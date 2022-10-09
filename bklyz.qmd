@@ -1,0 +1,118 @@
+---
+title: Should Bao et al. (2020) be retracted?
+author: Ian D. Gow
+date: "`r Sys.Date()`"
+bibliography: papers.bib
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+---
+
+[@walker2022erroneous] calls "for an investigation at the *Journal of Accounting Research* (JAR) into academic research misconduct."
+This paper examines whether this call is justified and considers possible responses JAR might take.
+Given the dramatic title, it seems appropriate to start with a listing of the characters appearing in this story.
+
+## Dramatis personae
+
+In order of appearance
+
+ - BKLYZ0: [@Bao:2015aa] Original submission to the *Journal of Accounting Research*
+ - BKLYZ1: [@Bao:2020aa] Published version of main paper in *Journal of Accounting Research*
+ - W1: [@walker2021critique] Original published critique by Walker
+ - BKLYZ2: [@Bao:2020aa] Reply to W1
+ - W2: [@walker2021rejoinder] Rejoinder to BKLYZ2
+ - BKLYZ3: [@Bao:2022aa] Erratum to BKLYZ1
+ - W3: [@walker2022erroneous] Response to BKLYZ3
+ 
+
+## BKLYZ1
+
+What exactly is the contribution of BKLYZ1?
+@Bao:2020aa [p. 199] suggest that it is "a state-of-the-art fraud prediction model" where the fraud that is predicted is accounting fraud resulting in an Accounting and Auditing Enforcement Release (AAER) by the SEC.^[See the SEC [website](https://www.sec.gov/divisions/enforce/friactions.htm) for details.]
+
+BKLYZ1 do indeed provide such a model.
+An analyst---whether an academic or a practitioner---can go to the [GitHub page associated with BKLYZ1](https://github.com/JarFraud/FraudDetection/tree/39212b7901fdd61fe420979bfa30f5eadcbee47e), download the code and data, open Matlab, and generate the model.
+
+But, even on the terms of BKLYZ1, this model has limitations.
+First, it doesn't really detect accounting fraud, so much as AAERs.
+But accounting fraud might not result in AAERs, either because it is never detected, or because it is detected but does not rise to the level that leads to an AAER, or even because the fraud is so profound that an AAER is somewhat irrelevant.
+
+With regard to the last category, it is not even clear that Enron, the public company at the heart of one of most notorious cases of accounting fraud this century, was the subject of an AAER.
+While the CEO (Jeffrey Skilling) and CFO (Andrew Fastow) of Enron ended up serving time in prison, there is no AAER related either Skilling or Fastow (many AAERs relate to individuals).
+There is no AAER directed specificly at Enron, perhaps because it entered bankruptcy shortly after fraud was detected.
+^[The [one AAER](https://www.sec.gov/litigation/admin/34-48230.htm) in the @Bao:2020aa sample connected to Enron actually covers to the order for Citigroup to pay a amount in a settlement arising because "Citigroup assisted [Enron and Dynegy] in enhancing artificially their financial presentations through a series of complex structured transactions ... to allow those companies to report proceeds of financings as cash from operating activities".]
+
+The BKLYZ1 sample "ends in 2008 because the regulators reduced the enforcement of accounting fraud starting from around 2009, increasing the possibility that many accounting fraud cases remain undetected for the post-2008 period" [@Bao:2020aa, pp. 203-204].
+In other words, the specific outcome (AAERs) that the BKLYZ1 model is designed to predict becomes simply too difficult to predict after 2008.
+This means that the model is only useful for "predicting" AAERs before 2009.
+Obviously no practitioner would find such a model useful and even academics---who appear to have an unhealthy appetite for using outputs of prediction models in regression analyses---probably have little use for a model whose utility ended with financial crisis of 2008.
+
+But even if the BKLYZ1 model itself is not useful for any identifiable purpose, perhaps the contribution of BKLYZ1 is in showing that a model based on ensemble learning ("one of the most powerful machine learning methods") "outperforms ... by a large margin" approaches commonly used in prior accounting research, including models based on logistic regression.
+Of course, this would not be a contribution to the vast literature in statistical learning, as any practitioner in that field is unlikely to be surprised by a general result covered in an introductory textbook.
+
+Nor would we view the contribution of BKLYZ1 to be in demonstrating the superiority of the specific ensemble method used in the paper ("RUSBoost") over alternative approaches.
+First, BKLYZ1 do not evaluate RUSBoost relative to other ensemble methods, such as the AdaBoost approach on which it is based.
+Second, earlier research has already provided evidence on this point [@Seiffert:2008to].
+
+Rather the contribution of BKLYZ1 seems more specific to the setting of accounting fraud.
+@Bao:2020aa [p. 204] summarize their results:
+
+> The average AUC and the average NDCG@k for the ensemble learning model are 0.725 and 0.049, respectively, representing a performance increase of 7.9% and 75%, respectively, relative to the performance of the better benchmark model, the Dechow et al. model [based on logistic regression].
+> These performance differences are also economically significant: Using the NDCG@k approach (where k = 1%), our best model, the ensemble learning model, identified a total of 16 fraud cases in the test period 2003–08 [versus] 9 for the Dechow et al. model.
+
+Assuming that the results of BKLYZ1 generalize from the prediction of AAERs in 2003-2008 to prediction of accounting fraud, we might conclude that BKLYZ1 provides the helpful result that a model based on RUSBoost may provide superior prediction performance to a model based on logistic regression.
+Presumably this was the central contribution of BKLYZ1 that led to its publication an accounting outlet as prestigious as the *Journal of Accounting Research*.
+
+## BKLYZ3
+
+Unfortunately, we need to update the central finding of BKLYZ1 in light of BKLYZ3.
+BKLYZ3 corrects a "coding error" in BKLYZ1 identified by W1.
+The updated results are found in Panel B of Table 1 of BKLYZ3.
+There we see that the quoted summary of results should instead read.
+
+> The average AUC and the average NDCG\@k for the ensemble learning model are 0.7228 and 0.0237, respectively, representing a performance increase of 7.7% and *performance decrease of 13.2%*, respectively, relative to the performance of the better benchmark model, the Dechow et al. model [based on logistic regression].
+> These performance differences are also economically significant: Using the NDCG@k approach (where k = 1%), our best model, the ensemble learning model, identified a total of 10 fraud cases in the test period 2003–08 [versus] 8 for the Dechow et al. model.
+
+So, based on the criteria used in BKLYZ1, correction of the "coding error" in that paper overturns the central result of BKLYZ1.
+So what seems to be the sole basis for publishing BKLYZ1 is no longer true.
+
+However, the way the erratum is written, a reader who stumbled upon BKLYZ1 and then checked BKLYZ3 might be forgiven for missing how the primary result of BKLYZ1 is undermined by the correction in BKLYZ3.
+BKLYZ3 arguably obfuscates the main result of BKLYZ1 by emphasizing alternative test periods, placing renewed emphasis on AUC (the metric with weaker results in BKLYZ1), introducing novel results using NDCG\@k at cutoffs not considered in BKLYZ1, and providing a rather beside-the-point discussion of an "alternative approach to coding serial fraud" that really does not provide an alternative approach.^[My own analysis suggests that AAERs are never released prior to the last affected period, so AAERs that affect test years are always in the "future" relative to that test year, and should never be coded as anything other than zero in the training sample.]
+
+## Are their grounds for retraction?
+
+The Committee on Publication Ethics provides guidance "intended to advise editors and publishers on expected practices when considering whether a retraction is appropriate, and how to issue a retraction."^[See p.2 of [Retraction Guidelines](https://publicationethics.org/files/retraction-guidelines-cope.pdf).]
+In light of BKLYZ3, "editors should consider retracting a publication if ... they have clear evidence that the findings are unreliable ... as a result of major error (eg, miscalculation or experimental error)."
+Given that BKLYZ3 provides evidence of an error and, based on our discussion above, this error goes to the central result of the BKLYZ1, retraction seems to be an appropriate response.
+
+But note that the COPE guidelines [p. 8] provide the option of "retract and republish": "journals may wish to work with authors to concurrently retract an article that was found to be fundamentally flawed while simultaneously publishing a linked and corrected version of the work. 
+This strategy ... may provide an opportunity for journals and authors to transparently correct the literature when a simple correction cannot sufficiently address the flaws of the original article."
+
+Note that while many grounds for retraction involve evidence of academic misconduct, there is no requirement that misconduct be shown for a retraction to occur.
+Indeed, it seems that the "retract and republish" option that has merit in the present cases is predicated on the absence of misconduct.
+
+## Is there evidence of misconduct?
+
+W3 claims "make the case that there is evidence of academic misconduct and make the recommendation that the *Journal of Accounting Research* launch a full and independent investigation into the matter."
+I can imagine that the editors of the *Journal of Accounting Research* would be reluctant to get into questions of whether there is academic misconduct, given the implications of any such allegation.
+
+
+## Stuff
+
+### JAR data policy
+
+### Sample period
+
+### BKLYZ2
+
+### BKLYZ3
+
+
+
+
+
+
+
+## References {-}
