@@ -33,12 +33,13 @@ In order of appearance (in the world, not in this paper) we have:
 
 ## BKLYZ1
 
-What exactly is the contribution of BKLYZ1? 
+What is the contribution of BKLYZ1? 
 @Bao:2020aa [p. 199] suggest that it is "a state-of-the-art fraud prediction model" where the fraud that is predicted is accounting fraud resulting in an Accounting and Auditing Enforcement Release (AAER) by the SEC.[^1]
 
 [^1]: See the SEC [website](https://www.sec.gov/divisions/enforce/friactions.htm) for details.
 
-BKLYZ1 do indeed provide such a model. An analyst---whether an academic or a practitioner---can go to the [GitHub page associated with BKLYZ1](https://github.com/JarFraud/FraudDetection/tree/39212b7901fdd61fe420979bfa30f5eadcbee47e), download the code and data, open Matlab, and generate the model.^[In some ways, the requirement for Matlab is unfortunate, as Matlab is proprietary software and offers less transparency than an implementation using one of the open-source alternatives, such as Python or R, would.
+BKLYZ1 do indeed provide such a model.
+An analyst---whether an academic or a practitioner---can go to the [GitHub page associated with BKLYZ1](https://github.com/JarFraud/FraudDetection/tree/39212b7901fdd61fe420979bfa30f5eadcbee47e), download the code and data, open Matlab, and generate the model ready for application to new data.^[In some ways, the requirement for Matlab is unfortunate, as Matlab is proprietary software and offers less transparency than an implementation using one of the open-source alternatives, such as Python or R, would.
 Unfortunately there is no implementation of RUSBoost in the popular Python library, `scikit-learn`, though this library does have an implementation of AdaBoost.
 There is also no well-documented implementation of RUSBoost in R, though there are several implementations of the AdaBoost in R.
 Fortunately, it is possible to implement RUSBoost in R, and I include an implementation in the R package `farr` that I created as a complement to the course book found [here](https://iangow.github.io/far_book/).
@@ -46,7 +47,7 @@ A chapter using RUSBoost will be forthcoming in the near future.]
 
 But, even on the terms of BKLYZ1, this model has limitations. 
 First, it doesn't really detect accounting fraud in a general sense, so much as AAERs.
-Accounting fraud might not result in AAERs, either because it is never detected, or because it is detected but does not rise to the level that leads to an AAER, or even because the fraud is so profound that an AAER is somewhat irrelevant.
+Accounting fraud might not result in AAERs, either because it is never detected, or because it is detected but does not rise to the level that leads to an AAER, or even because the fraud is so severe that an AAER is somewhat irrelevant.
 
 With regard to the last category, it is not even clear that Enron, the public company at the heart of one of most notorious cases of accounting fraud this century, was the subject of an AAER.
 While the CEO (Jeffrey Skilling) and CFO (Andrew Fastow) of Enron ended up serving time in prison, there is no AAER related either Skilling or Fastow (many AAERs relate to individuals).
