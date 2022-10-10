@@ -38,7 +38,7 @@ What exactly is the contribution of BKLYZ1?
 
 [^1]: See the SEC [website](https://www.sec.gov/divisions/enforce/friactions.htm) for details.
 
-BKLYZ1 do indeed provide such a model. An analyst---whether an academic or a practitioner---can go to the [GitHub page associated with BKLYZ1](https://github.com/JarFraud/FraudDetection/tree/39212b7901fdd61fe420979bfa30f5eadcbee47e), download the code and data, open Matlab, and generate the model.^[In some ways, the requirement for Matlab is unfortunate, as Matlab is proprietary software and offers less transparency than would an implementation usng one of the open-source alternatives, such as Python or R.
+BKLYZ1 do indeed provide such a model. An analyst---whether an academic or a practitioner---can go to the [GitHub page associated with BKLYZ1](https://github.com/JarFraud/FraudDetection/tree/39212b7901fdd61fe420979bfa30f5eadcbee47e), download the code and data, open Matlab, and generate the model.^[In some ways, the requirement for Matlab is unfortunate, as Matlab is proprietary software and offers less transparency than an implementation using one of the open-source alternatives, such as Python or R, would.
 Unfortunately there is no implementation of RUSBoost in the popular Python library, `scikit-learn`, though this library does have an implementation of AdaBoost.
 There is also no well-documented implementation of RUSBoost in R, though there are several implementations of the AdaBoost in R.
 Fortunately, it is possible to implement RUSBoost in R, and I include an implementation in the R package `farr` that I created as a complement to the course book found [here](https://iangow.github.io/far_book/).
@@ -112,7 +112,7 @@ Indeed, it seems that the "retract and republish" option that has merit in the p
 
 W3 claims to "make the case that there is evidence of academic misconduct and make the recommendation that the *Journal of Accounting Research* launch a full and independent investigation into the matter." I can imagine that the editors of the *Journal of Accounting Research* would be reluctant to get into questions of whether there is academic misconduct, given the implications of any such allegation.
 
-While I argue that a better presentation of the research record requires some kind of retraction, the CORE guidelines cited above appear to afford some latitude as to whether a journal will "in some instances, ... may wish to work with authors to concurrently retract an article that was found to be fundamentally flawed while simultaneously publishing a linked and corrected version of the work."
+While I argue that a better presentation of the research record requires some kind of retraction, the COPE guidelines cited above appear to afford some latitude as to whether a journal will "in some instances, ... may wish to work with authors to concurrently retract an article that was found to be fundamentally flawed while simultaneously publishing a linked and corrected version of the work."
 In other words, the *Journal of Accounting Research* arguably enjoys wide discretion over whether to "republish" a corrected version of BKLYZ1.
 
 The remainder of this note collects some information that I conjecture the *Journal of Accounting Research* may consider in reaching its decision on the best course of action.
@@ -201,11 +201,26 @@ It is critical that such meta-parameters be fixed using the training and validat
 
 In this regard, it is somewhat concerning that the number of trees parameter that is selected for the BKLYZ1 specification is 1,000 according to W3, not the 3,000 used in BKLYZ1.^[In my own analysis, I found that 900 trees maximized performance in the validation sample, which is very close to the value found in W3.]
 This creates the unfortunate impression that the idea of selecting meta-parameters in a transparent fashion using only validation data emerged only after observing a decline in test performance upon switching to "Walker's approach" in preparing the erratum.
+Some credit is due to BKLYZ and JAR for facilitating this sharing of data and code in the first place.^[We should not infer that the situation is better at journals without a data-sharing policy. If anything, we might expect them to be worse.]
 
 ### Other data issues
 
 While it is possible to explain changes in the code between BKLYZ1 and BKLYZ3 using GitHub, some concerns remain.
 For example, as detailed [here](https://gist.github.com/iangow/5d3843749de9793025618fab53e7f263), the two data files provided are not consistent.
 While the PDF-rendered SAS code suggests that one data file depends on the other, there are observations on AAERs not found in the former.
+
+### How unusual are the issues in BKLYZ1?
+
+Some readers may be surprised to learn that the core results of a published paper can disappear when a "coding error" is detected and corrected.
+I am not surprised.
+Having replicated many papers, I conjecture that the kinds of issues observed with BKLYZ1 are commonplace.
+Papers that say one thing, but do another (most papers using "regression discontinuity designs" fit [here](https://iangow.github.io/far_book/regression-discontinuity-designs.html)).
+Papers with genuine coding errors.
+Papers with results that are very sensitive to "design choices" that are difficult to rationalize (see [here](https://iangow.github.io/far_book/natural-revisited.html) and [here](https://iangow.github.io/far_book/panel-data.html)).
+If such issues abound, then the merit of singling out BKLYZ1 seems to be low.
+
+Another factor that seems relevant is JAR's data policy.
+While not perfect, arguably JAR's policy was critical in helping to unearth the issues not only in BKLYZ1, but in the replications I refer to above.
+If BKLYZ1 had been accompanied by a very perfunctory effort to comply with the data policy (e.g., "here is the list of CIKs for the fraud firms in our sample"), then it would not have been possible to detect the issue raised by W1 and corrected in BKLYZ3.
 
 ## References {.unnumbered}
