@@ -12,24 +12,24 @@ format:
 
 @walker2022erroneous calls "for an investigation at the *Journal of Accounting Research* (JAR) into academic research misconduct" related to @Bao:2020aa. 
 This paper examines whether this call is justified and considers possible responses JAR might take. 
-As the title of this piece suggests, I reframe the call of @walker2022erroneous as a question likely more applicable to JAR.
+As the title of this piece suggests, I reframe the call of @walker2022erroneous as a question likely more applicable to JAR:
+Should @Bao:2020aa be retracted?
 I argue that some form of retraction is required, even if only to provide (through a "retract and republish" approach) a research record that is clear and free from known error.
 
 However, I suggest that there are a number of factors that the editors of JAR might consider in deciding whether to provide the authors of @Bao:2020aa the opportunity to republish.
 
-Given the dramatic title, it seems appropriate to start with a listing of the characters appearing in this story.
-
 ## Dramatis personae
 
-In order of appearance (in the world, not in this paper):
+Given the dramatic title, it seems appropriate to start with a listing of the characters appearing in this story.
+In order of appearance (in the world, not in this paper) we have:
 
--   BKLYZ0: [@Bao:2015aa] Original submission to the *Journal of Accounting Research*
--   BKLYZ1: [@Bao:2020aa] Published version of main paper in *Journal of Accounting Research*
--   W1: [@walker2021critique] Original published critique by Walker
--   BKLYZ2: [@Bao:2021] Reply to W1
--   W2: [@walker2021rejoinder] Rejoinder to BKLYZ2
--   BKLYZ3: [@Bao:2022aa] Erratum to BKLYZ1
--   W3: [@walker2022erroneous] Response to BKLYZ3
+ - The Original [BKLYZ0, @Bao:2015aa]: Version submitted to JAR in 2015.
+ - The Publication [BKLYZ1, @Bao:2020aa]: Version published in JAR in 2020.
+ - The Critique [W1, @walker2021critique]
+ - The Reply [BKLYZ2, @Bao:2021]: Initial reply to W1.
+ - The Rejoinder [W2, @walker2021rejoinder]
+ - The Erratum [BKLYZ3, @Bao:2022aa]: Erratum published in JAR in 2022.
+ - The Call for an Investigation [W3, @walker2022erroneous]: Response to BKLYZ3.
 
 ## BKLYZ1
 
@@ -38,7 +38,11 @@ What exactly is the contribution of BKLYZ1?
 
 [^1]: See the SEC [website](https://www.sec.gov/divisions/enforce/friactions.htm) for details.
 
-BKLYZ1 do indeed provide such a model. An analyst---whether an academic or a practitioner---can go to the [GitHub page associated with BKLYZ1](https://github.com/JarFraud/FraudDetection/tree/39212b7901fdd61fe420979bfa30f5eadcbee47e), download the code and data, open Matlab, and generate the model.
+BKLYZ1 do indeed provide such a model. An analyst---whether an academic or a practitioner---can go to the [GitHub page associated with BKLYZ1](https://github.com/JarFraud/FraudDetection/tree/39212b7901fdd61fe420979bfa30f5eadcbee47e), download the code and data, open Matlab, and generate the model.^[In some ways, the requirement for Matlab is unfortunate, as Matlab is proprietary software and offers less transparency than would an implementation usng one of the open-source alternatives, such as Python or R.
+Unfortunately there is no implementation of RUSBoost in the popular Python library, `scikit-learn`, though this library does have an implementation of AdaBoost.
+There is also no well-documented implementation of RUSBoost in R, though there are several implementations of the AdaBoost in R.
+Fortunately, it is possible to implement RUSBoost in R, and I include an implementation in the R package `farr` that I created as a complement to the course book found [here](https://iangow.github.io/far_book/).
+A chapter using RUSBoost will be forthcoming in the near future.]
 
 But, even on the terms of BKLYZ1, this model has limitations. 
 First, it doesn't really detect accounting fraud in a general sense, so much as AAERs.
@@ -117,10 +121,10 @@ The remainder of this note collects some information that I conjecture the *Jour
 
 ### Test period
 
-One thing that BKLYZ1 is very clear on is that the test period is 2003--2008
+One thing that BKLYZ1 is very clear on is that the test period is 2003--2008.
 The main results ("performance increase of 7.9% and 75%") of that paper are all based on this test period.
 
-Yet the erratum [p. 1636] mysteriously seems to emphasize 2003--2005 as the test period: "Using NDCG@k as a performance measure RUSBoost ... continues the dominate the performance of the other models for the test period 2003--2005."
+Yet the erratum [BKLYZ3, p. 1636] mysteriously seems to emphasize 2003--2005 as the test period: "Using NDCG@k as a performance measure RUSBoost ... continues the dominate the performance of the other models for the test period 2003--2005."
 The published erratum [p. 1636] even suggests that BLKYZ1 "argued that this test period was the cleanest".
 Yet this is simply an impossible reading of BKLYZ1, where 2003--2008 is clearly the test period.
 The one common theme appears to be that the best test period is the test period that delivers the most favorable "out-of-sample" performance for RUSBoost, which would be a thoroughly dishonest approach to use.
