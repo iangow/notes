@@ -68,8 +68,8 @@ Rather the contribution of BKLYZ1 seems more specific to the setting of accounti
 > The average AUC and the average NDCG\@k for the ensemble learning model are 0.725 and 0.049, respectively, representing a performance increase of 7.9% and 75%, respectively, relative to the performance of the better benchmark model, the Dechow et al. model \[based on logistic regression\]. 
 > These performance differences are also economically significant: Using the NDCG\@k approach (where k = 1%), our best model, the ensemble learning model, identified a total of 16 fraud cases in the test period 2003--08 \[versus\] 9 for the Dechow et al. model.
 
-Assuming that the results of BKLYZ1 generalize from the prediction of AAERs in 2003-2008 to prediction of accounting fraud, we might conclude that BKLYZ1 provides the helpful result that a model based on RUSBoost may provide superior performance in predicting accounting to a model based on logistic regression. 
-Presumably this was the central contribution of BKLYZ1 that led to its publication an accounting outlet as prestigious as the *Journal of Accounting Research*.
+Assuming that the results of BKLYZ1 generalize from the prediction of AAERs in 2003-2008 to prediction of accounting fraud, we might conclude that BKLYZ1 provides the helpful result that a model based on RUSBoost may provide superior performance in predicting accounting fraud than a model based on logistic regression. 
+Presumably this was the central contribution of BKLYZ1 that led to its publication in an accounting outlet as prestigious as the *Journal of Accounting Research*.
 
 ## BKLYZ3
 
@@ -155,21 +155,20 @@ In BKLYZ2, the practice of *not* recoding these frauds in this way is described 
 
 That this approach to recoding frauds is not legitimate is evidenced by the fact that doing it that way has been relabelled a "coding error" in BKLYZ3.
 
-But relabeling "serial frauds" also does not make sense in that it is recoding a fraud as 1 in 2003 so that a "prediction" of the same underlying fraud can be made in 2005 even though, by the terms of the example itself (Figure 1 of BKLYZ), the SEC does not release an AAER until 2007.
+But relabelling "serial frauds" also does not make sense in that it is recoding a fraud as 1 in 2003 so that a "prediction" of the same underlying fraud can be made in 2005 even though, by the terms of the example itself (Figure 1 of BKLYZ), the SEC does not release an AAER until 2007.
 
-That one cannot be training models using data of frauds that have not yet been released to predicting frauds in the test period that also affect firm-years in the training period is clearly not appropriate.
-
-It seems clear from BKLYZ1's discussion of "serial fraud" that the authors were well aware of the issues here.
+That training models using data on frauds that are released until after the test period is problematic seems obvious.
+And it seems clear from BKLYZ1's discussion of "serial fraud" that the authors were well aware of these issues.
 In fact, they seem aware of the underlying issue even in BKLYZ0.
 As discussed above, the BKLYZ0 "sample ends in 2005 because ... a significant portion of the accounting frauds that occurred over 2006-2010 are likely still unreported by the AAERs as of the end of 2010."
 
-One response the authors might have is that there might be a "key event [that] reveals 2001-2003 fraud labels" before 2004.
-But this describes a completely different prediction problem from that studied in BKLYZ1 (or BKLYZ0), which identifies frauds as AAER events.
+One response the authors might have is that there might be a "key event [that] reveals 2001-2003 fraud labels" before 2004 (and before the AAER publication date in 2007).
+But this implies a completely different prediction problem from that studied in BKLYZ1 (or BKLYZ0), which identifies frauds as AAER events.
 The only reliable "key event" that identifies an AAER is the release of an AAER.
 As discussed above, disclosed accounting fraud might not result in AAERs for a number of reasons.
 
-Saying that sometimes information is released that suggests a high likelihood of a future AAER event transforms the prediction problem from one about predicting confirmed AAERs using financial statement features into one about predicting confirmed AAERs using financial statement features and also some *unidentified* information about possible future AAERs.
-This is a completely different prediction problem (and perhaps the one embedded in BKLYZ0, which appears to use information about serial frauds that will be revealed after the test period in developing a training model using those very same frauds).
+Saying that sometimes information is released that suggests a high likelihood of a future AAER event transforms the prediction problem from one about predicting confirmed AAERs using financial statement features into one about predicting confirmed AAERs using financial statement features and also some *unidentified* information about possible future AAERs.^[
+This a completely different prediction problem is perhaps the one embedded in BKLYZ0, which appears to use information about serial frauds that will be revealed after the test period in developing a training model using those very same frauds.]
 
 Even if we expand the information set to include the "maybe-future-AAERs" as is done in the "not Walker's approach" depicted in Figure 1 of BKLYZ2, there is no rationale provided as to why missing values for some items on Compustat in 2004 should be assumed to precipitate a fraud revelation event before 2004.
 In fact, it is hard to conceive of one.
