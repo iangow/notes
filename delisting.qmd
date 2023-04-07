@@ -201,6 +201,8 @@ Of course, all of the above could be easily be put into a function.
 Making functions in R is much easier than making macros in SAS.^[I don't think you'd cover macros in a first SAS class, but I cover making functions [here](https://iangow.github.io/far_book/r-intro.html).]
 Note that if using the function, we could omit the code creating `crsp.mse` and `crsp.dsedelist` above.
 Optionally, we could easily use dates taken from `crsp.msi` in the returned table that we could merge with monthly returns without any need to create `month` and `year` fields.
+Ideally, we would also incorporate the steps to correct `dlret` covered in the next section in the code here.
+
 It would be quite straightforward to add this function to my `farr` package.^[Once I understand this code better, I may do this, as it would be good to use returns with delisting returns in the [chapter replicating Sloan [1996]](https://iangow.github.io/far_book/accruals.html).]
 The only thing needed to be provided to the function is the PostgreSQL database connection (`conn`).
 
@@ -266,16 +268,12 @@ quit;
 data monthlyreturns;
     set monthlyreturns;
     ret_orig = ret;
-    
-    **
+  
     if not missing(dlstcd) and missing(dlret) then dlret=rv;
-    * 
-
     else if not missing(dlstcd) and dlpdt le dldate and not missing(dlret)
 	    then dlret=(1+dlret)*(1+rv)-1;
-    * 
 
-    ** Second, incorporate delistings into monthly return measure;
+    ** Then, incorporate delistings into monthly return measure;
     if not missing(dlstcd) and missing(ret) then ret=dlret;
     else if not missing(dlstcd) and not missing(ret) 
 	    then ret=(1+ret)*(1+dlret)-1;
