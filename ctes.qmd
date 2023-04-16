@@ -1,0 +1,362 @@
+---
+title: "From subqueries to CTEs"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+abstract: "Take a query with subqueries and turn it into one with CTEs."
+date: today
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+    html:
+        theme: cosmo
+---
+
+## Hello
+
+```{r}
+#| warning: false
+library(DBI)
+library(tidyverse)
+library(dbplyr)
+library(ggplot2)
+library(knitr)
+library(duckdb)
+```
+
+```{r}
+#| warning: false
+#| eval: false 
+#| cache: true
+url <- paste0("https://raw.githubusercontent.com/cathytanimura/",
+              "sql_book/master/Chapter%204%3A%20Cohorts/")
+legislators_df <- read_csv(paste0(url, "legislators.csv"),
+                           show_col_types = FALSE)
+legislators_terms_df <- read_csv(paste0(url, "legislators_terms.csv"),
+                                 show_col_types = FALSE)
+```
+
+```{r}
+#| warning: false
+legislators_df <- read_csv("data/legislators.csv.gz",
+                           show_col_types = FALSE)
+legislators_terms_df <- read_csv("data/legislators_terms.csv.gz",
+                                 show_col_types = FALSE)
+```
+
+        
+
+```{r}
+#| include: false
+knit_print.data.frame <- function(x, ...) {
+  knit_print(kable(x))
+}
+
+registerS3method("knit_print", "data.frame", knit_print.data.frame)
+```
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+legislators <- copy_to(db, legislators_df, "legislators")
+legislators_terms <- copy_to(db, legislators_terms_df, 
+                             "legislators_terms")
+```
+
+Chapter 4 of @tanimura2021sql contains the following query.
+
+Hello.
+```{sql}
+#| connection: db
+SELECT aa.cohort_century::int as cohort_century
+,round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps,4) as pct_5_yrs
+,round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps,4) as pct_10_yrs
+,round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps,4) as pct_15_yrs
+FROM
+(
+        SELECT date_part('century',a.first_term) as cohort_century
+        ,count(id_bioguide) as reps
+        FROM
+        (
+                SELECT id_bioguide, min(term_start) as first_term
+                FROM legislators_terms
+                WHERE term_type = 'rep'
+                GROUP BY 1
+        ) a
+        WHERE first_term <= '2009-12-31'
+        GROUP BY 1
+) aa
+LEFT JOIN
+(
+        SELECT date_part('century',b.first_term) as cohort_century
+        ,count(distinct case when age(c.term_start, b.first_term) <= interval '5 years' 
+            then b.id_bioguide end) as rep_and_sen_5_yrs
+        ,count(distinct case when age(c.term_start, b.first_term) <= interval '10 years' 
+            then b.id_bioguide end) as rep_and_sen_10_yrs
+        ,count(distinct case when age(c.term_start, b.first_term) <= interval '15 years' 
+            then b.id_bioguide end) as rep_and_sen_15_yrs
+        FROM
+        (
+                SELECT id_bioguide, min(term_start) as first_term
+                FROM legislators_terms
+                WHERE term_type = 'rep'
+                GROUP BY 1
+        ) b
+        JOIN legislators_terms c on b.id_bioguide = c.id_bioguide
+        and c.term_type = 'sen' and c.term_start > b.first_term
+        GROUP BY 1
+) bb on aa.cohort_century = bb.cohort_century
+;
+```
+
+This query is quite complex.
+Can we simplify it using CTEs?
+
+First, notice that the subqueries labelled `a` and `b` are identical.
+Let's clean that up.
+We'll put `a` as a CTE at the beginning of the query (after `WITH) and refer to that both where we currently have it, and also in place of `b`.
+All references to `b` are changed to references to `a`.
+We can then run the query to check that we are still getting the same results.
+
+```{sql}
+#| connection: db
+WITH a AS (
+    SELECT id_bioguide, min(term_start) as first_term
+    FROM legislators_terms
+    WHERE term_type = 'rep'
+    GROUP BY 1) 
+
+SELECT aa.cohort_century::int as cohort_century
+,round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps,4) as pct_5_yrs
+,round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps,4) as pct_10_yrs
+,round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps,4) as pct_15_yrs
+FROM
+(
+        SELECT date_part('century',a.first_term) as cohort_century
+        ,count(id_bioguide) as reps
+        FROM a
+        WHERE first_term <= '2009-12-31'
+        GROUP BY 1
+) aa
+LEFT JOIN
+(
+        SELECT date_part('century', a.first_term) as cohort_century
+        ,count(distinct case when age(c.term_start, a.first_term) <= interval '5 years' 
+            then a.id_bioguide end) as rep_and_sen_5_yrs
+        ,count(distinct case when age(c.term_start, a.first_term) <= interval '10 years' 
+            then a.id_bioguide end) as rep_and_sen_10_yrs
+        ,count(distinct case when age(c.term_start, a.first_term) <= interval '15 years' 
+            then a.id_bioguide end) as rep_and_sen_15_yrs
+        FROM a
+        JOIN legislators_terms c on a.id_bioguide = c.id_bioguide
+        and c.term_type = 'sen' and c.term_start > a.first_term
+        GROUP BY 1
+) bb on aa.cohort_century = bb.cohort_century
+;
+```
+
+Next, let's do the same for `aa` and `bb`.
+Note that there are commas after the CTEs defining `a` and `aa`, but not after `bb`, as it is the last CTE before the body of the query.
+Again we run the query to check that we still have the same results.
+
+```{sql}
+#| connection: db
+WITH 
+
+a AS (
+    SELECT id_bioguide, min(term_start) as first_term
+    FROM legislators_terms
+    WHERE term_type = 'rep'
+    GROUP BY 1),
+    
+aa AS (
+    SELECT date_part('century',a.first_term) as cohort_century,
+        count(id_bioguide) as reps
+    FROM a
+    WHERE first_term <= '2009-12-31'
+    GROUP BY 1),
+
+bb AS (
+    SELECT date_part('century', a.first_term) as cohort_century,
+        count(distinct case when age(c.term_start, a.first_term) <= interval '5 years' 
+            then a.id_bioguide end) as rep_and_sen_5_yrs,
+        count(distinct case when age(c.term_start, a.first_term) <= interval '10 years' 
+            then a.id_bioguide end) as rep_and_sen_10_yrs,
+        count(distinct case when age(c.term_start, a.first_term) <= interval '15 years' 
+            then a.id_bioguide end) as rep_and_sen_15_yrs
+    FROM a
+    JOIN legislators_terms c on a.id_bioguide = c.id_bioguide
+    and c.term_type = 'sen' and c.term_start > a.first_term
+    GROUP BY 1) 
+
+SELECT aa.cohort_century::int as cohort_century
+,round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps,4) as pct_5_yrs
+,round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps,4) as pct_10_yrs
+,round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps,4) as pct_15_yrs
+FROM aa
+LEFT JOIN bb on aa.cohort_century = bb.cohort_century
+;
+```
+
+Now we can delete the `aa` and `bb` labels and references to them.
+We can also tidy up the main query a little, including using the more elegant (in my view) `USING` syntax.
+
+Also notice that we have `age(c.term_start, a.first_term)` three times in the query above.
+We can split `bb` into two, as we do below (now `bbb` followed by `bb`).
+
+```{sql}
+#| connection: db
+WITH 
+
+a AS (
+    SELECT id_bioguide, min(term_start) as first_term
+    FROM legislators_terms
+    WHERE term_type = 'rep'
+    GROUP BY 1),
+    
+aa AS (
+    SELECT date_part('century', first_term) as cohort_century,
+        count(id_bioguide) as reps
+    FROM a
+    WHERE first_term <= '2009-12-31'
+    GROUP BY 1),
+    
+bbb AS (
+    SELECT date_part('century', a.first_term) as cohort_century,
+        a.id_bioguide,
+        age(c.term_start, a.first_term) AS age
+    FROM a
+    JOIN legislators_terms c 
+    ON a.id_bioguide = c.id_bioguide
+    AND c.term_type = 'sen' AND c.term_start > a.first_term), 
+
+bb AS (
+    SELECT cohort_century,
+        count(distinct case when age <= interval '5 years' 
+            then id_bioguide end) as rep_and_sen_5_yrs,
+        count(distinct case when age <= interval '10 years'
+            then id_bioguide end) as rep_and_sen_10_yrs,
+        count(distinct case when age <= interval '15 years' 
+            then id_bioguide end) as rep_and_sen_15_yrs
+    FROM bbb
+    GROUP BY 1) 
+
+SELECT cohort_century::int as cohort_century,
+    round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
+    round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
+    round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
+FROM aa
+LEFT JOIN bb 
+USING (cohort_century);
+```
+
+We are still left with the meaningless labels (e.g., `a`, `bb`).
+We can give the CTEs more meaningful labels.
+We also clean up `ages` a little (e.g., `USING`) and move `cohort_century` to `first_terms`.
+Again we check that results are the same.
+
+```{sql}
+#| connection: db
+WITH 
+
+first_terms AS (
+    SELECT id_bioguide,
+        min(term_start) AS first_term,
+        date_part('century', min(term_start)) AS cohort_century,
+    FROM legislators_terms
+    WHERE term_type = 'rep'
+    GROUP BY 1),
+
+century_reps AS (
+    SELECT cohort_century, count(id_bioguide) AS reps
+    FROM first_terms
+    WHERE first_term <= '2009-12-31'
+    GROUP BY 1),
+    
+ages AS (
+    SELECT cohort_century,
+        id_bioguide,
+        age(term_start, first_term) AS age
+    FROM first_terms
+    JOIN legislators_terms
+    USING (id_bioguide)
+    WHERE term_type = 'sen' AND term_start > first_term), 
+
+age_cuts AS (
+    SELECT cohort_century,
+        count(distinct case when age <= interval '5 years' 
+            then id_bioguide end) as rep_and_sen_5_yrs,
+        count(distinct case when age <= interval '10 years'
+            then id_bioguide end) as rep_and_sen_10_yrs,
+        count(distinct case when age <= interval '15 years' 
+            then id_bioguide end) as rep_and_sen_15_yrs
+    FROM ages
+    GROUP BY 1) 
+
+SELECT cohort_century::int as cohort_century,
+    round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
+    round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
+    round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
+FROM century_reps
+LEFT JOIN age_cuts 
+USING (cohort_century);
+```
+
+Now that we have a query based on CTEs, it is *much* easier to translate to `dbplyr`.
+
+```{r}
+first_terms <-
+    legislators_terms %>%
+    filter(term_type == 'rep') %>%
+    group_by(id_bioguide) %>%
+    summarize(first_term = min(term_start, na.rm = TRUE),
+              .groups = "drop") %>%
+    mutate(cohort_century = century(first_term))
+```
+
+```{r}
+century_reps <-
+    first_terms %>%
+    filter(first_term <= '2009-12-31') %>%
+    group_by(cohort_century) %>%
+    summarize(reps = n())
+```
+
+```{r} 
+ages <-
+    first_terms %>%
+    inner_join(legislators_terms, by = "id_bioguide") %>%
+    filter(term_type == 'sen', term_start > first_term) %>%
+    mutate(age = age(term_start, first_term)) %>%
+    select(cohort_century, id_bioguide, age)
+```
+
+```{r}
+age_cuts <-
+    ages %>%
+    mutate(id_05 = if_else(age <= years(5), id_bioguide, NA),
+           id_10 = if_else(age <= years(10), id_bioguide, NA),
+           id_15 = if_else(age <= years(15), id_bioguide, NA)) %>%
+    group_by(cohort_century) %>%
+    summarize(rep_and_sen_5_yrs = n_distinct(id_05),
+              rep_and_sen_10_yrs = n_distinct(id_10),
+              rep_and_sen_15_yrs = n_distinct(id_15))
+```
+
+```{r}
+century_reps %>%
+    left_join(age_cuts, by = "cohort_century") %>%
+    mutate(pct_5_yrs = rep_and_sen_5_yrs * 1.0 / reps,
+           pct_10_yrs = rep_and_sen_10_yrs * 1.0 / reps,
+           pct_15_yrs = rep_and_sen_15_yrs * 1.0 / reps) %>%
+    mutate(across(starts_with("pct_"), ~ round(., 4))) %>%
+    select(cohort_century, starts_with("pct_")) %>%
+    collect() 
+```
