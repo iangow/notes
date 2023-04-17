@@ -23,16 +23,17 @@ format:
 ## The data
 
 The example query I study below comes from Chapter 4 of @tanimura2021sql.
+The following packages will be used and should be installed.
 
 ```{r}
 #| warning: false
 library(DBI)
 library(tidyverse)
 library(dbplyr)
-library(ggplot2)
-library(knitr)
 library(duckdb)
 ```
+
+We first get the data, which requires an internet connection.
 
 ```{r}
 #| warning: false
@@ -48,22 +49,33 @@ legislators_terms_df <- read_csv(paste0(url, "legislators_terms.csv"),
 
 ```{r}
 #| warning: false
+#| include: false
 legislators_df <- read_csv("data/legislators.csv.gz",
                            show_col_types = FALSE)
 legislators_terms_df <- read_csv("data/legislators_terms.csv.gz",
                                  show_col_types = FALSE)
 ```
 
-        
+```{r}
+#| include: false
+library(knitr)
+knit_print.lazy_tbl <- function(x, ...) {
+  knitr::knit_print(knitr::kable(collect(x, n = 5)))
+}
+
+registerS3method("knit_print", "lazy_tbl", knit_print.lazy_tbl)
+```     
 
 ```{r}
 #| include: false
 knit_print.data.frame <- function(x, ...) {
-  knit_print(kable(x))
+  knitr::knit_print(kable(x))
 }
 
 registerS3method("knit_print", "data.frame", knit_print.data.frame)
 ```
+
+With the data in hand, we copy the two data tables to an in-memory DuckDB database.
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
@@ -74,7 +86,7 @@ legislators_terms <- copy_to(db, legislators_terms_df,
 
 Chapter 4 of @tanimura2021sql contains the following query.
 
-Hello.
+
 ```{sql}
 #| connection: db
 SELECT aa.cohort_century::int as cohort_century
@@ -311,6 +323,70 @@ LEFT JOIN age_cuts
 USING (cohort_century);
 ```
 
+Finally, let's put the "main" query in a CTE too.
+
+```{sql}
+#| connection: db
+WITH 
+
+first_terms AS (
+    SELECT id_bioguide,
+        min(term_start) AS first_term,
+        date_part('century', min(term_start)) AS cohort_century,
+    FROM legislators_terms
+    WHERE term_type = 'rep'
+    GROUP BY 1),
+
+century_reps AS (
+    SELECT cohort_century, count(id_bioguide) AS reps
+    FROM first_terms
+    WHERE first_term <= '2009-12-31'
+    GROUP BY 1),
+    
+ages AS (
+    SELECT cohort_century,
+        id_bioguide,
+        age(term_start, first_term) AS age
+    FROM first_terms
+    JOIN legislators_terms
+    USING (id_bioguide)
+    WHERE term_type = 'sen' AND term_start > first_term), 
+
+age_cuts AS (
+    SELECT cohort_century,
+        count(distinct case when age <= interval '5 years' 
+            then id_bioguide end) as rep_and_sen_5_yrs,
+        count(distinct case when age <= interval '10 years'
+            then id_bioguide end) as rep_and_sen_10_yrs,
+        count(distinct case when age <= interval '15 years' 
+            then id_bioguide end) as rep_and_sen_15_yrs
+    FROM ages
+    GROUP BY 1),
+
+cohort_retention AS (
+  SELECT cohort_century::int as cohort_century,
+    round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
+    round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
+    round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
+  FROM century_reps
+  LEFT JOIN age_cuts 
+  USING (cohort_century))
+  
+SELECT *
+FROM cohort_retention;
+```
+
+What's the value of this last step?
+Well it means we can easily edit the query to debug the CTEs that are used.
+For example, we could put the following at then end of the query about to look into `first_terms`.
+
+```{sql}
+#| connection: db
+#| eval: false
+SELECT *
+FROM first_terms;
+```
+
 Now that we have a query based on CTEs, it is *much* easier to translate to `dbplyr`.
 
 ```{r}
@@ -362,3 +438,5 @@ century_reps %>%
     select(cohort_century, starts_with("pct_")) %>%
     collect() 
 ```
+
+## References {-}
