@@ -20,6 +20,12 @@ format:
         theme: cosmo
 ---
 
+In this brief note, I use a query from @tanimura2021sql to illustrate how one can re-write a query that makes use of subqueries as a query using common table expressions (CTEs).
+I then show how a query written with CTEs is easily translated into a query using `dbplyr`.
+Finally, I do the analysis again from scratch, but using `dbplyr` expressions.
+In this analysis I find that the SQL query @tanimura2021sql does not quite meet the verbal specification it was intended to meet, while the `dbplyr` query does.
+I conjecture that the "building blocks" approach to SQL facilitated by `dbplyr` may enhance the accuracy of queries for many users.
+
 ## The data
 
 The example query I study below comes from Chapter 4 of @tanimura2021sql.
@@ -37,7 +43,7 @@ We first get the data, which requires an internet connection.
 
 ```{r}
 #| warning: false
-#| eval: false 
+#| eval: true 
 #| cache: true
 url <- paste0("https://raw.githubusercontent.com/cathytanimura/",
               "sql_book/master/Chapter%204%3A%20Cohorts/")
@@ -50,6 +56,7 @@ legislators_terms_df <- read_csv(paste0(url, "legislators_terms.csv"),
 ```{r}
 #| warning: false
 #| include: false
+#| eval: false
 legislators_df <- read_csv("data/legislators.csv.gz",
                            show_col_types = FALSE)
 legislators_terms_df <- read_csv("data/legislators_terms.csv.gz",
@@ -175,7 +182,7 @@ LEFT JOIN
         and c.term_type = 'sen' and c.term_start > a.first_term
         GROUP BY 1
 ) bb on aa.cohort_century = bb.cohort_century
-;
+ORDER BY 1;
 ```
 
 Next, let's do the same for `aa` and `bb`.
@@ -291,7 +298,7 @@ first_rep_terms AS (
     WHERE term_type = 'rep'
     GROUP BY 1),
 
-century_reps AS (
+cohort_sizes AS (
     SELECT cohort_century, count(id_bioguide) AS reps
     FROM first_rep_terms
     WHERE first_term <= '2009-12-31'
@@ -321,7 +328,7 @@ SELECT cohort_century AS cohort_century,
     round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
     round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
     round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
-FROM century_reps
+FROM cohort_sizes
 LEFT JOIN age_cuts 
 USING (cohort_century)
 ORDER BY 1;
@@ -341,7 +348,7 @@ first_rep_terms AS (
     WHERE term_type = 'rep'
     GROUP BY 1),
 
-century_reps AS (
+cohort_sizes AS (
     SELECT cohort_century, count(id_bioguide) AS reps
     FROM first_rep_terms
     WHERE first_term <= '2009-12-31'
@@ -372,7 +379,7 @@ cohort_retention AS (
     round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
     round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
     round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
-  FROM century_reps
+  FROM cohort_sizes
   LEFT JOIN age_cuts 
   USING (cohort_century))
   
@@ -407,7 +414,7 @@ first_rep_terms <-
 ```
 
 ```{r}
-century_reps <-
+cohort_sizes <-
     first_rep_terms %>%
     filter(first_term <= '2009-12-31') %>%
     group_by(cohort_century) %>%
@@ -436,7 +443,7 @@ age_cuts <-
 ```
 
 ```{r}
-century_reps %>%
+cohort_sizes %>%
     left_join(age_cuts, by = "cohort_century") %>%
     mutate(pct_5_yrs = rep_and_sen_5_yrs * 1.0 / reps,
            pct_10_yrs = rep_and_sen_10_yrs * 1.0 / reps,
@@ -449,6 +456,22 @@ century_reps %>%
 
 ## Doing it again in dplyr
 
+Now let's do it again more or less from scratch using `dbplyr`.
+In this version, I will build up block by block in a way that is easier (at least for me) to reason about.
+
+For convenience, I reproduce the code we used to create `first_rep_terms` above.
+
+```{r}
+first_rep_terms <-
+    legislators_terms %>%
+    filter(term_type == 'rep') %>%
+    group_by(id_bioguide) %>%
+    summarize(first_rep_term = min(term_start, na.rm = TRUE),
+              .groups = "drop")
+```
+
+Next, I produce an equivalent table for senate terms.
+
 ```{r}
 first_sen_terms <-
     legislators_terms %>%
@@ -458,16 +481,48 @@ first_sen_terms <-
               .groups = "drop") 
 ```
 
+We are interested in [legislators] "start as representatives" as our cohort.
+We want to exclude those who start as senators and (to match the query in the book), we also want to exclude those who first term is after `'2009-12-31'`.
+
 ```{r}
-rep_then_sen <-
+cohort_members <-
   first_rep_terms %>%
-  inner_join(first_sen_terms, 
-            join_by(id_bioguide, 
-                    first_term < first_sen_term)) %>%
-  mutate(gap = age(first_sen_term, first_term)) 
+  left_join(first_sen_terms, by = "id_bioguide") %>%
+  filter(first_rep_term < first_sen_term | is.na(first_sen_term)) %>%
+  select(id_bioguide, first_rep_term) %>%
+  mutate(cohort_century = century(first_rep_term)) %>%
+  filter(first_rep_term <= '2009-12-31')
 ```
 
-It is easy to check that `id_bioguide` is a valid key for this table.
+We can now calculate the sizes of the cohorts that we have formed.^[Here I am using the term "cohort" in a way that I object to below. Seems like another term is needed for precision here.]
+
+```{r}
+cohort_sizes <-
+  cohort_members %>%
+  group_by(cohort_century) %>%
+  summarize(reps = n(), .groups = "drop")
+```
+
+Now let's turn to the "go on to become senators" part of our remit.
+This is a simple `INNER JOIN` with an inequality `first_rep_term < first_sen_term` condition.
+We can calculate the `gap` using the SQL function `age()`.
+
+```{r}
+rep_then_sen <-
+  cohort_members %>%
+  inner_join(first_sen_terms, 
+            join_by(id_bioguide, 
+                    first_rep_term < first_sen_term)) %>%
+  mutate(gap = age(first_sen_term, first_rep_term))
+```
+
+It is easy to check that `id_bioguide` is a valid key for `rep_then_sen`.
+This fact makes it easy to building up the curve of subsequent senate terms using a window function.
+Within each `cohort_century` we sum up the number of rows leading up to each value of `age`.
+This is equivalent to `count(DISTINCT id_bioguide) OVER (PARTITION BY cohort_century ORDER BY gap)`, but we do not need the `DISTINCT` here because each value of `id_bioguide` is unique here.
+
+Note that there will be ties in terms of `age` here, and we deal wtih these using `max()`.
+That is if we had 432 representatives with `gap` of less than 5 years and 6 with `gap` of exactly 5 years, we want to step from 432 to 438 immediately.
 
 ```{r}
 rep_then_sen_gaps <-
@@ -480,12 +535,16 @@ rep_then_sen_gaps <-
   ungroup()
 ```
 
+I can now combine the "start as representatives" table (`cohort_sizes`) with the "go on to become senators" table (`rep_then_sen_gaps`) to calculate the percentages by `cohort_century`.
+
 ```{r}
 pct_rep_then_sen <-
   rep_then_sen_gaps %>%
-  inner_join(century_reps, by = "cohort_century") %>%
+  inner_join(cohort_sizes, by = "cohort_century") %>%
   mutate(pct = cum_ids/reps) 
 ```
+
+Rather than writing complicated `CASE` statements, I can make a little table in R with the three cutoff values and sent that to DuckDB and turn the rows into intervals.
 
 ```{r}
 gap_cutoffs <-
@@ -494,6 +553,8 @@ gap_cutoffs <-
           overwrite = TRUE) %>%
   mutate(cutoff = years(cutoff))
 ```
+
+Now I `CROSS JOIN` `pct_rep_then_sen` and `gap_cutoffs` and calculate the `pct` values for each before using `pivot_wider` to rearrange the table to match what is shown in @tanimura2021sql.
 
 ```{r}
 pct_rep_then_sen %>%
@@ -506,10 +567,45 @@ pct_rep_then_sen %>%
   pivot_wider(names_from = "cutoff",
               names_prefix = "pct_",
               values_from = "pct") %>%
-  # mutate(across(starts_with("pct_"), ~ round(., 4))) %>%
   arrange(cohort_century) %>%
   collect()
 ```
+
+But we now see different numbers.
+What has happened?
+
+It turns out that there are two situations I addressed in the code that produced the table just above.
+First, I only included in our cohort members of Congress who *started* as representatives.
+The original SQL query included cohort members of Congress who had served as representatives, but who had previously served as senators (so had not *started as* representatives).
+Second, I was consistent in application of the `first_rep_term <= '2009-12-31'` criterion throughout.
+The original SQL query imposed this requirement in calculating `cohort_sizes`, but not in constructing the cohorts themselves.
+
+I would argue that the answer I produced better matches the original question from @tanimura2021sql: 
+"What share of [legislators] start as representatives and go on to become senators? 
+(Some senators later become representatives, but that is much less common.)
+Since relatively few make this transition, we'll cohort legislators by the century in which they first became a representative."^[Minor edits here. I am not a fan of this use of the term "cohort" as the cohorts are formed based on `rep_first_date` and only aggregation of statistics happens by `cohort_century`.]
+
+Because we have access to the underlying tables as lazy data frames in R (effectively subqueries available for use to inspect), it is easy to dig into the steps of the two queries to check our reasoning.
+
+```{r}
+last_sen_terms <-
+    legislators_terms %>%
+    filter(term_type == 'sen') %>%
+    group_by(id_bioguide) %>%
+    summarize(last_sen_term = max(term_start, na.rm = TRUE),
+              .groups = "drop") 
+
+first_rep_terms %>%
+  anti_join(cohort_members, by = "id_bioguide") %>%
+  inner_join(first_sen_terms, by = "id_bioguide") %>%
+  inner_join(last_sen_terms, by = "id_bioguide") %>%
+  mutate(rep_to_sen = last_sen_term > first_rep_term,
+         sen_to_rep = first_sen_term < first_rep_term,
+         too_late = first_rep_term > '2009-12-31') %>%
+  arrange(desc(rep_to_sen), first_sen_term) %>%
+  collect()
+```
+Because of the form of our second analysis, it is easy to make a plot.
 
 ```{r}
 #| warning: false
@@ -526,5 +622,6 @@ pct_rep_then_sen %>%
   geom_line()
 ```
 
+Note that it would be easy to translate our `dbplyr` code---arguably a more precise solution than the original SQL query---back into SQL (probably using CTEs) if that were desired.
 
 ## References {-}
