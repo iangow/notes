@@ -60,7 +60,8 @@ legislators_terms_df <- read_csv("data/legislators_terms.csv.gz",
 #| include: false
 library(knitr)
 knit_print.lazy_tbl <- function(x, ...) {
-  knitr::knit_print(knitr::kable(collect(x, n = 5)))
+  knitr::knit_print(knitr::kable(collect(x, n = 5),
+                                 digits = 4))
 }
 
 registerS3method("knit_print", "lazy_tbl", knit_print.lazy_tbl)
@@ -69,7 +70,7 @@ registerS3method("knit_print", "lazy_tbl", knit_print.lazy_tbl)
 ```{r}
 #| include: false
 knit_print.data.frame <- function(x, ...) {
-  knitr::knit_print(kable(x))
+  knitr::knit_print(kable(x, digits = 4))
 }
 
 registerS3method("knit_print", "data.frame", knit_print.data.frame)
@@ -84,8 +85,9 @@ legislators_terms <- copy_to(db, legislators_terms_df,
                              "legislators_terms")
 ```
 
-Chapter 4 of @tanimura2021sql contains the following query.
+## The query
 
+Chapter 4 of @tanimura2021sql contains the following query.
 
 ```{sql}
 #| connection: db
@@ -135,7 +137,7 @@ Can we simplify it using CTEs?
 
 First, notice that the subqueries labelled `a` and `b` are identical.
 Let's clean that up.
-We'll put `a` as a CTE at the beginning of the query (after `WITH) and refer to that both where we currently have it, and also in place of `b`.
+We'll put `a` as a CTE at the beginning of the query (after `WITH`) and refer to that both where we currently have it, and also in place of `b`.
 All references to `b` are changed to references to `a`.
 We can then run the query to check that we are still getting the same results.
 
@@ -390,6 +392,8 @@ SELECT *
 FROM first_rep_terms;
 ```
 
+## Translating to dbplyr
+
 Now that we have a query based on CTEs, it is *much* easier to translate to `dbplyr`.
 
 ```{r}
@@ -472,16 +476,15 @@ rep_then_sen_gaps <-
   window_order(gap) %>%
   mutate(cum_ids = cumsum(1)) %>%
   group_by(cohort_century, gap) %>%
-  summarize(cum_ids = max(cum_ids, na.rm = TRUE),
-            .groups = "drop")
+  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) %>%
+  ungroup()
 ```
 
 ```{r}
 pct_rep_then_sen <-
   rep_then_sen_gaps %>%
   inner_join(century_reps, by = "cohort_century") %>%
-  mutate(pct = cum_ids/reps) %>%
-  select(cohort_century, gap, pct)
+  mutate(pct = cum_ids/reps) 
 ```
 
 ```{r}
@@ -503,7 +506,7 @@ pct_rep_then_sen %>%
   pivot_wider(names_from = "cutoff",
               names_prefix = "pct_",
               values_from = "pct") %>%
-  mutate(across(starts_with("pct_"), ~ round(., 4))) %>%
+  # mutate(across(starts_with("pct_"), ~ round(., 4))) %>%
   arrange(cohort_century) %>%
   collect()
 ```
