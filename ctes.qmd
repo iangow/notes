@@ -127,7 +127,7 @@ LEFT JOIN
         and c.term_type = 'sen' and c.term_start > b.first_term
         GROUP BY 1
 ) bb on aa.cohort_century = bb.cohort_century
-;
+ORDER BY 1;
 ```
 
 This query is quite complex.
@@ -216,7 +216,7 @@ SELECT aa.cohort_century::int as cohort_century
 ,round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps,4) as pct_15_yrs
 FROM aa
 LEFT JOIN bb on aa.cohort_century = bb.cohort_century
-;
+ORDER BY 1;
 ```
 
 Now we can delete the `aa` and `bb` labels and references to them.
@@ -262,25 +262,26 @@ bb AS (
     FROM bbb
     GROUP BY 1) 
 
-SELECT cohort_century::int as cohort_century,
+SELECT cohort_century as cohort_century,
     round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
     round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
     round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
 FROM aa
 LEFT JOIN bb 
-USING (cohort_century);
+USING (cohort_century)
+ORDER BY 1;
 ```
 
 We are still left with the meaningless labels (e.g., `a`, `bb`).
 We can give the CTEs more meaningful labels.
-We also clean up `ages` a little (e.g., `USING`) and move `cohort_century` to `first_terms`.
+We also clean up `ages` a little (e.g., `USING`) and move `cohort_century` to `first_rep_terms`.
 Again we check that results are the same.
 
 ```{sql}
 #| connection: db
 WITH 
 
-first_terms AS (
+first_rep_terms AS (
     SELECT id_bioguide,
         min(term_start) AS first_term,
         date_part('century', min(term_start)) AS cohort_century,
@@ -290,7 +291,7 @@ first_terms AS (
 
 century_reps AS (
     SELECT cohort_century, count(id_bioguide) AS reps
-    FROM first_terms
+    FROM first_rep_terms
     WHERE first_term <= '2009-12-31'
     GROUP BY 1),
     
@@ -298,7 +299,7 @@ ages AS (
     SELECT cohort_century,
         id_bioguide,
         age(term_start, first_term) AS age
-    FROM first_terms
+    FROM first_rep_terms
     JOIN legislators_terms
     USING (id_bioguide)
     WHERE term_type = 'sen' AND term_start > first_term), 
@@ -314,13 +315,14 @@ age_cuts AS (
     FROM ages
     GROUP BY 1) 
 
-SELECT cohort_century::int as cohort_century,
+SELECT cohort_century AS cohort_century,
     round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
     round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
     round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
 FROM century_reps
 LEFT JOIN age_cuts 
-USING (cohort_century);
+USING (cohort_century)
+ORDER BY 1;
 ```
 
 Finally, let's put the "main" query in a CTE too.
@@ -329,7 +331,7 @@ Finally, let's put the "main" query in a CTE too.
 #| connection: db
 WITH 
 
-first_terms AS (
+first_rep_terms AS (
     SELECT id_bioguide,
         min(term_start) AS first_term,
         date_part('century', min(term_start)) AS cohort_century,
@@ -339,7 +341,7 @@ first_terms AS (
 
 century_reps AS (
     SELECT cohort_century, count(id_bioguide) AS reps
-    FROM first_terms
+    FROM first_rep_terms
     WHERE first_term <= '2009-12-31'
     GROUP BY 1),
     
@@ -347,7 +349,7 @@ ages AS (
     SELECT cohort_century,
         id_bioguide,
         age(term_start, first_term) AS age
-    FROM first_terms
+    FROM first_rep_terms
     JOIN legislators_terms
     USING (id_bioguide)
     WHERE term_type = 'sen' AND term_start > first_term), 
@@ -373,24 +375,25 @@ cohort_retention AS (
   USING (cohort_century))
   
 SELECT *
-FROM cohort_retention;
+FROM cohort_retention
+ORDER BY cohort_century;
 ```
 
 What's the value of this last step?
 Well it means we can easily edit the query to debug the CTEs that are used.
-For example, we could put the following at then end of the query about to look into `first_terms`.
+For example, we could put the following at then end of the query about to look into `first_rep_terms`.
 
 ```{sql}
 #| connection: db
 #| eval: false
 SELECT *
-FROM first_terms;
+FROM first_rep_terms;
 ```
 
 Now that we have a query based on CTEs, it is *much* easier to translate to `dbplyr`.
 
 ```{r}
-first_terms <-
+first_rep_terms <-
     legislators_terms %>%
     filter(term_type == 'rep') %>%
     group_by(id_bioguide) %>%
@@ -401,7 +404,7 @@ first_terms <-
 
 ```{r}
 century_reps <-
-    first_terms %>%
+    first_rep_terms %>%
     filter(first_term <= '2009-12-31') %>%
     group_by(cohort_century) %>%
     summarize(reps = n())
@@ -409,7 +412,7 @@ century_reps <-
 
 ```{r} 
 ages <-
-    first_terms %>%
+    first_rep_terms %>%
     inner_join(legislators_terms, by = "id_bioguide") %>%
     filter(term_type == 'sen', term_start > first_term) %>%
     mutate(age = age(term_start, first_term)) %>%
@@ -436,7 +439,89 @@ century_reps %>%
            pct_15_yrs = rep_and_sen_15_yrs * 1.0 / reps) %>%
     mutate(across(starts_with("pct_"), ~ round(., 4))) %>%
     select(cohort_century, starts_with("pct_")) %>%
+    arrange(cohort_century) %>%
     collect() 
 ```
+
+## Doing it again in dplyr
+
+```{r}
+first_sen_terms <-
+    legislators_terms %>%
+    filter(term_type == 'sen') %>%
+    group_by(id_bioguide) %>%
+    summarize(first_sen_term = min(term_start, na.rm = TRUE),
+              .groups = "drop") 
+```
+
+```{r}
+rep_then_sen <-
+  first_rep_terms %>%
+  inner_join(first_sen_terms, 
+            join_by(id_bioguide, 
+                    first_term < first_sen_term)) %>%
+  mutate(gap = age(first_sen_term, first_term)) 
+```
+
+It is easy to check that `id_bioguide` is a valid key for this table.
+
+```{r}
+rep_then_sen_gaps <-
+  rep_then_sen %>%
+  group_by(cohort_century) %>%
+  window_order(gap) %>%
+  mutate(cum_ids = cumsum(1)) %>%
+  group_by(cohort_century, gap) %>%
+  summarize(cum_ids = max(cum_ids, na.rm = TRUE),
+            .groups = "drop")
+```
+
+```{r}
+pct_rep_then_sen <-
+  rep_then_sen_gaps %>%
+  inner_join(century_reps, by = "cohort_century") %>%
+  mutate(pct = cum_ids/reps) %>%
+  select(cohort_century, gap, pct)
+```
+
+```{r}
+gap_cutoffs <-
+  tibble(cutoff = c(5, 10, 15)) %>%
+  copy_to(db, ., name = "gap_cutoffs",
+          overwrite = TRUE) %>%
+  mutate(cutoff = years(cutoff))
+```
+
+```{r}
+pct_rep_then_sen %>%
+  cross_join(gap_cutoffs) %>%
+  filter(gap <= cutoff) %>%
+  group_by(cohort_century, cutoff) %>%
+  summarize(pct = max(pct, na.rm = TRUE),
+            .groups = "drop") %>%
+  mutate(cutoff = year(cutoff)) %>%
+  pivot_wider(names_from = "cutoff",
+              names_prefix = "pct_",
+              values_from = "pct") %>%
+  mutate(across(starts_with("pct_"), ~ round(., 4))) %>%
+  arrange(cohort_century) %>%
+  collect()
+```
+
+```{r}
+#| warning: false
+pct_rep_then_sen %>%
+  mutate(gap = (year(gap) * 12 + month(gap))/12) %>%
+  filter(gap <= 15) %>%
+  group_by(cohort_century, gap) %>%
+  summarize(pct = max(pct),
+            .groups = "drop") %>%
+  collect() %>%
+  mutate(cohort_century = factor(cohort_century)) %>%
+  ggplot(aes(x = gap, y = pct, group = cohort_century,
+             colour = cohort_century)) +
+  geom_line()
+```
+
 
 ## References {-}
