@@ -36,31 +36,29 @@ The following packages will be used and should be installed.
 library(DBI)
 library(tidyverse)
 library(dbplyr)
-library(duckdb)
 ```
 
 We first get the data, which requires an internet connection.
 
 ```{r}
 #| warning: false
-#| eval: true 
-#| cache: true
-url <- paste0("https://raw.githubusercontent.com/cathytanimura/",
-              "sql_book/master/Chapter%204%3A%20Cohorts/")
-legislators_df <- read_csv(paste0(url, "legislators.csv"),
-                           show_col_types = FALSE)
-legislators_terms_df <- read_csv(paste0(url, "legislators_terms.csv"),
-                                 show_col_types = FALSE)
-```
+#| eval: true
+#| message: false
+download_data <- function(filename) {
+  if (!dir.exists("data")) dir.create("data")
 
-```{r}
-#| warning: false
-#| include: false
-#| eval: false
-legislators_df <- read_csv("data/legislators.csv.gz",
-                           show_col_types = FALSE)
-legislators_terms_df <- read_csv("data/legislators_terms.csv.gz",
-                                 show_col_types = FALSE)
+  url <- paste0("https://raw.githubusercontent.com/cathytanimura/",
+                "sql_book/master/Chapter%204%3A%20Cohorts/")
+
+  local_filename <- paste0("data/", filename)
+  if (!file.exists(local_filename)) {
+    download.file(url = paste0(url, filename),
+                  destfile = local_filename)
+  }
+} 
+           
+download_data("legislators.csv")
+download_data("legislators_terms.csv")
 ```
 
 ```{r}
@@ -83,13 +81,16 @@ knit_print.data.frame <- function(x, ...) {
 registerS3method("knit_print", "data.frame", knit_print.data.frame)
 ```
 
-With the data in hand, we copy the two data tables to an in-memory DuckDB database.
+With the data downloads, we we read the two data files into an in-memory DuckDB database.
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
-legislators <- copy_to(db, legislators_df, "legislators")
-legislators_terms <- copy_to(db, legislators_terms_df, 
-                             "legislators_terms")
+legislators <-
+  tbl(db, "read_csv_auto('data/legislators.csv')") |>
+  compute(name = "legislators")
+legislators_terms <-
+  tbl(db, "read_csv_auto('data/legislators_terms.csv')") |>
+  compute(name = "legislators_terms")
 ```
 
 ## The query
