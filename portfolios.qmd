@@ -65,6 +65,7 @@ In the WRDS PostgreSQL database, `crsp.msf` is simply a view on the table `crsp_
 
 ```{r}
 schema <- 'crsp_a_stock'
+schema <- 'crsp'
 msf <- tbl(db, 
            sql(paste0("(SELECT * FROM postgres_scan_pushdown('', '",
                       schema,"', 'msf'))")))
@@ -80,7 +81,7 @@ The tables `crsp.mse` and `crsp.dsedelist` are used for delisting returns.
 The next step brings the data from WRDS's PostgreSQL server into our in-memory DuckDB database and takes about 5 seconds.
 
 ```{r}
-quantile_type <- 2
+quantile_type <- 7
 
 mktcap <-
   msf |>
@@ -253,6 +254,44 @@ mktcap_ports |> anti_join(mktcap_ports_alt,
 mktcap_ports_alt |> anti_join(mktcap_ports,
                               by = join_by(permno, date, portfolio))
 ```
+
+```{r}
+ports <- 0:n_portfolios
+ports_sql <- sql(paste0("[", paste(ports, collapse = ", "), "]"))
+breaks <- seq(0, 1, 1/n_portfolios)
+breaks_sql <- sql(paste0("[", paste(breaks, collapse = ", "), "]"))
+
+breakpoints_df <-
+  mktcap_2022 |>
+  summarize(portfolio = ports_sql,
+              breaks = quantile_cont(mktcap, breaks_sql),
+              .groups = "keep") %>%
+  mutate(portfolio = unnest(portfolio),
+           breaks = unnest(breaks)) |>
+  dbplyr::window_order(portfolio) |>
+  mutate(port_max = if_else(portfolio == n_portfolios, Inf, breaks),
+           port_min = if_else(portfolio == 1, -Inf, lag(breaks))) |>
+  filter(portfolio > 0) |>
+  select(portfolio, port_max, port_min) |>
+  ungroup()
+```
+
+
+```{r}
+mktcap_ports_alt <-
+  mktcap_2022 |>
+  inner_join(breakpoints_df, join_by(mktcap >= port_min,
+                                     mktcap < port_max)) |>
+  select(-port_min, -port_max) |>
+  collect()
+
+mktcap_ports |> anti_join(mktcap_ports_alt,
+                          by = join_by(permno, date, portfolio))
+mktcap_ports_alt |> anti_join(mktcap_ports,
+                              by = join_by(permno, date, portfolio))
+```
+
+
 
 # References
 
