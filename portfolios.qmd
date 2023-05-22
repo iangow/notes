@@ -1,0 +1,259 @@
+---
+title: "Forming portfolios with the Tidyverse"
+author: 
+  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+abstract: "This short note describes how to form portfolios based on quantiles of a variable."
+date: today
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+csl: jfe.csl
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+---
+
+# Introduction
+
+This short note describes how to form portfolios based on quantiles of a variable.
+
+# Setting up tables
+
+In the R code that folows, we will use a number of packages, including pacakges to connect to a PostgreSQL database containing WRDS data.
+Instructions for this can be found [here](https://iangow.github.io/far_book/intro.html#install).^[You don't need to install all the packages listed there, just the ones listed below plus `RPostgres`.]
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(DBI)
+library(rlang)
+```
+To connect to WRDS, you should set the following environment variables:
+
+```{r}
+#| eval: false
+Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
+           PGPORT = 9737L,
+           PGDATABASE = "wrds",
+           PGUSER = "YOUR_WRDS_ID",
+           PGPASSWORD = "YOUR_WRDS_ID")
+```
+
+We next connect to an in-memory DuckDB database.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+```
+
+Assuming you have run `dbExecute(db, "INSTALL postgres_scanner")` on you machine in the past, you can load `postgres_scanner` using the following command (uncomment the first line to run the `INSTALL` command if necessary).
+I set `threads` to 3 because DuckDB can easily seek to use more threads to improve performance, but WRDS will not allow this.
+
+```{r}
+#| output: false
+# dbExecute(db, "INSTALL postgres_scanner")
+dbExecute(db, "LOAD postgres_scanner")
+dbExecute(db, "SET threads TO 3")
+```
+
+In the WRDS PostgreSQL database, `crsp.msf` is simply a view on the table `crsp_a_stock.msf`.^[Actually the underlying schema may vary based on the CRSP product to which your instituion subscribes, but `crsp_a_stock` should work for everyone.]
+
+```{r}
+schema <- 'crsp_a_stock'
+msf <- tbl(db, 
+           sql(paste0("(SELECT * FROM postgres_scan_pushdown('', '",
+                      schema,"', 'msf'))")))
+```
+
+We will use three tables.
+The data on "regular" returns come from `crsp.msf`.
+The tables `crsp.mse` and `crsp.dsedelist` are used for delisting returns.
+
+
+# Starting simple
+
+The next step brings the data from WRDS's PostgreSQL server into our in-memory DuckDB database and takes about 5 seconds.
+
+```{r}
+quantile_type <- 2
+
+mktcap <-
+  msf |>
+  mutate(mktcap = abs(shrout * altprc) / 1000000,
+         mktcap = na_if(mktcap, 0)) |>
+  select(permno, date, mktcap) |>
+  compute()
+```
+
+Let's focus our initial analysis on a single date, `2022-12-30`, which is the last trading date of 2022.
+Initially, we will explore ways of creating portfolios using R commands, so we `collect()` the data, which turns it into an in-memory R data frame.
+
+```{r}
+mktcap_2022 <-
+  mktcap |>
+  filter(date == "2022-12-30") |>
+  filter(!is.na(mktcap)) |>
+  collect()
+```
+
+Let's start with decile portfolios formed using `mktcap`.
+
+```{r}
+n_portfolios <- 10L
+
+breakpoints <- quantile(mktcap_2022$mktcap,
+                        probs = seq(0, 1, length.out = n_portfolios + 1),
+                        type = quantile_type,
+                        na.rm = TRUE)
+
+mktcap_ports <-
+  mktcap_2022 |>
+  mutate(portfolio = findInterval(mktcap, breakpoints, all.inside = TRUE))
+```
+
+```{r}
+mktcap_ports |> filter(between(permno, 10026, 10066))
+```
+
+```{r}
+breakpoints_df <-
+  tibble(portfolio = 0:n_portfolios,
+         breakpoint = quantile(mktcap_2022$mktcap,
+                               type = quantile_type,
+                               probs = seq(0, 1, length.out = n_portfolios + 1),
+                               na.rm = TRUE)) |>
+  arrange(portfolio) |>
+  mutate(port_min = lag(breakpoint),
+         port_max = breakpoint) |>
+  select(-breakpoint)
+
+breakpoints_df
+```
+
+```{r}
+mktcap_ports_alt <-
+  mktcap_2022 |>
+  inner_join(breakpoints_df, join_by(mktcap >= port_min,
+                                     mktcap < port_max))
+```
+
+Now, let's check that `mktcap_ports` and `mktcap_ports_alt` have the same portfolio allocations.
+
+```{r}
+mktcap_ports_alt |> anti_join(mktcap_ports)
+```
+
+```{r}
+mktcap_ports |> anti_join(mktcap_ports_alt)
+```
+
+It seems that we have one case in `mktcap_ports` that is missing from `mktcap_ports_alt`.
+What has happened is that our `mktcap < port_max` does not handle the firm with the greatest market capitalization in the sample.
+
+
+```{r}
+breakpoints_df <-
+  tibble(portfolio = 0:n_portfolios,
+         breakpoint = quantile(mktcap_2022$mktcap,
+                               probs = seq(0, 1, length.out = n_portfolios + 1),
+                               type = quantile_type, 
+                               na.rm = TRUE)) |>
+  arrange(portfolio) |>
+  mutate(port_min = lag(breakpoint),
+         port_max = breakpoint) |>
+  select(-breakpoint) |>
+  mutate(port_max = if_else(portfolio == n_portfolios, Inf, port_max))
+```
+
+```{r}
+mktcap_ports_alt <-
+  mktcap_2022 |>
+  inner_join(breakpoints_df, join_by(mktcap >= port_min,
+                                     mktcap <= port_max))
+
+mktcap_ports |> anti_join(mktcap_ports_alt,
+                           by = join_by(permno, date, portfolio))
+
+mac_ports <- mktcap_ports_alt
+```
+
+## Using tidyverse functions
+
+The functions `quantile` comes from Base R.
+Is there a way to do this using Tidyverse functions.
+The natural candidate is `ntile()`.
+
+```{r}
+breakpoints_df <-
+  mktcap_2022 |>
+  mutate(portfolio = ntile(mktcap, n_portfolios)) |>
+  group_by(portfolio) |>
+  summarize(port_max = max(mktcap),
+            port_min = min(mktcap),
+            .groups = "drop") |>
+  arrange(portfolio) |>
+  mutate(port_min = if_else(portfolio == 1, -Inf, port_min),
+         port_max = if_else(portfolio == n_portfolios, Inf, port_max))
+```
+
+
+```{r}
+mktcap_ports_alt <-
+  mktcap_2022 |>
+  inner_join(breakpoints_df, join_by(mktcap >= port_min,
+                                     mktcap <= port_max)) |>
+  select(-port_min, -port_max)
+
+mktcap_ports |> anti_join(mktcap_ports_alt,
+                          by = join_by(permno, date, portfolio))
+mktcap_ports_alt |> anti_join(mktcap_ports,
+                              by = join_by(permno, date, portfolio))
+```
+
+
+
+# Moving analysis to the database
+
+```{r}
+mktcap_2022 <-
+  mktcap |>
+  filter(date == "2022-12-30") |>
+  filter(!is.na(mktcap))
+```
+
+```{r}
+breakpoints_df <-
+  mktcap_2022 |>
+  mutate(portfolio = ntile(mktcap, n_portfolios)) |>
+  group_by(portfolio) |>
+  summarize(port_max = max(mktcap),
+            port_min = min(mktcap),
+            .groups = "drop") |>
+  arrange(portfolio) |>
+  mutate(port_min = if_else(portfolio == 1, -Inf, port_min),
+         port_max = if_else(portfolio == n_portfolios, Inf, port_max))
+```
+
+
+```{r}
+mktcap_ports_alt <-
+  mktcap_2022 |>
+  inner_join(breakpoints_df, join_by(mktcap >= port_min,
+                                     mktcap <= port_max)) |>
+  select(-port_min, -port_max) |>
+  collect()
+
+mktcap_ports |> anti_join(mktcap_ports_alt,
+                          by = join_by(permno, date, portfolio))
+mktcap_ports_alt |> anti_join(mktcap_ports,
+                              by = join_by(permno, date, portfolio))
+```
+
+# References
+
+
