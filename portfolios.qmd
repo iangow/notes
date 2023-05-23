@@ -254,6 +254,52 @@ mktcap_ports |> anti_join(mktcap_ports_alt,
 mktcap_ports_alt |> anti_join(mktcap_ports,
                               by = join_by(permno, date, portfolio))
 ```
+```{r}
+get_breaks <- function(data, var, n_portfolios, exchanges) {
+  
+  ports <- 0:n_portfolios
+  ports_sql <- sql(paste0("[", paste(ports, collapse = ", "), "]"))
+  breaks <- seq(0, 1, 1/n_portfolios)
+  breaks_sql <- sql(paste0("[", paste(breaks, collapse = ", "), "]"))
+  
+  data |>
+    summarize(portfolio = ports_sql,
+              breaks = quantile_cont({{ var }}, breaks_sql),
+              .groups = "keep") %>%
+    mutate(portfolio = unnest(portfolio),
+           breaks = unnest(breaks)) |>
+    dbplyr::window_order(portfolio) |>
+    mutate(port_max = if_else(portfolio == n_portfolios, Inf, breaks),
+           port_min = if_else(portfolio == 1, -Inf, lag(breaks))) |>
+    filter(portfolio > 0) |>
+    select(group_cols(), portfolio, port_min, port_max)
+}
+```
+
+```{r}
+
+
+```{r}
+breakpoints_df <- get_breaks(mktcap_2022, mktcap, n_portfolios)
+```
+
+
+```{r}
+mktcap_ports_alt <-
+  mktcap_2022 |>
+  inner_join(breakpoints_df, join_by(mktcap >= port_min,
+                                     mktcap < port_max)) |>
+  select(-port_min, -port_max) |>
+  collect()
+
+mktcap_ports |> anti_join(mktcap_ports_alt,
+                          by = join_by(permno, date, portfolio))
+mktcap_ports_alt |> anti_join(mktcap_ports,
+                              by = join_by(permno, date, portfolio))
+```
+
+```
+
 
 ```{r}
 ports <- 0:n_portfolios
