@@ -127,10 +127,19 @@ In addition to setting these environment variables, you may want to set `PGPASSW
 (Hopefully it is obvious that your should use *your* WRDS ID and password, not mine.)
 
 ```{r}
-#| eval: true
+#| eval: false
 Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
            PGPORT = 9737L,
            PGDATABASE = "wrds",
+           PGUSER = "iangow")
+```
+
+```{r}
+#| eval: true
+#| include: false
+Sys.setenv(PGHOST = "localhost",
+           PGPORT = 5432L,
+           PGDATABASE = "iangow",
            PGUSER = "iangow")
 ```
 
@@ -139,8 +148,15 @@ While this is notionally `crsp.dsf`, it turns out that the "table" stored at `cr
 To access the table, we need to use the schema `crsp_a_stock`.^[You may have access to `crsp_q_stock` or `crsp_m_stock` depending on your institution's subscription to CRSP.]
 
 ```{r}
+#| eval: false
 dsf_db <- tbl(tidy_finance, 
               "postgres_scan_pushdown('', 'crsp_a_stock', 'dsf')")
+```
+
+```{r}
+#| include: false
+dsf_db <- tbl(tidy_finance, 
+              "postgres_scan_pushdown('', 'crsp', 'dsf')")
 ```
 
 As we can see, we have access to data in `crsp.dsf`.
