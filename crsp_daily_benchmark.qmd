@@ -35,6 +35,19 @@ Additionally DuckDB is faster than SQLite.
 In fact, DuckDB runs faster collecting data from WRDS than `dplyr` does with data on disk in an SQLite database.
 Performance isn't everything, but performance gains like these likely deliver real quality-of-life benefits to data analysts.
 
+# Databases and tidy data
+
+A popular way to manage and store data is with SQL databases.
+[Tidy Finance with R](https://www.tidy-finance.org) uses SQLite, which "implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine."
+In this note, I use DuckDB, which has been [described](https://medium.com/short-bits/duckdb-sqlite-for-analytics-1273f7267298) as offering "SQLite for Analytics".
+DuckDB is like SQLite in not requiring a server process, but like server-based databases such as PostgreSQL in terms of support for advanced SQL features and data types.
+
+While storing data in a DuckDB offers some benefits of SQLite (e.g., data compression), the real benefits of using DuckDB come from using the database engine for data analytics.
+For the most part, [Tidy Finance with R](https://www.tidy-finance.org) uses SQLite for storage and uses `dplyr` and in-memory data frames for analysis.
+For example, in the [chapter on beta estimation](https://www.tidy-finance.org/beta-estimation.html), the data are read into memory immediately using `collect()` before any analysis is conducted.
+However, the `dbplyr` package allows many analytical tasks to be performed in the database.
+In this note, I demonstrate how using DuckDB and `dbplyr` can lead to significant performance gains. 
+
 # Getting data
 
 There are two data sets that we need to collect.
@@ -127,7 +140,7 @@ To access the table, we need to use the schema `crsp_a_stock`.^[You may have acc
 
 ```{r}
 dsf_db <- tbl(tidy_finance, 
-              sql("postgres_scan_pushdown('', 'crsp_a_stock', 'dsf')"))
+              "postgres_scan_pushdown('', 'crsp_a_stock', 'dsf')")
 ```
 
 As we can see, we have access to data in `crsp.dsf`.
@@ -140,7 +153,7 @@ The following code is adapted from the Tidy Finance code [here](https://www.tidy
 But, whereas the original code is much more complicated and takes more than 15 minutes, this code takes just over a minute.^[Performance will vary according to the speed of your connection to WRDS. Note that this query does temporarily use a significant amount of RAM on my machine, it is not clear that DuckDB will use as much RAM if this is more constrained. If necessary, you can run (say) `dbExecute(tidy_finance, "SET memory_limit='1GB'")` to constrain DuckDB's memory usage; doing so has little impact on performance for this query.]
 
 ```{r}
-#| cache: true  
+#| freeze: auto  
 rs <- dbExecute(tidy_finance, "DROP TABLE IF EXISTS crsp_daily")
 
 system.time({
@@ -160,6 +173,7 @@ system.time({
     compute(name = "crsp_daily", temporary = FALSE)
 })
 ```
+
 ## Saving data to SQLite
 
 If you have been working through "Tidy Finance", you may already have an SQLite database containing `crsp_daily`.
@@ -243,7 +257,7 @@ Once the data are in memory, it is *relatively* quick to run a summary query.
 #| cache: true
 system.time(crsp_daily_local |> 
               group_by(month) |> 
-              summarize(ret = mean(ret_excess)) |> 
+              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
               collect())
 ```
 
@@ -262,7 +276,7 @@ This will not take a noticeable amount of time, but seems to be a reasonable ste
 #| cache: true
 system.time(crsp_daily |> 
               group_by(month) |> 
-              summarize(ret = mean(ret_excess)) |> 
+              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
               collect())
 ```
 
@@ -290,7 +304,7 @@ crsp_daily <- tbl(tidy_finance, "crsp_daily")
 ```{r}
 system.time(crsp_daily |> 
               group_by(month) |> 
-              summarize(ret = mean(ret_excess)) |> 
+              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
               collect())
 ```
 
@@ -299,7 +313,7 @@ Having done our benchmarks, we can take a quick peek at the data.
 ```{r}
 crsp_daily |> 
   group_by(month) |> 
-  summarize(ret = mean(ret_excess)) |> 
+  summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
   collect()
 ```
 
