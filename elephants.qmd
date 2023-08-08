@@ -9,7 +9,7 @@ I interpret each of these elephants as either a variant or a symptom of p-hackin
 I provide evidence of the prevalence of p-hacking in accounting research that complements the observations made by @Ohlson:2023aa.
 In this paper, I identify a number of steps that could be taken to reduce p-hacking in accounting research.
 I conjecture that facilitating and encouraging replication alone could have profound effects on the quality and quantity of empirical accounting research."
-date: 2023-07-03 
+date: 2023-08-08 
 date-format: "D MMMM YYYY"
 bibliography: papers.bib
 title-block-style: plain
@@ -21,6 +21,7 @@ format:
         colorlinks: true
         mainfont: TeX Gyre Pagella
         sansfont: TeX Gyre Pagella
+        keep-tex: true
 ---
 
 # Five elephants or one?
@@ -181,7 +182,7 @@ The second observation is that the results can be very fragile.
 The results in @Fang:2016uy on earnings management are robust to some alternative choices [see @Fang:2019tt], but less so to others.
 For example, the main measure of earnings management used in @Fang:2016uy is one proposed by @Kothari:2005aa that matches firms with controls based on performance.
 But @Kothari:2005aa use contemporary performance, while @Fang:2016uy use lagged performance; use contemporary performance and results vanish.^[See @Black:2022tz for an extensive analysis of the results of @Fang:2016uy.]
-Additionally, strong arguments can be made for not using difference-in-difference estimators and for using measures of accruals that do not condition on post-treatment outcomes, such as total accruals or even simply income, but all of these changes makes results disappear.^[See @far_book_21 for discussion of these design choices.]
+Additionally, strong arguments can be made for not using difference-in-difference estimators and for using measures of accruals that do not condition on post-treatment outcomes, such as total accruals or even simply income, but all of these changes makes results disappear.^[A post-treatment outcome is a variable observed only after treatment. As such one cannot be sure that it is not affected by the treatment itself or by the outcome of interest. In either case, inferences can be adversely affected [see Rosenbaum:1984aa]. See @far_book_21 for discussion of related design issues.]
 
 @Li:2018tj present evidence of firms being less forthcoming with disclosure of customer identities after adoption of the inevitable disclosure doctrine in the states in which they are headquartered.
 But these results rely on dubious research design choices.
@@ -191,8 +192,8 @@ As discussed in @far_book_23, almost any deviation from these choices causes res
 Accordingly, @Iliev:2010ic [p. 1179] implements RDD using instrumental variable (IV) regressions including "linear, quadratic, and cubic terms" of the running variable.
 In contrast, @Bloomfield:2021va does not present IV regression results at all, replacing @Iliev:2010ic's approach with OLS difference-in-difference regressions using the instrument and firm fixed effects.
 @Iliev:2010ic [p. 1179] reports first-stage regression results in support of his instrument, while @Bloomfield:2021va does not present such analyses. 
-Given differences in sample periods the instrument in plausibly weaker in @Bloomfield:2021va than in @Iliev:2010ic, and the analysis in @far_book_24 suggests that this is indeed true.]
-Replacing the analysis of @Bloomfield:2021va with a standard fuzzy RDD analysis causes results to vanish.^[See @far_book_24 for details. It is not clear whether more closely implementing the approach of "the IV approach from @Iliev:2010ic" would yield statistically significant results in support of @Bloomfield:2021va's hypotheses, but given developments since @Iliev:2010ic such as @Gelman:2019ws, it is not clear that @Iliev:2010ic is consistent with current standard approaches to RDD.]
+Differences in sample periods mean that the instrument is plausibly weaker in @Bloomfield:2021va than in @Iliev:2010ic, and the analysis in @far_book_24 suggests that this is indeed true.]
+Replacing the analysis of @Bloomfield:2021va with a conventional IV-based RDD analysis causes results to vanish.^[See @far_book_24 for details. It is not clear whether more closely implementing the approach of "the IV approach from @Iliev:2010ic" would yield statistically significant results in support of @Bloomfield:2021va's hypotheses, but given developments since @Iliev:2010ic such as @Gelman:2019ws, it is not clear that @Iliev:2010ic is consistent with current standard approaches to RDD.]
 
 In short, none of the papers replicated in our book in the second era is anything but extremely fragile, just as we would expect p-hacked results to be.^[It is important to caveat that I do not claim to have proven that any one of these papers *is* a p-hacked paper.
 Direct evidence of p-hacking is general impossible to come by and p-hacking is something more easily inferred for an area of research than for a single paper [@Ioannidis:2005aa].]
@@ -276,7 +277,7 @@ More recently, the *American Economic Review* published a comment on a paper tha
 ## Decrease emphasis on "identification strategies"
 
 It is widely understood that accounting research has become increasingly concerned about "identification strategies" in recent years.
-Identification strategies---to use the term in common use---seek to enhance the credibility of causal inferences in empirical research by exploiting features of the research setting and purportedly appropriate statistical techniques.
+Identification strategies---to use the term in common use---seek to enhance the credibility of causal inferences in empirical research by exploiting features of the research setting and purportedly appropriate statistical techniques.^[For example, researchers might seek to use complex fixed-effect structures, natural experiments, instrumental variables, or RDD.]
 By focusing on identification strategies, accounting research may have reduced its immunity to p-hacking.
 The apparent obsession with papers with "clever" identification strategies seems to have led to a new kind of p-hacking in which a researcher starts with the identification strategy (often drawn from finance and economics) and then seeks statistically significant results using outcomes popular in accounting research, such as earnings management or voluntary disclosure.
 
@@ -284,7 +285,9 @@ The extremely fragile results of @Fang:2016uy and @Li:2018tj seem to be plausibl
 @Fang:2016uy exploits the random assignment of elimination of short-selling restrictions, but so do 60 other papers exploring "indirect effects" of these restrictions in a setting where little or no evidence of direct effects was found.
 
 Apart from the potential inducement of p-hacking, concerns about the obsession with identification strategies in accounting research are increased when one considers the credibility of these strategies in practice.
-Many papers simply use difference-in-difference regressions---perhaps including "fixed effects"---which rely on the "assume a can-opener" assumption of "parallel trends".^[I label this an "assume a can-opener" assumption because its justification comes from the benefits of making it for causal inference and not at all from any underlying economic rationale. See  @far_book_21 for discussion of the general implausibility of the "parallel trends" assumption.]
+Many papers simply use difference-in-difference regressions---perhaps including "fixed effects"---which rely on the "assume a can-opener" assumption of "parallel trends".^[This assumption maintains that, in the absence of treatment, the difference in outcome between treatment and control observations is constant over time.
+I label this an "assume a can-opener" assumption because its justification comes from the benefits of making it for causal inference and not at all from any underlying economic rationale for it.
+See @far_book_21 for discussion of the general implausibility of the "parallel trends" assumption.]
 Papers use instrumental variables, even though it's doubtful that any valid instruments exist in accounting research.^[See @far_book_22 for more on this point.]
 Papers in accounting research that claim to use RDD generally do not.^[See @far_book_24 for a recent survey of the use of RDD in accounting research.]
 
@@ -335,7 +338,6 @@ This focus on causal inference is accompanied by a desire to find "positive" res
 
 In arguing that "accounting research can benefit substantially from more in-depth descriptive research", @Gow:2016kn [p. 499] suggest that "this type of research is essential to improve our understanding of causal mechanisms and [to] develop structural models."
 An additional benefit of such descriptive research is that it would enhance the understanding of the research community of how the real world works, making it more difficult to pass off p-hacked results that are not consistent with actual business practices.
-
 
 # Concluding comments
 

@@ -1,0 +1,1242 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  letterpaper,
+  DIV=11,
+  numbers=noendperiod]{scrartcl}
+
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else  
+    % xetex/luatex font selection
+  \setmainfont[]{TeX Gyre Pagella}
+  \setsansfont[]{TeX Gyre Pagella}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\setcounter{secnumdepth}{5}
+% Make \paragraph and \subparagraph free-standing
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslentryspacingunit} % times entry-spacing
+\setlength{\cslentryspacingunit}{\parskip}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+  \let\oldpar\par
+  \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\cslentryspacingunit}
+ }%
+ {}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+\KOMAoption{captions}{tableheading}
+\makeatletter
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\makeatletter
+\@ifpackageloaded{tcolorbox}{}{\usepackage[skins,breakable]{tcolorbox}}
+\makeatother
+\makeatletter
+\@ifundefined{shadecolor}{\definecolor{shadecolor}{rgb}{.97, .97, .97}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\makeatother
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={The elephant in the room: p-hacking and accounting research},
+  pdfauthor={Ian D. Gow},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\title{The elephant in the room: p-hacking and accounting research}
+\author{Ian D. Gow\footnote{University of Melbourne,
+  \href{mailto:ian.gow@unimelb.edu.au}{\nolinkurl{ian.gow@unimelb.edu.au}}}}
+\date{8 August 2023}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+Ohlson (2023) draws on his experience in empirical accounting seminars
+to identify five ``elephants in the room''. I interpret each of these
+elephants as either a variant or a symptom of p-hacking. I provide
+evidence of the prevalence of p-hacking in accounting research that
+complements the observations made by Ohlson (2023). In this paper, I
+identify a number of steps that could be taken to reduce p-hacking in
+accounting research. I conjecture that facilitating and encouraging
+replication alone could have profound effects on the quality and
+quantity of empirical accounting research.
+\end{abstract}
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, frame hidden, sharp corners, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, breakable, enhanced]}{\end{tcolorbox}}\fi
+
+\hypertarget{five-elephants-or-one}{%
+\section{Five elephants or one?}\label{five-elephants-or-one}}
+
+Ohlson (2023) identifies five of what he calls ``elephants in the room''
+(or topics considered taboo in seminars). I read these not so much as
+five elephants, but as five alternative descriptions of the one
+elephant, much like the elephant in the parable of the blind men and an
+elephant (Wikipedia, 2023).
+
+What exactly is that elephant in the room? I argue that Ohlson's five
+elephants are simply alternative perspectives on the same elephant,
+which is p-hacking, a term for a set of practices engaged in by
+researchers searching for ``significant'' and ``positive''
+results.\footnote{Here ``significant'' refers to statistical
+  significance and ``positive'' refers to results that reject so-called
+  ``null hypotheses'' and thereby (purportedly) push human knowledge
+  forward. As pointed out by Simmons (2018), it is very easy for
+  researchers to engage in p-hacking without being conscious that they
+  are doing so.} To be sure, this is a very big elephant: I conjecture
+that p-hacking is the dominant mode of research in academic accounting
+in 2023, and below I provide (admittedly circumstantial) evidence
+consistent with this conjecture.
+
+That the basic concern of Ohlson (2023) is with p-hacking is clearest
+with the last of his five elephants: ``Issues Related to
+`Screen-Picking' and `Data-Snooping'\,'', as terms like
+``data-snooping'' are simply synonyms of p-hacking.\footnote{I discuss
+  in an appendix below (Section~\ref{sec-other-elephants}) how the
+  remaining four elephants relate to p-hacking.} The key insight of
+Ohlson (2023) may be in highlighting how merely suggesting the
+possibility of p-hacking is taboo (Ohlson, 2023 uses terms such as
+``unacceptable,'' ``a personal assault,'' ``too sordid,'' ``testing
+ethical boundaries,'' and ``a more or less painful private matter'').
+
+Many researchers appear not to understand how p-hacking vitiates the
+whole research endeavour. So if even suggesting the possibility
+p-hacking is taboo, it will be much more difficult to address and
+accounting research will continue to be a largely pointless
+exercise.\footnote{Some researchers agree with the very limited value of
+  accounting research with regard to expanding human knowledge, but
+  argue that the real value of research is in deciding who gets tenure
+  at top universities. But this merely raises the question of the merits
+  of making these decisions based on skills related to conducting and
+  packaging p-hacked research, which seem unclear to say the least.} I
+agree with Ohlson (2023) that we need to confront this ``elephant in the
+room'' and make a number of proposals for how we might do so.
+
+In the rest of this paper, I first describe the practice of p-hacking. I
+then offer some circumstantial evidence of its prevalence in accounting
+research. Finally, I offer some ideas on how to address the
+``elephant(s) in the room'' of accounting research.
+
+\hypertarget{the-practice-of-p-hacking}{%
+\section{The practice of p-hacking}\label{the-practice-of-p-hacking}}
+
+According to Wigglesworth (2021), Campbell Harvey, professor of finance
+at Duke University, suggests that ``at least half of the 400 supposedly
+market-beating strategies identified in top financial journals over the
+years are bogus.'' Harvey (2017) cites research suggesting that 90\% of
+published studies report the ``significant'' and ``positive'' results.
+Reporting ``positive'' results is important not only for getting
+published, but also for attracting citations, which drive behaviour for
+both researchers and journals.
+
+Simmons et al. (2011, p. 1359) provide analyses that ``demonstrate how
+unacceptably easy it is to accumulate (and report) statistically
+significant evidence for a false hypothesis \ldots{} {[}how{]}
+flexibility in data collection, analysis, and reporting dramatically
+increases actual false-positive rates.'' They attribute this flexibility
+to \textbf{researcher degrees of freedom}: ``In the course of collecting
+and analyzing data, researchers have many decisions to make: Should more
+data be collected? Should some observations be excluded? Which
+conditions should be combined and which ones compared? Which control
+variables should be considered? Should specific measures be combined or
+transformed or both?'' (Simmons et al., 2011, p. 1359)
+
+It is important to note that p-hacking does not require academic
+misconduct or unethical behaviour. Simmons et al. (2011, p. 1359)
+suggest that ambiguity in how to make research design choices along with
+a ``researcher's desire to find a statistically significant result'' are
+sufficient conditions for p-hacking to exist.\footnote{Journal
+  preferences for ``significant'' and ``positive'' results could lead to
+  ``results'' that are effectively p-hacked even if researcher's are not
+  individually seeking ``results''.}
+
+An excessive focus on academic misconduct---such as fraudulent
+manipulation of data---may in fact be a distraction. Simmons (2018)
+suggests that ``fraud is out there \ldots{} but it's not very common.''
+Instead, p-hacking is ``the main culprit'' behind the failure of many
+studies to replicate (suggesting they are not correct). By focusing on
+academic misconduct, we risk spending a lot of effort on a smaller
+problem and missing the elephant in the room.\footnote{Inevitably and
+  understandably, the burden of proof is much higher for accusations of
+  academic misconduct, so the costs of showing it are much higher.}
+Additionally, there is a risk that academic misconduct and p-hacking get
+unnecessarily conflated, leading to undue harm to the reputation of
+researchers flagged as engaging in p-hacking, even though its practice
+seems widespread.
+
+Bloomfield et al. (2018, p. 317) suggest that ``almost all peer-reviewed
+articles in social science are published under'' what they call \ldots{}
+the Traditional Editorial Process (or TEP). Under the TEP, ``authors
+gather their data, analyze it, and write and revise their manuscripts
+repeatedly before sending them to editors.'' As such authors have access
+to many researcher degrees of freedom.
+
+An alternative to the TEP is what Bloomfield et al. (2018) call the
+Registration-based Editorial Process (REP). According to Bloomfield et
+al. (2018, p. 317), ``under REP, authors propose a plan to gather and
+analyze data to test their predictions. Journals send promising
+proposals to one or more reviewers and recommend revisions. Authors are
+given the opportunity to review their proposal in response, often
+multiple times, before the proposal is either rejected or granted
+in-principle acceptance \ldots{} regardless of whether {[}subsequent{]}
+results support their predictions.'' The REP is intended to eliminate
+research degrees of freedom and the questionable research practices that
+these permit.\footnote{There are two important elements of the REP that
+  affect p-hacking. First, the requirement to specify analytical
+  procedures in advance of having the data is intended to eliminate
+  p-hacking. However, in practice, it can be difficult to specify every
+  detail of data analysis and some researcher degrees of freedom can
+  remain. For example, researchers might choose to conduct and include
+  supplementary analyses if the pre-specified analyses do not yield
+  statistically significant results. Second, a journal will typically
+  commit to publishing the resulting study whether there are
+  statistically significant results or not. This is intended to limit
+  incentives for p-hacking (and also to produce a more faithful research
+  record). However, if authors are concerned about citations of their
+  papers, they may still have incentives to p-hack if there are enough
+  researcher degrees of freedom to do so.}
+
+The \emph{Journal of Accounting Research} (JAR) conducted a trial of the
+REP for its
+\href{https://research.chicagobooth.edu/arc/journal-of-accounting-research/jar-annual-conference/conference-web-casts/2017}{annual
+conference held in May 2017}. Unfortunately, it is unlikely that the REP
+will replace the TEP to any great extent in the foreseeable future. The
+REP is feasible when data are generated in randomized controlled trials
+(RCTs), as the data simply do not exist when the report is
+registered.\footnote{See Chambers et al. (2014) for more on the
+  historical antecendents of the REP.} In contrast, most empirical
+accounting research uses existing archival data, which often makes it
+impossible to register a report before being able to look at the
+data.\footnote{For example, if I am testing a hypothesis using data from
+  CRSP and Compustat, I cannot credibly promise that I have not looked
+  at the data before submitting my report. In principle, one could
+  propose a study that only uses future data from CRSP and Compustat,
+  but this seems unlikely to be popular in a discipline accustomed to
+  hundreds of thousands of observations.}
+
+\hypertarget{evidence-of-p-hacking}{%
+\section{Evidence of p-hacking}\label{evidence-of-p-hacking}}
+
+\hypertarget{conversational-evidence}{%
+\subsection{Conversational evidence}\label{conversational-evidence}}
+
+The contention of Ohlson (2023) that raising issues related to p-hacking
+is taboo in empirical accounting seminars seems very plausible. Outside
+of papers like Simmons et al. (2011) that aim to demonstrate the
+``power'' of p-hacking, we generally only see circumstantial evidence of
+p-hacking in the papers themselves.\footnote{I discuss such evidence
+  below.} But sometimes (outside of seminars!) researchers can be fairly
+candid about their research process.
+
+I must have had countless conversations where a colleague or student is
+examining the effect of \(X\) on \(y_1\) and my natural response has
+been to ask whether some other variables would be the more natural
+things to examine instead of \(y_1\) and the response is something like
+``we looked at those other variables and they didn't work''. This
+practice of ``reporting only experiments that `work'\,'' while
+discarding results that ``don't work'' is another well-known researcher
+degree of freedom discussed by Simmons et al. (2011, p. 1364), and is
+known as the \textbf{file-drawer problem} (because experiments that
+don't ``work'' are put in a file-drawer).
+
+A more brazen form of p-hacking is trawling through a data set until
+correlations are found, at which point the challenge is to devise an
+``interesting'' causal story to go with it. I have had conversations
+suggesting that research for some involves searching for a
+``significant'' correlation and \emph{then} developing a hypothesis to
+``predict'' it. This form of p-hacking is known as \textbf{HARKing}
+(from ``Hypothesizing After Results are Known'').
+
+To illustrate, consider the
+\href{http://tylervigen.com/spurious-correlations}{spurious correlations
+website} provided by Tyler Vigen.\footnote{Available at
+  \url{http://tylervigen.com/spurious-correlations}.} This site lists a
+number of evidently spurious correlations, such as the 99.26\%
+correlation between the divorce rate in Maine and margarine consumption
+or the 99.79\% correlation between US spending on science, space, and
+technology and suicides by hanging, strangulation and suffocation. The
+correlations are deemed spurious because normal human beings have strong
+prior beliefs that there is no underlying causal relation explaining
+these correlations. Instead, these are regarded as mere coincidence.
+
+However, a creative academic can probably craft a story to ``predict''
+any correlation: Perhaps increasing spending on science raises its
+perceived importance to society. But drawing attention to science only
+serves to highlight how the US has inevitably declined in relative
+stature in many fields, including science. While many Americans can
+carry on notwithstanding this decline, others are less sanguine about it
+and may go to extreme lengths as a result \ldots{} . This is a clearly
+silly line of reasoning, but if one added some references to published
+studies and fancy terminology, it would probably read a lot like the
+hypothesis development sections of academic papers presented in the
+empirical accounting seminars discussed by Ohlson (2023).
+
+Sherlock Holmes claims ``it is a capital mistake to theorize before you
+have all the evidence.'' (Doyle, 2001, p. 27). The modern equivalent
+might be that ``it is a capital mistake to theorize before you have a
+statistically significant association to `predict'\,'', as there seems
+to be little value in devoting effort to predict a relation that is not
+supported by the data set you have.
+
+\hypertarget{evidence-from-the-2017-jar-rep-trial}{%
+\subsection{Evidence from the 2017 JAR REP
+trial}\label{evidence-from-the-2017-jar-rep-trial}}
+
+The 2017 JAR REP trial itself provides circumstantial evidence of
+p-hacking in papers produced using the TEP (i.e., almost all papers in
+accounting research). Bloomfield et al. (2018, p. 326) examine the
+results reported in the conference papers and conclude that ``of the 30
+predictions made in the \ldots{} seven proposals, we count 10 as being
+supported at \(p \leq 0.05\) by at least one of the 134 statistical
+tests the authors reported.'' But this is very close to the level of
+support expected if the null hypotheses for all 30 predictions were
+true.\footnote{See Gow and Ding (2023a) for details of the calculation
+  in support of this claim.}
+
+This is particularly concerning in that it seems reasonable to expect
+that the alternative hypotheses considered in the 2017 JAR conference
+papers were deemed by the authors and reviewers to be worth pursuing
+before knowing their results, which is a higher bar than applied to
+hypotheses tested using the TEP. In other words, the results of the 2017
+JAR conference raise the uncomfortable prospect that many results
+produced by the TEP (i.e., almost all research in accounting) arise from
+p-hacking and are simply false rejections of true null hypotheses.
+
+\hypertarget{circumstantial-evidence-from-replications}{%
+\subsection{Circumstantial evidence from
+replications}\label{circumstantial-evidence-from-replications}}
+
+Another source of evidence on the prevalence of p-hacking is
+replications. We expect that p-hacked papers will have results that are
+very fragile. By definition, p-hacked results are not expected to be
+\textbf{reproducible}. That is, we would not expect the results to hold
+if the same analytical procedures were applied to a new data
+set.\footnote{Here I follow Hail et al. (2020) in distinguishing
+  replicability from reproducibility. This is clearly related to
+  Elephant \#4, which is ``Referring to the possibility of using a
+  holdout sample''.}
+
+But p-hacked results should pass the test of \textbf{replicability},
+which requires that the results can be produced by other authors using
+the same data sets and analytical procedures. Given that much of the
+published research in accounting uses data sets that are available to
+most researchers and papers typically include descriptions of the
+analytical procedures used, other researchers should be able to
+replicate results independently even without access to the code and data
+files used by the original authors.
+
+In practice, it seems that many papers cannot be replicated in this way,
+even approximately. Ask another researcher whether she has tried to
+replicate results of a published paper and you are likely to hear that
+attempts have been made, but without success.\footnote{Some researchers'
+  replication experiences are limited to exercises assigned during PhD
+  coursework, but there is a natural selection bias with these, as many
+  instructors would look to assign exercises where results can be
+  reproduced.} One explanation for this difficulty is that small
+departures from the choices made by the authors along the dimensions
+described in Simmons et al. (2011) can lead to apparent results
+disappearing (i.e., becoming statistically insignificant) and few papers
+describe these choices sufficiently clearly to allow precise
+replication.
+
+I have extensive experience with attempted replication of papers. My
+ill-fated PhD dissertation attempted to identify a causal mechanism
+underlying the numerous results in the literature suggesting a
+contracting value for firms' voluntary adoption of higher levels of
+conditional conservatism. However, explaining results documented in
+research is difficult when those results cannot be replicated, and
+almost all replications I tried failed. Since then I have undertaken
+many attempted replications in various areas and most have failed.
+
+One explanation might be that I simply do not know how to analyse data
+properly and that a more skilled researcher would be able to reproduce
+published results more readily. While it is difficult to rule out this
+explanation completely, I believe a significant recent project suggests
+that this is not a complete explanation.
+
+In 2021, a University of Melbourne colleague (Tony Ding) and I started
+to pull together a course book (Gow and Ding, 2023b) aimed at helping
+research students to develop the portfolio of skills needed to be good
+researchers in accounting. As discussed in the book, a core element is
+material focused on data analysis skills and we have included many
+replication analyses to support this (Gow and Ding, 2023c). It seems
+these replication efforts can be organized into two eras.
+
+The first era covers 1968 through to about 1996. The striking thing
+about this era is how robust the results appear to be. Like many before
+us, we find that the key results of the seminal Ball and Brown (1968)
+are easily replicated (Gow and Ding, 2023d), and Ball and Brown (2019)
+show this is true in different markets and periods. We find that key
+results of Beaver (1968) hold in any year we look at (Gow and Ding,
+2023e).\footnote{Bamber et al. (2000) raise concerns about the
+  reproducibility of the results in Beaver (1968), but these concerns
+  that do not appear to hold in years after Beaver (1968) was published.}
+Not only can we generate the core results of Bernard and Thomas (1989),
+but we broadly replicate Foster (1977) along the way (Gow and Ding,
+2023f). Replications of Dechow et al. (1995) and Sloan (1996) are also
+successful.
+
+The second era covers papers from the current century and reveals a
+different story. Our book provides replications of numerous papers from
+this era, including Zhang (2007), Fang et al. (2016), Li et al. (2018),
+and Bloomfield (2021).
+
+The first observation is that we can replicate all of the papers to some
+degree. But it is important to note that our replications often benefit
+from access to code and data provided by the authors. Fang et al. (2016)
+posted code and data starting from original sources and continuing
+through the production of (some) key results in their paper. Bloomfield
+(2021) provided code under the journal's data policy.\footnote{We did
+  not have access to code for Zhang (2007), but that paper is unusually
+  straightforward and based on a standard data set (CRSP).}
+
+The main purpose in selecting papers for replication in the book was
+pedagogical and being able to replicate results was an important
+criterion for inclusion. In some cases we were not able to replicate
+papers---and authors were not responsive to requests for
+assistance---that had been considered for inclusion. If authors do not
+share their code and data, replication is often difficult. Most of the
+authors of the papers we replicate went above and beyond the norms of
+accounting research in sharing their code and data and should receive
+credit for doing so. It is also important to note that there is no
+reason to believe that the papers we replicated are in any way unusual
+in terms of the fragility of their results. Most papers might be
+similarly fragile, but without the original code and data, there is no
+cost-effective way to check this.
+
+The second observation is that the results can be very fragile. The
+results in Fang et al. (2016) on earnings management are robust to some
+alternative choices (see Fang et al., 2019), but less so to others. For
+example, the main measure of earnings management used in Fang et al.
+(2016) is one proposed by Kothari et al. (2005) that matches firms with
+controls based on performance. But Kothari et al. (2005) use
+contemporary performance, while Fang et al. (2016) use lagged
+performance; use contemporary performance and results vanish.\footnote{See
+  Black et al. (2022) for an extensive analysis of the results of Fang
+  et al. (2016).} Additionally, strong arguments can be made for not
+using difference-in-difference estimators and for using measures of
+accruals that do not condition on post-treatment outcomes, such as total
+accruals or even simply income, but all of these changes makes results
+disappear.\footnote{A post-treatment outcome is a variable observed only
+  after treatment. As such one cannot be sure that it is not affected by
+  the treatment itself or by the outcome of interest. In either case,
+  inferences can be adversely affected {[}see Rosenbaum:1984aa{]}. See
+  Gow and Ding (2023a) for discussion of related design issues.}
+
+Li et al. (2018) present evidence of firms being less forthcoming with
+disclosure of customer identities after adoption of the inevitable
+disclosure doctrine in the states in which they are headquartered. But
+these results rely on dubious research design choices. As discussed in
+Gow and Ding (2023g), almost any deviation from these choices causes
+results to disappear.
+
+Bloomfield (2021, p. 869) claims to ``use the IV approach from Iliev
+(2010)'' in implementing a regression discontinuity design (RDD), but
+actually does not.\footnote{The setting of Iliev (2010) and Bloomfield
+  (2021) is a ``fuzzy RDD'' setting requiring use of instrumental
+  variable (IV) to obtain consistent estimates of the causal effect of
+  the treatment of interest. Accordingly, Iliev (2010, p. 1179)
+  implements RDD using instrumental variable (IV) regressions including
+  ``linear, quadratic, and cubic terms'' of the running variable. In
+  contrast, Bloomfield (2021) does not present IV regression results at
+  all, replacing Iliev (2010)'s approach with OLS
+  difference-in-difference regressions using the instrument and firm
+  fixed effects. Iliev (2010, p. 1179) reports first-stage regression
+  results in support of his instrument, while Bloomfield (2021) does not
+  present such analyses. Differences in sample periods mean that the
+  instrument is plausibly weaker in Bloomfield (2021) than in Iliev
+  (2010), and the analysis in Gow and Ding (2023h) suggests that this is
+  indeed true.} Replacing the analysis of Bloomfield (2021) with a
+conventional IV-based RDD analysis causes results to vanish.\footnote{See
+  Gow and Ding (2023h) for details. It is not clear whether more closely
+  implementing the approach of ``the IV approach from Iliev (2010)''
+  would yield statistically significant results in support of Bloomfield
+  (2021)'s hypotheses, but given developments since Iliev (2010) such as
+  Gelman and Imbens (2019), it is not clear that Iliev (2010) is
+  consistent with current standard approaches to RDD.}
+
+In short, none of the papers replicated in our book in the second era is
+anything but extremely fragile, just as we would expect p-hacked results
+to be.\footnote{It is important to caveat that I do not claim to have
+  proven that any one of these papers \emph{is} a p-hacked paper. Direct
+  evidence of p-hacking is general impossible to come by and p-hacking
+  is something more easily inferred for an area of research than for a
+  single paper (Ioannidis, 2005).} If other papers where authors do not
+provide detailed code and data are similarly fragile, then we would not
+expect to be able to replicate their results, as minor deviations from
+the data and analytical procedures of the original authors are likely to
+lead to null results. Thus p-hacking provides an explanation for the
+difficulty many researchers have in replicating results in published
+papers.
+
+Combining the evidence above with the concerns raised by Ohlson (2023)
+and it seems difficult to distinguish much of contemporaneous accounting
+research from what you would see if p-hacking were the modus operandi of
+most researchers.
+
+\hypertarget{what-to-do}{%
+\section{What to do?}\label{what-to-do}}
+
+If p-hacking is as prevalent as it seems to be, the natural question is
+what, if anything, can be done about it. Before addressing this, it is
+important to note how pernicious p-hacking is to the value of research.
+If all research is p-hacked, then we should simply ignore research, as
+p-hacking does not produce information of value other that insights into
+the p-hacking skills of the authors.\footnote{Of course, information
+  about the p-hacking skills of the authors is arguably relevant if the
+  ability to produce published papers is the sole research-related
+  criterion for evaluating a researcher, as it is at many institutions.}
+
+Some researchers appear to recognize the prevalence of p-hacking, yet
+remain sanguine about the research enterprise. For example, one senior
+researcher broadly agrees with my assessment about p-hacking, but argues
+``there are some solid researchers doing some interesting papers.'' But
+it is important to understand that if, say, 80\% of research is
+p-hacked, that one cannot simply read the 20\% that is not p-hacked and
+ignore the rest. If it were easy to detect the p-hacked papers, we could
+simply avoid publishing them.
+
+That said, I argue there are steps that could be taken to reduce
+p-hacking to an extent that research in aggregate might again have some
+value. In this section, I discuss four ideas for addressing concerns
+about p-hacking.
+
+\hypertarget{reject-papers-that-ask-silly-questions}{%
+\subsection{Reject papers that ask silly
+questions}\label{reject-papers-that-ask-silly-questions}}
+
+Accounting academics appear to adore ``novelty'', where novelty often
+means asking questions that no-one has even dreamed of asking before.
+This is problematic for two reasons. First, if questions are so novel
+that no-one has asked them, how can they be important? Second, the
+ability to simply make up ``interesting'' research questions is a
+p-hacker's dream.\footnote{Think ``What is effect of the decline in US
+  science on suicide rates?'' as a paper title based on the correlation
+  from Tyler Vigen's website that I discussed above.}
+
+Too often the bar seems to be ``has someone {[}in prior research{]}
+asked this question before?'' and if the answer is ``no'' then the
+novelty bar has been cleared. But, after more than 50 years of modern
+empirical accounting research, the fact that no-one has asked a question
+should in most cases be a strike \emph{against} a paper, not for it. If
+no-one has addressed the question, then it is perhaps because no-one
+cares what the answer is. If editors adopted a policy of desk-rejecting
+papers that ask silly questions, the pay-off to p-hacking would decline
+significantly.
+
+Of course, one reason for researchers needing to seek out smaller and
+smaller questions is simply the weight of prior research. Going first,
+researchers such as Ball and Brown (1968) and Beaver (1968) could pick
+the ``low-hanging fruit'' of more fundamental questions of the
+discipline, and test alternative hypotheses that were more likely to be
+true and hence easier to demonstrate empirically. Later researchers were
+left to to explore the questions that remain. As such, it is perhaps
+``unfair'' to compare research in the period from, say, 2000 to today
+with that in the period 1968--1999.
+
+But this argument would suggest that, as research progresses, we should
+be seeing more and more papers with null results, either because the
+alternative hypotheses tested are less likely to be true or because the
+empirical challenges faced in demonstrating them are greater. This seems
+inconsistent with the reality that almost all published papers have
+``results'', either ruling out the unfairness or suggesting that
+researchers compensate for the smallness of the (apparent) phenomena
+they study by simply looking harder (i.e., p-hacking).
+
+\hypertarget{increase-emphasis-on-replication}{%
+\subsection{Increase emphasis on
+replication}\label{increase-emphasis-on-replication}}
+
+We saw above that being able to replicate papers such as Fang et al.
+(2016) and Li et al. (2018) makes it easy to see just how fragile their
+results are. If it were easy to replicate papers, then the incentives
+for p-hacking might be dramatically reduced, as it would be easy to
+raise doubts about papers with the very fragile results that p-hacking
+usually produces. One would hope that papers shown to be extremely
+fragile would be regarded as less reliable, and thus less likely to
+cited or to be evaluated positively by peers after publication, thereby
+reducing incentives for their production.\footnote{Note that this
+  reduction in incentives for producing p-hacked papers would be much
+  reduced for researchers whose incentives focus on the number of papers
+  produced, whether those papers are cited or regarded highly. Such
+  incentives are created by many institutions around the world,
+  including my current one.} Unfortunately, the salutary effects that
+replications can have on incentives for p-hacking are much diminished
+for a number of reasons.
+
+First, replication is a costly exercise. Most empirical researchers
+already spend a large portion of their research time in the critical
+pre-tenure phase of their careers writing code to analyse data.
+Independently replicating others' papers is likely to be considered a
+poor use of very limited time. And, as discussed above, a typical
+replication conducted without some cooperation from the original authors
+is likely to yield differences in results that are difficult to explain,
+requiring exhaustive checks and iterations to understand them.
+
+While one solution to this issue is for authors to supply the data and
+code needed to replicate their results, very few authors do so. Authors
+have essentially no incentive to provide data and code voluntarily. Once
+a paper has been published, there is really only downside from sharing
+code and data for an author focused on publishing papers, as the results
+might be due to coding errors or fragile. Thus authors have a natural
+incentive to make replication difficult.
+
+On top of this lack of positive incentives is the reality that most
+researchers appear to be poor in organizing their code and that
+significant costs would need to be incurred to prepare code and data for
+sharing.\footnote{This is likely to be especially true when results are
+  derived from the often messy process of p-hacking.}
+
+In the absence of incentives for voluntary disclosure of code, some kind
+of requirement for sharing seems necessary. However, only one of the top
+three accounting journals (\emph{Journal of Accounting Research})
+imposes
+\href{https://onlinelibrary.wiley.com/page/journal/1475679x/homepage/ForAuthors.html}{requirements}
+for data and code, but even then these requirements rarely yield files
+that permit easy replication of tables found in papers.\footnote{The
+  \emph{Journal of Accounting and Economics} merely
+  ``\href{https://www.elsevier.com/journals/journal-of-accounting-and-economics/0165-4101/guide-for-authors}{encourages}''
+  authors to share replication files. And there is nothing on this issue
+  in the
+  \href{https://meridian.allenpress.com/DocumentLibrary/AAAN/TAR_Editorial_Policy.pdf}{editorial
+  policy} of \emph{The Accounting Review}, which does not appear to
+  provide any support for such sharing.}
+
+There are two steps that journals could take to enhance the credibility
+of results. First, journals could step up the data and code requirements
+for published papers. While the \emph{Journal of Accounting Research} is
+a clear leader in this regard among top accounting-focused journals,
+there is plenty of room for improvement. Journals in other disciplines
+have gone further and there is some hope that these could influence best
+practices in accounting research. For example, \emph{Management
+Science}, a broader management journal that has an accounting
+department, has a much more rigorous policy for code and data disclosure
+policy than any of the specialist accounting journals (Management
+Science, 2019). Under the \emph{Management Science} policy, ``all papers
+using code or data \ldots{} must provide replication materials which
+need to be approved by the Code and Data Editor'' (see Simchi-Levi,
+2023). The policies adopted by \emph{Management Science} are closely
+modelled on those of the
+\href{https://www.aeaweb.org/journals/policies/data-availability-policy}{American
+Economic Association} and the
+\emph{\href{https://www.afajof.org/resource/resmgr/files/Submission_docs/CodePolicy.pdf}{Journal
+of Finance}}.
+
+Second, journals could publish replications of papers when these provide
+insights on the questions in the original papers. For example, Guest
+(2021) identified ``six discrepancies in \ldots{} reporting, coding, and
+data'' in replicating a previously published paper. The \emph{Journal of
+Finance} published the replication and retracted the original paper.
+Because journals generally do not publish replications or corrections,
+there is essentially no incentive to produce these in a world where
+counting published papers is a dominant (often the only)
+research-related performance measure. More recently, the \emph{American
+Economic Review} published a comment on a paper that was then retracted
+(Bach et al., 2023).
+
+\hypertarget{decrease-emphasis-on-identification-strategies}{%
+\subsection{Decrease emphasis on ``identification
+strategies''}\label{decrease-emphasis-on-identification-strategies}}
+
+It is widely understood that accounting research has become increasingly
+concerned about ``identification strategies'' in recent years.
+Identification strategies---to use the term in common use---seek to
+enhance the credibility of causal inferences in empirical research by
+exploiting features of the research setting and purportedly appropriate
+statistical techniques.\footnote{For example, researchers might seek to
+  use complex fixed-effect structures, natural experiments, instrumental
+  variables, or RDD.} By focusing on identification strategies,
+accounting research may have reduced its immunity to p-hacking. The
+apparent obsession with papers with ``clever'' identification strategies
+seems to have led to a new kind of p-hacking in which a researcher
+starts with the identification strategy (often drawn from finance and
+economics) and then seeks statistically significant results using
+outcomes popular in accounting research, such as earnings management or
+voluntary disclosure.
+
+The extremely fragile results of Fang et al. (2016) and Li et al. (2018)
+seem to be plausible candidate illustrations of this phenomenon. Fang et
+al. (2016) exploits the random assignment of elimination of
+short-selling restrictions, but so do 60 other papers exploring
+``indirect effects'' of these restrictions in a setting where little or
+no evidence of direct effects was found.
+
+Apart from the potential inducement of p-hacking, concerns about the
+obsession with identification strategies in accounting research are
+increased when one considers the credibility of these strategies in
+practice. Many papers simply use difference-in-difference
+regressions---perhaps including ``fixed effects''---which rely on the
+``assume a can-opener'' assumption of ``parallel trends''.\footnote{This
+  assumption maintains that, in the absence of treatment, the difference
+  in outcome between treatment and control observations is constant over
+  time. I label this an ``assume a can-opener'' assumption because its
+  justification comes from the benefits of making it for causal
+  inference and not at all from any underlying economic rationale for
+  it. See Gow and Ding (2023a) for discussion of the general
+  implausibility of the ``parallel trends'' assumption.} Papers use
+instrumental variables, even though it's doubtful that any valid
+instruments exist in accounting research.\footnote{See Gow and Ding
+  (2023i) for more on this point.} Papers in accounting research that
+claim to use RDD generally do not.\footnote{See Gow and Ding (2023h) for
+  a recent survey of the use of RDD in accounting research.}
+
+\hypertarget{incorporate-discussion-of-p-hacking-into-research-training}{%
+\subsection{Incorporate discussion of p-hacking into research
+training}\label{incorporate-discussion-of-p-hacking-into-research-training}}
+
+One hopes that accounting research training has not ``evolved'' to the
+point that PhD students are being taught how to do p-hacking. Instead,
+students learn about p-hacking ``on the job'' in a sense. Understanding
+the importance of ``results'', students learn to exercise researcher
+degrees of freedom in ways that eventually yield the ``stars'' denoting
+``statistically significant'' coefficients. Given these incentives, it
+seems important that the problems with p-hacking are addressed more
+forthrightly in training PhD students.
+
+In this regard, the recent explosion of high-quality material on
+research methods is somewhat disappointing. Recent years have seen the
+emergence of high-quality resources for students looking to understand
+causal inference using observational data, including Angrist and Pischke
+(2008), Angrist and Pischke (2014), Cunningham (2021), and
+Huntington-Klein (2021). While these are excellent resources for helping
+researchers to understand subtle issues not explicitly addressed by more
+traditional texts, none of them even touches on the topic of p-hacking.
+We offer an initial attempt to incorporate this topic into a PhD
+curriculum in our course book and hope that others find ways to build
+content on this topic into their PhD curricula so as to raise awareness
+of these issues (Gow and Ding, 2023g).
+
+Beyond helping aspiring researchers to understand the issues with
+p-hacking, there are a number of complementary skills that could benefit
+from more attention in research training, especially skills related to
+management of code and data and research collaboration.
+
+One opportunity would be educating students on approaches to retention
+of data and code. For example, as ``the authors were unable to provide
+the original data and code requested by the publisher that reproduce
+{[}their{]} findings'' of the paper, Bird and Karolyi (2019) was
+retracted by \emph{The Accounting Review}. Loss of data and code can be
+addressed in a number of such ways, including the use of cloud services
+such as \href{https://www.dropbox.com}{Dropbox} or
+\href{https://drive.google.com}{Google Drive}.
+
+Another issue is coding errors. Simchi-Levi (2023) notes that ``errors
+in code'' were discovered in 22\% of the replication packages submitted
+to \emph{Management Science}. This likely represents an under-estimate
+given the limited scope of the replication effort and need to maintain
+quick turnaround times.\footnote{There is no breakdown of these
+  statistics by department, so it is not clear whether this is higher or
+  lower with accounting papers.} Yet it is also perhaps unsurprising. As
+discussed in Gow and Ding (2023c), most doctoral programs provide very
+little training related to coding practices despite the importance of
+such skills for modern empirical researchers. Incorporation of better
+training on coding practices may help to reduce coding errors, thereby
+yielding research that is both more correct and easier to
+replicate.\footnote{That the research community is relatively
+  understanding about coding errors perhaps explains efforts by
+  researchers to attribute issues in their papers to ``coding errors''.
+  For example, the code repository for Boissel and Matray (2022)
+  included the line
+  \texttt{replace\ B\ =\ B/1.8\ if\ t\textgreater{}-3\&t\textless{}0}.
+  This code modifies two coefficients in a way enhances a plot used to
+  support a claim of ``parallel trends''. While the responding author
+  attributes this to a ``coding error'' it is difficult to imagine what
+  the correct version of this line of code would be. The ``coding
+  error'' in Bao et al. (2020) differs from that in Boissel and Matray
+  (2022) in a number of respects. First, no code containing the claimed
+  error was provided. Second, producing code with this issue
+  accidentally seems even less plausible than with the line above from
+  Boissel and Matray (2022; see Gow, 2022 for an attempt to replicate
+  the ``coding error''). Third, the authors' efforts to attribute the
+  issue to a ``coding error'' is belied by earlier efforts to suggest it
+  was an appropriate research design choice (Bao et al., 2021).}
+
+A modern empirical research paper often resembles a software development
+project, with small collaborative teams, a need for version control, and
+the demonstrated potential for coding errors. As such, accounting
+researchers might benefit from drawing on tools and approaches used by
+software developers. In some cases coding errors have been made by one
+author whose code has not been seen by others. In other cases, the
+source of the error is difficult to identify (a ``coding error'' can
+have different valence if made by a research assistant rather than a
+motivated co-author). Collaborative tools such as Git can be adapted to
+social science research. With a shared Git repository it becomes easier
+to do code reviews and to ensure that data has not been
+manipulated.\footnote{For example, raw data files from MTurk might be
+  committed to a repository by an RA before any analysis is undertaken.}
+There appears to be some irony in a research field that often examines
+control systems itself having control systems without audit trails,
+separation of duties, or robust review processes.
+
+\hypertarget{encourage-more-descriptive-research}{%
+\subsection{Encourage more descriptive
+research}\label{encourage-more-descriptive-research}}
+
+Gow et al. (2016, p. 499) point out that ``there are very few studies
+published in top accounting journals that focus on providing detailed
+descriptions of institutions in accounting research settings'' and
+document that the vast majority of empirical accounting papers focus on
+providing causal inference, notwithstanding all the difficulties widely
+understood to be faced by that endeavour. This focus on causal inference
+is accompanied by a desire to find ``positive'' results, which provides
+the incentives for p-hacking I have discussed.
+
+In arguing that ``accounting research can benefit substantially from
+more in-depth descriptive research'', Gow et al. (2016, p. 499) suggest
+that ``this type of research is essential to improve our understanding
+of causal mechanisms and {[}to{]} develop structural models.'' An
+additional benefit of such descriptive research is that it would enhance
+the understanding of the research community of how the real world works,
+making it more difficult to pass off p-hacked results that are not
+consistent with actual business practices.
+
+\hypertarget{concluding-comments}{%
+\section{Concluding comments}\label{concluding-comments}}
+
+Ohlson (2023) draws on his experience in empirical accounting seminars
+to identify five ``elephants in the room''. I interpret each of these
+elephants as either a variant or a symptom of p-hacking. I provide
+evidence of the prevalence of p-hacking in accounting research that
+complements the observations made by Ohlson (2023).
+
+While I identify a number of steps that could be taken to reduce
+p-hacking in accounting research, I conjecture that facilitating and
+encouraging replication alone could have profound effects on the quality
+and quantity of empirical accounting research.
+
+\hypertarget{sec-other-elephants}{%
+\section{Appendix: The other elephants}\label{sec-other-elephants}}
+
+Above I explained that the basic Elephant \#5 of Ohlson (2023) (``Issues
+Related to `Screen-Picking' and `Data-Snooping'\,'') is synonymous with
+p-hacking. For completeness, I close this paper with a brief discussion
+of how the other four elephants also reflect concerns with p-hacking.
+
+Elephant \#1 (``Referring to the Absence of a Fama-MacBeth Analysis'')
+is likely to be seen when researchers are reluctant to adjust their
+standard errors in ways that make results disappear (see Gow et al.,
+2010 for discussion of approaches to calculating standard errors in
+accounting research).
+
+Elephant \#2 (``Asking whether a Key Right-Hand-Side (RHS) Variable
+Contributes to Explaining the Dependent Variable'') and \#3 (``It Takes
+More than Stars to Settle the Matter'') both raise uncomfortable
+questions when the results are p-hacked, as the explanatory value of the
+independent variable is likely to be low and the economic significance
+of any apparent relation is likely to be small when the sample is large.
+
+Elephant \#4 (``Referring to the Possibility of Using a Holdout
+Sample'') is also an awkward idea when a paper is based on p-hacked
+results, as we do not expect those results to hold in a new sample,
+pretty much by definition. Here Ohlson (2023) is effectively discussing
+the idea of replication by the authors of the paper themselves.
+
+\hypertarget{references}{%
+\section*{References}\label{references}}
+\addcontentsline{toc}{section}{References}
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-Angrist:2014aa}{}}%
+Angrist, J.D., Pischke, J.-S., 2014.
+\href{https://books.google.com/books?id=dEh-BAAAQBAJ}{Mastering
+'metrics: The path from cause to effect}. Princeton University Press.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Angrist:2008vk}{}}%
+Angrist, J.D., Pischke, J.-S., 2008. Mostly harmless econometrics: An
+empiricist's companion. Princeton University Press.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bach:2023aa}{}}%
+Bach, L., Bozio, A., Guillouzouic, A., Malgouyres, C., 2023. Dividend
+taxes and the allocation of capital: comment. American Economic Review
+Forthcoming. \url{https://doi.org/10.1257/aer.20221432}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Ball:2019wu}{}}%
+Ball, R., Brown, P., 2019. {B}all and {B}rown (1968) after fifty years.
+Pacific-Basin Finance Journal 53, 410--431.
+\url{https://doi.org/10.1016/j.pacfin.2018.12.008}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Ball:1968ub}{}}%
+Ball, R., Brown, P., 1968. An empirical evaluation of accounting income
+numbers. Journal of Accounting Research 6, 159--178.
+\url{https://doi.org/10.2307/2490232}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bamber:2000wv}{}}%
+Bamber, L.S., Christensen, T.E., Gaver, K.M., 2000. Do we really
+{``know''} what we think we know? A case study of seminal research and
+its subsequent overgeneralization. Accounting, Organizations and Society
+25, 103--129. \url{https://doi.org/10.1016/S0361-3682(99)00027-6}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bao:2021}{}}%
+Bao, Y., Ke, B., Li, B., Yu, Y.J., Zhang, J., 2021.
+\href{https://econjwatch.org/articles/a-response-to-critique-of-an-article-on-machine-learning-in-the-detection-of-accounting-fraud}{A
+response to {``critique of an article on machine learning in the
+detection of accounting fraud''}}. Econ Journal Watch 18, 71--78.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bao:2020aa}{}}%
+Bao, Y., Ke, B., Li, B., Yu, Y.J., Zhang, J., 2020. Detecting accounting
+fraud in publicly traded {U.S.} Firms using a machine learning approach.
+Journal of Accounting Research 58, 199--235.
+\url{https://doi.org/10.1111/1475-679X.12292}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Beaver:1968vf}{}}%
+Beaver, W.H., 1968. The information content of annual earnings
+announcements. Journal of Accounting Research 6, 67--92.
+\url{https://doi.org/10.2307/2490070}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bernard:1989uu}{}}%
+Bernard, V.L., Thomas, J.K., 1989. Post-earnings-announcement drift:
+Delayed price response or risk premium? Journal of Accounting Research
+27, 1--36. \url{https://doi.org/10.2307/2491062}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bird:2019aa}{}}%
+Bird, A., Karolyi, S.A., 2019. Retraction: Governance and taxes:
+Evidence from regression discontinuity. The Accounting Review 000--000.
+\url{https://doi.org/10.2308/1558-7967-92.1.000}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Black:2022tz}{}}%
+Black, B.S., Desai, H., Litvak, K., Yoo, W., Yu, J.J., 2022. The {SEC}'s
+short-sale experiment: Evidence on causal channels and on the importance
+of specification choice in randomized and natural experiments.
+\url{https://doi.org/10.2139/ssrn.3657196}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bloomfield:2021va}{}}%
+Bloomfield, M.J., 2021. The asymmetric effect of reporting flexibility
+on priced risk. Journal of Accounting Research 59, 867--910.
+\url{https://doi.org/10.1111/1475-679X.12346}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Bloomfield:2018va}{}}%
+Bloomfield, R., Rennekamp, K., Steenhoven, B., 2018. No system is
+perfect: Understanding how registration-based editorial processes affect
+reproducibility and investment in research quality. Journal of
+Accounting Research 56, 313--362.
+\url{https://doi.org/10.1177/0956797611417632}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Boissel:2022aa}{}}%
+Boissel, C., Matray, A., 2022. Dividend taxes and the allocation of
+capital. American Economic Review 112, 2884--2920.
+\url{https://doi.org/10.1257/aer.20210369}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Chambers:2014aa}{}}%
+Chambers, C.D., Feredoes, E., Muthukumaraswamy, S.D., Etchells, P.J.,
+2014. Instead of "playing the game" it is time to change the rules:
+Registered reports at {AIMS Neuroscience} and beyond. {AIMS
+Neuroscience} 1, 4--17.
+\url{https://doi.org/10.3934/neuroscience.2014.1.4}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Cunningham:2021vk}{}}%
+Cunningham, S., 2021. Causal inference: The mixtape. Yale University
+Press.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Dechow:1995wr}{}}%
+Dechow, P.M., Sloan, R.G., Sweeney, A.P., 1995. Detecting earnings
+management. The Accounting Review 70, 193--225.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Doyle:2001aa}{}}%
+Doyle, A.C., 2001.
+\href{https://books.google.com/books?id=xN2lK7oPTjYC}{A study in
+scarlet}, Classics series. Penguin Publishing Group.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Fang:2016uy}{}}%
+Fang, V.W., Huang, A.H., Karpoff, J.M., 2016. Short selling and earnings
+management: A controlled experiment. The Journal of Finance 71,
+1251--1294. \url{https://doi.org/10.1111/jofi.12369}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Fang:2019tt}{}}%
+Fang, V.W., Huang, A., Karpoff, J.M., 2019. Reply to 'the {Reg SHO}
+reanalysis project: Reconsidering {Fang, Huang and Karpoff} (2016) on
+{Reg SHO} and earnings management' by {Black et al.} (2019).
+\url{https://doi.org/10.2139/ssrn.3507033}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Foster:1977wy}{}}%
+Foster, G., 1977. Quarterly accounting data: Time-series properties and
+predictive-ability results. The Accounting Review 52, 1--21.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gelman:2019ws}{}}%
+Gelman, andrew, Imbens, G., 2019.
+\href{https://doi.org/10.1080/07350015.2017.1366909}{Why high-order
+polynomials should not be used in regression discontinuity designs}.
+Journal of Business \& Economic Statistics 37, 447--456.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gow:2022ab}{}}%
+Gow, I.D., 2022. Should bao et al. (2020) be retracted? {SSRN}
+Electronic Journal. \url{https://doi.org/10.2139/ssrn.4246151}
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_24}{}}%
+Gow, I.D., Ding, T.T., 2023h.
+\href{https://iangow.github.io/far_book/regression-discontinuity-designs.html}{Regression
+discontinuity designs}, in: Empirical Research in Accounting: Tools and
+Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_22}{}}%
+Gow, I.D., Ding, T.T., 2023i.
+\href{https://iangow.github.io/far_book/iv.html}{Instrumental
+variables}, in: Empirical Research in Accounting: Tools and Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_21}{}}%
+Gow, I.D., Ding, T.T., 2023a.
+\href{https://iangow.github.io/far_book/natural-revisited.html}{Natural
+experiments revisited}, in: Empirical Research in Accounting: Tools and
+Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_23}{}}%
+Gow, I.D., Ding, T.T., 2023g.
+\href{https://iangow.github.io/far_book/panel-data.html}{Panel data},
+in: Empirical Research in Accounting: Tools and Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_13}{}}%
+Gow, I.D., Ding, T.T., 2023d.
+\href{https://iangow.github.io/far_book/bb68.html}{{B}all and {B}rown
+(1968)}, in: Empirical Research in Accounting: Tools and Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_14}{}}%
+Gow, I.D., Ding, T.T., 2023e.
+\href{https://iangow.github.io/far_book/beaver68.html}{Beaver (1968)},
+in: Empirical Research in Accounting: Tools and Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_16}{}}%
+Gow, I.D., Ding, T.T., 2023f.
+\href{https://iangow.github.io/far_book/pead.html}{Post-earnings
+announcement drift}, in: Empirical Research in Accounting: Tools and
+Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-far_book_1}{}}%
+Gow, I.D., Ding, T.T., 2023c.
+\href{https://iangow.github.io/far_book/intro.html}{Introduction}, in:
+Empirical Research in Accounting: Tools and Methods.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gow:2022aa}{}}%
+Gow, I.D., Ding, T.T., 2023b.
+\href{https://iangow.github.io/far_book}{Empirical research in
+accounting: Tools and methods}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gow:2016kn}{}}%
+Gow, I.D., Larcker, D.F., Reiss, P.C., 2016. Causal inference in
+accounting research. Journal of Accounting Research 54, 477--523.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gow:2010ub}{}}%
+Gow, I.D., Ormazabal, G., Taylor, D.J., 2010.
+\href{http://www.jstor.org/stable/20744139}{Correcting for
+cross-sectional and time-series dependence in accounting research}. The
+Accounting Review 85, 483--512.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Guest:2021aa}{}}%
+Guest, P.M., 2021. Risk management in financial institutions: A
+replication. The Journal of Finance 76, 2689--2707.
+\url{https://doi.org/10.1111/jofi.13063}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Hail:2020aa}{}}%
+Hail, L., Lang, M., Leuz, C., 2020. Reproducibility in accounting
+research: Views of the research community. Journal of Accounting
+Research 58, 519--543. \url{https://doi.org/10.1111/1475-679X.12305}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Harvey:2017ux}{}}%
+Harvey, C.R., 2017. Presidential address: The scientific outlook in
+financial economics. The Journal of Finance 72, 1399--1440.
+\url{https://doi.org/10.1111/jofi.12530}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Huntington-Klein:2021aa}{}}%
+Huntington-Klein, N., 2021.
+\href{https://books.google.com/books?id=f0NOEAAAQBAJ}{The effect: An
+introduction to research design and causality}. CRC Press.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Iliev:2010ic}{}}%
+Iliev, P., 2010. The effect of {SOX Section} 404: Costs, earnings
+quality, and stock prices. The Journal of Finance 65, 1163--1196.
+\url{https://doi.org/10.1111/j.1540-6261.2010.01564.x}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Ioannidis:2005aa}{}}%
+Ioannidis, J.P.A., 2005. Why most published research findings are false.
+{PLoS} Medicine 2, e124.
+\url{https://doi.org/10.1371/journal.pmed.0020124}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Kothari:2005aa}{}}%
+Kothari, S.P., Leone, A.J., Wasley, C.E., 2005. Performance matched
+discretionary accrual measures. Journal of Accounting and Economics 39,
+163--197. \url{https://doi.org/10.1016/j.jacceco.2004.11.002}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Li:2018tj}{}}%
+Li, Y., Lin, Y., Zhang, L., 2018. Trade secrets law and corporate
+disclosure: Causal evidence on the proprietary cost hypothesis. Journal
+of Accounting Research 56, 265--308.
+\url{https://doi.org/10.1111/1475-679X.12187}
+
+\leavevmode\vadjust pre{\hypertarget{ref-MS:2019}{}}%
+Management Science, 2019.
+\href{https://pubsonline.informs.org/page/mnsc/datapolicy}{Policy for
+data and code disclosure}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Ohlson:2023aa}{}}%
+Ohlson, J.A., 2023. Empirical accounting seminars: Elephants in the
+room. Accounting, Economics, and Law: A Convivium 0.
+\url{https://doi.org/10.1515/ael-2021-0067}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Simchi-Levi:2023aa}{}}%
+Simchi-Levi, D., 2023.
+\href{https://www.informs.org/Blogs/ManSci-Blogs/From-the-Editor}{From
+the editor}. Managemenet Science.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Simmons:2018}{}}%
+Simmons, J.P., 2018.
+\href{https://www.youtube.com/watch?v=8wDwcp1EwNM}{Life after
+p-hacking}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Simmons:2011ux}{}}%
+Simmons, J.P., Nelson, L.D., Simonsohn, U., 2011. False-positive
+psychology: Undisclosed flexibility in data collection and analysis
+allows presenting anything as significant. Psychological Science 22,
+1359--1366. \url{https://doi.org/10.1177/0956797611417632}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Sloan:1996wd}{}}%
+Sloan, R.G., 1996. Do stock prices fully reflect information in accruals
+and cash flows about future earnings? The Accounting Review 71,
+289--315.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Wigglesworth:2021aa}{}}%
+Wigglesworth, R., 2021.
+\href{https://www.ft.com/content/9025393f-76da-4b8f-9436-4341485c75d0?shareType=nongift}{The
+hidden {``replication crisis''} of finance}. Financial Times.
+
+\leavevmode\vadjust pre{\hypertarget{ref-wiki:elephant}{}}%
+Wikipedia, 2023.
+\href{https://en.wikipedia.org/wiki/Blind_men_and_an_elephant}{Blind men
+and an elephant}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Zhang:2007tv}{}}%
+Zhang, I.X., 2007. Economic consequences of the {Sarbanes-Oxley Act} of
+2002. Journal of Accounting and Economics 44, 74--115.
+\url{https://doi.org/10.1016/j.jacceco.2007.02.002}
+
+\end{CSLReferences}
+
+
+
+\end{document}
