@@ -134,15 +134,6 @@ Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
            PGUSER = "iangow")
 ```
 
-```{r}
-#| eval: true
-#| include: false
-Sys.setenv(PGHOST = "localhost",
-           PGPORT = 5432L,
-           PGDATABASE = "iangow",
-           PGUSER = "iangow")
-```
-
 Now we can connect to the CRSP daily stock file.
 While this is notionally `crsp.dsf`, it turns out that the "table" stored at `crsp.dsf` is actually a [view](https://www.postgresql.org/docs/current/sql-createview.html), not a table and `postgres_scanner` requires a actual table.
 To access the table, we need to use the schema `crsp_a_stock`.^[You may have access to `crsp_q_stock` or `crsp_m_stock` depending on your institution's subscription to CRSP.]
