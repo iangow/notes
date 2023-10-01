@@ -84,10 +84,11 @@ Combining the two control groups into one and comparing it to the experimental g
 
 ```{r}
 #| include: false
+avg <- mean(df$SumDeduction)
 df_mod <- 
   df |>
-  mutate(Cond = case_when(`P#` %in% c(51, 12, 101) ~ "2",
-                          `P#` %in% c(7, 91, 52) ~ "1",
+  mutate(Cond = case_when(disputed & SumDeduction > avg ~ "1",
+                          disputed & SumDeduction < avg ~ "2",
                           .default = Cond))
 ```
 
