@@ -1,0 +1,135 @@
+---
+title: "The Gino-Colada Affair"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+abstract: "This short note reproduces analysis found on [Replicability-Index](https://replicationindex.com/2023/09/30/the-gino-colada-affair/)."
+date: today
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+csl: jfe.csl
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+---
+
+```{r}
+#| include: false
+library(modelsummary)
+library(haven)
+library(dplyr, warn.conflicts = FALSE)
+library(broom)
+```
+
+```{r}
+#| include: false
+#| cache: true
+t <- tempfile(fileext = ".sav")
+
+url <- paste0("https://files.osf.io/v1/resources/4b7mu/",
+              "providers/osfstorage/5d49ee070f488d00178e31ce")
+download.file(url, t)
+df <- 
+  read_sav(t) |>
+  mutate(Cond = as.factor(Cond),
+         disputed = `P#` %in% c(51, 12, 101, 7, 91, 52))
+```
+
+```{r}
+#| include: false
+fms <- list()
+fms[[1]] <- lm(SumDeduction ~ Cond, data = df)
+fms[[2]] <- lm(SumDeduction ~ Cond, data = df, subset = Cond != 0)
+fms[[3]] <- lm(SumDeduction ~ Cond, data = df, subset = Cond != 2)
+```
+
+```{r}
+#| include: false
+glance_custom.lm <- function(x, ...) {
+    broom::glance(x)
+}
+```
+
+We can reproduce *the equivalent of* the published results of an ANOVA with the three conditions as categorical predictor variable and deductions as outcome variable *using linear regression*.
+Results are reported in column (1) of @tbl-orig.
+In addition, the original article reported that each difference between the experimental "signature-on-top" and the two control conditions ("signature-on-bottom", "no signature") was significant.
+This is confirmed in columns (2) and (3) of @tbl-orig.
+
+```{r}
+#| include: false
+fms_no_disp <- list()
+fms_no_disp[[1]] <- lm(SumDeduction ~ Cond, data = df, subset = !disputed)
+fms_no_disp[[2]] <- lm(SumDeduction ~ Cond, data = df, subset = Cond != 0 & !disputed)
+fms_no_disp[[3]] <- lm(SumDeduction ~ Cond, data = df, subset = Cond != 2 & !disputed)
+fms_no_disp[[4]] <- lm(SumDeduction ~ Cond == 1, data = df, subset = !disputed)
+```
+
+```{r}
+#| include: false
+f_fixed <- summary(fms_no_disp[[1]])$fstatistic
+p_val <- glance(fms_no_disp[[1]])$p.value
+```
+
+Next, we can repeat the analysis without rows 67 to 72. 
+Results are reported in @tbl-delete.
+Without the six contested cases, the results are no longer statistically significant, $F( `r f_fixed[["numdf"]]`, `r f_fixed[["dendf"]]`) = `r prettyNum(f_fixed[["value"]], digits = 3)`$, $p = `r prettyNum(p_val, digits = 3)`$, as seen in column (1) of @tbl-delete.
+The comparisons of the experimental group with the two control groups were also statistically significant (see columns (2) and (3) of @tbl-delete).
+Combining the two control groups into one and comparing it to the experimental group and presenting the results as a planned contrast would also have produced a significant result (see column (4) of @tbl-delete).
+
+```{r}
+#| include: false
+df_mod <- 
+  df |>
+  mutate(Cond = case_when(`P#` %in% c(51, 12, 101) ~ "2",
+                          `P#` %in% c(7, 91, 52) ~ "1",
+                          .default = Cond))
+```
+
+```{r}
+#| include: false
+fms_fixed <- list()
+fms_fixed[[1]] <- lm(SumDeduction ~ Cond, data = df_mod)
+fms_fixed[[2]] <- lm(SumDeduction ~ Cond, data = df_mod, subset = Cond != 0)
+fms_fixed[[3]] <- lm(SumDeduction ~ Cond, data = df_mod, subset = Cond != 2)
+```
+
+```{r}
+#| include: false
+f_fixed <- summary(fms_fixed[[1]])$fstatistic
+p_val <- glance(fms_fixed[[1]])$p.value
+```
+
+Of course, the accusation is that she switched rows with low values to the experimental condition and rows with high values to the control condition.
+To attempt to reverse this manipulation, we can recode the contested rows 67--69 as signature-at-the-bottom and 70--72 as signature-at-the-top and repeat the analysis.
+In this case, there was no evidence that the group means differed from each other, $F( `r f_fixed[["numdf"]]`, `r f_fixed[["dendf"]]`) = `r prettyNum(f_fixed[["value"]], digits = 3)`$, $p = `r prettyNum(p_val, digits = 3)`$.
+Results are presented in Column (1) of @tbl-fixed.
+Neither of the experimental group with each of the two control groups was statistically significant (see columns (2) and (3) of @tbl-fixed).
+
+```{r}
+#| label: tbl-orig
+#| echo: false
+#| tbl-cap: Reproduction of results from the paper
+modelsummary(fms, statistic = "std.error",
+             gof_map = c("F", "p.value"))
+```
+
+```{r}
+#| label: tbl-delete
+#| echo: false
+#| tbl-cap: Reproduction of results without disputed observations
+modelsummary(fms_no_disp, gof_map = c("F", "p.value"))
+```
+
+```{r}
+#| label: tbl-fixed
+#| echo: false
+#| tbl-cap: Reproduction of results with corrected data
+modelsummary(fms_fixed, statistic = "std.error",
+             gof_map = c("F", "p.value"))
+```
