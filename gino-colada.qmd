@@ -22,7 +22,7 @@ format:
 ```{r}
 #| include: false
 library(modelsummary)
-library(haven)
+library(readxl)
 library(dplyr, warn.conflicts = FALSE)
 library(broom)
 ```
@@ -30,15 +30,20 @@ library(broom)
 ```{r}
 #| include: false
 #| cache: true
-t <- tempfile(fileext = ".sav")
-
-url <- paste0("https://files.osf.io/v1/resources/4b7mu/",
-              "providers/osfstorage/5d49ee070f488d00178e31ce")
+t <- tempfile(fileext = ".xlsx")
+url <- "https://osf.io/download/2ehzt/"
 download.file(url, t)
+
 df <- 
-  read_sav(t) |>
+  read_xlsx(t, range = "A1:T102") |>
+  rename(id = `P#`) |>
   mutate(Cond = as.factor(Cond),
-         disputed = `P#` %in% c(51, 12, 101, 7, 91, 52))
+         disputed = id %in% c(51, 12, 101, 7, 91, 52)) %>%
+  mutate(IncomeMinusTax = Income - TaxOnIncome,
+         SumDeduction = Deduction1 + Deduction2,
+         FinalPayment = IncomeMinusTax + SumDeduction,
+         OverReport = `#B` - `#ActuallyCorrect`,
+         CheatedOnMatrixTax = OverReport > 0)
 ```
 
 ```{r}
