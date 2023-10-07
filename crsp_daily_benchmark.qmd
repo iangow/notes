@@ -331,6 +331,7 @@ Having done our benchmarks, we can take a quick peek at the data.
 crsp_daily |> 
   group_by(month) |> 
   summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+  arrange(month) |>
   collect()
 ```
 
@@ -410,3 +411,35 @@ month
 
 [744 rows x 1 columns]
 ```
+
+```{python}
+#| eval: false
+import pyarrow as pa
+import pyarrow.parquet as pq
+import time
+start_time = time.monotonic()
+df = pq.read_table('data/crsp_daily.parquet')
+avg = df.group_by('month').aggregate([('ret_excess', 'mean')])
+seconds = time.monotonic() - start_time
+print("Time Taken: {:0.2f} seconds.".format(seconds))
+print(avg.to_pandas().sort_values(by=['month']))
+```
+
+```
+Time Taken: 0.36 seconds.
+          month  ret_excess_mean
+0    1960-01-01        -0.002130
+1    1960-02-01         0.000325
+2    1960-03-01        -0.001154
+3    1960-04-01        -0.001062
+4    1960-05-01         0.001137
+..          ...              ...
+720  2021-08-01         0.000985
+721  2021-09-01        -0.001301
+722  2021-10-01         0.001344
+723  2021-11-01        -0.002161
+724  2021-12-01         0.000075
+
+[744 rows x 2 columns]
+```
+
