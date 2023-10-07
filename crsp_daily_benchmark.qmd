@@ -63,6 +63,7 @@ In addition to these three packages, you should have the `duckdb` and `RSQLite` 
 library(tidyverse)
 library(DBI)
 library(frenchdata)
+library(arrow)
 ```
 
 Next we set up a DuckDB database file in the `data` directory, creating this directory if need be.
@@ -359,4 +360,19 @@ system.time(crsp_daily |>
 
 ```{r}
 dbDisconnect(db, shutdown = TRUE)
+```
+
+### dbplyr with dplyr and parquet files
+
+Let's do one more benchmark using the parquet data with the `arrow` library.
+
+```{r}
+crsp_daily <- open_dataset('data/crsp_daily.parquet')
+```
+
+```{r}
+system.time(crsp_daily |> 
+              group_by(month) |> 
+              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+              collect())
 ```
