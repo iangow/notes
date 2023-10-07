@@ -161,7 +161,7 @@ The following code is adapted from the Tidy Finance code [here](https://www.tidy
 But, whereas the original code is much more complicated and takes more than 15 minutes, this code takes just over a minute.^[Performance will vary according to the speed of your connection to WRDS. Note that this query does temporarily use a significant amount of RAM on my machine, it is not clear that DuckDB will use as much RAM if this is more constrained. If necessary, you can run (say) `dbExecute(tidy_finance, "SET memory_limit='1GB'")` to constrain DuckDB's memory usage; doing so has little impact on performance for this query.]
 
 ```{r}
-#| freeze: auto  
+#| freeze: auto
 rs <- dbExecute(tidy_finance, "DROP TABLE IF EXISTS crsp_daily")
 
 system.time({
@@ -264,8 +264,7 @@ crsp_daily <- tbl(tidy_finance, "crsp_daily")
 What takes most time is simply loading nearly 2GB of data into memory.
 
 ```{r}
-#| cache: false 
-#| cache-lazy: false
+#| freezer: auto
 system.time(crsp_daily_local <- crsp_daily |> collect())
 ```
 
@@ -375,4 +374,39 @@ system.time(crsp_daily |>
               group_by(month) |> 
               summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
               collect())
+```
+
+### Python and parquet files
+
+It seems that Python (with `pandas`) is constrained by the need to load the data into memory.
+
+```{python}
+#| eval: false
+import pandas as pd
+import time
+start_time = time.monotonic()
+df = pd.read_parquet('data/crsp_daily.parquet')
+avg = df.groupby('month').agg(ret = ('ret_excess', 'mean'))
+seconds = time.monotonic() - start_time
+print("Time Taken: {:0.2f} seconds.".format(seconds))
+print(avg)
+```
+
+```
+Time Taken: 19.07 seconds.
+                 ret
+month               
+1960-01-01 -0.002130
+1960-02-01  0.000325
+1960-03-01 -0.001154
+1960-04-01 -0.001062
+1960-05-01  0.001137
+...              ...
+2021-08-01  0.000985
+2021-09-01 -0.001301
+2021-10-01  0.001344
+2021-11-01 -0.002161
+2021-12-01  0.000075
+
+[744 rows x 1 columns]
 ```
