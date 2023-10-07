@@ -1,0 +1,40 @@
+---
+title: "Parquet performance"
+format: pdf 
+jupyter: python3
+---
+
+```{python}
+import pandas as pd
+import time
+```
+
+```{python}
+start_time = time.monotonic()
+df = pd.read_parquet('data/crsp_daily.parquet', engine='pyarrow',
+                     dtype_backend = 'pyarrow')
+avg = df.groupby('month').aggregate(ret = ('ret_excess', 'mean'))
+seconds = time.monotonic() - start_time
+print("Time Taken: {:0.2f} seconds.".format(seconds))
+print(avg)
+```
+
+```{python}
+start_time = time.monotonic()
+df = pd.read_parquet('data/crsp_daily.parquet', engine='fastparquet')
+avg = df.groupby('month').aggregate(ret = ('ret_excess', 'mean'))
+seconds = time.monotonic() - start_time
+print("Time Taken: {:0.2f} seconds.".format(seconds))
+print(avg)
+```
+
+```{python}
+import pyarrow.parquet as pq
+start_time = time.monotonic()
+df = pq.read_table('data/crsp_daily.parquet')
+avg = df.group_by('month').aggregate([('ret_excess', 'mean')])
+avg = avg.sort_by([("month", "ascending")]).to_pandas()
+seconds = time.monotonic() - start_time
+print("Time Taken: {:0.2f} seconds.".format(seconds))
+print(avg)
+```
