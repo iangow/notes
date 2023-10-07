@@ -218,6 +218,16 @@ copy_to(tidy_finance_sqlite,
 dbExecute(tidy_finance_sqlite, "VACUUM")
 ```
 
+We can also save the data to a parquet file.
+
+```{r}
+#| output: false
+#| cache: true
+dbExecute(tidy_finance, 
+          "COPY crsp_daily TO 'data/crsp_daily.parquet' 
+          (FORMAT 'PARQUET')")
+```
+
 Having created our two databases, we disconnect from them.
 This mimics the most common "write-once, read-many" pattern for using databases.
 
@@ -329,4 +339,24 @@ This will happen automatically if we close R, etc., and is less important if we 
 
 ```{r}
 dbDisconnect(tidy_finance, shutdown = TRUE)
+```
+
+### dbplyr with DuckDB and parquet files
+
+Let's do one more benchmark using the parquet data.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+crsp_daily <- tbl(db, "read_parquet('data/crsp_daily.parquet')")
+```
+
+```{r}
+system.time(crsp_daily |> 
+              group_by(month) |> 
+              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+              collect())
+```
+
+```{r}
+dbDisconnect(db, shutdown = TRUE)
 ```
