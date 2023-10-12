@@ -19,6 +19,8 @@ format:
         sansfont: TeX Gyre Pagella
 ---
 
+## Study #1
+
 ```{r}
 #| include: false
 library(modelsummary)
@@ -139,3 +141,89 @@ modelsummary(fms_no_disp, gof_map = c("F", "p.value"))
 modelsummary(fms_fixed, statistic = "std.error",
              gof_map = c("F", "p.value"))
 ```
+
+## Study #2
+
+```{r}
+#| include: false
+#| cache: true
+url <- "https://osf.io/download/ew2ms/"
+t <- tempfile()
+download.file(url, t)
+
+df_2 <- 
+  read_excel(t) |>
+  rename(id = `P#`,
+         Reported = `#B`,
+         Actual = `#ActuallyCorrect`) |>
+  mutate(Cheating = Reported - Actual)
+```
+
+```{r}
+#| include: false
+fms_2 <- list()
+fms_2[[1]] <- lm(Cheating ~ SignAtTop, data = df_2)
+fms_2[[2]] <- lm(SumDeductions ~ SignAtTop, data = df_2)
+fms_2[[3]] <- lm(SumEthicsWords ~ SignAtTop, data = df_2)
+```
+
+```{r}
+#| label: tbl-study-2
+#| echo: false
+#| tbl-cap: "Study 2: Reproduction of results with OSF data"
+modelsummary(dvnames(fms_2), statistic = "statistic",
+             gof_map = c("F", "p.value"))
+```
+The original results from the paper are reported in @tbl-study-2.
+
+From the `calcChain.xml` file, it appears that just three observations (`P#` values `1, 59, 61`) have been moved "out of order" from "sign at the bottom" to "sign at the top".
+These observations are (now) in rows 2, 60, and 61 of the OSF spreadsheet.
+It seems these changes involved moving a row from the bottom to the top and two rows from the top to the bottom.
+
+```
+<c r="I58" i="1"/>
+<c r="K58" i="1"/>
+<c r="I59" i="1"/>
+<c r="K59" i="1"/>
+<c r="I2" i="1"/>
+<c r="K2" i="1"/>
+```
+and
+
+```
+<c r="I60" i="1"/>
+<c r="K60" i="1"/>
+<c r="I61" i="1"/>
+<c r="K61" i="1"/>
+<c r="I3" i="1"/>
+<c r="K3" i="1"/>
+<c r="I4" i="1"/>
+```
+
+Let's see what happens if we move it back?
+Results are reported in @tbl-study-2-fixed.
+
+```{r}
+#| include: false 
+df_2_fixed <-
+  df_2 |>
+  mutate(SignAtTop = if_else(id %in% c(1, 59, 61), !SignAtTop, SignAtTop))
+```
+
+
+```{r}
+#| include: false
+fms_2_fixed <- list()
+fms_2_fixed[[1]] <- lm(Cheating ~ SignAtTop, data = df_2_fixed)
+fms_2_fixed[[2]] <- lm(SumDeductions ~ SignAtTop, data = df_2_fixed)
+fms_2_fixed[[3]] <- lm(SumEthicsWords ~ SignAtTop, data = df_2_fixed)
+```
+
+```{r}
+#| label: tbl-study-2-fixed
+#| echo: false
+#| tbl-cap: "Study 2: Reproduction of results with corrected data"
+modelsummary(dvnames(fms_2_fixed), statistic = "statistic",
+             gof_map = c("F", "p.value"))
+```
+
