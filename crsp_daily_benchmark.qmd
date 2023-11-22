@@ -28,7 +28,7 @@ Essentially, I combine data from CRSP's daily stock return file (`crsp.dsf`) wit
 
 # Summary of findings
 
-Using DuckDB speeds up the data collection from WRDS in this case from 15 minutes to about 1 minute.
+Using DuckDB speeds up the data collection from WRDS in this case from 5 minutes using batched code to about 3 minutes using simpler code.
 Using DuckDB to do the aggregate query reduces the time taken from over two minutes using `dbplyr` to well under one second.
 DuckDB is faster than `dplyr` even if the data are in RAM.
 Additionally DuckDB is faster than SQLite.
@@ -138,7 +138,7 @@ dsf_db
 ```
 
 The following code is adapted from the Tidy Finance code [here](https://www.tidy-finance.org/wrds-crsp-and-compustat.html#daily-crsp-data).
-But, whereas the original code is much more complicated and takes more than 15 minutes, this code takes less than 5 minutes.^[Performance will vary according to the speed of your connection to WRDS. Note that this query does temporarily use a significant amount of RAM on my machine, it is not clear that DuckDB will use as much RAM if this is more constrained. If necessary, you can run (say) `dbExecute(tidy_finance, "SET memory_limit='1GB'")` to constrain DuckDB's memory usage; doing so has little impact on performance for this query.]
+But the original code is much more complicated and takes slightly longer to run.^[Performance will vary according to the speed of your connection to WRDS. Note that this query does temporarily use a significant amount of RAM on my machine, it is not clear that DuckDB will use as much RAM if this is more constrained. If necessary, you can run (say) `dbExecute(tidy_finance, "SET memory_limit='1GB'")` to constrain DuckDB's memory usage; doing so has little impact on performance for this query.]
 
 ```{r}
 #| freeze: auto
@@ -328,6 +328,7 @@ dbDisconnect(tidy_finance, shutdown = TRUE)
 Let's do one more benchmark using the parquet data.
 
 ```{r}
+#| warning: false
 db <- dbConnect(duckdb::duckdb())
 crsp_daily <- tbl(db, "read_parquet('data/crsp_daily.parquet')")
 ```
