@@ -1,0 +1,59 @@
+---
+title: "Window functions - a[n] SQL versus R example"
+---
+
+```{r}
+#| output: false
+library(tidyverse)
+library(dbplyr) #for simulating a database
+library(DBI)
+```
+
+```{r}
+con <- dbConnect(duckdb::duckdb())
+
+sample_orders <- 
+  tibble(o_id = 101:110,
+         spent = round(runif(10, 5, 100), digits = 2)) |>
+  copy_to(con, df = _, name = "sample_orders")
+```
+
+```{sql}
+#| connection: con
+SELECT o_id, 
+  spent,
+  sum(spent) OVER () AS sum_spent,
+  sum(spent) OVER (ORDER BY o_id) AS sum_spent_so_far, --assumes ROWS UNBOUNDED PRECEDING
+  avg(spent) OVER (ORDER BY o_id) AS avg_spent_so_far,
+  avg(spent) OVER (ORDER BY o_id ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS moving_avg_spent,
+  ntile(4) OVER (ORDER BY spent) AS ntile,
+  percent_rank() OVER (ORDER BY spent) AS percent_rank
+FROM sample_orders
+ORDER BY o_id
+```
+```{r}
+#| warning: false
+results <- 
+  sample_orders |>
+  window_order(o_id) |>
+  window_frame(-Inf, Inf) |>
+  mutate(sum_spent = sum(spent)) |>
+  window_frame(-Inf, 0) |>
+  mutate(sum_spent_so_far = sum(spent),
+         avg_spent_so_far = mean(spent)) |>
+  window_frame(-2, 2) |>
+  mutate(moving_avg_spent = mean(spent)) |>
+  ungroup() |>
+  mutate(ntile = ntile(spent, 4),
+         percent_rank = percent_rank(spent)) |>
+  arrange(o_id)
+
+results |>
+  collect() |>
+  knitr::kable()
+```
+```{r}
+results |>
+  collapse() |>
+  show_query()
+```
