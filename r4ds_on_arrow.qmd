@@ -1,0 +1,194 @@
+---
+title: "Observations on R4DS on Arrow"
+author: 
+  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2023-12-20
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+csl: jfe.csl
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(arrow)
+library(DBI)
+```
+
+```{r}
+system_time <- function(x) {
+  print(system.time(x))
+  x
+}
+```
+
+```{r}
+pq_file <- "~/Dropbox/pq_data/seattle.parquet"
+```
+
+```{r}
+seattle_pq <- open_dataset(pq_file)
+```
+
+```{r}
+seattle_pq |> 
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+
+```{r}
+#| cache: true
+pq_path <- "data/seattle-library-checkouts"
+
+seattle_pq |>
+  group_by(CheckoutYear) |>
+  write_dataset(path = pq_path, format = "parquet")
+```
+
+```{r}
+#| cache: true
+csv_path <- "data/seattle-library-csvs"
+csv_file <- "data/seattle-library.csv"
+
+seattle_pq |>
+  group_by(CheckoutYear) |>
+  write_dataset(path = csv_path, format = "csv")
+
+seattle_pq |>
+  write_dataset(path = csv_file, format = "csv")
+```
+
+```{r}
+seattle_pq <- open_dataset(pq_path)
+```
+
+```{r}
+seattle_pq |> 
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+```{r}
+seattle_csv <- open_csv_dataset(csv_path)
+```
+
+```{r}
+seattle_csv |> 
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+```{r}
+#| cache: true
+seattle_csv <- open_csv_dataset(csv_file)
+
+seattle_csv |> 
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+```{r}
+seattle_pq |> 
+  to_duckdb() |>
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+```{r}
+seattle_pq |> 
+  to_duckdb() |> 
+  system.time()
+```
+
+```{r}
+seattle_db <-
+  seattle_pq |> 
+  to_duckdb() |> 
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |> 
+  compute() |>
+  system_time()
+```
+
+```{r}
+seattle_db |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+```{r}
+load_parquet <- function(con, path) {
+  sql <- paste0('SELECT * FROM read_parquet("', path, '")')
+  tbl(con, sql(sql))
+}
+```
+
+
+
+```{r}
+db <- dbConnect(duckdb::duckdb()) |> system_time()
+
+db_path <- "data/seattle-library-checkouts/*/*.parquet"
+seattle_pq <- load_parquet(db, db_path) |> system_time()
+```
+
+```{r}
+seattle_pq |> 
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+```{r}
+seattle_pq <- load_parquet(db, pq_file)
+```
+
+```{r}
+seattle_pq |> 
+  filter(CheckoutYear == 2021, MaterialType == "BOOK") |>
+  group_by(CheckoutMonth) |>
+  summarize(TotalCheckouts = sum(Checkouts)) |>
+  arrange(desc(CheckoutMonth)) |>
+  collect() |> 
+  system.time()
+```
+
+```{r}
+dbDisconnect(db, shutdown = TRUE)
+```
