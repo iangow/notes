@@ -1,0 +1,75 @@
+---
+title: "DuckDB UDFs and R"
+author: 
+  - name: Ian D. Gow
+orcid: 0000-0002-6243-8409
+email: iandgow@gmail.com
+abstract: "This short note does stuff."
+date: today
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+csl: jfe.csl
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+---
+
+Load the R packages we need.
+```{r}
+library(reticulate)
+library(haven)
+library(dplyr, warn.conflicts = FALSE)
+```
+  
+Run a little Python code.  
+  
+```{python}
+from scipy.optimize import minimize_scalar
+
+def coc(p: float, bv0: float, bv1: float, bv2: float, \
+        eps1: float, eps2: float, eps3: float) -> float:
+  g = 0.01
+  def f(x): 
+    iv = bv0 + \
+    (eps1 - x * bv0) / (1 + x) + \
+    (eps2 - x * bv1) / (1 + x)**2 + \
+    (eps3 - x * bv2) / (1 + x)**3 + \
+    ((eps3 - x * bv2) * (1 + g)) / ((x - g) * (1 + x) **3)
+    return (p - iv)**2
+
+  return minimize_scalar(f, bounds=[0.01, 0.5]).x
+```
+
+Create the R-side function.
+
+```{r}
+coc <- Vectorize(py$coc)
+```
+
+Do the calculations.
+
+```{r}
+system.time({
+  icc <-
+    read_dta("~/Downloads/icc.dta") |>
+    mutate(coc = coc(p, bv0, bv1, bv2, eps1, eps2, eps3))
+})
+```
+
+Look at some data.
+
+```{r}
+icc |>
+  select(gvkey, year, coc)
+```
+
+And some summary stats.
+
+```{r}
+summary(icc$coc)
+```
