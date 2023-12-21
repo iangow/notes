@@ -8,7 +8,7 @@ date: 2023-12-21
 date-format: "D MMMM YYYY"
 bibliography: papers.bib
 abstract: "Recent developments in Python led me to do some research into the possibility of translating *Empirical Research in Accounting: Tools and Methods* from R to Python.
-As discussed below, I think it would be possible to do this without losing the elegance and efficiency of the current approach using R.
+As discussed below, I think it would be possible to do this without completely losing the elegance and efficiency of the current approach.
 Nonetheless, a significant amount of work would be required and this could not happen before 2024.
 In the meantime, I recommend Python users interested in our book to consider learning a little R."
 title-block-style: plain
@@ -24,6 +24,9 @@ format:
         number-sections: true
 ---
 
+The code used to produce this note can be found [here](https://raw.githubusercontent.com/iangow/notes/main/era_python.qmd).
+It should be straightforward to compile this document using RStudio.
+
 Our book [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/intro.html) incorporates an extensive amount of code for a few reasons.
 One reason is that one's understanding of a paper can be much deeper if one can get one's "hands dirty" with the analysis in a paper, including identifying and executing variants on the analysis in the paper.
 Another reason is that a core goal is to provide readers with the data analysis skills needed to do their own research.
@@ -31,7 +34,7 @@ Another reason is that a core goal is to provide readers with the data analysis 
 Another book taking a similar approach, but perhaps more focused on the coding, is [*Tidy Finance with R*](https://www.tidy-finance.org).
 Since *Tidy Finance with R* was released earlier in 2023, the author team has added a fourth member to create a Python version of the book, which can be found on the book's [website](https://www.tidy-finance.org).
 
-Suppressing some messy details, translation of either *Empirical Research in Accounting: Tools and Methods* or *Tidy Finance with R* from R to Python using standard tools like SQLAchemy and Pandas involves two steps.
+Suppressing some messy details, translation of either *Empirical Research in Accounting: Tools and Methods* or *Tidy Finance with R* from R to Python using standard tools like SQLAchemy and Pandas involves two main steps.
 
  1. Translating `dbplyr` code that operates on remote data frames to SQL.
  2. Translating `dplyr` code that operates on local data frames to Pandas code.^[The package `dbplyr` provides a set of verbs for interacting with remote data sources, while `dplyr` provides more or less the same verbs for interacting with tibbles and other local data frames.]
@@ -41,18 +44,19 @@ While the data sets created in Part II are stored in an SQLite database, the rem
 All analyses involve loading entire tables from SQLite and processing the data using `dplyr`.
 
 In contrast, the approach in *Empirical Research in Accounting: Tools and Methods* uses `dbplyr` throughout.
-So this approach with a Python translation would mean that SQL strings appeared throughout the book.
+So the first step of this approach to a Python translation of the current book would mean that SQL strings appeared throughout the book.
 While it would be possible to move to the data-management approach used by the Tidy Finance team, this would involve costs.
 First, the chapters would no longer be independent.
 Some code would depend on data sets created in a portion of the book largely dedicated to extracting data from the WRDS database.
 Second, users would need to think about managing a local database.
-While not a huge task, *Empirical Research in Accounting: Tools and Methods* does not ask users to maintain any persistent data storage.
+While not a huge task, *Empirical Research in Accounting: Tools and Methods* does not ask users to maintain *any* persistent data storage.
 Third, there can be real benefits to executing data analysis steps in a database.
-For example, the code [here](https://iangow.github.io/far_book/rdd.html#bloomfield2021va) that creates `risk_asymmetry` takes about one second to run, but would take many minutes using an approach that loaded data into a data frame and ran regressions in R or Python.^[Earlier versions of the code in fact took many minutes to run.]
+For example, the code [here](https://iangow.github.io/far_book/rdd.html#bloomfield2021va) that creates the `risk_asymmetry` data frame takes about one second to run, but would take many minutes using an approach that loaded data into a data frame and ran regressions in R or Python.^[Earlier versions of the code in fact took many minutes to run.]
 
 Beyond these reasons, there are additional complications with moving *Empirical Research in Accounting: Tools and Methods* to Python.
 First, we assume very little of our readers.
 While the much shorter *Tidy Finance with R* elects to dive in head-first, we have a chapter providing [a tutorial on R](https://iangow.github.io/far_book/r-intro.html) and another chapter [introducing users to regression analysis](https://iangow.github.io/far_book/reg-basics.html) using R.
+These chapters would require more than a simple code translation.
 Second, our book leans heavily on the companion [R package `farr`](https://cran.r-project.org/web/packages/farr/index.html) for data sets and functions and we would have to work out how to replicate elements of this in a Python version.
 
 Given our desire to retain the core approach used in *Empirical Research in Accounting: Tools and Methods*, translation of our book to Python has had to wait for a more `dbplyr`-like approach to emerge. 
@@ -60,9 +64,17 @@ Given our desire to retain the core approach used in *Empirical Research in Acco
 I recently noted that Wes McKinney, the creator of Pandas, has joined Posit, the firm once known as RStudio.
 In [his blog](https://wesmckinney.com/blog/looking-back-15-years/), he discusses Ibis, "a lazily-evaluated expression system that is pleasant to use, extensible, and can support a broad set of SQL-like and non-SQL-like data processing use cases."
 
-In this note, I translate code from the `dbplyr` form it takes in *Empirical Research in Accounting: Tools and Methods* into equivalent Ibis code.
-The [code I chose](https://iangow.github.io/far_book/parquet-wrds.html#working-with-parquet-larger-data-sets) for translation uses `crsp.dsf`, a relatively large table that illustrates nicely the benefits of working with remote data.
+As outlined below, I think it is broadly feasible to move to a Python-based approach without completely forgoing the elegance and performance of the R-based approach.
+While a Tidyverse user will find that some things are missing in Python with Ibis, these don't seem to be deal-breakers.
+For example, Python doesn't have pipes (`|>` or `%>%` in R), but the chaining of methods gives something similar.
+Also, Python lacks the [**non-standard evaluation** goodies](https://adv-r.hadley.nz/evaluation.html) provided by R.
 
+## Translating from R to Python: A case study
+
+In this note, I translate code from the `dbplyr` form it takes in *Empirical Research in Accounting: Tools and Methods* into equivalent Ibis code.
+The [code I chose](https://iangow.github.io/far_book/parquet-wrds.html#working-with-parquet-larger-data-sets) for translation uses `crsp.dsf`, a relatively large table that illustrates nicely the benefits of working with remote data.^[The careful reader will notice that the R code in the book uses parquet data.
+However a version that used a PostgreSQL database would be almost identical.
+In itself, this nicely illustrates a key benefit of an approach using `dplyr` and `dbplyr`.]
 
 Apart from importing Ibis, I also set `ibis.options.interactive` so that displayed output from data frames is limited to ten rows.
 
