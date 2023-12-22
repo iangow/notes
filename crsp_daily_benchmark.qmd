@@ -24,16 +24,23 @@ In this short note, I show how one can use DuckDB with WRDS data stored in the P
 I then use some simple benchmarks to show how DuckDB offers a powerful, fast analytical engine for researchers in accounting and finance.
 
 To make the analysis concrete, I focus on data used in the excellent recent book ["Tidy Finance with R"](https://www.tidy-finance.org).
-Essentially, I combine data from CRSP's daily stock return file (`crsp.dsf`) with data on factor returns from Ken French's website.
+Essentially, I combine data from CRSP's daily stock return file (`crsp.dsf`) with data on factor returns from Ken French's website and then run an aggregate query.
 
 # Summary of findings
 
-Using DuckDB speeds up the data collection from WRDS in this case from 5 minutes using batched code to about 3 minutes using simpler code.
-Using DuckDB to do the aggregate query reduces the time taken from over two minutes using `dbplyr` to well under one second.
-DuckDB is faster than `dplyr` even if the data are in RAM.
+While using DuckDB simplifies the process of collecting data from WRDS (and results in a shorter download time), the real differences come after the data sets are on your computer.
+Using DuckDB to load the data and run an aggregate query reduces the time taken from over two minutes using `dplyr` to well under one second.
+DuckDB from disk is faster than `dplyr` from RAM.
 Additionally DuckDB is faster than SQLite.
-In fact, DuckDB runs faster collecting data from WRDS than `dplyr` does with data on disk in an SQLite database.
-Performance isn't everything, but performance gains like these likely deliver real quality-of-life benefits to data analysts.
+In fact, for many queries DuckDB would be faster collecting data from WRDS than `dplyr` is with data in a local SQLite database.
+While performance isn't everything, gains like these likely deliver real quality-of-life benefits to data analysts.
+
+I also show that almost all the performance benefits of DuckDB are realized even if the data are stored in parquet files.
+This is useful information because, while the format of DuckDB database files remains in flux, parquet files are regarded by many as the "modern CSV" and can be read by many software systems, including R and Python.
+I describe how one could maintain a local library of parquet files including copies of WRDS tables [here](https://iangow.github.io/far_book/parquet-wrds.html).
+
+This note illustrates the power of the core Tidy Finance approach.
+With a few tweaks, one can springboard from the SQLite-and-`dplyr` approach of the book to the very cutting-edge of data science tools and approaches.
 
 # Databases and tidy data
 
@@ -42,7 +49,7 @@ A popular way to manage and store data is with SQL databases.
 In this note, I use DuckDB, which has been [described](https://medium.com/short-bits/duckdb-sqlite-for-analytics-1273f7267298) as offering "SQLite for Analytics".
 DuckDB is like SQLite in not requiring a server process, but like server-based databases such as PostgreSQL in terms of support for advanced SQL features and data types.
 
-While storing data in a DuckDB offers some benefits of SQLite (e.g., data compression), the real benefits of using DuckDB come from using the database engine for data analytics.
+While storing data in a DuckDB database offers some benefits of SQLite (e.g., data compression), the real benefits of using DuckDB come from using the database engine for data analytics.
 For the most part, [Tidy Finance with R](https://www.tidy-finance.org) uses SQLite for storage and uses `dplyr` and in-memory data frames for analysis.
 For example, in the [chapter on beta estimation](https://www.tidy-finance.org/beta-estimation.html), the data are read into memory immediately using `collect()` before any analysis is conducted.
 However, the `dbplyr` package allows many analytical tasks to be performed in the database.
@@ -56,7 +63,8 @@ The second is from CRSP's daily stock file, which we get from WRDS.
 
 We start by loading three packages.
 Note that we load `DBI` rather than the underlying database driver package.^[This is how it's done in ["R for Data Science"](https://r4ds.hadley.nz). I have read comments by Hadley Wickham that this is the right way to do it, but I can't find those comments.]
-In addition to these three packages, you should have the `duckdb` and `RSQLite` packages installed. Use `install.packages()` in R to install any missing packages.
+In addition to these three packages, you should have the `duckdb` and `RSQLite` packages installed. 
+Use `install.packages()` in R to install any missing packages.
 
 ```{r}
 #| warning: false
@@ -128,7 +136,7 @@ Third, we connect to the CRSP daily stock file in the WRDS PostgreSQL database.
 ```{r}
 #| eval: true
 pg <- dbConnect(RPostgres::Postgres())
-dsf_db <- tbl(pg, sql("SELECT * FROM crsp.dsf"))
+dsf_db <- tbl(pg, Id(schema = "crsp", table = "dsf"))
 ```
 
 As we can see, we have access to data in `crsp.dsf`.
@@ -137,30 +145,41 @@ As we can see, we have access to data in `crsp.dsf`.
 dsf_db
 ```
 
+Before proceeding with our first benchmark, we will make a version of `system.time()` that works with assignment.^[If we put `system.time()` at the end of this pipe, then `crsp_daily` would hold the value returned by that function rather than the result of the pipeline preceding it.
+At first, the `system_time()` function may seem like magic, but Hadley Wickham explained to me that this works because of **lazy evaluation**, which is discussed in "Advanced R" [here](https://adv-r.hadley.nz/environments.html?q=lazy#lazy-call-stack).
+Essentially, `x` is evaluated just once---inside `system.time()`---and its value is returned in the next line.]
+
+```{r}
+system_time <- function(x) {
+  print(system.time(x))
+  x
+}
+```
+
 The following code is adapted from the Tidy Finance code [here](https://www.tidy-finance.org/wrds-crsp-and-compustat.html#daily-crsp-data).
-But the original code is much more complicated and takes slightly longer to run.^[Performance will vary according to the speed of your connection to WRDS. Note that this query does temporarily use a significant amount of RAM on my machine, it is not clear that DuckDB will use as much RAM if this is more constrained. If necessary, you can run (say) `dbExecute(tidy_finance, "SET memory_limit='1GB'")` to constrain DuckDB's memory usage; doing so has little impact on performance for this query.]
+But the original code is much more complicated and takes slightly longer to run.^[Performance will vary according to the speed of your connection to WRDS. Note that this query does temporarily use a significant amount of RAM on my machine, it is not clear that DuckDB will use as much RAM if this is more constrained. 
+If necessary, you can run (say) `dbExecute(tidy_finance, "SET memory_limit='1GB'")` to constrain DuckDB's memory usage; doing so has little impact on performance for this query.]
 
 ```{r}
 #| freeze: auto
 rs <- dbExecute(tidy_finance, "DROP TABLE IF EXISTS crsp_daily")
 
-system.time({
-  crsp_daily <- 
-    dsf_db |>
-    filter(between(date, start_date, end_date),
-           !is.na(ret)) |>
-    select(permno, date, ret) |>
-    mutate(month = as.Date(floor_date(date, "month"))) |>
-    copy_to(tidy_finance, df = _, name = "dsf_temp") |>
-    left_join(factors_ff_daily |>
-                select(date, rf), by = "date") |>
-    mutate(
-      ret_excess = ret - rf,
-      ret_excess = pmax(ret_excess, -1, na.rm = TRUE)
-    ) |>
-    select(permno, date, month, ret_excess) |>
-    compute(name = "crsp_daily", temporary = FALSE)
-})
+crsp_daily <- 
+  dsf_db |>
+  filter(between(date, start_date, end_date),
+         !is.na(ret)) |>
+  select(permno, date, ret) |>
+  mutate(month = as.Date(floor_date(date, "month"))) |>
+  copy_to(tidy_finance, df = _, name = "dsf_temp") |>
+  left_join(factors_ff_daily |>
+              select(date, rf), by = "date") |>
+  mutate(
+    ret_excess = ret - rf,
+    ret_excess = pmax(ret_excess, -1, na.rm = TRUE)
+  ) |>
+  select(permno, date, month, ret_excess) |>
+  compute(name = "crsp_daily", temporary = FALSE, overwrite = TRUE) |>
+  system_time()
 ```
 
 ## Saving data to SQLite
@@ -220,14 +239,18 @@ dbDisconnect(tidy_finance, shutdown = TRUE)
 
 # Benchmarking a simple aggregation query
 
-The following is a simple comparison of three different ways of doing some basic data analysis with R.
-After running the code above, we have the table `crsp_daily` as described in [Tidy Finance](https://www.tidy-finance.org/wrds-crsp-and-compustat.html#daily-crsp-data) in two separate databases: a SQLite database and a DuckDB database.
+The following is a simple comparison of several different ways of doing some basic data analysis with R.
+After running the code above, we have the table `crsp_daily` as described in [Tidy Finance](https://www.tidy-finance.org/wrds-crsp-and-compustat.html#daily-crsp-data) in two separate databases---a SQLite database and a DuckDB database---and in a parquet file.
 
 The following examines the same query processed in three different ways.
 
   1. Using `dplyr` on an in-memory dataframe
   2. Using `dbplyr` with an SQLite database
   3. Using `dbplyr` with a DuckDB database 
+  4. Using `dbplyr` with DuckDB and a parquet file.
+  5. Using `dbplyr` with the `arrow` library and a parquet file.
+  
+
 
 ## dplyr
 
@@ -246,17 +269,21 @@ What takes most time is simply loading nearly 2GB of data into memory.
 
 ```{r}
 #| freezer: auto
-system.time(crsp_daily_local <- crsp_daily |> collect())
+crsp_daily_local <- 
+  crsp_daily |> 
+  collect() |>
+  system_time()
 ```
 
 Once the data are in memory, it is *relatively* quick to run a summary query.
 
 ```{r}
 #| cache: true
-system.time(crsp_daily_local |> 
-              group_by(month) |> 
-              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
-              collect())
+crsp_daily_local |> 
+  group_by(month) |> 
+  summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+  collect() |> 
+  system_time()
 ```
 
 ```{r}
@@ -272,10 +299,11 @@ This will not take a noticeable amount of time, but seems to be a reasonable ste
 
 ```{r}
 #| cache: true
-system.time(crsp_daily |> 
-              group_by(month) |> 
-              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
-              collect())
+crsp_daily |> 
+  group_by(month) |> 
+  summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+  collect() |>
+  system_time()
 ```
 
 ```{r}
@@ -300,10 +328,11 @@ crsp_daily <- tbl(tidy_finance, "crsp_daily")
 ```
 
 ```{r}
-system.time(crsp_daily |> 
-              group_by(month) |> 
-              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
-              collect())
+crsp_daily |> 
+  group_by(month) |> 
+  summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+  collect() |>
+  system_time()
 ```
 
 Having done our benchmarks, we can take a quick peek at the data.
@@ -323,9 +352,9 @@ This will happen automatically if we close R, etc., and is less important if we 
 dbDisconnect(tidy_finance, shutdown = TRUE)
 ```
 
-### dbplyr with DuckDB and parquet files
+## dbplyr with DuckDB and a parquet file
 
-Let's do one more benchmark using the parquet data.
+Let's do the benchmark using the parquet data.
 
 ```{r}
 #| warning: false
@@ -334,17 +363,18 @@ crsp_daily <- tbl(db, "read_parquet('data/crsp_daily.parquet')")
 ```
 
 ```{r}
-system.time(crsp_daily |> 
-              group_by(month) |> 
-              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
-              collect())
+crsp_daily |> 
+  group_by(month) |> 
+  summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+  collect() |>
+  system_time()
 ```
 
 ```{r}
 dbDisconnect(db, shutdown = TRUE)
 ```
 
-### dbplyr with dplyr and parquet files
+## The `arrow` library with a pqrquet file
 
 Let's do one more benchmark using the parquet data with the `arrow` library.
 
@@ -353,13 +383,14 @@ crsp_daily <- open_dataset('data/crsp_daily.parquet')
 ```
 
 ```{r}
-system.time(crsp_daily |> 
-              group_by(month) |> 
-              summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
-              collect())
+crsp_daily |> 
+  group_by(month) |> 
+  summarize(ret = mean(ret_excess, na.rm = TRUE)) |> 
+  collect() |>
+  system_time()
 ```
 
-### Python and parquet files
+## Python and parquet files
 
 It seems that Python (with `pandas`) is constrained by the need to load the data into memory.
 
@@ -393,6 +424,9 @@ month
 
 [744 rows x 1 columns]
 ```
+
+But using the PyArrow library, we see performance very similar to that using R above.
+Of course, DuckDB offers an API for Python too, so parquet files offer the data analyst many ways of working with them.
 
 ```{python}
 #| eval: false
