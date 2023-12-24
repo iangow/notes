@@ -158,7 +158,7 @@ crsp_daily <-
 
 # Calculating betas
 
-I following Tidy Finance in calculating both monthly and daily betas.
+I following *Tidy Finance* in calculating both monthly and daily betas.
 
 ## Monthly betas
 
@@ -183,11 +183,11 @@ w <- paste("OVER (PARTITION BY permno",
            "CURRENT ROW)")
 ```
 
-Having constructed out window, we can append the window to SQL for the aggregates we want to use.
+Having constructed our window, we can append the window to SQL for the aggregates we want to use.
 To impose the requirement minimum number of months, we calculate `n_rets`, which is the number of return values in our window `w` and impose a filter accordingly.
 Finally, we select just the variables we want.^[While the `date` variable is omitted in Tidy Finance, we retain it, as in principle it facilitates merging of beta data with monthly CRSP data.]
 
-According to the Tidy Finance website, "using eight cores, the estimation for our sample of around 25k stocks takes around 20 minutes."
+According to the *Tidy Finance* website, "using eight cores, the estimation for our sample of around 25k stocks takes around 20 minutes."
 How long does our approach take?
 Less than a second!
 Note that DuckDB does multi-core processing out of the box, with no need to set up workers or such like.^[My understanding is that this may be a function of writing DuckDB with C++11.]
@@ -206,7 +206,7 @@ beta_monthly <-
 ## Daily betas
 
 Now, let's do daily betas.
-Here Tidy Finance uses a three-month window and requires at last fifty observations.
+Here *Tidy Finance* uses a three-month window and requires at last fifty observations.
 This requires only a minor tweak to our window definition.
 
 ```{r}
@@ -218,12 +218,12 @@ w <- paste("OVER (PARTITION BY permno",
 ```
 
 While daily data are used to calculate the betas, only one beta per PERMNO-month is returned.
-There are some ambiguities in my reading of Tidy Finance in terms of exactly which dates are used for each month, but I assume that daily returns for the three months up to the last day of the month are used.
-The code below actually calculates betas for three months for every stock for every day, but only keeps data for the last day of each month.
+There are some ambiguities in my reading of *Tidy Finance* in terms of exactly which dates are used for each month, but I assume that daily returns for the three months up to the last day of the month are used.
+The code below actually calculates betas using three months of data for every stock for every day, but only keeps data for the last day of each month.
 
-For Tidy Finance, "the whole estimation takes around 30 minutes using eight cores and 16GBb memory."
+For *Tidy Finance*, "the whole estimation takes around 30 minutes using eight cores and 16GB memory."
 With the approach here, it takes about 8 seconds.
-This is *relatively* worse than the monthly beta calculations, which I suspect is due to the calculations of betas for every day even though we don't keep these.
+This is *relatively* worse than the monthly beta calculations, which I suspect is due to our calculations of betas for every day even though we don't keep these.
 
 ```{r}
 #| cache: true
@@ -275,7 +275,7 @@ beta <-
   arrange(permno, date)
 ```
 
-I have made no effort to do a detailed reconciliation of my calculations with those in Tidy Finance, but @fig-beta-comp looks quite similar to the counterpart in Tidy Finance.
+I have made no effort to do a detailed reconciliation of my calculations with those in *Tidy Finance*, but @fig-beta-comp looks quite similar to the counterpart in *Tidy Finance*.
 
 ```{r}
 #| label: fig-beta-comp
