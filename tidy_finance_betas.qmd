@@ -112,7 +112,7 @@ msf <- tbl(db, Id(table = "msf", schema = "crsp"))
 dsf <- tbl(db, Id(table = "dsf", schema = "crsp"))
 ```
 
-However, it turns out that there is no efficient way to merge the Fama-French factor data we have above with those tables on the WRDS server due our inability to create temporary tables there.^[As discussed [here](https://iangow.github.io/far_book/beaver68.html#a-re-evaluation-of-beaver1968vf), the `copy_inline()` function can often address this gap, but the complexity of the queries below seems to complex for this to be a viable approach.]
+However, it turns out that there is no efficient way to merge the Fama-French factor data we have above with those tables on the WRDS server due our inability to create temporary tables there.^[As discussed [here](https://iangow.github.io/far_book/beaver68.html#a-re-evaluation-of-beaver1968vf), the `copy_inline()` function can often address this gap, but the complexity of the queries below seems too high for this to be a viable approach.]
 In fact, even with a local PostgreSQL database, we can do better if we have local parquet versions of `crsp.msf` and `crsp.dsf` (see [here](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq)), and we assume that we have those in the rest of this note.
 
 If we have our library set up, we can create an in-memory DuckDB database, and use `load_parquet()` from the `farr` package to load these tables in the database.
