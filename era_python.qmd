@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2023-12-21
+date: 2023-12-24
 date-format: "D MMMM YYYY"
 bibliography: papers.bib
 abstract: "Recent developments in Python led me to do some research into the possibility of translating *Empirical Research in Accounting: Tools and Methods* from R to Python.
@@ -77,6 +77,14 @@ However a version that used a PostgreSQL database would be almost identical.
 In itself, this nicely illustrates a key benefit of an approach using `dplyr` and `dbplyr`.]
 
 Apart from importing Ibis, I also set `ibis.options.interactive` so that displayed output from data frames is limited to ten rows.
+
+```{r}
+Sys.setenv(PGPORT= 9737L)
+Sys.setenv(PGDATABASE = "wrds")
+Sys.setenv(PGUSER = "iangow")
+Sys.setenv(WRDS_ID ="iangow")
+Sys.setenv(PGHOST= "wrds-pgdata.wharton.upenn.edu")
+```
 
 ```{python}
 import ibis
