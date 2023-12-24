@@ -84,6 +84,7 @@ Sys.setenv(PGDATABASE = "wrds")
 Sys.setenv(PGUSER = "iangow")
 Sys.setenv(WRDS_ID ="iangow")
 Sys.setenv(PGHOST= "wrds-pgdata.wharton.upenn.edu")
+Sys.setenv(DATA_DIR= "/mnt/samsung/data/Dropbox/pq_data")
 ```
 
 ```{python}
@@ -97,6 +98,7 @@ You could replace the following lines with `wrds_id = "your_wrds_id"`.
 ```{python}
 import os
 wrds_id = os.environ['WRDS_ID']
+data_dir = os.environ['DATA_DIR']
 ```
 
 Now I connect to the WRDS PostgreSQL database and establish variables representing `crsp.dsf` and `crsp.stocknames`.
@@ -104,13 +106,9 @@ Note that these are effectively **remote** data frames, as no data is brought in
 As such these lines take almost no time to run.
 
 ```{python}
-con = ibis.postgres.connect(user=wrds_id, 
-                            host="wrds-pgdata.wharton.upenn.edu",
-                            port=9737,
-                            database="wrds")
-
-dsf = con.table("dsf", schema="crsp")
-stocknames = con.table("stocknames", schema="crsp")
+con = ibis.duckdb.connect()
+dsf = con.read_parquet(data_dir + "/crsp/dsf.parquet")
+stocknames = con.read_parquet(data_dir + "/crsp/stocknames.parquet")
 ```
 
 Now that we have our remote data frames set up, we can begin to interrogate the data.
@@ -160,7 +158,7 @@ Below we will use other UDFs and we register these now.
 
 ```{python}
 @udf.scalar.builtin
-def regexp_like(string, pattern) -> bool:
+def regexp_matches(string, pattern) -> bool:
     ...
     
 @udf.scalar.builtin
@@ -243,7 +241,7 @@ Now, we will use `crsp.stocknames` to look up the PERMNO for Apple so that we ca
 
 ```{python}
 apple_permno = stocknames. \
-    filter(regexp_like(stocknames.comnam, "^APPLE COM")). \
+    filter(regexp_matches(stocknames.comnam, "^APPLE COM")). \
     select("permno"). \
     to_pandas(). \
     permno[0]
