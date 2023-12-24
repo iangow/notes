@@ -1,0 +1,55 @@
+---
+title: "Unused code"
+format: html
+---
+
+```{r}
+#| eval: false
+#| include: false
+pg <- dbConnect(RPostgres::Postgres(), 
+                host="wrds-pgdata.wharton.upenn.edu",
+                port=9737L, dbname="wrds", user="iangow")
+
+factors_ff_daily <-
+  factors_ff_daily |>
+  collect() |>
+  copy_inline(pg, df = _)
+
+dsf <- tbl(pg, Id(table = "dsf", schema = "crsp"))
+```
+
+```{r}
+#| eval: false
+#| include: false
+crsp_daily <- 
+  dsf |>
+  filter(between(date, start_date, end_date),
+         !is.na(ret)) |>
+  select(permno, date, ret) |>
+  left_join(factors_ff_daily, by = "date") |>
+  mutate(
+    ret_excess = ret - rf,
+    ret_excess = pmax(ret_excess, -1, na.rm = TRUE)
+  ) |>
+  select(permno, date, date, ret_excess, mkt_excess)
+```
+
+```{r}
+#| eval: false
+#| include: false
+w <- paste("OVER (PARTITION BY permno",
+           "ORDER BY date",
+           "RANGE BETWEEN INTERVAL '3 MONTHS' PRECEDING AND CURRENT ROW)")
+
+beta_daily <-
+  crsp_daily |>
+  mutate(beta = sql(paste("regr_slope(ret_excess, mkt_excess)", w)),
+         n_rets = sql(paste("count(ret_excess)", w))) |>
+  select(permno, date, beta, n_rets) |>
+  filter(n_rets > 50) |>
+  mutate(month = floor_date(date, "month")) |>
+  group_by(permno, month) |>
+  filter(date == max(date, na.rm = TRUE)) |>
+  collect() |>
+  system_time()
+```
