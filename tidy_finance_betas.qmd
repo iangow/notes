@@ -210,6 +210,20 @@ Here *Tidy Finance* uses a three-month window and requires at last fifty observa
 This requires only a minor tweak to our window definition.
 
 ```{r}
+crsp_daily <- tbl(tidy_finance, "crsp_daily") |>
+  select(permno, month, date, ret_excess) |>
+  collect()
+
+factors_ff3_daily <- tbl(tidy_finance, "factors_ff3_daily") |>
+  select(date, mkt_excess) |>
+
+crsp_daily <- crsp_daily |>
+  inner_join(factors_ff3_daily, by = "date") |>
+  select(permno, month, ret_excess, mkt_excess)
+```
+
+
+```{r}
 #| cache: true
 w <- paste("OVER (PARTITION BY permno",
             "ORDER BY date",
