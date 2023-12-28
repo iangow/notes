@@ -1,0 +1,276 @@
+---
+title: "Improving performance of SQLite"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+abstract: "Tidy Finance with R/Python uses SQLite for data storage. However, SQLite appears to have appalling performance for some common tasks. In this note, I discuss some options for dramatically improving on this performance."
+date: 2023-12-28
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+    html:
+        theme: cosmo
+---
+
+# Introduction
+
+[Tidy Finance with R](https://www.tidy-finance.org/r/) and [Tidy Finance with Python](https://www.tidy-finance.org/python/) provide excellent introductions to doing data analysis for finance.
+Chapters 2--4 of either book provide code to establish an SQLite database that is used a the data source for the rest of the book.
+Recently I have been dabbling with the Python version of the book and have found the analyses to be surprisingly sluggish on my computer.
+This note explores some options for improving this performance while still getting the results found in the book.
+
+In this note, I will load the following R packages.
+I will also use `duckdb` and `RSQLite` packages.
+use `install.packages()` to get any package that you don't already have.
+
+```{r}
+#| message: false
+library(DBI)
+library(dplyr)
+library(dbplyr)
+library(farr)
+```
+
+We will use the following small function to calculate the time taken for steps below.^[Unlike the base R `system.time()`, this function works with assignment.
+If we put `system.time()` at the end of a pipe, then the value returned by `system.time()` would be stored rather than the result of the pipeline preceding it.
+Hadley Wickham explained to me that this function works because of **lazy evaluation**, which is discussed in "Advanced R" [here](https://adv-r.hadley.nz/environments.html?q=lazy#lazy-call-stack).
+Essentially, `x` is evaluated just once---inside `system.time()`---and its value is returned in the next line.]
+
+```{r}
+system_time <- function(x) {
+  print(system.time(x))
+  x
+}
+```
+
+I have created an SQLite database comprising data generated from running code in [chapter 2](https://www.tidy-finance.org/python/accessing-and-managing-financial-data.html) and [chapter 3](https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html).^[[Chapter 4](https://www.tidy-finance.org/python/trace-and-fisd.html) covers data that are not needed in the later chapters I am currently looking at.] 
+ 
+```{r}
+db_path <- "data/tidy_finance_python.sqlite"
+```
+
+# Using RSQLite
+
+To start with, I follow the approach used in Tidy Finance, which generally involves connecting to the SQLite database before using `collect()` to read data into memory in R.
+The following code is pretty much copy-pasted from Chapter 5.
+
+```{r}
+tidy_finance <- dbConnect(
+  RSQLite::SQLite(),
+  db_path,
+  extended_types = TRUE
+)
+```
+
+```{r}
+#| cache: true
+crsp_daily <- tbl(tidy_finance, "crsp_daily") |>
+  select(permno, month, date, ret_excess) |>
+  collect() |>
+  system_time()
+```
+
+That's more than two minutes just to read one table.
+And things are no better using Python.
+
+```{python}
+#| cache: true
+import sqlite3
+import time
+import pandas as pd
+
+tidy_finance = sqlite3.connect(
+  database="data/tidy_finance_python.sqlite"
+)
+
+start = time.time()
+crsp_daily = (pd.read_sql_query(
+    sql=("SELECT permno, month, date, ret_excess "
+         "FROM crsp_daily"),
+    con=tidy_finance,
+    parse_dates={"month", "date"})
+  .dropna()
+)
+end = time.time()
+
+print(f"Loading crsp_daily: {end - start:.3f}")
+```
+
+```{r}
+dbDisconnect(tidy_finance)
+```
+
+These numbers indicate mind-bogglingly bad performance.
+Mind-boggling because it is not clear how it can take so long to read 4GB of structured data into memory.
+
+# Using DuckDB to interact with SQLite
+
+Rather than using `RSQLite` to interact with the Tidy Finance SQLite database, we could use DuckDB.
+DuckDB is touted as "SQLite for analytics", as it does not require a separate server process and is easy to install, but has a much more feature rich SQL dialect and data types and offers superior performance.
+To use DuckDB, we first instantiate an in-memory database.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+```
+
+Next, we load the `sqlite` extension and attach the Tidy Finance SQLite database.
+Note that the `INSTALL`  takes less than a second and happens only once per installation of DuckDB, but the `LOAD` is needed for each new connection.^[Subsequent calls to `INSTALL` appear to have no effect.]
+Windows users may need more work to install the `sqlite` extension (see discussion [here](https://github.com/duckdb/duckdb-r)).
+
+```{r}
+#| output: false
+dbExecute(db, "INSTALL sqlite")
+dbExecute(db, "LOAD sqlite")
+dbExecute(db, paste0("ATTACH '", db_path, "' AS tf"))
+dbExecute(db, "USE tf")
+```
+Now, we could `collect()` the data from `crsp_daily` above using DuckDB.
+As can be seen, it is much faster than using SQLite to do this.
+
+```{r}
+crsp_daily <- tbl(db, "crsp_daily") |>
+  select(permno, month, date, ret_excess) |>
+  collect() |>
+  system_time()
+```
+
+While much faster, more than ten seconds is not great.
+In fact, we may find it better to leave the data in the database and do computations there.
+For example, we can do a version of the [monthly beta calculations](https://www.tidy-finance.org/r/beta-estimation.html#parallelized-rolling-window-estimation) done in Tidy Finance inside the DuckDB database.
+This calculation requires two tables: `crsp_monthly` and `factors_ff3_monthly`.
+
+```{r}
+crsp_monthly <- tbl(db, "crsp_monthly")
+factors_ff3_monthly <- tbl(db, "factors_ff3_monthly")
+```
+
+We will also use **window functions**
+
+```{r}
+w <- paste("OVER (PARTITION BY permno",
+           "ORDER BY date",
+           "RANGE BETWEEN INTERVAL '60 MONTHS' PRECEDING AND",
+           "CURRENT ROW)")
+```
+
+All the calculations below occur in DuckDB with the data not reaching R until the `collect()` at the end.
+
+```{r}
+beta_monthly <-
+  crsp_monthly |>
+  inner_join(factors_ff3_monthly, by = "month") |>
+  mutate(month = as.Date(month)) |>
+  group_by(permno) |>
+  window_order(month) |>
+  window_frame(-60, 0) |>
+  mutate(beta = sql(paste("regr_slope(ret_excess, mkt_excess)", w)),
+         n_rets = sql(paste("regr_count(ret_excess, mkt_excess)", w))) |>
+  filter(n_rets >= 48) |>
+  select(permno, month, beta) |>
+  ungroup() |>
+  collect() |>
+  system_time()
+```
+
+We have loaded data, calculated `r prettyNum(nrow(beta_monthly),  big.mark = ",")` betas (each involving a regression) and brought the data into memory in R in about half a second!
+
+```{r}
+beta_monthly
+```
+
+# Converting the Tidy Finance database to parquet files
+
+Rather than keeping the data in an SQLite database, we could actually convert the entire Tidy Finance  database to parquet files using the following function, which leverages DuckDB's ability to create parquet files.
+
+```{r}
+#| cache: true
+#| label: to_parquet
+to_parquet <- function(con, table, schema = "",
+                       data_dir = "data") {
+  df <- tbl(con, table) |> 
+    mutate(across(any_of(c("month", "date")), as.Date)) |>
+    compute(name = "df", overwrite = TRUE)
+  pq_dir <- file.path(data_dir, schema = schema)
+  if (!dir.exists(pq_dir)) dir.create(pq_dir)
+  pq_file_name <- paste0(table, ".parquet")
+  pq_path <- file.path(pq_dir, pq_file_name)
+  res <- dbExecute(con, paste0("COPY (SELECT * FROM df) TO '",
+                               pq_path, "' (FORMAT PARQUET)"))
+  return(tibble(table = table, rows = res))
+}
+```
+
+Converting all the tables takes around 20 seconds.
+While there are now 11 files rather than one, these files use less than a quarter of the disk space of the original database file.
+
+```{r}
+#| cache: true
+#| dependson: to_parquet
+db |> 
+  dbListTables() |> 
+  lapply(X = _, \(x) to_parquet(db, x)) |> 
+  bind_rows() |>
+  arrange(desc(rows)) |>
+  system_time()
+```
+
+Now that we have the data in parquet format, we can read it even faster than using DuckDB to read SQLite tables.
+These files can be used equally easily with Python.
+And R and Python have libraries (e.g., `arrow` in R) for working with parquet files directly.
+
+Returning to our original benchmark, how long does it take to load the `crsp_daily` data into memory in R?
+
+```{r}
+crsp_daily <- 
+  load_parquet(db, "crsp_daily", data_dir ="data") |>
+  select(permno, month, date, ret_excess) |>
+  collect() |>
+  system_time()
+```
+
+Less than a second?
+Here's a peek at the data.
+
+```{r}
+crsp_daily
+```
+
+## Calculating monthly betas---again
+
+Let's do the beta calculation again.
+Everything is as it was above except the first two lines, which point `crsp_monthly` and `factors_ff3_monthly` to parquet files in place of SQLite tables.
+
+```{r}
+crsp_monthly <- load_parquet(db, "crsp_monthly", data_dir = "data")
+factors_ff3_monthly <- load_parquet(db, "factors_ff3_monthly", 
+                                    data_dir = "data")
+```
+
+```{r}
+beta_monthly <-
+  crsp_monthly |>
+  inner_join(factors_ff3_monthly, by = "month") |>
+  mutate(month = as.Date(month)) |>
+  group_by(permno) |>
+  window_order(month) |>
+  window_frame(-60, 0) |>
+  mutate(beta = sql(paste("regr_slope(ret_excess, mkt_excess)", w)),
+         n_rets = sql(paste("regr_count(ret_excess, mkt_excess)", w))) |>
+  filter(n_rets >= 48) |>
+  select(permno, month, beta) |>
+  collect() |>
+  system_time()
+```
+
+```{r}
+dbDisconnect(db, shutdown = TRUE)
+```
+
