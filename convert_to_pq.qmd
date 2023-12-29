@@ -25,7 +25,7 @@ format:
 [Tidy Finance with R](https://www.tidy-finance.org/r/) and [Tidy Finance with Python](https://www.tidy-finance.org/python/) provide excellent introductions to doing data analysis for finance.
 Chapters 2--4 of either book provide code to establish an SQLite database that is used a the data source for the rest of the book.
 Recently I have been dabbling with the Python version of the book and have found the analyses to be surprisingly sluggish on my computer.
-This note explores some options for improving this performance while still getting the results found in the book.
+This note explores some options for improving this performance while still getting the results found in the book.^[I ran the code in this note on an M1 Pro MacBook Pro. Running the same code on an i7-3770K running Linux Mint gave similar relative results. Faster code on an old computer beats slow code on a faster computer.]
 
 In this note, I will load the following R packages.
 I will also use `duckdb` and `RSQLite` packages.
@@ -204,6 +204,7 @@ to_parquet <- function(con, table, schema = "",
   pq_path <- file.path(pq_dir, pq_file_name)
   res <- dbExecute(con, paste0("COPY (SELECT * FROM df) TO '",
                                pq_path, "' (FORMAT PARQUET)"))
+  dbExecute(con, "DROP TABLE df")
   return(tibble(table = table, rows = res))
 }
 ```
@@ -258,7 +259,6 @@ factors_ff3_monthly <- load_parquet(db, "factors_ff3_monthly",
 beta_monthly <-
   crsp_monthly |>
   inner_join(factors_ff3_monthly, by = "month") |>
-  mutate(month = as.Date(month)) |>
   group_by(permno) |>
   window_order(month) |>
   window_frame(-60, 0) |>
