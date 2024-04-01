@@ -133,12 +133,15 @@ See @fig-roic.
 #| label: fig-roic
 #| fig-cap: "Distribution of Return on Capital across OECD Supermarkets: 2021--2023"
 #| echo: false
-breaks <- seq(-0.02, 0.30, 0.02)
+breaks <- seq(round(min(histsuper$roic), 2), 
+              round(max(histsuper$roic), 2), 
+              0.02)
 histsuper |>
   filter(!gvkey %in% local_gvkeys) |>
   ggplot(aes(x = roic)) +
   geom_density() +
-  scale_x_continuous(breaks = breaks) +
+  scale_x_continuous(breaks = breaks,
+                     labels = scales::label_percent()) +
   geom_vline(xintercept = local_roic, color = "blue", linetype = "solid") +
   annotate("text", x = local_roic + 0.002, y = 7.5,
            label = str_c("Coles/Woolies = ", local_roic_str, "%"),
@@ -147,7 +150,8 @@ histsuper |>
   annotate("text", x = oecd_roic - 0.002, y = 7.,
            label = str_c("OECD Median = ", oecd_roic_str, "%"),
            color = "blue", angle = 360, hjust = 1) +
-  xlab("EBIT Margin") + ylab("Frequency")
+  xlab("EBIT Margin") + ylab("Frequency") +
+  theme(axis.text = element_text(size = 7))
 ```
 
 # Fixed Cost Investments and Quality of Service
@@ -173,12 +177,15 @@ See @fig-ebitm.
 #| label: fig-ebitm
 #| fig-cap: "Distribution of EBIT Margins across OECD Supermarkets: 2021--2023"
 #| echo: false
-breaks <- seq(-0.005, 0.09, 0.01)
+breaks <- seq(round(min(histsuper$ebitm), 2), 
+              round(max(histsuper$ebitm), 2), 
+              0.01)
 histsuper |>
   filter(!gvkey %in% local_gvkeys) |>
   ggplot(aes(x = ebitm)) +
   geom_density() +
-  scale_x_continuous(breaks = breaks) +
+  scale_x_continuous(breaks = breaks,
+                     labels = scales::label_percent(accuracy = 1)) +
   geom_vline(xintercept = local_ebitm, color = "blue", linetype = "solid") +
   annotate("text", x = local_ebitm + 0.002, y = 2,
            label = str_c("Coles/Woolies = ", local_ebitm_str, "%"),
@@ -187,7 +194,8 @@ histsuper |>
   annotate("text", x = oecd_ebitm - 0.002, y = 1,
            label = str_c("OECD Median = ", oecd_ebitm_str, "%"),
            color = "blue", angle = 360, hjust = 1) +
-  xlab("ROC") + ylab("Frequency")
+  xlab("ROC") + ylab("Frequency") +
+  theme(axis.text = element_text(size = 7))
 ```
 
 A further implication of the significant investment in fixed costs is that it gives rise to increased risk due to higher operating leverage and year-on-year changes in margins cannot be used in isolation as evidence of price gouging. 
