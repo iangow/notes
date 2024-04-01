@@ -1,0 +1,51 @@
+---
+title: "GDP: India versus Australia"
+author: Ian D. Gow
+date: 2024-03-28
+date-format: "D MMMM YYYY"
+format:
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+    csl: journal-of-financial-economics.csl
+bibliography: book.bib
+---
+
+```{r}
+#| message: false
+#| include: false
+library(tidyverse)
+library(WDI)
+library(scales)
+```
+
+```{r}
+#| include: false
+world_bank_data <-
+     WDI(indicator = c("NY.GDP.MKTP.KD", "SP.POP.TOTL"),
+         country = c("AU", "IN")) |>
+  as_tibble() |>
+  mutate(GDP = NY.GDP.MKTP.KD / 1e9)
+```
+
+As seen in @fig-gdp, India's GDP passed that of Australia in 2004.
+
+ 
+```{r}
+#| label: fig-gdp
+#| fig-cap: "GDP: India and Australia since 1960"
+#| echo: false
+world_bank_data |> 
+  ggplot(aes(x = year, y = GDP, color = country)) + 
+  geom_line() +
+  theme(legend.position = "bottom", 
+        plot.title = element_text(hjust = 0.5)) + 
+  scale_y_continuous(labels = comma) +
+  labs(x = "Year", 
+       y = "GDP (billions of constant dollars)")
+```
