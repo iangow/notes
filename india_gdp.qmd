@@ -12,8 +12,7 @@ format:
     papersize: a4
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
-    csl: journal-of-financial-economics.csl
-bibliography: book.bib
+bibliography: papers.bib
 ---
 
 ```{r}
@@ -33,13 +32,25 @@ world_bank_data <-
   mutate(GDP = NY.GDP.MKTP.KD / 1e9)
 ```
 
-As seen in @fig-gdp, India's GDP passed that of Australia in 2004.
+```{r}
+#| include: false
+min_year <-
+  world_bank_data |> 
+  group_by(year) |> 
+  filter(GDP == max(GDP)) |>
+  ungroup() |> 
+  filter(country == "India") |> 
+  summarize(min(year))
+```
+
+As seen in @fig-gdp, India's GDP passed that of Australia in `r min_year`.
 
  
 ```{r}
 #| label: fig-gdp
 #| fig-cap: "GDP: India and Australia since 1960"
 #| echo: false
+#| warning: false
 world_bank_data |> 
   ggplot(aes(x = year, y = GDP, color = country)) + 
   geom_line() +
@@ -49,3 +60,4 @@ world_bank_data |>
   labs(x = "Year", 
        y = "GDP (billions of constant dollars)")
 ```
+
