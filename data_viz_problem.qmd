@@ -90,12 +90,10 @@ df |>
   arrange(date) |>
   mutate(switch = coalesce(is_event != lead(is_event), FALSE)) |>
   ggplot(aes(x = date, y = cumret)) +
-  geom_ribbon(mapping = aes(ymax = if_else(!is_event | (is_event & switch), 
-                                           cumret, NA),
+  geom_ribbon(mapping = aes(ymax = if_else(!is_event | switch, cumret, NA),
                             ymin = 0,
                             fill = FALSE)) +
-  geom_ribbon(mapping = aes(ymax = if_else(is_event | (!is_event & switch), 
-                                           cumret, NA),
+  geom_ribbon(mapping = aes(ymax = if_else(is_event | switch, cumret, NA),
                             ymin = 0,
                             fill = TRUE)) +
   geom_line() +
@@ -133,11 +131,9 @@ df |>
   arrange(date) |>
   mutate(switch = coalesce(is_event != lead(is_event), FALSE)) |>
   ggplot(aes(x = date, y = cumret)) +
-  geom_area(mapping = aes(y = if_else(!is_event | (is_event & switch), 
-                                      cumret, 0),
+  geom_area(mapping = aes(y = if_else(!is_event | switch, cumret, 0),
                           fill = FALSE)) +
-  geom_area(mapping = aes(y = if_else(is_event | (!is_event & switch), 
-                                      cumret, 0),
+  geom_area(mapping = aes(y = if_else(is_event | switch, cumret, 0),
                           fill = TRUE)) +
   geom_line() +
   geom_point() +
