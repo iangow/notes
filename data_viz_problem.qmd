@@ -1,0 +1,126 @@
+---
+title: "Data visualization challenge"
+author: Ian D. Gow
+date: 2024-04-05
+date-format: "D MMMM YYYY"
+format:
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+```
+
+The data we will use here are as follows:
+
+```{r}
+df <-
+  tribble(
+    ~date, ~cumret, ~is_event,
+    "2024-01-01", 1, FALSE,
+    "2024-01-02", 1.15, FALSE,
+    "2024-01-03", 1.20, TRUE,
+    "2024-01-04", 1.06, TRUE,
+    "2024-01-05", 1.01, FALSE,
+    "2024-01-06", 1.06, FALSE,
+    "2024-01-07", 0.95, TRUE,
+    "2024-01-08", 0.99, TRUE
+  ) |>
+  mutate(date = as.Date(date))
+```
+
+The challenge here is to transform the data in `df` into @fig-sol.
+In words, we are looking to "fill" the area under the line with shading that is coloured according to the value of `is_event`.
+We want the shading to be continuous with the colours "switching" immediately after the value for `is_event` changes.
+
+
+```{r}
+#| echo: true
+#| label: fig-bar
+#| fig-cap: One plot
+df |>
+  arrange(date) |>
+  ggplot(aes(x = date, y = cumret)) +
+  geom_col(aes(fill = is_event)) +
+  geom_line() +
+  geom_point() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#| echo: false
+#| label: fig-sol
+#| fig-cap: Desired plot
+df |>
+  arrange(date) |>
+  mutate(switch = coalesce(is_event != lead(is_event), FALSE)) |>
+  ggplot(aes(x = date, y = cumret)) +
+  geom_ribbon(mapping = aes(ymax = if_else(!is_event | (is_event & switch), 
+                                           cumret, NA),
+                            ymin = 0,
+                            fill = FALSE)) +
+  geom_ribbon(mapping = aes(ymax = if_else(is_event | (!is_event & switch), 
+                                           cumret, NA),
+                            ymin = 0,
+                            fill = TRUE)) +
+  geom_line() +
+  geom_point() +
+  labs(fill = "is_event") +
+  theme(legend.position = "bottom")
+```
+Our first attempt uses the code below, which produces @fig-att-1.
+One issue with @fig-att-1 is that it doesn't satisfy the requirement that the colours "switch" immediately after the value for `is_event` changes.
+Instead, we have the plot ramping up and down for "event" periods between "non-event" periods, rather than going up and down vertically as in @fig-sol.
+
+```{r}
+#| echo: true
+#| label: fig-att-1
+#| fig-cap: First attempt
+df |>
+  arrange(date) |>
+  ggplot(aes(x = date, y = cumret)) +
+  geom_area(mapping = aes(y = if_else(!is_event, cumret, 0),
+                          fill = FALSE)) +
+  geom_area(mapping = aes(y = if_else(is_event, cumret, 0),
+                          fill = TRUE)) +
+  geom_line() +
+  geom_point() +
+  labs(fill = "is_event") +
+  theme(legend.position = "bottom")
+```
+Our second attempt uses the code below, which produces @fig-att-2.
+While @fig-att-2 satisfies the requirement that the colours between "switch" immediately after the value for `is_event` changes, we still have the issue of the plot gradually ramping up and down between dates rather than going up and down vertically.
+
+```{r}
+#| label: fig-att-2
+#| fig-cap: Second attempt
+df |>
+  arrange(date) |>
+  mutate(switch = coalesce(is_event != lead(is_event), FALSE)) |>
+  ggplot(aes(x = date, y = cumret)) +
+  
+  geom_area(mapping = aes(y = if_else(!is_event | (is_event & switch), 
+                                      cumret, 0),
+                          fill = FALSE)) +
+  geom_area(mapping = aes(y = if_else(is_event | (!is_event & switch), 
+                                      cumret, 0),
+                          fill = TRUE)) +
+  geom_line() +
+  geom_point() +
+  labs(fill = "is_event") +
+  theme(legend.position = "bottom")
+```
+## Hints
+
+ - The variable `switch` as defined in the second attempt could be useful.
+ - Setting the "false" value in the `if_else()` calls to `NA` rather than `0` might help.
+ - If you call `? geom_area`, you will see discussion of the closely related `geom_ribbon()` function. This could be useful.
