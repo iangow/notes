@@ -20,7 +20,7 @@ bibliography: papers.bib
 library(tidyverse)
 ```
 
-The data we will use here are as follows:
+The data we will use in this note are as follows:
 
 ```{r}
 df <-
@@ -38,15 +38,33 @@ df <-
   mutate(date = as.Date(date))
 ```
 
-The challenge here is to transform the data in `df` into @fig-sol.
-In words, we are looking to "fill" the area under the line with shading that is coloured according to the value of `is_event`.
-We want the shading to be continuous with the colours "switching" immediately after the value for `is_event` changes.
+The data in `cumret` are intended to represent the "cumulative return" of a stock over time.
+You might think of `cumret` as a stock price with an initial value of 1.
+The most common way to represent the cumulative returns over time in a plot uses a line plot (`geom_line()`), often with points representing discrete observations (e.g., end-of-day stock prices), which we can show using `geom_point()`.
 
+In this note, we will discuss the situation where some trading days are "event days" and some are not.
+A question naturally arises as to how depict the performance of a stock over time in such as case while presenting information about events.
+
+@fig-bar is an initial attempt at depicting this situation.
+We have cumulative returns depicted using both lines (`geom_line()`) and points (`geom_point()`) and the events are depicted as different colours in the columns (`geom_col()`).
+
+However, @fig-bar has some aesthetic deficiencies or inconsistencies of presentation.
+First, the column graph represents data shown as points as wide bars that are flat on top.
+Second, using columns to represent events suggest that the points go in the middle of the events.
+
+This second feature is inconsistent with the notion that the points are day-end prices and the events happen during the trading days.
+Thus a better representation would seem to be to have the bars line up *between* the points.
+
+However, merely moving the bars horizontally would not address the inconsistency introduced by the first feature.
+In a sense, the line plot presents an idealized notion of the stock price moving in a linear fashion between two points.
+It would seem desirable for the representation of the events to follow this notion.
+
+In a sense, we want a plot that simply fills the area under the line plot and uses colours to distinguish event periods from non-event periods.
 
 ```{r}
 #| echo: true
 #| label: fig-bar
-#| fig-cap: One plot
+#| fig-cap: An initial plot
 df |>
   arrange(date) |>
   ggplot(aes(x = date, y = cumret)) +
@@ -55,6 +73,14 @@ df |>
   geom_point() +
   theme(legend.position = "bottom")
 ```
+
+I argue that @fig-sol is the plot we are looking for.
+Note that viewing the "events" as occurring between points means that we lose one "column" that we have in @fig-bar.
+Of course, there is inherently a loss in "columns" with the new perspective because the number of lines between points is always one less than the number of consecutive points.
+
+If we accept @fig-sol as the goal, our challenge here is, in a nutshell, to transform the data in `df` into @fig-sol.
+In words, we are looking to "fill" the area under the line with shading that is coloured according to the value of `is_event`.
+We want the shading to be continuous with the colours "switching" immediately after the value for `is_event` changes.
 
 ```{r}
 #| echo: false
@@ -107,7 +133,6 @@ df |>
   arrange(date) |>
   mutate(switch = coalesce(is_event != lead(is_event), FALSE)) |>
   ggplot(aes(x = date, y = cumret)) +
-  
   geom_area(mapping = aes(y = if_else(!is_event | (is_event & switch), 
                                       cumret, 0),
                           fill = FALSE)) +
