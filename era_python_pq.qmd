@@ -1,5 +1,5 @@
 ---
-title: "Empirical Research in Accounting with Python"
+title: "Empirical Research in Accounting with Python (PQ)"
 author: 
   - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
     orcid: 0000-0002-6243-8409
@@ -71,46 +71,34 @@ Also, Python lacks the [**non-standard evaluation** goodies](https://adv-r.hadle
 
 ## Translating from R to Python: A case study
 
-In this note, I translate code from the `dbplyr` form it takes in *Empirical Research in Accounting: Tools and Methods* into equivalent Ibis code.
+In this note, I translate code from the `dbplyr` form it takes in the **parquet-focused version** of *Empirical Research in Accounting: Tools and Methods* into equivalent Ibis code.
 The [code I chose](https://iangow.github.io/far_book/parquet-wrds.html#working-with-parquet-larger-data-sets) for translation uses `crsp.dsf`, a relatively large table that illustrates nicely the benefits of working with remote data.^[The careful reader will notice that the R code in the book uses parquet data.
 However a version that used a PostgreSQL database would be almost identical.
 In itself, this nicely illustrates a key benefit of an approach using `dplyr` and `dbplyr`.]
 
 Apart from importing Ibis, I also set `ibis.options.interactive` so that displayed output from data frames is limited to ten rows.
 
-```{r}
-Sys.setenv(PGPORT= 9737L)
-Sys.setenv(PGDATABASE = "wrds")
-Sys.setenv(PGUSER = "iangow")
-Sys.setenv(WRDS_ID ="iangow")
-Sys.setenv(PGHOST= "wrds-pgdata.wharton.upenn.edu")
-```
-
 ```{python}
 import ibis
 ibis.options.interactive = True
 ```
 
-On my computers, I store my WRDS ID in an environment variable `WRDS_ID`. 
-You could replace the following lines with `wrds_id = "your_wrds_id"`.
+On my computers, I store the location of my parquet files in an environment variable `DATA_DIR`. 
  
 ```{python}
-import os
-wrds_id = os.environ['WRDS_ID']
+from os.path import join
+data_dir = "/Users/igow/Dropbox/pq_data"
 ```
 
-Now I connect to the WRDS PostgreSQL database and establish variables representing `crsp.dsf` and `crsp.stocknames`.
+Now I connect to the the local parquet data via DuckDB and establish variables representing `crsp.dsf` and `crsp.stocknames`.
 Note that these are effectively **remote** data frames, as no data is brought into memory.
 As such these lines take almost no time to run.
 
 ```{python}
-con = ibis.postgres.connect(user=wrds_id, 
-                            host="wrds-pgdata.wharton.upenn.edu",
-                            port=9737,
-                            database="wrds")
+con = ibis.duckdb.connect()
 
-dsf = con.table("dsf", schema="crsp")
-stocknames = con.table("stocknames", schema="crsp")
+dsf = con.read_parquet(join(data_dir, "crsp", "dsf.parquet"))
+stocknames = con.read_parquet(join(data_dir, "crsp", "stocknames.parquet"))
 ```
 
 Now that we have our remote data frames set up, we can begin to interrogate the data.
@@ -122,7 +110,7 @@ dsf.count().to_pandas()
 
 Ibis takes a different approach from `dbplyr` in translating code to SQL.
 In `dbplyr`, many commonly used functions available to `dplyr` are translated to SQL equivalents in the dialect matching the connection supplied.
-For example `year(date)` is translated to `EXTRACT(year FROM "date")` in PostgreSQL's dialect of SQL.
+For example `year(date)` is translated to `EXTRACT(year FROM "date")` in DuckDB's dialect of SQL.
 If no translation is found, then the function is passed along for the SQL query engine to interpret.
 An example of this is seen in `date_part('year', date)` below.
 
@@ -145,7 +133,7 @@ It seems that Ibis takes a different approach that is more like the second of th
 However, Ibis requires that we register each function that we want to use as a user-defined function (UDF).
 We will want to use `date_part()` below, so we register this function as follows.
 We import `udf` and then add a **decorator** before our function to let Python know that we are registering a built-in scalar UDF.
-Because the function is handled by PostgreSQL, the body of our function is simply an ellipsis (`...`).
+Because the function is handled by DuckDB, the body of our function is simply an ellipsis (`...`).
 All we have to do is indicate the slots for the arguments (`field` and `source` in this case) and returned data type using the type hint `-> int`.
 
 ```{python}
@@ -160,7 +148,7 @@ Below we will use other UDFs and we register these now.
 
 ```{python}
 @udf.scalar.builtin
-def regexp_like(string, pattern) -> bool:
+def regexp_matches(string, pattern) -> bool:
     ...
     
 @udf.scalar.builtin
@@ -232,8 +220,9 @@ Try removing that portion of the code, or the `select("permno", "date", "ret")` 
 dsf_subset = dsf. \
   filter(dsf.date == "1986-01-07"). \
   select("permno", "date", "ret"). \
+  to_pyarrow(). \
   to_pandas()
-
+  
 dsf_subset[["permno", "date", "ret"]]
 ```
 
@@ -243,7 +232,7 @@ Now, we will use `crsp.stocknames` to look up the PERMNO for Apple so that we ca
 
 ```{python}
 apple_permno = stocknames. \
-    filter(regexp_like(stocknames.comnam, "^APPLE COM")). \
+    filter(regexp_matches(stocknames.comnam, "^APPLE COM")). \
     select("permno"). \
     to_pandas(). \
     permno[0]
@@ -268,6 +257,7 @@ plot_data = dsf. \
     mutate(log_ret = ln(1 + coalesce(dsf.ret, 0))). \
     mutate(sum_ret = exp(_.log_ret.sum().over(w))). \
     select("permno", "date", "ret", "sum_ret"). \
+    to_pyarrow(). \
     to_pandas()
 ```
 
