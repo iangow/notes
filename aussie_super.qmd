@@ -43,21 +43,23 @@ g_funda <- load_parquet(db, table = "g_funda", schema = "comp")
 funda <- load_parquet(db, table = "funda", schema = "comp")
 
 vars <- c("gvkey", "datadate", "conm", "ceq",
-          "fyear", "fic", "sale",
+          "fyear", "fic", "sale", "niadj", "nicon",
           "oiadp", "dltt", "dlc", "mib", "teq")
 
 g_funda_mod <-
   g_funda |>
   filter(indfmt == "INDL", datafmt == "HIST_STD",
          consol == "C", popsrc == "I") |>
-  select(all_of(vars))
+  select(any_of(vars)) |>
+  rename(ni = nicon)
 
 funda_mod <-
   funda |>
   filter(indfmt == "INDL", datafmt == "STD",
          consol == "C", popsrc == "D")  |>
   filter(fic != "MEX") |>
-  select(all_of(vars))
+  select(any_of(vars)) |>
+  rename(ni = niadj)
 
 funda_all <-
   g_funda_mod |>
@@ -70,11 +72,13 @@ histsuper <-
   mutate(ic = dltt + dlc + mib + teq) |>
   group_by(gvkey) |>
   window_order(datadate) |>
-  mutate(lag_ic = lag(ic)) |>
+  mutate(lag_ceq = lag(ceq),
+         lag_ic = lag(ic)) |>
   ungroup() |>
   filter(fyear >= 2021) |>
   mutate(ebitm = oiadp / sale,
-         roic = oiadp / ((ic + lag_ic) / 2)) |>
+         roic = oiadp / ((ic + lag_ic) / 2),
+         roe = ni / (ceq + lag_ceq) / 2) |>
   collect()
 ```
 
@@ -94,6 +98,24 @@ oecd_roic <-
 
 local_roic_str <- round(local_roic * 100, 1)
 oecd_roic_str <- round(oecd_roic * 100, 1)
+```
+
+```{r}
+#| include: false
+local_roe <-
+  histsuper |>
+  filter(gvkey %in% local_gvkeys) |>
+  summarize(median(roe, na.rm = TRUE)) |>
+  pull()
+
+oecd_roe <-
+  histsuper |>
+  filter(!gvkey %in% local_gvkeys) |>
+  summarize(median(roe, na.rm = TRUE)) |>
+  pull()
+
+local_roe_str <- round(local_roe * 100, 1)
+oecd_roe_str <- round(oecd_roe * 100, 1)
 ```
 
 ```{r}
@@ -133,9 +155,10 @@ See @fig-roic.
 #| label: fig-roic
 #| fig-cap: "Distribution of Return on Capital across OECD Supermarkets: 2021--2023"
 #| echo: false
-breaks <- seq(round(min(histsuper$roic), 2), 
-              round(max(histsuper$roic), 2), 
-              0.02)
+x_min <- round(min(histsuper$roic), 2)
+x_max <- round(max(histsuper$roic), 2)
+breaks <- seq(x_min, x_max, 0.02)
+
 histsuper |>
   filter(!gvkey %in% local_gvkeys) |>
   ggplot(aes(x = roic)) +
@@ -150,8 +173,40 @@ histsuper |>
   annotate("text", x = oecd_roic - 0.002, y = 7.,
            label = str_c("OECD Median = ", oecd_roic_str, "%"),
            color = "blue", angle = 360, hjust = 1) +
-  xlab("EBIT Margin") + ylab("Frequency") +
-  theme(axis.text = element_text(size = 7))
+  xlab("Return on Capital") + ylab("Frequency") +
+  theme(axis.text = element_text(size = 7)) +
+  xlim(c(x_min, x_max))
+```
+
+# Return on Equity
+
+The frequency distribution of ROE across the world shows that the ROC of Woolworths and Coles is clearly in the middle of the distribution of among the world’s supermarkets. 
+See @fig-roe. 
+
+```{r}
+#| label: fig-roe
+#| fig-cap: "Distribution of Return on Equity across OECD Supermarkets: 2021--2023"
+#| echo: false
+x_min <- max(-0.06, max(min(histsuper$roe, na.rm = TRUE)))
+x_max <- max(histsuper$roe, na.rm = TRUE)
+breaks <- seq(round(x_min, 2), round(x_max, 2), 0.02)
+
+histsuper |>
+  filter(!gvkey %in% local_gvkeys, !is.na(roe), roe > x_min) |>
+  ggplot(aes(x = roe)) +
+  geom_density() +
+  scale_x_continuous(breaks = breaks,
+                     labels = scales::label_percent()) +
+  geom_vline(xintercept = local_roe, color = "blue", linetype = "solid") +
+  annotate("text", x = local_roe + 0.002, y = 7.5,
+           label = str_c("Coles/Woolies = ", local_roe_str, "%"),
+           color = "blue", angle = 360, hjust = 0) +
+  geom_vline(xintercept = oecd_roe, color = "blue", linetype = "dashed") +
+  annotate("text", x = oecd_roe - 0.002, y = 7.,
+           label = str_c("OECD Median = ", oecd_roe_str, "%"),
+           color = "blue", angle = 360, hjust = 1) +
+  xlab("Return on Equity") + ylab("Frequency") +
+  theme(axis.text = element_text(size = 7)) 
 ```
 
 # Fixed Cost Investments and Quality of Service
@@ -207,4 +262,119 @@ The magnitude of the fixed investments by Australian supermarkets is both strong
 
 # Caveat
 The reported figures in this analysis are based on Woolworths Group which includes the effects of the non-food divisions such as K-Mart. 
-The self-reported EBIT margins and ROFE by the Woolworths Group for the Woolworths food division are significantly greater than the medians for the OECD benchmark supermarkets. 
+The self-reported EBIT margins and ROFE by the Woolworths Group for the Woolworths food division are significantly greater than the medians for the OECD benchmark supermarkets.
+
+# DuPont analysis
+
+As shareholders we may care about return on equity (*ROE*). 
+Thus, understanding what drives *ROE* helps us better understand what drives stock value. 
+The simple DuPont decomposition is an attempt to do this, but does not clearly separate the effects of operating vs. financing decisions.^[[Simple DuPont Decomposition: \\ $\textit{ROE}=\frac{NI}{E}=\frac{\textit{Sales}}{A}\times\frac{NI}{\textit{Sales}}\times\frac{A}{E}$.]
+For example, net income includes (thus is confounded by) the effects of capital structure (e.g., interest expense), complicating the comparison between firms with different level of debt. 
+Similarly, total assets includes both operating and financial assets.
+The advanced DuPont decomposition introduces return on net operating assets (*RNOA*) as a central measure of operating performance to separate the effects of operating decisions from the effects of financial leverage on *ROE*. 
+
+## Concepts and Definitions} {#sec-concepts}
+
+To understand the advanced DuPont decomposition, it is useful to introduce the following concepts. 
+These concepts arise from dividing the balance sheet into operating assets and liabilities and financial assets and liabilities. 
+The following section will illustrate
+how these concepts become useful. 
+
+1. Net Operating Assets (*NOA*): Operating Working Capital + Net Operating Long-Term Assets
+      
+  - Operating Working Capital = Current Operating Assets - Current Operating Liabilities^[Current operating assets is current assets minus the amount of cash and marketable securities above what is considered "normal" or necessary to operate the business. 
+Current operating liabilities is current liabilities minus short-term debt and the current portion of long-term debt.]
+  - Net Operating Long-Term Assets = Total Long-Term Assets - Non-Interest-Bearing Long-Term Liabilities
+          
+    
+2. Net Operating Profit After Taxes (*NOPAT*): Net Income + Net Interest Expenses After Tax^[The idea is to calculate the firm's profitability if it held no debt and has no interest expense.]
+    
+  - Net Interest Expense After Tax = (Interest Expense - Interest Income)$\times(1-\tau) = \textit{Int} \times(1-\tau)$
+                $$
+                    \textit{NOPAT} = NI + Int\times(1-\tau) 
+                    = (\textit{EBIT}-Int)\times(1-\tau)+\textit{Int}\times(1-\tau) 
+                    = \textit{EBIT}\times(1-\tau)
+                $$
+            
+    
+3. Return on *NOA* (*RNOA*): $= \textit{NOPAT}/\textit{NOA}$.^This measure is not affected by the amount of debt (relative to equity) because *NOA* and *NOPAT* are not affected by capital structure.]
+    
+    \item Spread: \textit{R\textit{NOA}--Net Cost of Debt}
+            \begin{itemize}
+                \item Net Cost of Debt = Net Interest Expense After Tax / Net Debt
+                \item Net Debt = Financial Liabilities - Financial Assets\footnote{Financial liabilities is the sum of short-term debt, current portion of long-term debt, and interest-bearing long-term debt. Financial assets are the cash and marketable securities above what is considered ``normal'' or necessary to operate the business.}
+            \end{itemize}    
+    \item Net Financial Leverage: Net Debt/Equity
+\end{enumerate}
+
+## Derivation}\label{sec:Derivation}
+
+\begin{enumerate}
+    \item $A = L + E$ $^{[}$\footnote{We begin with the balance sheet equation}$^{]}$
+    \bigskip
+    \bigskip
+    \item $OA + FA = OL + FL + E$ $^{[}$\footnote{We will divide assets and liabilities into operating and financial components}$^{]}$
+    \bigskip
+    \bigskip
+    \item $\textit{NOA} = \textit{Net Debt} +E$ $^{[}$\footnote{We can re-express in terms of net operating assets and net debt}$^{]}$
+    \bigskip
+    \bigskip
+    \item \begin{eqnarray*}
+    \textit{ROE}&=&\frac{NI}{E}\\
+       &=&\frac{\textit{EBIT}\times(1-\tau) - \textit{Int}\times(1-\tau)}{E}\\
+       &=&\left[\frac{\textit{EBIT}\times(1-\tau)}{\textit{NOA}}\right] \times \frac{\textit{NOA}}{E} - \left[\frac{\textit{Int}\times(1-\tau)}{\textit{Net Debt}}\right] \times \frac{\textit{Net Debt}}{E} \\
+       &=& \textit{RNOA} \times \frac{E+\textit{Net Debt}}{E} - \textit{Net Borrowing Cost} \times \frac{\textit{Net Debt}}{E} \\
+       &=&\textit{RNOA}+ \left(\textit{RNOA}-\textit{Net Borrowing Cost}\right) \times \frac{\textit{Net Debt}}{E} \\ 
+       &=&\textit{RNOA} + \textit{Spread}\times \textit{Net Fin Leverage}
+    \end{eqnarray*}
+        
+\end{enumerate}
+
+\bigskip
+\section{Conceptual Notes}
+\begin{enumerate}
+    \item You can think of RNOA as the \textbf{ROA or ROE for an all-equity financed firm}. It takes out the effect of financing from both the numerator and the denominator of ROA, so we can focus solely on how well managers are operating the firm or deploying the company's net operating assets independent of financing decisions. 
+    \item \textit{Spread}$\times$ \textit{Net Fin Leverage} is the \textbf{gain from financial leverage}. Another way to think of this is to re-express this gain as 
+    \begin{equation*}
+        \frac{Spread\times NetDebt}{Equity}.
+    \end{equation*} 
+    The numerator is the dollar return you generate to shareholders from taking on additional (net) debt: since you earn \textit{RNOA}$\times$\textit{NetDebt} dollars, but pay back an effective interest of \textit{NetInterestRate}$\times$\textit{NetDebt}, with the remainder representing the dollar amount that is attributable to equity holders. Dividing by total equity re-expresses this dollar amount as the percent return to equity that comes from taking out additional net debt. 
+    \item The effective interest rate on net debt 
+        \begin{equation*}
+            \frac{(Interest Expense - Interest Income)\times(1-\tau)}{NetDebt}        
+        \end{equation*}
+        evaluates the effectiveness of the company's management of financial assets and liabilities. It punishes for holding high levels of financial assets (lower \textit{NetDebt}) that have low returns (lower \textit{Interest Income}), or for taking out small amount of loans at a high interest (higher \textit{InterestExpense} with lower \textit{NetDebt}). On the other hand, it rewards generating high level of financial returns with a low level of financial assets (high \textit{InterestIncome} and lower \textit{NetDebt}) and rewards low interest expenses especially at high levels of debt (lower \textit{InterestExpense} and higher \textit{NetDebt}). 
+    \item Although \textit{Spread} may be positive at any point in time, the gain from leverage may not increase monotonically as we increase financial leverage. Above some efficient level of leverage, additional net debt may increase the cost of debt. Combined with diminishing returns to scale which could lower RNOA, one expects the spread to eventually decline as leverage increases. 
+    \item What if the firm has net financial assets (i.e., $\textit{Net Debt} < 0)$? In this case, we can re-express the deomposition as follows: 
+        \begin{eqnarray*}
+                ROE &=& RNOA+(RNOA - Interest)\times\frac{NetDebt}{E} \\ 
+                    &=& RNOA+(RNFA - RNOA)\times\frac{NFA}{E} 
+         \end{eqnarray*}[\footnote{NFA = Net Financial Assets=-Net Debt. RNFA = Return on Net Financial Assets = (Interest Revenue - Interest Expense)(1-$\tau$) / Net Financial Assets = (Interest Expense-Interest Revenue)(1-$\tau$) / Net Debt  = Effective Interest Rate}] 
+    
+    In this case, equity is invested in operating and financial assets ($\textit{NOA} + \textit{NFA} = E$). Thus, if returns from financing assets exceed that of operating assets, then equity holders benefit when a greater proportion of the capital is invested in net financial assets. If RNOA exceeds RNFA, on the other hand, then investing a greater proportion of equity in financial assets is worse for equity holders. 
+\end{enumerate}
+
+
+## Implementation
+
+1 Divide assets and liabilities on the balance sheet into operating and financial assets and liabilities.^[Technically, we can carefully divide cash into an operating or "normal" portion and an "excess" or financial portion. 
+Similarly, when we look at balance sheet accounts, we can carefully separate components of accounts (e.g., "LT Investments") into portions that are operating and those that are financial. In practice, we often treat all cash as negative net debt, and all accounts other than debt, borrowings, or capital lease liabilities as operating.]
+        
+  - Net Operating Working Capital (CA - CL and exclude financial assets and liabilities)
+  
+  - Net Operating Long-Term Capital (LT Assets - LT Liabilities and exclude LT financial assets and LT financial liabilities)
+Doing so allows us to re-express the standard balance sheet equation as follows:
+    $$
+    \begin{eqnarray*}
+        A &=& L+E \\ 
+        OA + FA &=& OL + FA + E \\
+        NOA &=& ND + E
+    \end{eqnarray*}
+    $$
+ -  Divide the income statement into an operating and financial income and expenses.^[Typically we just take interest expense and interest income as reported. However, there could be financial assets (e.g., short term or long term securities) that generate earnings reported elsewhere in the income statement which we can parse out. Alternatively, there could be interest revenues (e.g., from holding "normal" level of cash necessary for operations of the business) that could be considered operating earnings rather than financial.]
+Note that how we divide the income statement should be consistent with the approach taken to divide the balance sheet. 
+  
+  - Compute NOPAT, RNOA, Spread, and Net Financial Leverage
+    
+  - Check that ROE is *exactly* equal to RNOA + Spread $\times$ Net Financial Leverage
+\end{enumerate}
