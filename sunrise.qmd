@@ -1,0 +1,115 @@
+---
+title: "Sunrise and sunset times"
+author: 
+  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2024-04-20
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+csl: jfe.csl
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+    docx:
+        number-sections: true
+---
+
+```{r}
+#| include: false
+library(maps)
+library(lubridate, warn.conflicts = FALSE)
+library(dplyr, warn.conflicts = FALSE)
+library(suncalc)
+library(lutz)
+library(ggplot2)
+library(ggrepel)
+library(tidyr)
+```
+
+```{r}
+make_local <- function(time, tz) {
+  as.character(with_tz(time, tz)) %>%
+    as.POSIXct() %>%
+    strftime(., format="%H:%M:%S")
+}
+```
+
+```{r}
+the_date <- "2019-04-06"
+
+big_cities <- 
+  world.cities %>%
+  filter(pop > 2e5) %>%
+  mutate(date = as.Date(the_date)) %>%
+  rename(lon = long) %>%
+  mutate(tz = tz_lookup_coords(lat, lon, warn = FALSE)) %>%
+  as_tibble()
+```
+
+```{r}
+sunrise <-
+  big_cities |>
+  getSunlightTimes(data = _, keep = "sunrise") %>%
+  select(name, country.etc, sunrise) %>%
+  as_tibble()
+
+merged <-
+  big_cities %>%
+  inner_join(sunrise) %>%
+  rowwise() %>%
+  mutate(local_time = make_local(sunrise, tz)) %>%
+  mutate(local_time = as.POSIXct(paste(date, local_time)))
+```
+
+```{r}
+merged %>%
+  ggplot(aes(x = local_time)) +
+  ggtitle(paste("Sunrise on", the_date)) +
+  geom_histogram(binwidth = 5 * 60) +
+  geom_text_repel(data = subset(merged, 
+                                 name == "Boston" | (pop > 1e6 &
+                                 ( local_time > as.POSIXct(paste(date, "07:50.00")) |
+                                  country.etc %in% c("Australia")))),
+                  mapping = aes(y = 10, label = name, color = country.etc),
+                  angle = 90, vjust = 1, hjust = 1)
+
+
+sample_cities <-
+    crossing(
+      world.cities %>%
+        filter(name %in% "Tokyo" |
+                 (name %in% c("Boston", "Sydney") & country.etc %in% c("USA", "Australia")) |
+                 (name == "Melbourne" & country.etc == "Australia")) %>%
+        rename(lon = long) %>%
+        mutate(tz = tz_lookup_coords(lat, lon, warn = FALSE)) %>%
+        as_tibble(),
+      date = seq(as.Date("2019-01-01"), to = as.Date("2019-12-31"), by = 1))
+
+make_time <- function(a_time, tz) {
+  res <- strftime(a_time, format="%H:%M:%S", tz = tz)
+  res <- as.POSIXct(paste("2019-01-01", res))
+  res
+}
+
+sample_cities_times <-
+  sample_cities %>%
+  getSunlightTimes(data = ., keep = c("sunset", "sunrise")) %>%
+  bind_cols(sample_cities, .) %>%
+  rowwise() %>%
+  mutate(sunrise = make_time(sunrise, tz),
+         sunset = make_time(sunset, tz))
+  
+sample_cities_times %>%
+  gather(key = "event", value = "time", sunrise, sunset) %>%
+  ggplot(aes(x = date, y = time, group = event, color = event)) +
+  geom_line() +
+  facet_wrap(~ name) +
+  scale_y_datetime(labels = function(x) strftime(x, format="%H:%M:%S"),
+                   date_breaks = "1 hour")
+```
