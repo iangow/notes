@@ -1,0 +1,245 @@
+---
+title: "Defining winter and summer in Sydney"
+author: 
+  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2024-04-20
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+title-block-style: plain
+csl: jfe.csl
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+    docx:
+        number-sections: true
+---
+
+```{r}
+#| include: false
+library(reticulate)
+library(tidyverse)
+library(DBI)
+library(dbplyr)
+library(scales)
+```
+
+```{python}
+#| label: py_get_data
+#| include: false
+import openmeteo_requests
+
+import requests_cache
+import pandas as pd
+from retry_requests import retry
+
+# Setup the Open-Meteo API client with cache and retry on error
+cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
+retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
+openmeteo = openmeteo_requests.Client(session = retry_session)
+latitude = -33.9
+longitude = 151.
+
+# Make sure all required weather variables are listed here
+# The order of variables in hourly or daily is important to assign them correctly below
+url = "https://archive-api.open-meteo.com/v1/archive"
+params = {
+	"latitude": latitude,  
+	"longitude": longitude,
+	"start_date": "2001-01-01",
+	"end_date": "2023-12-31",
+	"hourly": "temperature_2m",
+	"daily": ["temperature_2m_max", "temperature_2m_min"],
+	"timezone": "Australia/Sydney"
+}
+responses = openmeteo.weather_api(url, params=params)
+response = responses[0]
+
+# Process daily data. The order of variables needs to be the same as requested.
+daily = response.Daily()
+daily_temperature_2m_max = daily.Variables(0).ValuesAsNumpy()
+daily_temperature_2m_min = daily.Variables(1).ValuesAsNumpy()
+
+daily_data = {"date": pd.date_range(
+	start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
+	end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
+	freq = pd.Timedelta(seconds = daily.Interval()),
+	inclusive = "left"
+)}
+daily_data["temperature_2m_max"] = daily_temperature_2m_max
+daily_data["temperature_2m_min"] = daily_temperature_2m_min
+
+daily_dataframe = pd.DataFrame(data = daily_data)
+```
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+
+latitude <- py$latitude
+longitude <- py$longitude
+
+mel_daily <-
+  py$daily_dataframe |>
+  mutate(date = as.Date(date, tz = "Australia/Sydney"))  |>
+  copy_to(db, df = _, name = "mel_daily", overwrite = TRUE)
+```
+
+```{r}
+#| include: false
+season_length <- 91
+
+mel_stats <-
+  mel_daily |>
+  window_order(date) |>
+  window_frame(0, season_length - 1) |>
+  mutate(n_days = n(),
+         last_day = min(date, na.rm = TRUE),
+         avg_min = mean(temperature_2m_min, na.rm = TRUE),
+         avg_max = mean(temperature_2m_max, na.rm = TRUE)) |>
+  arrange() |>
+  compute()
+```
+
+```{r}
+#| include: false
+max_year <-
+  mel_stats |>
+  summarize(max(year(date))) |>
+  pull()
+
+max_n_days <-
+  mel_stats |>
+  summarize(max(n_days)) |>
+  pull()
+
+mel_avgs <-
+  mel_stats |>
+  ungroup() |>
+  mutate(month = month(date), day = day(date), year = year(date)) |>
+  filter(n_days == max_n_days, year < max_year) |>
+  group_by(month, day) |>
+  summarize(avg_min = mean(avg_min, na.rm = TRUE),
+            avg_max = mean(avg_max, na.rm = TRUE),
+            .groups = "drop") |>
+  collect()
+```
+
+```{r}
+#| include: false
+mel_seasons <-
+  mel_avgs |> 
+  mutate(month = str_pad(month, width = 2, pad = "0"),
+         day = str_pad(day, width = 2, pad = "0")) |>
+  mutate(date = as.Date(str_c("2024", month, day, sep = "-"))) |>
+  select(date, avg_min, avg_max) |>
+  pivot_longer(cols = -date, names_to = "metric") |>
+  mutate(metric = str_replace(metric, "^avg_", ""))
+```
+
+```{r}
+#| include: false
+winter_max <-
+  mel_seasons |>
+  filter(metric == "max") |>
+  filter(value == min(value)) |>
+  select(date) |>
+  pull()
+
+winter_min <-
+  mel_seasons |>
+  filter(metric == "min") |>
+  filter(value == min(value)) |>
+  select(date) |>
+  pull()
+
+summer_max <-
+  mel_seasons |>
+  filter(metric == "max") |>
+  filter(value == max(value)) |>
+  select(date) |>
+  pull()
+
+summer_min <-
+  mel_seasons |>
+  filter(metric == "min") |>
+  filter(value == max(value)) |>
+  select(date) |>
+  pull()
+
+hex <- hue_pal()(2)
+```
+
+```{r}
+#| include: false
+min_year <- mel_stats |> summarize(min(year(date))) |> pull()
+max_year <- mel_stats |> summarize(max(year(date))) |> pull()
+
+fig_cap <- str_c("Average daily temperatures for ", max_n_days, 
+                 " days following indicated date for period ",
+                 min_year, "--", max_year)
+```
+
+```{r}
+#| label: fig-mel
+#| fig-cap: !expr fig_cap
+#| echo: false
+mel_seasons |>
+  ggplot(aes(x = date, y = value, color = metric)) + 
+  geom_line() +
+  geom_vline(xintercept = summer_max, color = hex[1]) +
+  geom_vline(xintercept = summer_min, color = hex[2]) +
+  geom_vline(xintercept = winter_max, color = hex[1]) +
+  geom_vline(xintercept = winter_min, color = hex[2]) +
+  scale_x_date(breaks = "1 month",
+               labels = date_format("%b"),
+               guide = guide_axis(angle = 90)) +
+  theme(legend.position = "bottom")
+```
+
+In the United States, one often hears people speak of the "official" start of seasons.
+Ironically, there seems to be nothing that is official about these dates.
+However, there is consensus about the dates.
+The "official" start of summer is the summer solstice (for 2024: 20 June in Boston, 21 December in Sydney) and the "official" start of winter is (for 2024: 21 December in Boston, 21 June in Sydney).
+
+In Australia, the usual convention is to divide seasons by months.
+On this basis, winter starts on 1 June and summer starts on 1 December.
+
+Is there a sense in which one approach is more correct than the other?
+Focusing on summer and winter, one definition for these seasons would be that winter starts on the first day of the `r max_n_days`-day period that is the coldest such period for a year averaged over a number of years.
+Similarly, summer should starts on the first day of the `r max_n_days`-day period that is the hottest such period for a year averaged over a number of years.
+
+We answer this question focusing on Sydney, Australia (latitude of `r latitude`, longitude: `r longitude`).
+
+Daily temperature data from [Open-Meteo](https://open-meteo.com) comprise a maximum and minimum temperature.
+So immediately we have two possible definitions of each season according to the temperature we use (e.g., summer could be the `r max_n_days`-day period that has the highest average minimum temperature or it could be the period that has the highest average maximum temperature.
+Here we consider both.
+
+The start of winter based on the `r max_n_days`-day period with the lowest average maximum temperature is **`r format(winter_max, "%d %B")`**.
+The start of winter based on the `r max_n_days`-day period with the lowest average minimum temperature is **`r format(winter_min, "%d %B")`**.
+So whether we use maximums or minimums, we get close to the Australian convention for winter.
+
+The start of summer based on the `r max_n_days`-day period with the highest average maximum temperature is **`r format(summer_max, "%d %B")`**.
+The start of summer based on the `r max_n_days`-day period with the highest average minimum temperature is **`r format(summer_min, "%d %B")`**.
+With summer, we get close to the US convention for summer using minimums, but  close to the Australian convention using maximums.
+
+
+```{r}
+#| include: false
+spring_max <- winter_max + days(max_n_days)
+autumn_max <- summer_max + days(max_n_days)
+```
+
+Interestingly, it seems that using average maximums for summer and winter gets closest to the current approach in Australia.
+However, even using these we have the issue that spring begins on `r format(spring_max, "%d %B")` and autumn begins on `r format(autumn_max, "%d %B")`.
+This implies a spring of `r summer_max - spring_max` days and an autumn of `r winter_max + years(1) - autumn_max` days.
+
+```{r}
+#| include: false
+dbDisconnect(db)
+```
