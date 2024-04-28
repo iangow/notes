@@ -1,0 +1,104 @@
+---
+title: "Ben F orgers"
+author: Ian D. Gow
+date: 2024-04-28
+date-format: "D MMMM YYYY"
+format:
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+```
+
+```{r}
+#| cache: true
+options(HTTPUserAgent = "iandgow@gmail.com")
+
+t <- "FirmFilings.zip"
+url <- "https://pcaobus.org/assets/PCAOBFiles/FirmFilings.zip"
+path <- file.path("data", t)
+
+if (!file.exists(path)) {
+  download.file(url, path)
+}
+```
+
+```{r}
+fix_names <- function(names) {
+  names <- tolower(gsub("\\s+", "_", names))
+  names <- gsub("<", "lt", names)
+  names <- gsub(">", "gt", names)
+  names <- gsub("[)(_]+", "_", names)
+  names
+}
+
+form_aps <- 
+  read_csv(path, guess_max = Inf, show_col_types = FALSE) |> 
+  rename_with(fix_names)
+
+combine_names <- function(names) {
+  names <- str_replace_na(names, "")
+  names <- str_c(names, collapse = " ")
+  names <- str_replace_all(names, "\\s+", " ")
+  names
+}
+
+most_common_name <-
+  form_aps |> 
+  count(engagement_partner_id, 
+         engagement_partner_last_name, 
+         engagement_partner_middle_name,
+         engagement_partner_first_name, 
+        name = "n_forms") |>
+    group_by(engagement_partner_id) |>
+    arrange(desc(n_forms)) |>
+  filter(row_number() == 1) |>
+  rowwise() |>
+  mutate(engagement_partner_name = 
+           combine_names(c(engagement_partner_first_name,
+                           engagement_partner_middle_name,
+                           engagement_partner_last_name))) |>
+  select(engagement_partner_id, engagement_partner_name)
+
+names_df <-
+  form_aps |> 
+  distinct(engagement_partner_id, 
+           engagement_partner_last_name, 
+           engagement_partner_middle_name,
+           engagement_partner_first_name) |>
+  count(engagement_partner_id, name = "n_names") |>
+  inner_join(most_common_name, by = "engagement_partner_id")
+
+names_df |> 
+  filter(n_names >= 6) |>
+  arrange(desc(n_names))
+```
+
+```{r}
+#| label: fig-ft
+#| fig-cap: Distribution of auditors by number of reported spellings
+names_df |>  
+  count(n_names, name = "count") |>
+  ggplot(aes(x = n_names, y = count)) +
+  geom_col()
+```
+
+```{r}
+#| label: fig-ft-log1p
+#| fig-cap: Distribution of auditors by number of reported spellings ($log(1 + y)$)
+names_df |>  
+  count(n_names, name = "count") |>
+  ggplot(aes(x = n_names, y = count)) +
+  geom_col() +
+  scale_y_continuous(transform = "log1p")
+```
