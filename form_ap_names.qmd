@@ -42,6 +42,7 @@ options(tibble.width = 75)
 
 ```{r}
 #| message: false
+#| include: false
 library(tidyverse)
 library(DBI)
 library(dbplyr)
@@ -55,6 +56,7 @@ The Form AP data are made available by the PCAOB as a single compressed comma-se
 The PCAOB requires use to provide an email address when downloading data using a script and we can set this using the `HTTPUserAgent` option as in the R code below.^[Use your actual email address here.]
 
 ```{r}
+#| cache: true
 #| include: false
 options(HTTPUserAgent = "iandgow@gmail.com")
 ```
@@ -62,6 +64,17 @@ options(HTTPUserAgent = "iandgow@gmail.com")
 ```{r}
 #| eval: false
 options(HTTPUserAgent = "your_name@some_email.com")
+```
+
+```{r}
+#| include: false
+fix_names <- function(names) {
+  names <- tolower(gsub("\\s+", "_", names))
+  names <- gsub("<", "lt", names)
+  names <- gsub(">", "gt", names)
+  names <- gsub("[)(_]+", "_", names)
+  names
+}
 ```
 
 Once we have set `HTTPUserAgent`, we can run the script available [here](https://raw.githubusercontent.com/iangow/notes/main/get_form_aps.R) by executing the following line in R.
@@ -265,6 +278,7 @@ I next produce @fig-ft, which is almost identical to the plot in the [FT article
 ```{r}
 #| label: fig-ft
 #| fig-cap: Distribution of auditors by number of reported spellings
+#| echo: false
 names_df |>  
   count(n_names, name = "count") |>
   ggplot(aes(x = n_names, y = count)) +
@@ -278,6 +292,7 @@ One approach to address this is to use a log-transformation.
 ```{r}
 #| label: fig-ft-log1p
 #| fig-cap: Distribution of auditors by number of reported spellings ($log(1 + y)$)
+#| echo: false
 names_df |>  
   count(n_names, name = "count") |>
   ggplot(aes(x = n_names, y = count)) +
