@@ -4,6 +4,8 @@ author: Ian D. Gow
 date: 2024-04-28
 date-format: "D MMMM YYYY"
 format:
+  html:
+    colorlinks: true
   pdf: 
     colorlinks: true
     geometry:
@@ -18,71 +20,59 @@ bibliography: papers.bib
 ```{r}
 #| message: false
 library(tidyverse)
+library(DBI)
+library(dbplyr)
 ```
 
 ```{r}
-#| cache: true
-options(HTTPUserAgent = "iandgow@gmail.com")
-
-t <- "FirmFilings.zip"
-url <- "https://pcaobus.org/assets/PCAOBFiles/FirmFilings.zip"
-path <- file.path("data", t)
-
-if (!file.exists(path)) {
-  download.file(url, path)
-}
+db <- dbConnect(duckdb::duckdb())
+form_aps <- tbl(db, sql("SELECT * FROM 'data/form_aps.parquet'"))
 ```
 
 ```{r}
-fix_names <- function(names) {
-  names <- tolower(gsub("\\s+", "_", names))
-  names <- gsub("<", "lt", names)
-  names <- gsub(">", "gt", names)
-  names <- gsub("[)(_]+", "_", names)
-  names
-}
-
-form_aps <- 
-  read_csv(path, guess_max = Inf, show_col_types = FALSE) |> 
-  rename_with(fix_names)
-
-combine_names <- function(names) {
-  names <- str_replace_na(names, "")
-  names <- str_c(names, collapse = " ")
-  names <- str_replace_all(names, "\\s+", " ")
-  names
-}
+form_aps_names <-
+  form_aps |> 
+  mutate(engagement_partner_name = 
+           str_c(engagement_partner_first_name,
+                 engagement_partner_middle_name,
+                 engagement_partner_last_name, sep = " "))
 
 most_common_name <-
-  form_aps |> 
-  count(engagement_partner_id, 
-         engagement_partner_last_name, 
-         engagement_partner_middle_name,
-         engagement_partner_first_name, 
-        name = "n_forms") |>
-    group_by(engagement_partner_id) |>
-    arrange(desc(n_forms)) |>
+  form_aps_names |>
+  count(engagement_partner_id, engagement_partner_name, name = "n_forms") |>
+  group_by(engagement_partner_id) |>
+  window_order(desc(n_forms)) |>
   filter(row_number() == 1) |>
-  rowwise() |>
-  mutate(engagement_partner_name = 
-           combine_names(c(engagement_partner_first_name,
-                           engagement_partner_middle_name,
-                           engagement_partner_last_name))) |>
   select(engagement_partner_id, engagement_partner_name)
 
 names_df <-
-  form_aps |> 
-  distinct(engagement_partner_id, 
-           engagement_partner_last_name, 
-           engagement_partner_middle_name,
-           engagement_partner_first_name) |>
-  count(engagement_partner_id, name = "n_names") |>
-  inner_join(most_common_name, by = "engagement_partner_id")
+  form_aps_names |> 
+  group_by(engagement_partner_id) |>
+  summarize(n_names = n_distinct(engagement_partner_name)) |>
+  inner_join(most_common_name, by = "engagement_partner_id") |>
+  relocate(n_names, .after = last_col())
+```
 
+```{r}
+#| label: tbl-mult-names
+#| tbl-cap: Auditors with most reported spellings
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x))
 names_df |> 
   filter(n_names >= 6) |>
-  arrange(desc(n_names))
+  select(-engagement_partner_id) |>
+  arrange(desc(n_names)) 
 ```
+
+```{r}
+#| label: tbl-ben-names
+#| tbl-cap: The many names of Ben F orgers
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x))
+form_aps_names |> 
+  filter(engagement_partner_id == "504100001") |> 
+  count(engagement_partner_name) |> 
+  arrange(desc(n))
+```
+
 
 ```{r}
 #| label: fig-ft
@@ -101,4 +91,8 @@ names_df |>
   ggplot(aes(x = n_names, y = count)) +
   geom_col() +
   scale_y_continuous(transform = "log1p")
+```
+
+```{r}
+dbDisconnect(db)
 ```
