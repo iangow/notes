@@ -17,15 +17,28 @@ format:
 bibliography: papers.bib
 ---
 
-The United States Public Company Accounting Oversight Board (PCAOB) requires registered public accounting firms to file on Form AP for each audit report.
+The United States Public Company Accounting Oversight Board (PCAOB) requires registered public accounting firms to file on Form AP for each audit report.^[Discussion of the history of the PCAOB is provided by @Gow:2018vf.]
 Data from these filings are made available by the PCAOB as part of its AuditorSearch page.
-[PCAOB](https://pcaobus.org/resources/auditorsearch) describes AuditorSearch as "a public database of engagement partners and audit firms participating in audits of U.S. public companies."
+[The PCAOB](https://pcaobus.org/resources/auditorsearch) describes AuditorSearch as "a public database of engagement partners and audit firms participating in audits of U.S. public companies."
 
-These Form AP data recently featured in a *Financial Times* [article by George Steer](https://www.ft.com/content/2556fab5-d168-4d68-aedb-9be4b5ab739d) that showed that the auditor Ben Borgers had used 14 different names---including the name "Ben F orgers"---on Form AP filings.
-The analysis of the Form AP data in the FT article had been conducted by independent researcher [Stephen Walker](https://www.stephenwalker.me) and below I show how to  reproduce Stephen's analysis.
+These Form AP data recently featured in a tongue-in-cheek *Financial Times* [article by George Steer](https://www.ft.com/content/2556fab5-d168-4d68-aedb-9be4b5ab739d) that showed that the auditor Ben Borgers had used 14 different names---including the name "Ben F orgers"---on Form AP filings.
+The analysis of the Form AP data in the FT article had been conducted by independent researcher [Stephen Walker](https://www.stephenwalker.me) and below I show how to reproduce Stephen's analysis.
 
-In writing this note, I use the packages listed below.^[Use `install.packages()` within R to install any packages you need.]
+The purpose of this note is to demonstrate how one can work with Form AP data using R.
+Working with these data is a nice exercise for developing some basic data science skills.
+All the software needed to produce the analyses in this note is free and can be installed in less than ten minutes.
+So it should be easy to work through everything I do here.^[An internet connection is required to download the data and software.]
+A fast-paced hands-on tutorial for R and some of the ideas here is provided in Chapter 2 of *Empirical Research in Accounting: Tools and Methods* [here](https://iangow.github.io/far_book/r-intro.html).^[*Empirical Research in Accounting: Tools and Methods* will be published in print form by CRC Press later in 2024 and will remain free online after publication.]
+
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "dbplyr", "duckdb", "jsonlite", "arrow"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/form_ap_names.qmd).
+
+```{r}
+#| include: false
+options(width = 75)
+options(tibble.width = 75)
+```
 
 ```{r}
 #| message: false
@@ -38,8 +51,9 @@ library(arrow)
 
 ## Getting Form AP data
 
-The Form AP data are made available by the PCAOB as compressed comma-separated value (CSV) file.
+The Form AP data are made available by the PCAOB as a single compressed comma-separated value (CSV) file.
 The PCAOB requires use to provide an email address when downloading data using a script and we can set this using the `HTTPUserAgent` option as in the R code below.^[Use your actual email address here.]
+
 ```{r}
 #| include: false
 options(HTTPUserAgent = "iandgow@gmail.com")
@@ -51,12 +65,12 @@ options(HTTPUserAgent = "your_name@some_email.com")
 ```
 
 Once we have set `HTTPUserAgent`, we can run the script available [here](https://raw.githubusercontent.com/iangow/notes/main/get_form_aps.R) by executing the following line in R.
-This script takes about 10 seconds to run for me, but it may take longer if you have a slower connection to the PCAOB.
+This script takes about 10 seconds to run for me, but it may take longer if you have a slower connection to the PCAOB website than I do.
 
 ```{r}
+#| eval: false
 source("https://raw.githubusercontent.com/iangow/notes/main/get_form_aps.R")
 ```
-
 
 This script downloads and processes the Form AP data into a parquet file.
 The parquet format is described in *R for Data Science* [@Wickham:2023aa, p. 393] as "an open standards-based format widely used by big data systems."
@@ -76,7 +90,7 @@ However, two sets of fields create more work than the others.
 
 ### JSON data
 
-Three fields in the Form AP data are stored as JSON:
+The first set of fields in the Form AP data that require more effort are the three stored as JSON:
 
  - `audit_fund_series`
  - `audit_not_divided_percent_information`
@@ -86,14 +100,16 @@ JSON stands for "Javascript object notation" and is a common form of data on the
 For example, many web APIs return data in JSON form.
 More on JSON can be found in [Chapter 23](https://r4ds.hadley.nz/rectangling.html#json) of *R for Data Science*.
 
-The script we used to create `form_aps.parquet` does not process the JSON data.
-However, we could easily do that if we wanted to do so.
+The script we used to create `form_aps.parquet` does not process the JSON data; these are retained as simple text date.
+However, we could easily process these columns if we wanted to do so.
 While DuckDB has native functions for processing JSON, these are mostly predicated on JSON data being found in files, not in a single field of a table.
-In this case it is easier to bring the data into R and use functions from the `jsonlite` library to parse these fields.
+In this case it is easier to bring the data into R (using the `collect()` function) and use the `parse_json()` function from the `jsonlite` library to parse these fields.
 
 Here we illustrate one approach using the column `audit_fund_series`.
-In effect, we process the data in this column into a new table.
-This table could be copied to DuckDB and joined with `form_aps` as needed.
+We use `rowwise()` because `parse_json()` is design to work with one value at a time and `list()` to allow multiple values to be stored in a single row.
+To understand what the `unnest_longer()` and `unnest_wider()` functions are doing, it may be helpful to examine the input to and output from those functions.
+This can be achieved by selecting and executing the code preceding the pipes (i.e., `|>`) before and after the respective functions.
+More about pipes can be found in [Chapter 4](https://r4ds.hadley.nz/workflow-style.html#sec-pipes) of *R for Data Science*.
 
 ```{r}
 fund_series <-
@@ -106,7 +122,12 @@ fund_series <-
   unnest_longer(json) |> 
   unnest_wider(json) |>
   select(-audit_fund_series)
+```
 
+In effect, we process the data in this column into a new table, `fund_series`.
+This `fund_series` table could be copied to DuckDB and joined with `form_aps` as needed.
+
+```{r}
 fund_series
 ```  
 
@@ -126,10 +147,40 @@ The `audit_dual_date` field can contain multiple dates and requires special hand
 Finally, `filing_date` contains both a date and a time and I process it accordingly.
 According to the PCAOB-provided [data dictionary](https://assets.pcaobus.org/pcaob-dev/docs/default-source/rusdocuments/auditorsearch-form-ap-data-references.pdf), "dates and times are provided based on the U.S. Eastern time zone" and I process these fields using that assumption.
 
+We can see from the following code that the Form AP data is updated frequently (on at least a daily basis) and with date-times for `filing_date` as recent as a couple of hours ago as I write.^[You will see more recent dates if you download after the date of writing.]
+
+```{r}
+form_aps |> 
+  select(ends_with("date")) |>
+  select(-audit_dual_date) |>
+  summarize(across(everything(), \(x) max(x, na.rm = TRUE))) |>
+  collect()
+```
+
+The anonymous function is needed to exclude missing values (`NA` in R).
+More on missing values is found in [Chapter 18](https://r4ds.hadley.nz/missing-values) of *R for Data Science*.
+
+Note that the `unnest()` function is needed to analyse `audit_dual_date`, as `audit_dual_date` contains a list of dates.
+More on list-columns can be found in [Chapter 23](https://r4ds.hadley.nz/rectangling.html#lists) of *R for Data Science*.
+
+```{r}
+form_aps |> 
+  select(audit_dual_date) |>
+  mutate(audit_dual_date = unnest(audit_dual_date)) |>
+  filter(!is.na(audit_dual_date)) |>
+  summarize(max = max(audit_dual_date, na.rm = TRUE)) |>
+  collect()
+```
+
+
+
 ## Partner names
 
 We now combine the first, middle, and last names of each partner into a single name.
-This step is facilitated by our use of DuckDB, as missing values (e.g., cases where partners have no middle name) as quietly ignored.^[If we working with `dplyr` and native data frames, missing values would be "infectious" with `str_c()`. Such infectiousness is often the desired behaviour, but in this case, we want to quietly discard missing components of names. More on missing values can be found in [Chapter 18](https://r4ds.hadley.nz/missing-values) of *R for Data Science*.]
+This step is facilitated by our use of DuckDB, as missing values (e.g., cases where partners have no middle name) are quietly ignored.^[If we working with `dplyr` and native data frames, missing values would be "infectious" with `str_c()`.
+Such infectiousness is often the desired behaviour, but in this case, we want to quietly discard missing components of names. 
+That is we want `str_c("Ian", NA, "Gow")` to be `"Ian Gow"` rather than the `NA` it would be if we used `str_c()` with native R data.
+More on missing values can be found in [Chapter 18](https://r4ds.hadley.nz/missing-values) of *R for Data Science*.]
 
 
 ```{r}
@@ -138,29 +189,53 @@ form_aps_names <-
   mutate(engagement_partner_name = 
            str_c(engagement_partner_first_name,
                  engagement_partner_middle_name,
-                 engagement_partner_last_name, sep = " "))
+                 engagement_partner_last_name, sep = " ")) |>
+  select(form_filing_id, engagement_partner_id, engagement_partner_name)
 ```
 
-
+Note that `dplyr` is quietly translating our code into SQL, as can be seen by applying `show_query()` to `form_aps_names`.
+Here `str_c()` is translated into the SQL function `concat_ws()` (see [here](https://duckdb.org/docs/sql/functions/char#concat_wsseparator-string-) for details).
 
 ```{r}
-most_common_name <-
+#| eval: false
+form_aps_names |>
+  show_query()
+```
+```{r}
+#| echo: false
+sql <- remote_query(form_aps_names)
+cat("<SQL>\n", str_wrap(sql, width = 80, exdent = 4))
+```
+
+SQL is a specialized language for manipulating and retrieving tabular data used by almost all modern database systems.
+More on SQL is provided in [an appendix](https://iangow.github.io/far_book/sql-primer.html) to *Empirical Research in Accounting: Tools and Methods* and in [Chapter 21](https://r4ds.hadley.nz/databases) of *R for Data Science*.
+
+In @tbl-mult-names, we show the number of different names associated with a sample of engagement partners.
+While we could provide a table the number of names associated with each value of `engagement_partner_id`, `engagement_partner_id` has no real meaning for readers.
+Instead, for each value of `engagement_partner_id`, we identify a unique name (the most frequent value of `engagement_partner_name`) that we use for this purpose and store this value in `most_common_names`.^[We use `group_by(engagement_partner_id)` then ``window_order(desc(n_forms))` to organize the data in descending order of the frequency a name appears for a given `engagement_partner_id` and then `filter(row_number() == 1)` to pick off the first row for each value of `engagement_partner_id`.]
+
+```{r}
+most_common_names <-
   form_aps_names |>
   count(engagement_partner_id, engagement_partner_name, name = "n_forms") |>
   group_by(engagement_partner_id) |>
   window_order(desc(n_forms)) |>
   filter(row_number() == 1) |>
+  ungroup() |>
   select(engagement_partner_id, engagement_partner_name)
 ```
+
+We count the number of unique names for each `engagement_partner_id` using `n_distinct()` and then merge the result with `most_common_names` to create the data frame `names_df` that we can use to produce tables and figures.
 
 ```{r}
 names_df <-
   form_aps_names |> 
   group_by(engagement_partner_id) |>
   summarize(n_names = n_distinct(engagement_partner_name)) |>
-  inner_join(most_common_name, by = "engagement_partner_id") |>
-  relocate(n_names, .after = last_col())
+  inner_join(most_common_names, by = "engagement_partner_id") 
 ```
+
+We first produce @tbl-mult-names, where we can already see that Ben F Borgers is an outlier.
 
 ```{r}
 #| label: tbl-mult-names
@@ -168,9 +243,12 @@ names_df <-
 #| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x))
 names_df |> 
   filter(n_names >= 6) |>
-  select(-engagement_partner_id) |>
+  select(engagement_partner_name, n_names) |>
   arrange(desc(n_names)) 
 ```
+
+We next examine the various names under which Ben F Borgers has filed in @tbl-ben-names.
+To be fair to "Ben F orgers", the vast majority of filings by Ben F Borgers use the name "Ben F Borgers" and most of the rest use the name "Ben Borgers".
 
 ```{r}
 #| label: tbl-ben-names
@@ -179,9 +257,10 @@ names_df |>
 form_aps_names |> 
   filter(engagement_partner_id == "504100001") |> 
   count(engagement_partner_name) |> 
+  mutate(perc = round(n / sum(n, na.rm = TRUE) * 100, 2)) |>
   arrange(desc(n))
 ```
-
+I next produce @fig-ft, which is almost identical to the plot in the [FT article](https://www.ft.com/content/2556fab5-d168-4d68-aedb-9be4b5ab739d) cited above.
 
 ```{r}
 #| label: fig-ft
@@ -191,6 +270,10 @@ names_df |>
   ggplot(aes(x = n_names, y = count)) +
   geom_col()
 ```
+
+A weakness of @fig-ft is that it is difficult to discern any information for values of `n_names` greater than 5.
+One approach to address this is to use a log-transformation.
+@fig-ft-log1p depicts the result of transforming the $y$-axis using $log(1 + y)$.
 
 ```{r}
 #| label: fig-ft-log1p

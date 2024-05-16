@@ -33,9 +33,10 @@ process_date <- function(x) {
 
 process_dual_dates <- function(x) {
   x <- str_split(x, "#\\^#")
-  map(x, \(x) parse_date_time(x,
-                              orders = c("ymdHMS", "ymd"),
-                              tz = "America/New_York"))
+  map(x, \(x) as.Date(parse_date_time(x,
+                                      orders = c("ymdHMS", "ymd"),
+                                      tz = "America/New_York")))
+
 }
 
 form_aps <-
