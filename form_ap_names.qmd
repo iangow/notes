@@ -285,6 +285,96 @@ names_df |>
   scale_y_continuous(transform = "log1p")
 ```
 
+## Busy auditors
+
+One possible red flag with the case of Ben F Borgers is the sheer number of audit engagements he has been involved in.
+Is Borgers an outlier in this regard too?
+
+```{r}
+#| label: tbl-many-audits
+#| tbl-cap: Auditors with the most audits
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x))
+form_aps |>
+  group_by(engagement_partner_id) |>
+  summarize(n_audits = n(), .groups = "drop") |>
+  inner_join(most_common_names, by = "engagement_partner_id") |>
+  arrange(desc(n_audits)) |>
+  select(engagement_partner_name, n_audits) |>
+  collect(n = 10)
+```
+From @tbl-many-audits, we see that Borgers barely cracks the top ten.
+What's going on here?
+
+In @tbl-many-audits-type, I add information about the value of `audit_report_type`.
+It turns out that the "top auditors" are generally auditing investment companies.
+It seems plausible that such audits are quite perfunctory and a single engagement covers many companies (e.g., audits of ETFs or mutual funds).
+
+```{r}
+#| label: tbl-many-audits-type
+#| tbl-cap: Auditors with the most audits by type
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x))
+form_aps |>
+  mutate(audit_report_type = str_replace(audit_report_type, ",.*$", "")) |>
+  group_by(engagement_partner_id, audit_report_type) |>
+  summarize(n_audits = n(), .groups = "drop") |>
+  inner_join(most_common_names, by = "engagement_partner_id") |>
+  arrange(desc(n_audits)) |>
+  select(engagement_partner_name, audit_report_type, n_audits) |>
+  collect(n = 10)
+```
+So, in @tbl-many-audits-issuer, I exclude audits of investment companies and there it can be seen that Borgers is once again an outlier.
+
+```{r}
+#| label: tbl-many-audits-issuer
+#| tbl-cap: Auditors with the most audits (excluding investment companies)
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x))
+form_aps |>
+  mutate(audit_report_type = str_replace(audit_report_type, ",.*$", ""),
+         firm_name = str_replace(firm_name, ",.*$", "")) |>
+  filter(audit_report_type != "Investment Company") |>
+  group_by(engagement_partner_id, firm_name, audit_report_type) |>
+  summarize(n_audits = n(), .groups = "drop") |>
+  inner_join(most_common_names, by = "engagement_partner_id") |>
+  arrange(desc(n_audits)) |>
+  select(engagement_partner_name, firm_name, audit_report_type, n_audits) |>
+  collect(n = 10)
+```
+## Trump Media's new auditor
+
+According to the [*Wall Street Journal*](https://www.wsj.com/business/media/trump-media-hires-new-auditor-after-previous-firm-gets-banned-5ee7489b), Semple, Marchal & Cooper was appointed as the new financial auditor for Trump Media & Technology Group early in May 2024.
+
+We can search `form_aps` to identify the `firm_id` for this new audit firm.
+
+```{r}
+djt_new_auditor <-
+  form_aps |>
+  filter(str_detect(firm_name, "^Semple")) |>
+  distinct(firm_id, firm_name) 
+
+djt_new_auditor |>
+  collect()
+```
+@tbl-djt-new suggests that Semple, Marchal & Cooper, LLP, has a much more manageable client roster than Ben F Borgers had.
+
+```{r}
+#| label: tbl-djt-new
+#| tbl-cap: Audit clients of Semple, Marchal & Cooper, LLP
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x))
+form_aps |>
+  semi_join(djt_new_auditor, join_by(firm_id, firm_name)) |>
+  mutate(fiscal_year = year(fiscal_period_end_date)) |>
+  group_by(issuer_name) |>
+  summarize(n_audits = n(),
+            first_year = min(fiscal_year, na.rm = TRUE),
+            last_year = max(fiscal_year, na.rm = TRUE)) |>
+  arrange(desc(last_year), desc(n_audits)) |>
+  collect()
+```
+
+Having completed our analysis, we can disconnect from our in-memory DuckDB database.
+
 ```{r}
 dbDisconnect(db)
 ```
+
+## References {-}
