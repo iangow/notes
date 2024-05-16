@@ -1,5 +1,5 @@
 ---
-title: "Ben F orgers"
+title: "Working with Form AP data"
 author: Ian D. Gow
 date: 2024-04-28
 date-format: "D MMMM YYYY"
@@ -17,17 +17,120 @@ format:
 bibliography: papers.bib
 ---
 
+The United States Public Company Accounting Oversight Board (PCAOB) requires registered public accounting firms to file on Form AP for each audit report.
+Data from these filings are made available by the PCAOB as part of its AuditorSearch page.
+[PCAOB](https://pcaobus.org/resources/auditorsearch) describes AuditorSearch as "a public database of engagement partners and audit firms participating in audits of U.S. public companies."
+
+These Form AP data recently featured in a *Financial Times* [article by George Steer](https://www.ft.com/content/2556fab5-d168-4d68-aedb-9be4b5ab739d) that showed that the auditor Ben Borgers had used 14 different names---including the name "Ben F orgers"---on Form AP filings.
+The analysis of the Form AP data in the FT article had been conducted by independent researcher [Stephen Walker](https://www.stephenwalker.me) and below I show how to  reproduce Stephen's analysis.
+
+In writing this note, I use the packages listed below.^[Use `install.packages()` within R to install any packages you need.]
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/form_ap_names.qmd).
+
 ```{r}
 #| message: false
 library(tidyverse)
 library(DBI)
 library(dbplyr)
+library(jsonlite)
+library(arrow)
 ```
+
+## Getting Form AP data
+
+The Form AP data are made available by the PCAOB as compressed comma-separated value (CSV) file.
+The PCAOB requires use to provide an email address when downloading data using a script and we can set this using the `HTTPUserAgent` option as in the R code below.^[Use your actual email address here.]
+```{r}
+#| include: false
+options(HTTPUserAgent = "iandgow@gmail.com")
+```
+
+```{r}
+#| eval: false
+options(HTTPUserAgent = "your_name@some_email.com")
+```
+
+Once we have set `HTTPUserAgent`, we can run the script available [here](https://raw.githubusercontent.com/iangow/notes/main/get_form_aps.R) by executing the following line in R.
+This script takes about 10 seconds to run for me, but it may take longer if you have a slower connection to the PCAOB.
+
+```{r}
+source("https://raw.githubusercontent.com/iangow/notes/main/get_form_aps.R")
+```
+
+
+This script downloads and processes the Form AP data into a parquet file.
+The parquet format is described in *R for Data Science* [@Wickham:2023aa, p. 393] as "an open standards-based format widely used by big data systems."
+Parquet files provide a format optimized for data analysis, with a rich type system.
+More details on the parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of *R for Data Science* and a guide to creating a parquet data repository are provided [here](https://iangow.github.io/far_book/parquet-wrds.html).
+
+For reasons we will explain below, we use a DuckDB database connection to work with the data.
+We start by creating that connection and loading the parquet file we just created.
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
 form_aps <- tbl(db, sql("SELECT * FROM 'data/form_aps.parquet'"))
 ```
+
+For the most part, the data in the Form AP file are straightforward.
+However, two sets of fields create more work than the others.
+
+### JSON data
+
+Three fields in the Form AP data are stored as JSON:
+
+ - `audit_fund_series`
+ - `audit_not_divided_percent_information`
+ - `audit_divided_information`
+
+JSON stands for "Javascript object notation" and is a common form of data on the internet.
+For example, many web APIs return data in JSON form.
+More on JSON can be found in [Chapter 23](https://r4ds.hadley.nz/rectangling.html#json) of *R for Data Science*.
+
+The script we used to create `form_aps.parquet` does not process the JSON data.
+However, we could easily do that if we wanted to do so.
+While DuckDB has native functions for processing JSON, these are mostly predicated on JSON data being found in files, not in a single field of a table.
+In this case it is easier to bring the data into R and use functions from the `jsonlite` library to parse these fields.
+
+Here we illustrate one approach using the column `audit_fund_series`.
+In effect, we process the data in this column into a new table.
+This table could be copied to DuckDB and joined with `form_aps` as needed.
+
+```{r}
+fund_series <-
+  form_aps |>
+  select(form_filing_id, audit_fund_series) |> 
+  filter(!is.na(audit_fund_series)) |>
+  collect() |>
+  rowwise() |>
+  mutate(json = list(parse_json(audit_fund_series))) |>
+  unnest_longer(json) |> 
+  unnest_wider(json) |>
+  select(-audit_fund_series)
+
+fund_series
+```  
+
+### Dates and times
+
+The second set of columns that requires careful handling are the five columns containing dates or date-times.
+
+ - `audit_report_date`: Date of the audit report (`mm/dd/yyyy`)
+ - `fiscal_period_end_date`: The end date of the most recent period's financial statements identified in the audit report
+(`mm/dd/yyyy`)
+ - `signed_date`: Date of typed and manual signatures (`mm/dd/yyyy`)
+ - `audit_dual_date`: The date of the dual-date information, if any.
+ - `filing_date`: Date and time that the Form AP was filed.
+ 
+Some clean-up is required for the first three fields, as these are not always in the indicated `mm/dd/yyyy` format.
+The `audit_dual_date` field can contain multiple dates and requires special handling.
+Finally, `filing_date` contains both a date and a time and I process it accordingly.
+According to the PCAOB-provided [data dictionary](https://assets.pcaobus.org/pcaob-dev/docs/default-source/rusdocuments/auditorsearch-form-ap-data-references.pdf), "dates and times are provided based on the U.S. Eastern time zone" and I process these fields using that assumption.
+
+## Partner names
+
+We now combine the first, middle, and last names of each partner into a single name.
+This step is facilitated by our use of DuckDB, as missing values (e.g., cases where partners have no middle name) as quietly ignored.^[If we working with `dplyr` and native data frames, missing values would be "infectious" with `str_c()`. Such infectiousness is often the desired behaviour, but in this case, we want to quietly discard missing components of names. More on missing values can be found in [Chapter 18](https://r4ds.hadley.nz/missing-values) of *R for Data Science*.]
+
 
 ```{r}
 form_aps_names <-
@@ -36,7 +139,11 @@ form_aps_names <-
            str_c(engagement_partner_first_name,
                  engagement_partner_middle_name,
                  engagement_partner_last_name, sep = " "))
+```
 
+
+
+```{r}
 most_common_name <-
   form_aps_names |>
   count(engagement_partner_id, engagement_partner_name, name = "n_forms") |>
@@ -44,7 +151,9 @@ most_common_name <-
   window_order(desc(n_forms)) |>
   filter(row_number() == 1) |>
   select(engagement_partner_id, engagement_partner_name)
+```
 
+```{r}
 names_df <-
   form_aps_names |> 
   group_by(engagement_partner_id) |>
