@@ -1,8 +1,6 @@
 library(tidyverse)
 library(arrow)
 
-options(HTTPUserAgent = "iandgow@gmail.com")
-
 data_path <- "data"
 t <- file.path(data_path, "FirmFilings.zip")
 parquet_file <- file.path(data_path, "form_aps.parquet")
