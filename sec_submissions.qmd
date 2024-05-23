@@ -1,7 +1,7 @@
 ---
 title: "Working with JSON data: The case of SEC submissions data"
 author: Ian D. Gow
-date: 2024-05-20
+date: 2024-05-23
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -18,10 +18,9 @@ bibliography: papers.bib
 ---
 
 One of the goals of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).
-That is, in working through *Empirical Research in Accounting: Tools and Methods* (along with the occasional detour to *R for Data Science*) the reader will have covered the contents of *R for Data Science* in enough detail to do their own data analysis.^[*Empirical Research in Accounting: Tools and Methods* will be published in print form by CRC Press later in 2024 and will remain free online after publication.]
+That is, by working through *Empirical Research in Accounting: Tools and Methods* (along with the occasional detour to *R for Data Science*) the reader will achieved a level of proficiency at or above that provided by studying *R for Data Science*.^[*Empirical Research in Accounting: Tools and Methods* will be published in print form by CRC Press later in 2024 and will remain free online after publication.]
 
-
-While we meet this goal for most of the contents of *R for Data Science*, a few gaps remain: spreadsheets, dates and times, and hierarchical data are three notable ones.
+While we do cover most of the content of *R for Data Science*, a few gaps remain: spreadsheets, dates and times, and hierarchical data are three notable ones.
 The omission of [spreadsheets](https://r4ds.hadley.nz/spreadsheets) is not accidental given our focus on academic research applications.^[Explaining my views on the (limited) role of spreadsheets in research probably requires a separate note, but a good starting point is @Broman:2018aa.]
 While we do discuss dates extensively in *Empirical Research in Accounting: Tools and Methods*, we have no application involving date-times and thus our coverage of the the additional complexities of [dates and times](https://r4ds.hadley.nz/datetimes) discussed in *R for Data Science*---such as time zones---is limited.
 
@@ -30,9 +29,15 @@ Regarding hierarchical data, *Empirical Research in Accounting: Tools and Method
 However, we do not provide coverage of these topics as systematic as that of [Chapter 23](https://r4ds.hadley.nz/rectangling) of *R for Data Science*.
 For example, we do not touch `unnest_longer()` at all.
 
-The purpose of this note is two-fold.
+The purpose of this note is three-fold.
 First, I hope to provide a hands-on introduction to hierarchical data that complements and builds on [Chapter 23](https://r4ds.hadley.nz/rectangling) of *R for Data Science*.
 Second, I aim to show how one can process JSON data provided by SEC EDGAR using submissions data as case study.
+Finally, I introduce what I call a **batch-processing paradigm**, which is a general approach that I believe is helpful for many significant data processing tasks.
+
+Before proceeding, I make some brief comments on my experience working with the submissions data provided by the SEC.
+While the SEC continues to be a leader in providing publicly available data on public companies and other entities in electronic form, I did not find the submissions data set particularly easy to work with.^[For example, Australian regulators do very little to ensure that public companies file data in a form that analysts and researchers can use and the situation in Australia is probably behind where SEC EDGAR was in 1995.]
+While downloading the data submissions data in "bulk" format (`submissions.zip`) takes less than a minute, processing these data into a form that is easy to work with requires several hours.^[Sorting out data gremlins meant that the whole task took a few days in elapsed time.]
+At the end of this note I show how parquet files can be used to store the contents of the `submissions.zip` in a form that is easy to download and relatively painless to work with.
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "jsonlite", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -40,8 +45,9 @@ The source code for this note is available [here](https://raw.githubusercontent.
 
 ```{r}
 #| include: false
-options(width = 75)
-options(tibble.width = 75)
+options(width = 75,
+        tibble.width = 75,
+        pillar.print_min = 5)
 ```
 
 ```{r}
@@ -59,16 +65,16 @@ The SEC provides data in JSON form, including the submissions data I focus on in
 
 JSON is a text-based data format with four scalar data types:
 
- - `null`: Like `NA` in R, this represents the absence of data.
- - **string**, as in R, but always quoted using double quotes (`"`).
- - **number**, as in R, but no support for `Inf`, `-Inf`, or `NaN`. Can be formatted using integer, decimal, or scientific (e.g., `2.99e8`) notation.
- - **Boolean**, similar to R's logical. Either `true` or `false`.
+ - **nulls** are similar to `NA` in R in that `null` represents the absence of data.
+ - **strings**, as in R, but always quoted using double quotes (`"`).
+ - **numbers**, as in R, but no support for `Inf`, `-Inf`, or `NaN`. Can be formatted using integer, decimal, or scientific (e.g., `2.99e8`) notation.
+ - **Booleans**, similar to R's logical type. Either `true` or `false`.
  
 These scalar types can be used to form **arrays** and **objects**.
 An array is like an unnamed list, and is written with `[]`. For example `[2, 4, 6]` is an array containing 3 numbers, and `[null, 2, "text", true]` is an array that contains a null, a number, a string, and a Boolean. 
 An object is like a named list, and is written with `{}`.
 The names ("keys" in JSON terminology) are provided as strings. 
-For example, `{"a": 2, "b": 4}` is an object that maps `a` to 2 and `b` to 4.
+For example, `{"a": 2, "b": 4}` is an object that maps `a` to 2 and `b` to 4.^[Python users may notice similarities between arrays and Python lists and between objects and Python dictionaries.]
 
 Note that  dates or date-times are not among the scalar data types supported by JSON.
 @Wickham:2023aa [p. 418] note that dates are "often stored as strings, and you’ll need to use `readr::parse_date()` or `readr::parse_datetime()` to turn them into the correct data structure."
@@ -131,8 +137,7 @@ json_example_df |>
   unnest_longer(c(accessionNumber, filingDate))
 ```
 
-Reader familiar with database design principles might cringe at the output above, as we have duplicated a number of items that appear to have a one-to-one relationship with a company (here identified by `cik`)---`entityType`, `sic`, `insiderOwner`, and `description`---because of the multiplicity of the items stored in `filings`.
-A better structure would split the company-level items and the filing-level items into separate tables.
+Readers familiar with database design principles might cringe at the output above, as we have duplicated a number of items that appear to have a one-to-one relationship with a company (here identified by `cik`)---`entityType`, `sic`, `insiderOwner`, and `description`---because of the multiplicity of the items stored in `filings`.
 To create the `companies` table, we simply drop the `filings` column.
 
 ```{r}
@@ -164,15 +169,15 @@ filings
 
 According to the SEC's [webpage](https://www.sec.gov/edgar/sec-api-documentation), "each entity's current filing history is available at the following URL: `https://data.sec.gov/submissions/CIK##########.json` where the `##########` is the entity’s 10-digit Central Index Key (CIK), including leading zeros."
 This means we will use CIKs to identify files to collect.
-Most sources of CIKs provide them as integers, but we can easily construct the 10-digit strings with leading zeros using `str_pad()` and construct the desired URL from that.
+Most data sources---including the SEC's own [index files](https://iangow.github.io/far_book/glms.html#sec-edgar)---provide CIKs as integers, but we can easily construct the 10-digit strings with leading zeros using `str_pad()` and construct the desired URL from that.
 To start we focus (arbitrarily) on Agnico Eagle Mines, a Canadian firm with CIK `2809`.
 Running the following code should open a browser tab with the JSON data for submissions by Agnico Eagle Mines.
 
 ```{r}
 #| cache: false
 cik <- 2809
-basename <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
-url <- paste0("https://data.sec.gov/submissions/", basename)
+json_file <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
+url <- paste0("https://data.sec.gov/submissions/", json_file)
 ```
 
 ```{r}
@@ -180,18 +185,18 @@ url <- paste0("https://data.sec.gov/submissions/", basename)
 browseURL(url)
 ```
 
-We embed the logic for creating a URL from the file name (`basename`) and the first couple of steps of processing the JSON in a function.
+We embed the logic for creating a URL from the file name (`json_file`) and the first couple of steps of processing the JSON in a function.
 The reasons for using the file name rather than the CIK and for the (as-yet-unused) `local_file` argument will become clear later.
 
 ```{r}
-get_sec_json <- function(basename, local_file = NULL) {
-  url <- paste0("https://data.sec.gov/submissions/", basename)
+get_sec_json <- function(json_file, local_file = NULL) {
+  url <- paste0("https://data.sec.gov/submissions/", json_file)
   tibble(json = list(read_json(url))) |>
     unnest_wider(json)
 }
 ```
 
-The PCAOB requires use to provide an email address when downloading data using a script and we can set this using the `HTTPUserAgent` option as in the R code below.^[Use your actual email address here.]
+The PCAOB requires users to provide email addresses when downloading data using a script and we can set this using the `HTTPUserAgent` option as in the R code below.^[Use your *actual* email address here.]
 
 ```{r}
 #| include: false
@@ -207,40 +212,98 @@ Once we have set `HTTPUserAgent`, we can execute the `get_sec_json()` function:
 
 ```{r}
 #| cache: true
-get_sec_json(basename)
+get_sec_json(json_file)
 ```
 
 From the output above, we see that there are four list columns: `tickers`, `exchanges`, `addresses`, and `filings`.
-While we could dig deeped into the first three (e.g., creating an `addresses` table), we focus on reorganizing only the `filings` code, keeping the other three as list-columns in a `companies` table.
+For the most part the company-level data has one row per company, while the filing-level data might have thousands of rows for a given company.
+For this reason, I split the data processing into company-level and filing-level processes.
 
-We embed code all to collect company-level data in a simple function `get_company_data()`.
-We use `get_sec_json()` to get the JSON, then drop `filings` before processing the remaing columns as needed.
-While `cik` was supplied as a number in the example above, the actual data on the SEC site present this as a string and we convert it to integer using `as.integer()` (and do likewise for `sic`).
-Similarly, the two fields that are fundamentally Boolean are supplied as either `0` or `1` rather than `true` or `false` and we convert these to logical type using `as.logical()`.
+### Company-level data
+
+I embed code all to collect company-level data in a simple function `get_company_data()`.
+I use `get_sec_json()` to get the JSON, then drop `filings` before processing the remaing columns as needed.
+While `cik` was supplied as a number in the example above, the actual data on the SEC site present this as a string and I convert it to integer using `as.integer()` (and do likewise for `sic`).
+Similarly, the two fields that are fundamentally Boolean are supplied as either `0` or `1` rather than as `true` or `false` and I convert these to logical type using `as.logical()`.
 
 ```{r}
 get_company_data <- function(cik, local_file = NULL) {
-  basename <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
+  json_file <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
   
-  get_sec_json(basename, local_file) |>
+  get_sec_json(json_file, local_file) |>
     select(-filings) |>
     mutate(across(c(cik, sic), as.integer),
            across(ends_with("Exists"), as.logical))
 }
 ```
 
-We can confirm that these type conversions behave as expected using the following code:
+We can apply our function to `cik`, which we set to `r cik` above and store the result in `company_data`.
 
 ```{r}
 #| cache: true
-get_company_data(cik) |> select(cik, sic, ends_with("Exists"))
+company_data <- get_company_data(cik) 
 ```
 
-We can now Shift our focus to the filing-level data.
+We then split the `company_data` data frame into three data frames:
+
+The first data frame (`companies`) contains all the columns that are not list-columns, which is most of the company-level data.
+  
+```{r}
+companies <-
+  company_data |>
+  select(-tickers, -exchanges, -addresses)
+
+companies
+```
+
+We can confirm that these type conversions discussed above behave as expected using the following code:
+
+```{r}
+companies |> select(cik, sic, ends_with("Exists"))
+```
+
+The second data frame is `addresses`.
+Rather than the more typical named list of unnamed lists, the `addresses` list-column in `company_data` contains an unnamed list of named lists, which requires a reversal of the usual `unnest_wider()`-then-`unnest_longer()` paradigm we saw above.
+It appears that most filers have a mailing address and a business address.
+
+```{r}
+addresses <-
+  company_data |> 
+  select(cik, addresses) |> 
+  unnest_longer(addresses, indices_to = "address_type") |> 
+  unnest_wider(addresses) |>
+  select(cik, address_type, everything())
+
+addresses
+```
+
+The third data frame is `tickers`, which contains data from the `tickers` and `exchanges` list-columns.
+While not represented explicitly in the JSON structure, it appears that the unnamed lists in these list-columns have the same length as they represent pairs (i.e., each ticker relates to a specific exchange).
+
+```{r}
+tickers <-
+  company_data |> 
+  select(cik, tickers, exchanges) |> 
+  unnest_longer(c(tickers, exchanges)) |>
+  rename(ticker = tickers,
+         exchange = exchanges)
+
+tickers
+```
+
+I initially tried keeping the `addresses` and `tickers` data as list-columns.
+However, for reasons discussed below, I end up putting the data in a DuckDB database and encountered problems with these columns when doing so.
+The unnamed list of named lists structure of the original `addresses` data was rejected by DuckDB.
+The issue with the `tickers`-`exchanges` data is that occasionally the exchange associated with a ticker is `NULL` and DuckDB rejected such data.
+Splitting out the `addresses` and `tickers` into separate tables resolves these data issues without any loss of data.
+
+### Filing-level data
+
+We can now shift our focus to the filing-level data.
 
 ```{r}
 #| cache: true
-get_sec_json(basename) |>
+get_sec_json(json_file) |>
   select(filings)
 ```
 
@@ -248,7 +311,7 @@ Noting that it's a named list, we look at the results of applying `unnest_wider(
 
 ```{r}
 #| cache: true
-get_sec_json(basename) |>
+get_sec_json(json_file) |>
   select(filings) |>
   unnest_wider(filings)
 ```
@@ -260,11 +323,11 @@ If the entity has additional filings, `files` will contain an array of additiona
 
 In the current case, `files` contains only `NA`, suggesting that there are less than 1,000 filings in `recent` (so `recent` represents *all* filings for this issuer).
 We put `files` aside for now and focus on `recent`.
-As `recent` is a named-list, the natural next step is to apply `unnest_wider()` to this column.
+As `recent` is a named list-column, the natural next step is to apply `unnest_wider()` to this column.
 
 ```{r}
 #| cache: true
-get_sec_json(basename) |>
+get_sec_json(json_file) |>
   select(filings) |>
   unnest_wider(filings) |>
   select(-files) |>
@@ -274,7 +337,7 @@ Seeing that all remaining columns are unnamed list-columns, we now apply `unnest
 
 ```{r}
 #| cache: true
-get_sec_json(basename) |>
+get_sec_json(json_file) |>
   select(filings) |>
   unnest_wider(filings) |>
   select(-files) |>
@@ -288,7 +351,7 @@ Ashland Inc, a chemicals company with CIK of `7694`, is such a case.
 ```{r}
 #| cache: false
 cik <- 7694
-basename <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
+json_file <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
 ```
 
 Retracing our steps above, we see that `recent` takes the same form as we saw for Agnico Eagle Mines, but that `files` is now an unnamed list-column.
@@ -297,7 +360,7 @@ Applying `unnest_wide()` to that named list-column, we get the following.
 
 ```{r}
 #| cache: true
-get_sec_json(basename) |>
+get_sec_json(json_file) |>
   select(filings) |>
   unnest_wider(filings) |>
   select(files) |>
@@ -305,7 +368,7 @@ get_sec_json(basename) |>
   unnest_wider(files)
 ```
 
-Thus we see that the **base file** `CIK0000007694.json` contains filings data inside the `recent` element  as well as a list of **supplemental files** in inside the `files` element.
+Thus we see that the **base file** `CIK0000007694.json` contains filings data inside the `recent` element  as well as a list of **supplemental files** in inside the `files` element.^[There are not official terms, I made them up for the purpose of this note.]
 We now examine the supplemental file identified above.
 
 ```{r}
@@ -320,9 +383,9 @@ This suggests we could make one function that, depending on whether there is a `
 The following `extract_filings()` function does just that.
 
 ```{r}
-extract_filings <- function(basename, local_file = NULL) {
+extract_filings <- function(json_file, local_file = NULL) {
 
-  raw_data <- get_sec_json(basename, local_file)
+  raw_data <- get_sec_json(json_file, local_file)
 
   if ("filings" %in% colnames(raw_data)) {
     filings_raw <-
@@ -340,15 +403,13 @@ extract_filings <- function(basename, local_file = NULL) {
     mutate(across(c(filingDate, reportDate), parse_date),
            acceptanceDateTime = parse_date_time(acceptanceDateTime,
                                                 orders = "ymdHMSz"),
-           across(c(isXBRL, isInlineXBRL), as.logical)) |>
-    mutate(cik = as.integer(cik)) |>
-    select(cik, everything())
+           across(c(isXBRL, isInlineXBRL), as.logical))
 }
 ```
 
 In addition, `extract_filings()` converts `filingDate` and `reportDate` to date type, `isXBRL` and `isInlineXBRL` to logical type, `cik` to integer and `acceptanceDateTime` to date-time.
 
-We can now see the rationale for using `basename`, not `cik`, as the argument to `extract_filings()`: a single function can handle both base files (which can be identified using CIKs) and supplemental files, which require inspection of the base files to be identified.
+We can now see the rationale for using `json_file`, not `cik`, as the argument to `extract_filings()`: a single function can handle both base files (which can be identified using CIKs) and supplemental files, which require inspection of the base files to be identified.
 
 Now we need to create a function that assembles the list of files (base files and supplemental files) for each CIK.
 The following `get_submission_files()` function does just that.
@@ -359,8 +420,8 @@ Otherwise, the extracts the non-null values in `files` and adds them to the name
 ```{r}
 get_submission_files <- function(cik, local_file = NULL) {
 
-  basename <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
-  raw_data <- get_sec_json(basename, local_file)
+  json_file <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
+  raw_data <- get_sec_json(json_file, local_file)
 
   files_df <-
     raw_data |>
@@ -375,9 +436,9 @@ get_submission_files <- function(cik, local_file = NULL) {
       unnest_wider(files) |>
       select(name) |>
       pull() |>
-      union_all(basename)
+      union_all(json_file)
   } else {
-    basename
+    json_file
   }
 }
 ```
@@ -396,7 +457,9 @@ Note that we use an anonymous function with `map()` so that we can pass along th
 cik_to_filings <- function(cik, local_file = NULL) {
   get_submission_files(cik, local_file = local_file) |>
     map(\(x) extract_filings(x, local_file = local_file)) |>
-    list_rbind()
+    list_rbind() |>
+    mutate(cik = as.integer(cik)) |>
+    select(cik, everything())
 }
 ```
 
@@ -436,7 +499,7 @@ If there's a hiccup in the middle, we would finish up empty-handed and need to t
 Regarding internet traffic, note that the code is fairly inefficient.
 The [base file URL for Ashland Inc](https://data.sec.gov/submissions/CIK0000007694.json) is accessed three times: once for `get_company_data()` and twice for `cik_to_filings()`.
 If internet traffic ends up being a bottleneck, then it might make sense to modify the code above to download data just once for each CIK.
-But we shelve this issue for now.
+But I shelve this issue for now.^[In fact, it turns out that this inefficiency has no significant impact on the running time for the code and, given that we use a bulk download file, I actually ignore this issue in this note.]
 
 ## Bulk data
 
@@ -462,7 +525,7 @@ if (!file.exists(bulk_path)) {
 ```
 
 From the following output, we can see that `submissions.zip` contains nearly 900,000 files.
-While we could simply "unzip" this file, this would take some time and we would have nearly 900,000 files in a single directory.
+While we could simply "unzip" this file, this would take some time and we would have nearly 900,000 files in a single directory and working with files in that directory can become quite painful as a result.
 
 ```{r}
 #| cache: true
@@ -473,25 +536,25 @@ bulk_files <-
 bulk_files
 ```
 
-It turns out that we can use the `unz()` function to unzip a single file and, as we can identify the files we need from CIKs and inspection of the base files for that CIK, we can elect to extract just the files we need as and when we need them.
+It turns out that we can use the `unz()` function to unzip a single file and, as we can identify the files we need from the CIKs themselves and inspection of the base files for those CIKs, we can elect to extract just the files we need as and when we need them.
 It is at this point that we can reveal the purpose of the `local_file` argument that we included above, but neither explained nor used.
 In short, we want to create a new version of `get_sec_json()` that gets the relevant data from a local file if `local_file` is supplied, but goes to the relevant URL if not.
-Note that the version of `get_sec_json()` below uses `parse_json()` instead of `read_json` because the argument supplied represents a "connection" rather than an actual file.
+Note that the version of `get_sec_json()` below uses `parse_json()` instead of `read_json()`  when working with a local file because the argument supplied represents a "connection" rather than an actual file.
 
 ```{r}
-get_sec_json <- function(basename, local_file = NULL) {
+get_sec_json <- function(json_file, local_file = NULL) {
 
   local <- !is.null(local_file)
 
   if (local) {
-    t <- unz(local_file, basename, open = "rb")
+    t <- unz(local_file, json_file, open = "rb")
     raw_data <-
       tibble(json = list(parse_json(t, null = 'list'))) |>
       unnest_wider(json)
     close(t)
     unlink(t)
   } else {
-    url <- paste0("https://data.sec.gov/submissions/", basename)
+    url <- paste0("https://data.sec.gov/submissions/", json_file)
     raw_data <-
       tibble(json = list(read_json(url))) |>
       unnest_wider(json)
@@ -512,11 +575,12 @@ cik_to_filings(7694, local_file = bulk_path)
 To put our code to the test, we will look at collecting submissions data for a larger set of CIKs.
 For most research applications, we would not be interested in all files in `submissions.zip`.
 Instead, we will use data from SEC index files to get the population of CIKs for filers that ever filed on a Form 8-K.
+Because we will use a persistent database to store the processed data, I store the table I create here in that database under the name `ciks`.
 
 ```{r}
 #| eval: true
 db_path <- file.path(data_dir, "submissions.duckdb")
-db <- dbConnect(duckdb::duckdb(dbdir = db_path, read_only = FALSE))
+db <- dbConnect(duckdb::duckdb(), dbdir = db_path, read_only = FALSE)
 
 sec_index <- load_parquet(db, "sec_index*", "edgar")
 ciks <-
@@ -539,42 +603,134 @@ cik_sample <-
 dbDisconnect(db)
 ```
 
-First, the company-level data:
+First, the company-level data.
+The first part of `process_companies()` runs `get_company_data()` for the CIKs in `ciks` and combines the result into a single data frame.
+Then `company_data` is split into three tables exactly as we did earlier.
+Finally, if `write_to_db` is `TRUE` the data are written to the database at the location specified by the argument `dbdir`.^[The default value for `dbdir` is the value `db_path` set above.]
+
+```{r}
+process_companies <- function(ciks, dest_table = "companies",
+                              write_to_db = TRUE,
+                              dbdir = db_path) {
+  company_data <-
+    ciks |>
+    map(\(x) get_company_data(x, local_file = bulk_path)) |>
+    list_rbind()
+  
+  companies <-
+    company_data |>
+    select(-any_of(c("tickers", "exchanges", 
+                     "addresses", "ownerOrg")))
+  
+  addresses <-
+    company_data |> 
+    select(cik, addresses) |> 
+    unnest_longer(addresses) |> 
+    unnest_wider(addresses)
+  
+  tickers <-
+    company_data |> 
+    select(cik, tickers, exchanges) |> 
+    unnest_longer(c(tickers, exchanges))
+  
+  if (write_to_db) {
+    db <- dbConnect(duckdb::duckdb(), dbdir = dbdir, read_only = FALSE)
+    dbWriteTable(db, dest_table, companies, append = TRUE)
+    dbWriteTable(db, "addresses", addresses, append = TRUE)
+    dbWriteTable(db, "tickers", tickers, append = TRUE)
+    dbDisconnect(db)
+  } else {
+    list(companies = companies,
+         addresses = addresses,
+         tickers = tickers)
+  }
+}
+```
+
+We can test this function on the sample of CIKs in `cik_sample`:
 
 ```{r}
 #| eval: true
 #| cache: true
-company_sample <-
-  cik_sample |>
-  map(\(x) get_company_data(x, local_file = bulk_path)) |>
-  list_rbind() |>
-  system_time()
+cik_sample |>
+  process_companies(write_to_db = FALSE) |>
+  system.time()
 ```
 
-Second, the filing-level data:
+Second, the filing-level data. The `process_filings()` function is relatively straightforward because just one table is produced by this code.
+
+```{r}
+process_filings <- function(ciks, dest_table = "filings",
+                            write_to_db = TRUE,
+                            dbdir = db_path) {
+  filings <-
+    ciks |>
+    map(\(x) cik_to_filings(x, local_file = bulk_path)) |>
+    list_rbind()
+  
+  if (write_to_db) {
+    db <- dbConnect(duckdb::duckdb(), dbdir = dbdir, read_only = FALSE)
+    dbWriteTable(db, dest_table, filings,
+                 append = TRUE)
+    dbDisconnect(db)
+  }
+}
+```
+
+We can test `process_filings()` on the sample of CIKs in `cik_sample`:
 
 ```{r}
 #| eval: true
 #| cache: true
-filings_sample <-
-  cik_sample |>
-  map(\(x) cik_to_filings(x, local_file = bulk_path)) |>
-  list_rbind() |>
-  system_time()
+cik_sample |>
+  process_filings(write_to_db = FALSE) |>
+  system.time()
 ```
 
-So we will need around 40 seconds for 100 filings and thus roughly 5 hours for all filings.
+So we will need around 50 seconds for 100 filings and thus roughly 6 hours for all filings.
+My experience is that estimates generated from small samples like this are likely to be underestimates because outliers will exist that require more time and such outliers may not be found in small samples.
 
-## Processing CIKs in bulk
+## The batch processing paradigm
+
+In principle, we could just `collect()` all the CIKs in `ciks` and run the code above.
+However, this would be problematic for at least two reasons.
+
+First, issues due to anomalies in the data are likely to arise that cause a breakdown midway through data collection.
+In practice it will be easier to address this issues if the process is broken into chunks (e.g., batches of 100 CIKs) so that problematic cases can be identified and remedied.
+
+Second, even if the code has been adapted to address all data issues, a long-running process can still go awry for various random reasons (e.g., internet hiccups).
+A batched approach that allows the data collection effort to continue after interruption with minimal loss of data will minimize the costs of any interruptions.
+
+Here I use the following **batch-processing paradigm** to process data in batches of CIKs.^[I call this a *paradigm* because this is a common pattern or model that applies in many situations.]
+
+  1. Create a population of units to the processed. Depending on the task a "unit" might be a conference call, or a 10-K filing, or (in this case) a CIK.
+  2. Get a sample of units that have not yet been processed.
+  3. Collect data for this sample.
+  4. Store the collected data.
+  5. Return to step (2) above until all units have been processed.
+
+One key requirement to implement this paradigm is that we need to keep track of CIKs that have been processed already so that we only work on ones for which we need to collect data.
+For this purpose a database provides a natural structure.
+If the population identified in (1) is stored in a table `units_to_process` and the stored results in (4) go into `processed_data`, then `units_to_process |> anti_join(processed_data)` provides the unprocessed units that can be sampled in step (2).
+Here I use the DuckDB database I created above to implement this paradigm.
+The table `ciks` we stored in that database represents the population.
+
+The `get_ciks()` function takes two arguments.
+The first argument (`n_ciks`) specifies the size of the batch (i.e., number of CIKs) and here I set the default to 100 CIKs.
+The second argument (`dest_table`) identifies the table that is the primary destination for the data we are generating.
+
+The basic idea of `get_ciks()` is quite simple: The `ciks` table (the universe of CIKs we are interested in) is compared with `dest_table` using an `anti_join()` so that only CIKs not found on the latter table are returned.^[Initially there will be no `dest_table`, in which case the code just returns a sample of CIKs from `ciks`.]
+Finally, `get_ciks()` returns a sample of `n_ciks` CIKs.
 
 ```{r}
-get_cik_sample <- function(n_ciks = 100, new_table = "filings") {
-  db <- dbConnect(duckdb::duckdb(dbdir = db_path, read_only = TRUE))
-
+get_ciks <- function(n_ciks = 100, dest_table = "companies",
+                           dbdir = db_path) {
+  db <- dbConnect(duckdb::duckdb(), dbdir = dbdir, read_only = TRUE)
+  
   ciks <- tbl(db, "ciks")
 
-  if (new_table %in% dbListTables(db)) {
-    to_update <- tbl(db, new_table)
+  if (dest_table %in% dbListTables(db)) {
+    to_update <- tbl(db, dest_table)
     unprocessed <-
       ciks |>
       anti_join(to_update, by = "cik")
@@ -582,7 +738,7 @@ get_cik_sample <- function(n_ciks = 100, new_table = "filings") {
     unprocessed <- ciks
   }
   
-  cik_sample <-
+  ciks <-
     unprocessed |>
     collect(n = n_ciks) |>
     select(cik) |>
@@ -590,72 +746,127 @@ get_cik_sample <- function(n_ciks = 100, new_table = "filings") {
   
   dbDisconnect(db)
   
-  cik_sample
+  ciks
 }
 ```
+
+We break the main data collection efforts into two steps: one for the company-level data and one for the filing-level data.
+Each of these steps is place in a `while()` loop that will run until no more data needs to be collected.
+
+### Company-level data
+
+The code below starts by running `get_ciks(dest_table = "companies")` and stores the result in `ciks`.
+If there are CIKs in `ciks` (i.e., `length(ciks) > 0`), then the loop runs.
+
+One difference between the issues for the two list-columns in the company-level data is that the `addresses` issue created problems immediately while `tickers`-`exchanges` issue did not cause problems until several thousand CIKs had been processed.
+An advantage of the while-loop structure is that when an error causes the code to stop, it is relatively easy to step through the code to identify the fields and observations that are causing problems.
+
+Another issue that only appeared after several thousand CIKs had been processed related to the field `ownerOrg`, which isn't even meant to be part of the data.
+But when dealing with data related to more than 40,000 entities strange issues can crop up and the mistaken inclusion of data for `ownerOrg` is one of these.
+Note that we write `select(-any_of("ownerOrg"))` because `select(-ownerOrg)` will result in an error if `ownerOrg` is not on the `company_data` table, as it generally isn't.
+
+Once we have created the three tables, we write them to the persistent DuckDB database we created above.
+We use `append = TRUE` to indicate that the data are to be added to whatever data are already there.
+
+The code then returns to the beginning of the loop, where `get_ciks()` will examine the newly updated contents of `companies` so that only unprocessed CIKs are returned.
 
 ```{r}
-convert_nulls <- function(x) {
-  return(x)
-  nulls <- unlist(map(x, is.null))
-  x[nulls] <- NA
-  x
+while (length(ciks <- get_ciks(dest_table = "companies", 
+                                           n_ciks = 100)) > 0) {
+  process_companies(ciks, dest_table = "companies")
 }
 ```
+
+### Filing-level data
+
+The while-loop for `filings` is similar.
+The `cik_to_filings()` function takes the place of `get_company_data()` and there is no need to split the data into separate tables.
 
 ```{r}
-sample_n <- 0
-
-while (length(cik_sample <- get_cik_sample(new_table = "companies")) > 0) {
-  
-  sample_n <- sample_n + 1
-  cat("Processing sample number: ", sample_n, "\n")
-  
-  company_sample <-
-    cik_sample |>
-    map(\(x) get_company_data(x, local_file = bulk_path)) |>
-    list_rbind() |> 
-    mutate(across(where(is.list), convert_nulls))
-  
-  addresses <-
-    company_sample |> 
-    select(cik, addresses) |> 
-    unnest_longer(addresses) |> 
-    unnest_wider(addresses)
-  
-  db <- dbConnect(duckdb::duckdb(dbdir = db_path, read_only = FALSE))
-  dbWriteTable(db, "companies", 
-               company_sample |>
-                 select(-any_of(c("addresses", "ownerOrg"))),
-               append = TRUE)
-  
-  dbWriteTable(db, "addresses", addresses, append = TRUE)
-  
-  dbDisconnect(db)
+while (length(ciks <- get_ciks(dest_table = "filings")) > 0) {
+  process_filings(ciks, "filings")
 }
-
-# -tickers, -exchanges,  , -formerNames
 ```
+
+### Extending the batch-processing paradigm
+
+Whether we use a local copy of `submissions.zip` or access the JSON data directly on SEC EDGAR, the process here is inherently single-threaded.
+With `submissions.zip`, only one process can access the file at any time and the SEC imposes limits on accessing multile JSON files at once.
+As such the limitation that only a single process can access a DuckDB database with read-write access does not bind.
+
+However, other tasks will not be subject to this limitation and parallel processing can provide dramatic performance improvements.
+For such parallel processing a server-based database system, such as PostgreSQL, is ideal.
+However, some modification is needed because we don't want one process to be processing data that another process is already working on.
+
+  1. Create a population of units to the processed. Assume this is in table `population`.
+  2. Get a sample of units that have not yet been processed
+  3. Store this sample table that identifies units selected for processing (e.g., `processed`)
+  4. Collect data for this sample.
+  5. Store the collected data in a table (e.g., `results`)
+  6. Return to step (2) above until all units have been processed.
+
+Here step (2) will involve `population |> anti_join(processed)` and if steps (2) and (3) are put in a single database transaction, then it is possible to ensure that each unit is processed only once even if many processes are working simultaneously.
+
+## Exporting the data to parquet format
+
+Finally, we export the four tables we have created as parquet files.
+The parquet format is described in *R for Data Science* [@Wickham:2023aa, p. 393] as "an open standards-based format widely used by big data systems."
+Parquet files provide a format optimized for data analysis, with a rich type system.
+More details on the parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of *R for Data Science* and a guide to creating a parquet data repository are provided [here](https://iangow.github.io/far_book/parquet-wrds.html).
+
+For reasons discussed [here](https://iangow.github.io/far_book/parquet-wrds.html#converting-wrds-data-to-parquet), I use the environment variable `DATA_DIR` to identify the location in which I will store the data.
+If you do not have `DATA_DIR` set, you can easily set it using a command like this:^[Change the directory to an appropriate location on your own computer.]
 
 ```{r}
-sample_n <- 0
+#| eval: false
+Sys.setenv(DATA_DIR = "data")
+```
 
-while (length(cik_sample <- get_cik_sample(new_table = "filings")) > 0) {
-  
-  sample_n <- sample_n + 1
-  cat("Processing sample number: ", sample_n, "\n")
+I will store the data in a `submissions` directory under the `DATA_DIR` location.
 
-  filings_sample <-
-    cik_sample |>
-    map(\(x) cik_to_filings(x, local_file = bulk_path)) |>
-    list_rbind()
+```{r}
+pq_path = file.path(Sys.getenv("DATA_DIR"), "submissions")
+```
+
+Here I create a small function that uses the built-in functionality of DuckDB to save tables as parquet files.
+
+```{r}
+db_to_parquet <- function(db, table, data_path) {
+  if (!dir.exists(data_path)) dir.create(data_path)
+  file_path <- file.path(data_path, str_c(table, ".parquet"))
   
-  db <- dbConnect(duckdb::duckdb(dbdir = db_path, read_only = FALSE))
-  dbWriteTable(db, "filings", filings_sample,
-               append = TRUE)
-  dbDisconnect(db)
+  dbExecute(db, str_c("COPY ", table, " TO '", file_path, 
+                      "' (FORMAT PARQUET)"))
 }
 ```
 
+With `db_to_parquet()` in hand, it is easy to connect to the database and export the four tables.
+
+```{r}
+#| cache: true
+db <- dbConnect(duckdb::duckdb(), dbdir = db_path, read_only = TRUE)
+
+db_to_parquet(db, table = "companies", data_path = pq_path)
+db_to_parquet(db, table = "tickers", data_path = pq_path)
+db_to_parquet(db, table = "addresses", data_path = pq_path)
+db_to_parquet(db, table = "filings", data_path = pq_path)
+
+dbDisconnect(db)
+```
+
+These four parquet files can be downloaded from [here](https://www.dropbox.com/scl/fo/69i5mpo89wq541e32rgte/ADv3Ty8ObOun2P4Mdp-FCRE?rlkey=hxpdplt27tik8wbp4n9fc9vck&dl=0).
+We provide a guide to working with parquet files [here](https://iangow.github.io/far_book/parquet-wrds.html#working-with-parquet-files).
+If you have set `DATA_DIR` correctly, then the `load_parquet()` function from the `farr` package makes it easy to access the data, as illustrated below.
+
+```{r}
+#| cache: true
+db <- dbConnect(duckdb::duckdb())
+
+filings <- load_parquet(db, table = "filings", schema = "submissions")
+filings
+
+dbDisconnect(db)
+```
 
 ## References {-}
+
