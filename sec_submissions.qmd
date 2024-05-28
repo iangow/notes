@@ -402,7 +402,8 @@ extract_filings <- function(json_file, local_file = NULL) {
     unnest_longer(everything()) |>
     mutate(across(c(filingDate, reportDate), parse_date),
            acceptanceDateTime = parse_date_time(acceptanceDateTime,
-                                                orders = "ymdHMSz"),
+                                                orders = "ymdHMS",
+                                                tz = "America/New_York"),
            across(c(isXBRL, isInlineXBRL), as.logical))
 }
 ```
@@ -625,14 +626,17 @@ process_companies <- function(ciks, dest_table = "companies",
   addresses <-
     company_data |> 
     select(cik, addresses) |> 
-    unnest_longer(addresses) |> 
-    unnest_wider(addresses)
+    unnest_longer(addresses, indices_to = "address_type") |> 
+    unnest_wider(addresses) |>
+    select(cik, address_type, everything())
   
   tickers <-
     company_data |> 
     select(cik, tickers, exchanges) |> 
-    unnest_longer(c(tickers, exchanges))
-  
+    unnest_longer(c(tickers, exchanges)) |>
+    rename(ticker = tickers,
+           exchange = exchanges)
+
   if (write_to_db) {
     db <- dbConnect(duckdb::duckdb(), dbdir = dbdir, read_only = FALSE)
     dbWriteTable(db, dest_table, companies, append = TRUE)
