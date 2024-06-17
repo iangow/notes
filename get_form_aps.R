@@ -1,7 +1,10 @@
 library(tidyverse)
 library(arrow)
 
-if (!exists("data_path")) data_path <- "data"
+if (!exists("data_path")) {
+  print("Setting data path ...\n")
+  data_path <- "data"
+}
 t <- file.path(data_path, "FirmFilings.zip")
 parquet_file <- file.path(data_path, "form_aps.parquet")
 
