@@ -1,0 +1,183 @@
+---
+title: "Analysis of IPOs on the ASX"
+author: Ian D. Gow
+date: 2024-06-27
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+The purpose of this note is compile some statistics about IPOs on the Australia Stock Exchange (ASX).
+
+```{r}
+#| message: false
+#| include: false
+library(tidyverse)
+library(DBI)
+library(scales)
+library(farr, warn.conflicts = FALSE)
+library(dbplyr, warn.conflicts = FALSE)
+```
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+asx_ipos <- load_parquet(db, "asx_ipos", "asx") |> filter(year(listed) == 2021) 
+ipo_gvkey_links <- load_parquet(db, "ipo_gvkey_links", "asx") |> filter(year(listed) == 2021) 
+g_secd <- load_parquet(db, schema = "comp", table = "g_secd")
+```
+
+```{r}
+#| include: false
+ipo_day1_rets <-
+  asx_ipos |>
+  inner_join(ipo_gvkey_links, by = join_by(code, listed)) |>
+  rename(datadate = listed) |>
+  inner_join(g_secd, by = join_by(gvkey, iid, datadate)) |>
+  mutate(day1 = day1 / 100,
+         ret = prccd / issueprice - 1,
+         adj_prc = prccd / ajexdi * trfd) |>
+  select(gvkey, iid, datadate, prccd, ajexdi, trfd, adj_prc, ret) |>
+  compute()
+```
+
+```{r}
+#| echo: false
+#| label: fig-ipo-day1
+#| fig-cap: Distribution of IPO Day-1 returns (% over issue price)
+ipo_day1_rets |>
+  ggplot(aes(x = ret * 100)) +
+  geom_histogram(binwidth = 5) +
+  scale_x_continuous()
+```
+
+```{r}
+#| include: false
+daily_returns <-
+  ipo_gvkey_links |>
+  inner_join(g_secd, by = join_by(gvkey, iid)) |>
+  group_by(gvkey, iid) |>
+  window_order(datadate) |>
+  mutate(adj_prc = prccd / ajexdi * trfd) |>
+  mutate(ret = adj_prc / lag(adj_prc) - 1) |>
+  filter(datadate > listed) |>
+  select(gvkey, iid, datadate, prccd, ajexdi, trfd, adj_prc, ret) |>
+  window_order() |>
+  ungroup() |>
+  compute()
+```
+
+```{r}
+#| include: false
+daily_rets_all <-
+  ipo_day1_rets |>
+  union_all(daily_returns) |>
+  arrange(gvkey, iid, datadate)
+```
+
+```{r}
+#| echo: false
+#| include: false
+#| eval: false
+asx_ipos |>
+  ggplot(aes(x = marketcap)) +
+  geom_histogram() +
+  scale_x_continuous(transform = "log10")
+```
+
+```{r}
+#| echo: false
+#| label: fig-ipo-ts
+#| fig-cap: IPOs by month (January 2017--June 2024)
+asx_ipos |>
+  mutate(month = floor_date(listed, "month"),
+         year = as.character(year(listed))) |>
+  ggplot(aes(x = month, fill = year)) +
+  geom_bar()
+```
+
+```{r}
+#| include: false
+total_returns <-
+  daily_rets_all |>
+  group_by(gvkey, iid) |>
+  window_order(datadate) |>
+  summarize(ret_total = exp(sum(log(ret + 1), na.rm = TRUE)) - 1,
+            .groups = "drop") |>
+  window_order() |>
+  select(gvkey, iid, ret_total) |>
+  compute()
+
+total_returns |>
+  ggplot(aes(x = log(1 + ret_total))) +
+  geom_histogram()
+
+max_days <- 250
+ci <- 0.95
+
+ipo_rets_cum <-
+  daily_rets_all |>
+  group_by(gvkey, iid) |>
+  window_order(datadate) |>
+  mutate(day_number = row_number(),
+         cum_ret = exp(cumsum(log(ret + 1))) - 1) |>
+  filter(day_number <= max_days) |>
+  window_order() |>
+  ungroup() |>
+  select(gvkey, iid, day_number, cum_ret) |>
+  compute()
+
+ipo_rets_start <-
+  ipo_rets_cum |>
+  select(gvkey, iid) |>
+  mutate(day_number = 0, 
+         cum_ret = 0)
+
+ipo_rets_cum_all <-
+  ipo_rets_start |>
+  union_all(ipo_rets_cum)
+  
+average_cum_rets <-
+  ipo_rets_cum_all |>
+  group_by(day_number) |>
+  summarise(
+    avg_cum_ret = mean(cum_ret, na.rm = TRUE),
+    sd = sd(cum_ret, na.rm = TRUE),
+    n = n(),
+    .groups = "drop") |>
+  mutate(se = sd / sqrt(n)) |>
+  collect() |>
+  mutate(
+    lower_ci = avg_cum_ret + qt((1 - ci) / 2, df = n - 1) * se,
+    upper_ci = avg_cum_ret + qt(1 - (1 - ci) / 2, df = n - 1) * se
+  )
+```
+
+```{r}
+#| include: false
+fig_cap <- str_c("Average cumulative return on issue price with ",
+                 ci * 100, "% confidence intervals")
+```
+
+```{r}
+#| echo: false
+#| label: fig-cum-rets
+#| fig-cap: !expr fig_cap
+average_cum_rets |>
+  ggplot(aes(x = day_number, y = avg_cum_ret)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2) +
+  labs(x = "Trading days since IPO",
+       y = "Average cumulative return") +
+  theme_minimal()
+```
