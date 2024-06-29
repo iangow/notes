@@ -17,9 +17,23 @@ format:
 bibliography: papers.bib
 ---
 
-In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr"))` within R to install all the packages you need to run the code in this note.]
+Two levels:
+
+1. Importing the specific data sets comprised by the SIRCA ASX EOD library.
+2. Illustrating general principles for importing data using the SIRCA ASX EOD library as a case study.
+
+What are these principles?
+
+1. 
+
+In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "janitor"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd).
+
+```{r}
+Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data/")
+Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
+```
 
 ```{r}
 #| include: false
@@ -34,14 +48,28 @@ library(tidyverse)
 library(DBI)
 library(arrow)
 library(farr)
+library(janitor)
 ```
 
 ```{r}
-si_au_ref_names <- read_csv("data/sirca/si_au_ref_names.csv.gz")
+csv_dir <- file.path(Sys.getenv("RAW_DATA_DIR"), "sirca")
+
+si_au_ref_names_csv <- file.path(csv_dir, "si_au_ref_names.csv.gz")
+si_au_ref_names <- read_csv(si_au_ref_names_csv)
 ```
+
 ```{r}
 si_au_ref_names |>
   select(ends_with("_YMD"))
+```
+
+```{r}
+si_au_ref_names |>
+  distinct() |>
+  count(Gcode, SecurityTicker, ListDate, name = "num_rows") |>
+  filter(num_rows > 1) |>
+  inner_join(si_au_ref_names) |>
+  select(Gcode, ListDate, SecurityTicker, GICSIndustry, SIRCAIndustryClassCode)
 ```
 
 ```{r}
@@ -57,8 +85,7 @@ si_au_ref_names |>
 ```
 ```{r}
 si_au_ref_names <-
-  read_csv("data/sirca/si_au_ref_names.csv.gz",
-           show_col_types = FALSE) |>
+  read_csv(si_au_ref_names_csv, show_col_types = FALSE) |>
   mutate(across(ends_with("_YMD"), ymd),
          ListDateNew = dmy(ListDate),
          DelistDateNew = dmy(DelistDate))
@@ -73,25 +100,59 @@ si_au_ref_names |>
 
 ```{r}
 si_au_ref_names |>
-  select(DelistDate_YMD, DelistDate, DelistDateNew) |>
+  select(starts_with("DelistDate")) |>
   filter(!is.na(DelistDate), DelistDateNew != DelistDate_YMD)
 ```
+
 ```{r}
-si_au_ref_names |>
+#| include: false
+days_since <- 
+  si_au_ref_names |>
   filter(!is.na(DelistDate), DelistDateNew != DelistDate_YMD) |>
-  View()
+  select(DelistDate_DaysSince) |>
+  pull()
 ```
 
+```{r}
+si_au_ref_names |>
+  select(Gcode, starts_with("DelistDate")) |>
+  filter(DelistDate_DaysSince == days_since)
+```
+So it seems that `DelistDate` is to be preferred here, if only in terms of internal consistency.
 
 ```{r}
 si_au_ref_names |>
   select_if(is.character) |>
   select(8:9) 
 ```
+
 ```{r}
 si_au_ref_names |>
   select_if(is.character) |>
   select(12:14) |>
+  filter(if_all(everything(), \(x) !is.na(x)))
+```
+
+```{r}
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(12:13) |>
+  filter(if_all(everything(), \(x) !is.na(x)))
+```
+
+```{r}
+si_au_ref_names |>
+  select(Gcode, SecurityTicker, ListDate, CompanyDelistReasonCode) |>
+  mutate(CompanyDelistReasonCode = str_split(CompanyDelistReasonCode, "[;\\.]")) |>
+  unnest(CompanyDelistReasonCode) |>
+  count(CompanyDelistReasonCode) |>
+  arrange(n)
+```
+
+```{r}
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(14:15) |>
   filter(if_all(everything(), \(x) !is.na(x)))
 ```
 
@@ -103,19 +164,24 @@ si_au_ref_names |>
 ```
 
 ```{r}
+#| cache: true
+pq_dir <- file.path(Sys.getenv("DATA_DIR"), "sirca")
+
+if (!dir.exists(pq_dir)) dir.create(pq_dir)
+
+si_au_ref_names_pq <- file.path(pq_dir, "si_au_ref_names.parquet")
+
 si_au_ref_names <-
-  read_csv("data/sirca/si_au_ref_names.csv.gz",
+  read_csv(si_au_ref_names_csv,
            show_col_types = FALSE,
            name_repair = str_to_lower) |>
-  mutate(across(ends_with("_ymd"), ymd),
-         across(ends_with("date"), mdy),
+  select(-ends_with("_ymd")) |>
+  mutate(across(ends_with("date"), dmy),
          across(c(seniorsecurity, ends_with("dayssince"),
                   recordcount, gicsindustry, sircaindustryclasscode,
                   sircasectorcode),
                 as.integer)) |>
-  # select(-ends_with("date")) |>
-  # rename_with(\(x) str_remove(x, "_ymd"), ends_with("_YMD")) |>
-  write_parquet(sink = "data/sirca/si_au_ref_names.parquet") |>
+  write_parquet(sink = si_au_ref_names_pq) |>
   system_time()
 ```
 
@@ -124,9 +190,11 @@ si_au_ref_names
 ```
 
 ```{r}
+si_au_ref_trddays_csv <- file.path(csv_dir, "si_au_ref_trddays.csv.gz")
+si_au_ref_trddays_pq <- file.path(pq_dir, "si_au_ref_trddays.parquet")
+
 si_au_ref_trddays <-
-  read_csv("data/sirca/si_au_ref_trddays.csv.gz",
-           col_types = "ciDii") |>
+  read_csv(si_au_ref_trddays_csv, col_types = "ciDii") |>
   mutate(dateymd = ymd(dateymd))
 ```
 
@@ -148,19 +216,22 @@ si_au_ref_trddays |>
 
 ```{r}
 si_au_ref_trddays <-
-  read_csv("data/sirca/si_au_ref_trddays.csv.gz",
+  read_csv(si_au_ref_trddays_csv,
            col_types = "-iDii") |>
   relocate(date) |>
-  write_parquet(sink = "data/sirca/si_au_ref_trddays.parquet") |>
+  write_parquet(sink = si_au_ref_trddays_pq) |>
   system_time()
 ```
 
 ```{r}
+si_au_retn_mkt_csv <- file.path(csv_dir, "si_au_retn_mkt.csv.gz")
+si_au_retn_mkt_pq <- file.path(pq_dir, "si_au_retn_mkt.parquet")
+
 si_au_retn_mkt <-
-  read_csv("data/sirca/si_au_retn_mkt.csv.gz",
-                           col_types = "ciDdddddd",
-                           locale = locale(date_format = "%d/%m/%Y"),
-                           name_repair = str_to_lower) |>
+  read_csv(si_au_retn_mkt_csv,
+           col_types = "ciDdddddd",
+           locale = locale(date_format = "%d/%m/%Y"),
+           name_repair = str_to_lower) |>
   mutate(dateymd = ymd(dateymd))
 ```
 
@@ -171,29 +242,33 @@ si_au_retn_mkt |>
 
 ```{r}
 si_au_retn_mkt <-
-  read_csv("data/sirca/si_au_retn_mkt.csv.gz",
+  read_csv(si_au_retn_mkt_csv,
            col_types = "-iDdddddd",
            locale = locale(date_format = "%d/%m/%Y"),
            name_repair = str_to_lower) |>
   relocate(date) |>
-  write_parquet(sink = "data/sirca/si_au_retn_mkt.parquet") |>
+  write_parquet(sink = si_au_retn_mkt_pq) |>
   system_time()
 ```
 
 ```{r}
 #| cache: true
 #| cache-lazy: false
+si_au_prc_daily_csv <- file.path(csv_dir, "si_au_prc_daily.csv.gz")
+si_au_prc_daily_pq <- file.path(pq_dir, "si_au_prc_daily.parquet")
+
 si_au_prc_daily <-
-  read_csv("data/sirca/si_au_prc_daily.csv.gz",
+  read_csv(si_au_prc_daily_csv,
            guess_max = 1e6,
            show_col_types = FALSE) |>
   mutate(dateymd = ymd(dateymd),
-         # date = dmy(date), # One difference with dateymd seems to be an error
          weekday = as.integer(weekday),
          monthend = as.logical(monthend),
          seniorsecurity = as.integer(seniorsecurity)) |>
   system_time()
 ```
+
+ date = dmy(date), # One difference with dateymd seems to be an error
 
 ```{r}
 #| cache: true
@@ -201,7 +276,7 @@ si_au_prc_daily <-
 si_au_prc_daily |>
   select(-date) |>
   rename(date = dateymd) |>
-  write_parquet(sink = "data/sirca/si_au_prc_daily.parquet") |>
+  write_parquet(sink = si_au_prc_daily_pq) |>
   system.time()
 ```
 
@@ -221,17 +296,17 @@ export_parquet <- function(df, file) {
 db <- dbConnect(duckdb::duckdb())
 
 si_au_prc_daily <-
-  tbl(db, "read_csv('data/sirca/si_au_prc_daily.csv.gz',
+  tbl(db, str_c("read_csv('", si_au_prc_daily_csv, "',
                     DateFormat = '%Y%m%d',
                     types = {'dateymd': 'DATE',
                              'dayssince': 'INTEGER',
                              'weekday': 'INTEGER',
                              'monthend': 'BOOLEAN',
-                             'seniorsecurity': 'INTEGER'})",
+                             'seniorsecurity': 'INTEGER'})"),
       name = "si_au_prc_daily") |>
   select(-date) |>
   rename(date = dateymd) |>
-  export_parquet(file = "data/sirca/si_au_prc_daily_new.parquet") |>
+  export_parquet(file = si_au_prc_daily_pq) |>
   system_time()
 
 dbDisconnect(db)
