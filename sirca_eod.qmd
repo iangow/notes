@@ -1,0 +1,254 @@
+---
+title: "ASX End of Day Prices"
+author: Ian D. Gow (based on SIRCA document)
+date: 2024-05-23
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+# Overview
+
+SIRCA’s end of day price service is a comprehensive collection of datasets designed to give you everything needed to find daily closing price for ASX listed companies, and to generate reliable daily measures of total shareholder returns.
+Everything is retained for delisted companies.
+Starting from January 2000, this collection includes all available end-of-day trade prices for the senior (residual risk) securities of all companies.
+Dividend and franking histories; capital returns; adjustments for numerous corporate action events, like splits, consolidation, bonus issues, renounceable and non-renounceable issues; total daily traded volume and value, subdivided into various categories to expose activity in lit and dark ASX markets; numbers of issued shares; are all provided in this table.
+
+All company names and ticker codes are recorded in a separate table, where these many pieces are linked together through time by an identifier we created for that purpose.
+We call that identifier our Group Company Code, or `Gcode`.
+`GCode` valuess are designed to make it easy for you to build price and return series for each company across its whole listed experience and not just that of pieces with different ticker codes.
+Another goal for GCode is to remain unchanging across time.
+`GCode` persistence means you can select a sample identified by `GCode`, test your ideas and come back later to update your research, without any extra work caused by intervening name and ticker code changes.
+These same `GCodes` are used in many of our services, for the same beneficial reasons.
+
+Other components of this service are our history of value- and equal-weighted all-of-market daily returns, which we generate from all observable daily company returns; another file identifying all of the ASX trading days since the start of January 2000, which can be used to identify gaps in company price series, from suspensions or thin trading; and a detailed description of all tables and fields in a data dictionary created just for this collection, which clearly describes how to interpret and use its many elements.
+
+This entire collection is an ideal choice for researchers considering event studies for ASX listed companies.
+With these data sets you can:
+
+1.  Find `GCode`s from company names or ticker codes
+2.  Apply the `CumulativeFactor` field to adjust prices for different dividend and corporate action events.
+3.  Generate and plot total shareholder returns
+4.  Use the `DaysSince` column to identify return intervals between consecutive trades
+5.  Use the `SeniorSecurity` column to restrict attention to the residual risk security of each company
+6.  Recognise and accommodate negative factors and zero volumes
+7.  Calculate cumulative factor without dividends
+8.  Segment market trading activity by trade and venue type, such as to explore lit versus dark market trading.
+
+# Tables
+
+SIRCA's ASX end of day price collection includes the following tables:
+
+| Data Library                   | Description                                                                  | Dataset            | Main Identifier                             | Coverage |
+|-----------------|---------------|------------|------------|------------|
+| Company Name Histories (SIRCA) | Complete name histories and change dates for companies listed from 01Jan2000 | `si_au_ref_names`  | `GCode`, ASX SecurityTicker, SeniorSecurity | ASX      |
+| End of Day Prices              | Complete daily price, volume and value histories, with issued share numbers  | `si_au_prc_daily`  | `GCode`, ASX SecurityTicker, SeniorSecurity | ASX      |
+| ASX Market Returns             | Daily value- and equal-weighted whole market returns                         | `si_au_retn_mkt`   | dates                                       | ASX      |
+| ASX Trading Dates              | Record of ASX trading dates since 01Jan2000                                  | `si_au_ref_trdday` | dates                                       | ASX      |
+| EOD Data Dictionary            | Comprehensive description of all components with guidance for correct usage  | `si_au_prc_mdasx`  | None                                        | ASX      |
+
+# Statistical software examples
+
+The following examples demonstrate ways in which you might extract content of interest to you, or work with data from more than one data set.
+They are intended to help with analysis in your preferred environment, rather than to be precise guidance, because your favoured environment may require modifications to the exact form of these examples.
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(DBI)
+library(dbplyr, warn.conflicts = FALSE)
+# library(farr)
+
+conflicted::conflict_prefer("filter", "dplyr")
+conflicted::conflict_prefer("lag", "dplyr")
+
+load_parquet <- function (conn, table, schema = "", data_dir = Sys.getenv("DATA_DIR")) 
+{
+  file_path <- file.path(data_dir, schema, paste0(table, ".parquet"))
+  df_sql <- paste0("read_parquet('", file_path, "')")
+  print(df_sql)
+  dplyr::tbl(conn, dplyr::sql(df_sql))
+}
+```
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+si_au_ref_names <-
+  tbl(db, "'data/sirca/si_au_ref_names.parquet'") |>
+  compute(name = "si_au_ref_names")
+
+si_au_prc_daily <- tbl(db, "'data/sirca/si_au_prc_daily.parquet'") 
+```
+
+## 1. Finding `GCodes` from company names or ticker codes
+
+One way of searching for a `GCode` is to look up the company name, for example, every company name including Westpac, such as Westpac Banking Corporation, Westpac Office Trust, Westpac Property Trust.
+
+```{sql}
+#| connection: db
+#| eval: false
+SELECT gcode, securityticker, abbrevcompanyname
+FROM si_au_ref_names
+WHERE fullcompanyname LIKE '%WESTPAC%'
+```
+
+The same query could be run using `dplyr` code:
+
+```{r}
+si_au_ref_names |>
+  filter(str_like(fullcompanyname, '%WESTPAC%')) |>
+  select(gcode, securityticker, abbrevcompanyname) |>
+  collect()
+```
+
+Alternatively, searching by the ticker code will also yield a result.
+
+```{sql}
+#| connection: db
+#| eval: false
+SELECT gcode, securityticker, abbrevcompanyname
+FROM si_au_ref_names 
+WHERE securityticker = 'ANZ'
+```
+
+Again the same query could be run using `dplyr` code:
+
+```{r}
+si_au_ref_names |>
+  filter(securityticker == 'ANZ') |>
+  select(gcode, securityticker, abbrevcompanyname) |>
+  collect()
+```
+
+As another example, suppose one is interested in Arena REIT which has a CompanyTicker of `ARF`.
+Searching for this ticker code reveals the `gcode` of Arena REIT is `arf2`.
+This `gcode` can then be used to search the `si_au_prc_daily` table for information about the securities of Arena REIT.
+
+```{r}
+si_au_ref_names |>
+  filter(companyticker == 'ARF') |>
+  select(gcode, securityticker, abbrevcompanyname, 
+         listdate, delistdate) |>
+  arrange(listdate) |>
+  collect()
+```
+
+The previous search reveals that in 2000, the ticker code ARF was then associated with Arrowfield Group Limited.
+Arrowfield Group Limited is a different entity to Arena REIT, which was listed in 2013, so the two entities have separate `GCode`s.
+
+A search for `CompanyTicker` equalling ARF also shows that in 2013,
+the `SecurityTicker` of Arena REIT briefly changed from `ARF` to `ARFDA`, and then back to `ARF`, due to conversions to and from deferred units.
+Since Arena REIT remained the same entity during this process, the `GCode` remains `arf2` throughout this history, allowing for accurate comparisons across name changes and ticker code changes.
+
+2. The `CumulativeFactor` column can be used to adjust the closing price for the effects of corporate actions, e.g. stock splits or entitlement offers, or dividends.
+
+The following plot shows a large drop in the closing price of BHP in late June 2001.
+
+```{r}
+bhp <- 
+  si_au_prc_daily |>
+  filter(gcode == 'bhp1',
+         between(date, '2001-01-01', '2001-12-31')) |>
+  select(gcode, date, close, coraxdescription)
+```
+
+```{r}
+bhp |>
+  collect() |>
+  ggplot(aes(x = date, y = close)) +
+  geom_line()
+```
+Examining the `coraxdescription` column, it seems that the change is due to a `1:0.94` bonus issue.
+
+```{r}
+bhp |>
+  filter(!is.na(coraxdescription)) |>
+  collect()
+```
+
+The `coraxdescription` column provides details of CORAX (Corporate Action) events, when available. 
+However, descriptions are not always available.
+The `numberofdilutionevents` field will always show a value greater than 0 when a dilution event (CORAX or dividend) has been considered and applied and `numberofcoraxevents > 0` specifically indicates CORAX events.
+Likewise, `numberofdividendevents > 0` can be used to find all dividend events, even when other descriptive fields are not available.
+
+```{r}
+si_au_prc_daily |>
+  filter(gcode == 'bhp1', 
+          between(date, '2001-06-27', '2001-07-02')) |>
+  select(gcode, date, close, numberofcoraxevents, coraxdescription) |>
+  collect()
+```
+
+Simply multiplying the `close` column by the `cumulativefactor` column will produce the adjusted price.
+
+```{r}
+bhp <- 
+  si_au_prc_daily |>
+  filter(gcode == 'bhp1',
+         between(date, '2001-01-01', '2001-12-31')) |>
+  mutate(adjustedprice = close * cumulativefactor) |>
+  select(gcode, date, close, adjustedprice, coraxdescription) |>
+  collect()
+```
+  
+In this case the new `adjustedprice` series is everywhere lower than `close` because `cumulativefactor` is affected by all CORAX events to the end of each series of Close prices. 
+This is so the resulting `adjustedprice` series is consistent over its entire history and can reliably measure returns between any two trading dates for `bhp1`.
+Exactly the same process for `cumulativefactor` applies for dividends as well as corporate actions.
+`AAA` is a security that pays regular dividends, and the effect of its dividends on the closing price can be observed from a graph.
+
+```{r}
+aaa <-
+  si_au_prc_daily |>
+  filter(gcode == 'aaa2', between(date, '2017-01-01', '2018-01-05')) |>
+  mutate(adjustedprice = close * cumulativefactor) |>
+  select(date, close, adjustedprice, cumulativefactor) |>
+  collect()
+
+aaa
+
+aaa |>
+  select(-cumulativefactor) |>
+  pivot_longer(-date, names_to = "variable", values_to = "price") |>
+  ggplot(aes(x = date, y = price, color = variable)) +
+  geom_line()
+```
+
+## 3. Plotting a distribution of price relatives for a security.
+
+The following function can calculate the price relative, or total shareholder return, for a security. Note that it requires the price to be adjusted for Corporate Actions and Dividends, and to be ordered by Date.
+
+```{r}
+cba <- 
+  si_au_prc_daily |>
+  filter(gcode == 'cba1') |>
+  mutate(adjustedprice = close * cumulativefactor) |>
+  group_by(gcode) |>
+  window_order(date) |>
+  mutate(prel = adjustedprice / lag(adjustedprice)) |>
+  ungroup() |>
+  window_order() |>
+  select(gcode, date, close, adjustedprice, prel, dayssince) |>
+  collect()
+
+cba
+```
+
+## 4. `dayssince` column
+
+It is important to note that price relatives calculated in the previous section may not always be over consecutive trading days. 
+Although CBA is a stock that is consistently traded, a less-liquid security may show large gaps in trading activity, leading to price relatives that span
+larger time periods
+An example of this is shown below, using the `datesince` column.
+This column contains the number of elapsed days since a point in time, and provides a way to measure the liquidity of a security.
