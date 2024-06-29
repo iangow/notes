@@ -68,13 +68,14 @@ They are intended to help with analysis in your preferred environment, rather th
 library(tidyverse)
 library(DBI)
 library(dbplyr, warn.conflicts = FALSE)
+library(duckdb)
 # library(farr)
 
 conflicted::conflict_prefer("filter", "dplyr")
 conflicted::conflict_prefer("lag", "dplyr")
 
-load_parquet <- function (conn, table, schema = "", data_dir = Sys.getenv("DATA_DIR")) 
-{
+load_parquet <- function (conn, table, schema = "sirca", 
+                          data_dir = Sys.getenv("DATA_DIR")) {
   file_path <- file.path(data_dir, schema, paste0(table, ".parquet"))
   df_sql <- paste0("read_parquet('", file_path, "')")
   print(df_sql)
@@ -85,11 +86,16 @@ load_parquet <- function (conn, table, schema = "", data_dir = Sys.getenv("DATA_
 ```{r}
 db <- dbConnect(duckdb::duckdb())
 
+si_au_ref_names_pq <- file.path(Sys.getenv("DATA_DIR"), "sirca",
+                                "si_au_ref_names.parquet")
+
 si_au_ref_names <-
-  duckdb::tbl_file(db, "data/sirca/si_au_ref_names.parquet") |>
+  tbl_file(db, si_au_ref_names_pq) |>
   compute(name = "si_au_ref_names")
 
-si_au_prc_daily <- duckdb::tbl_file(db, "data/sirca/si_au_prc_daily.parquet") 
+si_au_prc_daily_pq <- file.path(Sys.getenv("DATA_DIR"), "sirca",
+                                "si_au_prc_daily.parquet")
+si_au_prc_daily <- tbl_file(db, si_au_prc_daily_pq) 
 ```
 
 ## 1. Finding `GCodes` from company names or ticker codes
