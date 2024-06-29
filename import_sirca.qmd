@@ -1,0 +1,238 @@
+---
+title: "Importing SIRCA ASX EOD data"
+author: Ian D. Gow
+date: 2024-06-29
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf:
+    colorlinks: true
+    geometry:
+    - left=2.5cm
+    - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd).
+
+```{r}
+#| include: false
+options(width = 75,
+        tibble.width = 75,
+        pillar.print_min = 5)
+```
+
+```{r}
+#| message: false
+library(tidyverse)
+library(DBI)
+library(arrow)
+library(farr)
+```
+
+```{r}
+si_au_ref_names <- read_csv("data/sirca/si_au_ref_names.csv.gz")
+```
+```{r}
+si_au_ref_names |>
+  select(ends_with("_YMD"))
+```
+
+```{r}
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(1:5)
+```
+```{r}
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(6:7, 10:11) |>
+  filter(if_all(everything(), \(x) !is.na(x)))
+```
+```{r}
+si_au_ref_names <-
+  read_csv("data/sirca/si_au_ref_names.csv.gz",
+           show_col_types = FALSE) |>
+  mutate(across(ends_with("_YMD"), ymd),
+         ListDateNew = dmy(ListDate),
+         DelistDateNew = dmy(DelistDate))
+         
+```
+
+```{r}
+si_au_ref_names |>
+  select(ListDate_YMD, ListDate, ListDateNew) |>
+  filter(!is.na(ListDate), ListDateNew != ListDate_YMD)
+```
+
+```{r}
+si_au_ref_names |>
+  select(DelistDate_YMD, DelistDate, DelistDateNew) |>
+  filter(!is.na(DelistDate), DelistDateNew != DelistDate_YMD)
+```
+```{r}
+si_au_ref_names |>
+  filter(!is.na(DelistDate), DelistDateNew != DelistDate_YMD) |>
+  View()
+```
+
+
+```{r}
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(8:9) 
+```
+```{r}
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(12:14) |>
+  filter(if_all(everything(), \(x) !is.na(x)))
+```
+
+```{r}
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(16:20) |>
+  filter(if_all(everything(), \(x) !is.na(x)))
+```
+
+```{r}
+si_au_ref_names <-
+  read_csv("data/sirca/si_au_ref_names.csv.gz",
+           show_col_types = FALSE,
+           name_repair = str_to_lower) |>
+  mutate(across(ends_with("_ymd"), ymd),
+         across(ends_with("date"), mdy),
+         across(c(seniorsecurity, ends_with("dayssince"),
+                  recordcount, gicsindustry, sircaindustryclasscode,
+                  sircasectorcode),
+                as.integer)) |>
+  # select(-ends_with("date")) |>
+  # rename_with(\(x) str_remove(x, "_ymd"), ends_with("_YMD")) |>
+  write_parquet(sink = "data/sirca/si_au_ref_names.parquet") |>
+  system_time()
+```
+
+```{r}
+si_au_ref_names
+```
+
+```{r}
+si_au_ref_trddays <-
+  read_csv("data/sirca/si_au_ref_trddays.csv.gz",
+           col_types = "ciDii") |>
+  mutate(dateymd = ymd(dateymd))
+```
+
+```{r}
+si_au_ref_trddays |>
+  filter(dateymd != date)
+
+si_au_ref_trddays |>
+  mutate(some_date = date - dayssince,
+         weekday_calc = wday(date))
+
+si_au_ref_trddays |>
+  mutate(
+    weekday_calc = wday(date),
+    wday = wday(date, label = TRUE)
+  ) |>
+  count(weekday, weekday_calc, wday)
+```
+
+```{r}
+si_au_ref_trddays <-
+  read_csv("data/sirca/si_au_ref_trddays.csv.gz",
+           col_types = "-iDii") |>
+  relocate(date) |>
+  write_parquet(sink = "data/sirca/si_au_ref_trddays.parquet") |>
+  system_time()
+```
+
+```{r}
+si_au_retn_mkt <-
+  read_csv("data/sirca/si_au_retn_mkt.csv.gz",
+                           col_types = "ciDdddddd",
+                           locale = locale(date_format = "%d/%m/%Y"),
+                           name_repair = str_to_lower) |>
+  mutate(dateymd = ymd(dateymd))
+```
+
+```{r}
+si_au_retn_mkt |>
+  filter(dateymd != date | is.na(dateymd) | is.na(date))
+```
+
+```{r}
+si_au_retn_mkt <-
+  read_csv("data/sirca/si_au_retn_mkt.csv.gz",
+           col_types = "-iDdddddd",
+           locale = locale(date_format = "%d/%m/%Y"),
+           name_repair = str_to_lower) |>
+  relocate(date) |>
+  write_parquet(sink = "data/sirca/si_au_retn_mkt.parquet") |>
+  system_time()
+```
+
+```{r}
+#| cache: true
+#| cache-lazy: false
+si_au_prc_daily <-
+  read_csv("data/sirca/si_au_prc_daily.csv.gz",
+           guess_max = 1e6,
+           show_col_types = FALSE) |>
+  mutate(dateymd = ymd(dateymd),
+         # date = dmy(date), # One difference with dateymd seems to be an error
+         weekday = as.integer(weekday),
+         monthend = as.logical(monthend),
+         seniorsecurity = as.integer(seniorsecurity)) |>
+  system_time()
+```
+
+```{r}
+#| cache: true
+#| cache-lazy: false
+si_au_prc_daily |>
+  select(-date) |>
+  rename(date = dateymd) |>
+  write_parquet(sink = "data/sirca/si_au_prc_daily.parquet") |>
+  system.time()
+```
+
+```{r}
+export_parquet <- function(df, file) {
+ db <- df[["src"]][["con"]]
+ df <- dplyr::collapse(df)
+ sql <- paste0("COPY (", dbplyr::remote_query(df),
+               ") TO '", file, "'")
+ DBI::dbExecute(db, sql)
+ invisible(df)
+}
+```
+
+```{r}
+#| cache: TRUE
+db <- dbConnect(duckdb::duckdb())
+
+si_au_prc_daily <-
+  tbl(db, "read_csv('data/sirca/si_au_prc_daily.csv.gz',
+                    DateFormat = '%Y%m%d',
+                    types = {'dateymd': 'DATE',
+                             'dayssince': 'INTEGER',
+                             'weekday': 'INTEGER',
+                             'monthend': 'BOOLEAN',
+                             'seniorsecurity': 'INTEGER'})",
+      name = "si_au_prc_daily") |>
+  select(-date) |>
+  rename(date = dateymd) |>
+  export_parquet(file = "data/sirca/si_au_prc_daily_new.parquet") |>
+  system_time()
+
+dbDisconnect(db)
+```

@@ -86,10 +86,10 @@ load_parquet <- function (conn, table, schema = "", data_dir = Sys.getenv("DATA_
 db <- dbConnect(duckdb::duckdb())
 
 si_au_ref_names <-
-  tbl(db, "'data/sirca/si_au_ref_names.parquet'") |>
+  duckdb::tbl_file(db, "data/sirca/si_au_ref_names.parquet") |>
   compute(name = "si_au_ref_names")
 
-si_au_prc_daily <- tbl(db, "'data/sirca/si_au_prc_daily.parquet'") 
+si_au_prc_daily <- duckdb::tbl_file(db, "data/sirca/si_au_prc_daily.parquet") 
 ```
 
 ## 1. Finding `GCodes` from company names or ticker codes
