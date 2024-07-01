@@ -1,0 +1,241 @@
+---
+title: "Working with date and times"
+author: Ian D. Gow
+date: 2024-05-24
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in print form by CRC Press later in 2024 and will remain free online after publication.]
+That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times.
+That recent note covered hierarchical data and a forthcoming note will address spreadsheets.
+
+The purpose of this note is provide the missing coverage of dates and times with a bit more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science*
+The application I work with is based on the SEC submissions data I discussed in my last note.
+I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
+
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.qmd).
+
+```{r}
+#| include: false
+options(width = 75,
+        tibble.width = 75,
+        pillar.print_min = 5)
+```
+
+```{r}
+#| message: false
+library(tidyverse)
+library(DBI)
+library(farr)
+library(scales)
+```
+# Dates and times: The basics
+
+[Chapter 17](https://r4ds.hadley.nz/datetimes) of *R for Data Science* identifies three data types related to dates and times:
+
+ - **dates**
+ - **times** identify times within a day
+ - **date-times** combine dates and times into a single data type.
+ 
+Like *R for Data Science*, I concentrate on dates and date-times.
+
+## Dates
+
+A lot of the complexity surrounding dates and times arises from the existence of time zones.
+That said, one does not completely avoid this complexity with dates.
+For example, the date `2024-06-28` in the `America/New_York` time zone will include points of time that are associated with the date `2024-06-29` in the `Australia/Sydney` time zone.
+So if a date-time related to Australia is converted to a date based on UTC or `America/New_York`, then it may end up on a different date that would result if converted to a date using `Australia/Melbourne`.
+
+One properly encoded as type `Date`, date data in R does not present particular difficult in many contexts.
+
+```{r}
+a_date <- as.Date("2024-05-28")
+class(a_date)
+year(a_date)
+month(a_date)
+```
+
+Outside of R, we might encounter dates in either text data or data from other programs, such as SAS, Stata, or Excel.
+Functions such as `read_sas()`, `read_stata()`, and `read_excel()` will generally detect and convert dates.
+Otherwise exporting data to text with dates represented in an unambiguous text format is perhaps the best approach.
+For example, in my `wrds2pg` Python package, I apply SAS code that uses `format=YYMMDD10.` to represent dates using the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format discussed in [*R for Data Science*](https://r4ds.hadley.nz/datetimes#during-import).
+
+Dates are generally transferred without any issues from databases such as DuckDB or PostgreSQL to R or vice versa.
+
+## Date-times
+
+A date-time, also known as a **timestamp**, combines a date with a time and thus represents an instant in time.
+From this perspective, I would argue that a timestamp only has meaning if understood in the context of a time-zone, as a date-time with a different time zone represents a different instant in time, as can be seen from the following examples.
+
+```{r}
+ts <- "2008-12-31 16:52:26"
+t1 <- parse_date_time(ts, orders = "ymdHMS")
+t2 <- parse_date_time(ts, tz = "America/New_York", orders = "ymdHMS")
+t3 <- parse_date_time(ts, tz = "Australia/Melbourne", orders = "ymdHMS")
+t3 - t1
+t1 - t2
+```
+
+Teh
+
+## DuckDB
+
+```{r}
+#| eval: true
+db <- dbConnect(duckdb::duckdb())
+dbExecute(db, "INSTALL icu")
+dbExecute(db, "LOAD icu")
+```
+
+```{r}
+sec_index <- load_parquet(db, "sec_index*", "edgar")
+ciks <-
+  sec_index |>
+  filter(str_detect(form_type, "^8-K")) 
+```
+
+```{r}
+filings <- load_parquet(db, table = "filings", schema = "submissions")
+companies <- load_parquet(db, table = "companies", schema = "submissions")
+tickers <- load_parquet(db, table = "tickers", schema = "submissions")
+addresses <- load_parquet(db, table = "addresses", schema = "submissions")
+```
+
+```{r}
+filing_times <- 
+  filings |>
+  mutate(acceptanceDateTimeStr = as.character(acceptanceDateTime)) |>
+  mutate(year = year(acceptanceDateTime),
+         hour = hour(acceptanceDateTime),
+         acceptance_time = make_time(hour(acceptanceDateTime),
+                                     minute(acceptanceDateTime),
+                                     date_part('microseconds', acceptanceDateTime) / 1e6)) |>
+  mutate(acceptance_time = as.Date("2000-01-01") + acceptance_time) |>
+  select(cik, year, hour, accessionNumber, acceptanceDateTime, acceptance_time) |>
+  compute() 
+```
+
+```{r}
+filing_times |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+filing_times |> 
+  mutate(year = year(acceptanceDateTime)) |> 
+  filter(year < 2002,
+         acceptance_time != "2000-01-01 00:00:00") |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+filing_times |>
+  filter(acceptance_time > "2000-01-01") |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+filing_times |> 
+  mutate(year = year(acceptanceDateTime)) |> 
+  filter(year > 2003,
+         acceptance_time == "2000-01-01 00:00:00") |>
+  ggplot(aes(x = acceptanceDateTime)) + 
+  geom_histogram(binwidth = 60 * 60 * 24 * 7) +
+  scale_x_datetime(date_breaks = "1 month", date_labels = "%Y-%m-%d") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+filing_times |> 
+  mutate(year = year(acceptanceDateTime)) |> 
+  filter(year > 2003,
+         acceptance_time == "2000-01-01 00:00:00") |>
+  ggplot(aes(x = acceptanceDateTime)) + 
+  geom_histogram(binwidth = 60 * 60 * 24 * 7) +
+  scale_x_datetime(date_breaks = "1 month", date_labels = "%Y-%m-%d") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+filings |>
+  mutate(acceptanceDateTime =	timezone('America/New_York', acceptanceDateTime)) |>
+  mutate(year = year(acceptanceDateTime),
+         acceptance_time = make_time(hour(acceptanceDateTime),
+                                     minute(acceptanceDateTime),
+                                     date_part('microseconds', acceptanceDateTime) / 1e6)) |>
+  mutate(acceptance_time = as.Date("2000-01-01") + acceptance_time) |>
+  filter(year > 2003) |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+#| cache: true
+sample_calls <-
+  tbl(db, "read_csv('data/sample_calls.csv')") |>
+  mutate(start_date = sql("start_date::timestamp")) |>
+  mutate(start_date =	timezone('UTC', start_date)) |>
+  mutate(filingDate = as.Date(start_date)) |>
+  compute()
+
+filings <- load_parquet(db, table = "filings", schema = "submissions")
+tickers <- load_parquet(db, table = "tickers", schema = "submissions")
+
+earnings_filings <-
+  filings |>
+  inner_join(tickers, by = "cik") |>
+  mutate(item = regexp_split_to_table(items, ",")) |>
+  filter(form == "8-K", item == "2.02") |>
+  select(cik, ticker, filingDate, acceptanceDateTime, item)
+
+sample_merged <-
+  earnings_filings |>
+  inner_join(sample_calls, join_by(ticker, filingDate)) |>
+  mutate(time_diff = start_date - acceptanceDateTime) |>
+  collect() |>
+  system_time()
+```
+
+```{r}
+sample_merged |>
+  mutate(time_diff = as.double(time_diff / 60)) |>
+  ggplot(aes(x = time_diff, fill = ticker)) +
+  geom_histogram(binwidth = 5)
+```
+
+
+```{r}
+dbDisconnect(db)
+```
+
+## References {-}
+
