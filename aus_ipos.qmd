@@ -32,8 +32,8 @@ library(dbplyr, warn.conflicts = FALSE)
 ```{r}
 #| include: false
 db <- dbConnect(duckdb::duckdb())
-asx_ipos <- load_parquet(db, "asx_ipos", "asx") |> filter(year(listed) == 2021) 
-ipo_gvkey_links <- load_parquet(db, "ipo_gvkey_links", "asx") |> filter(year(listed) == 2021) 
+asx_ipos <- load_parquet(db, "asx_ipos", "asx")
+ipo_gvkey_links <- load_parquet(db, "ipo_gvkey_links", "asx")
 g_secd <- load_parquet(db, schema = "comp", table = "g_secd")
 ```
 
