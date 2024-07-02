@@ -19,12 +19,30 @@ bibliography: papers.bib
 
 Two levels:
 
-1. Importing the specific data sets comprised by the SIRCA ASX EOD library.
-2. Illustrating general principles for importing data using the SIRCA ASX EOD library as a case study.
+1. Importing the *specific details* of the data sets comprised by the SIRCA ASX EOD library.
+2. Illustrating *general principles* for importing data using the SIRCA ASX EOD library as a case study.
 
 What are these principles?
 
-1. 
+One principle is that the process of importing and tidying data is best handled as a discrete step separate from the modelling process. 
+See @fig-whole-game.
+
+```{r}
+#| label: fig-whole-game 
+#| echo: false
+#| out.width: NULL
+#| fig-cap: |
+#|   A representation of the data analysis process
+#| fig-alt: |
+#|   A diagram displaying the data science cycle: Import -> Tidy ->
+#|   Understand  (which has the phases Transform -> Visualize -> Model in a
+#|   cycle) -> Communicate. Surrounding all of these is Program 
+#|   Import, Tidy, Transform, and Visualize is highlighted.
+
+knitr::include_graphics("images/whole-game.png", dpi = 270)
+```
+
+
 
 In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "janitor"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -57,10 +75,16 @@ csv_dir <- file.path(Sys.getenv("RAW_DATA_DIR"), "sirca")
 si_au_ref_names_csv <- file.path(csv_dir, "si_au_ref_names.csv.gz")
 si_au_ref_names <- read_csv(si_au_ref_names_csv)
 ```
+```{r}
+si_au_ref_names |> 
+  select_if(is.numeric) |>
+  select(1, 4:5)
+```
 
 ```{r}
-si_au_ref_names |>
-  select(ends_with("_YMD"))
+si_au_ref_names |> 
+  select_if(is.numeric) |>
+  select(6:9)
 ```
 
 ```{r}
