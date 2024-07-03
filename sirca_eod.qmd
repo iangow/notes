@@ -19,47 +19,46 @@ bibliography: papers.bib
 
 # Overview
 
-SIRCA’s end of day price service is a comprehensive collection of datasets designed to give you everything needed to find daily closing price for ASX listed companies, and to generate reliable daily measures of total shareholder returns.
-Everything is retained for delisted companies.
-Starting from January 2000, this collection includes all available end-of-day trade prices for the senior (residual risk) securities of all companies.
-Dividend and franking histories; capital returns; adjustments for numerous corporate action events, like splits, consolidation, bonus issues, renounceable and non-renounceable issues; total daily traded volume and value, subdivided into various categories to expose activity in lit and dark ASX markets; numbers of issued shares; are all provided in this table.
+SIRCA's ASX EOD (end of day) data collection is designed to give users everything needed to find daily closing price for ASX listed companies, and to generate reliable daily measures of total shareholder returns, with all data being retained for delisted companies.
 
-All company names and ticker codes are recorded in a separate table, where these many pieces are linked together through time by an identifier we created for that purpose.
-We call that identifier our Group Company Code, or `Gcode`.
-`GCode` valuess are designed to make it easy for you to build price and return series for each company across its whole listed experience and not just that of pieces with different ticker codes.
-Another goal for GCode is to remain unchanging across time.
-`GCode` persistence means you can select a sample identified by `GCode`, test your ideas and come back later to update your research, without any extra work caused by intervening name and ticker code changes.
-These same `GCodes` are used in many of our services, for the same beneficial reasons.
-
-Other components of this service are our history of value- and equal-weighted all-of-market daily returns, which we generate from all observable daily company returns; another file identifying all of the ASX trading days since the start of January 2000, which can be used to identify gaps in company price series, from suspensions or thin trading; and a detailed description of all tables and fields in a data dictionary created just for this collection, which clearly describes how to interpret and use its many elements.
-
-This entire collection is an ideal choice for researchers considering event studies for ASX listed companies.
-With these data sets you can:
-
-1.  Find `gcode`s from company names or ticker codes
-2.  Apply the `cumulativefactor` field to adjust prices for different dividend and corporate action events.
-3.  Generate and plot total shareholder returns
-4.  Use the `dayssince` column to identify return intervals between consecutive trades
-5.  Use the `seniorsecurity` column to restrict attention to the residual risk security of each company
-6.  Recognise and accommodate negative factors and zero volumes
-7.  Calculate cumulative factor without dividends
-8.  Segment market trading activity by trade and venue type, such as to explore lit versus dark market trading.
-
-# Tables
 
 SIRCA's ASX end of day price collection includes the following tables:
 
 | Table              | Description                                                                  | Primary key                                 |
 |----------------|----------------------------------------|----------------|
-| `si_au_ref_names`  | Complete name histories and change dates for companies listed from 01Jan2000 | `GCode`, ASX SecurityTicker, SeniorSecurity |
-| `si_au_prc_daily`  | Complete daily price, volume and value histories, with issued share numbers  | `GCode`, ASX SecurityTicker, SeniorSecurity |
+| `si_au_ref_names`  | Complete name histories and change dates for companies listed from 01Jan2000 | `gcode`, ASX SecurityTicker, SeniorSecurity |
+| `si_au_prc_daily`  | Complete daily price, volume and value histories, with issued share numbers  | `gcode`, ASX SecurityTicker, SeniorSecurity |
 | `si_au_retn_mkt`   | Daily value- and equal-weighted whole market returns                         | `date`                                      |
 | `si_au_ref_trdday` | Record of ASX trading dates since 01Jan2000                                  | `date`                                      |
 
-# Statistical software examples
+Starting from January 2000, the `si_au_ref_names` table includes all available end-of-day trade prices for the equity securities of all ASX companies.
+This table also includes dividend and franking histories; capital returns; adjustments for numerous corporate action events, such as splits, consolidation, bonus issues, renounceable and non-renounceable issues; total daily traded volume and value, divided into categories to expose activity in lit and dark ASX markets; numbers of issued shares; are all provided in `si_au_ref_names`.
+
+All company names and ticker codes are recorded in a separate table---`si_au_ref_names`---which links names and tickers through time with a permanent "group code" identifier created by SIRCA named `gcode`.
+SIRCA designed `gcode` to allow users to build price and return series for series for a company's shares over time even if its ticker code changes.
+The same `gcodes` are used across a number of SIRCA's data sets.
+
+Other components of the SIRCA ASX EOD library are `si_au_retn_mkt` which provides value- and equal-weighted all-of-market daily returns, which SIRCA generates from all observable daily company returns.
+
+SIRCA provides `si_au_ref_trdday`, which identifies all ASX trading days since the start of January 2000 and can be used to identify gaps in company price series, from suspensions or thin trading.
+
+Finally SIRCA provides a detailed description of all tables and fields in a data dictionary created just for this collection.
+
+This entire collection is an ideal choice for researchers considering event studies for ASX listed companies.
+
+# Examples
 
 The following examples demonstrate ways in which you might extract content of interest to you, or work with data from more than one data set.
-They are intended to help with analysis in your preferred environment, rather than to be precise guidance, because your favoured environment may require modifications to the exact form of these examples.
+I show how one can use the SIRCA ASX EOD collection to do the following analyses:
+
+1. Find `gcode`s from company names or ticker codes
+2. Apply the `cumulativefactor` field to adjust prices for different dividend and corporate action events.
+3. Generate and plot total shareholder returns
+4. Use the `dayssince` column to identify return intervals between consecutive trades
+5. Use the `seniorsecurity` column to restrict attention to the residual risk security of each company
+6. Recognise and accommodate negative factors and zero volumes
+7. Calculate cumulative factor without dividends
+8. Segment market trading activity by trade type and venue
 
 ```{r}
 #| message: false
@@ -70,8 +69,8 @@ library(dbplyr, warn.conflicts = FALSE)
 library(duckdb)
 library(farr)
 
-conflicted::conflict_prefer("filter", "dplyr")
-conflicted::conflict_prefer("lag", "dplyr")
+# conflicted::conflict_prefer("filter", "dplyr")
+# conflicted::conflict_prefer("lag", "dplyr")
 ```
 
 ```{r}
@@ -89,9 +88,9 @@ si_au_prc_daily <- load_parquet(db, "si_au_prc_daily", "sirca")
 si_au_ref_trddays <- load_parquet(db, "si_au_ref_trddays", "sirca")
 ```
 
-## 1. Finding `GCodes` from company names or ticker codes
+## 1. Finding `gcodes` from company names or ticker codes
 
-One way of searching for a `GCode` is to look up the company name, for example, every company name including Westpac, such as Westpac Banking Corporation, Westpac Office Trust, Westpac Property Trust.
+One way of searching for a `gcode` is to look up the company name, for example, every company name including Westpac, such as Westpac Banking Corporation, Westpac Office Trust, Westpac Property Trust.
 
 ```{sql}
 #| connection: db
@@ -143,14 +142,14 @@ si_au_ref_names |>
 ```
 
 The previous search reveals that in 2000, the ticker code ARF was then associated with Arrowfield Group Limited.
-Arrowfield Group Limited is a different entity to Arena REIT, which was listed in 2013, so the two entities have separate `GCode`s.
+Arrowfield Group Limited is a different entity to Arena REIT, which was listed in 2013, so the two entities have separate `gcode`s.
 
 A search for `CompanyTicker` equalling ARF also shows that in 2013, the `SecurityTicker` of Arena REIT briefly changed from `ARF` to `ARFDA`, and then back to `ARF`, due to conversions to and from deferred units.
-Since Arena REIT remained the same entity during this process, the `GCode` remains `arf2` throughout this history, allowing for accurate comparisons across name changes and ticker code changes.
+Since Arena REIT remained the same entity during this process, the `gcode` remains `arf2` throughout this history, allowing for accurate comparisons across name changes and ticker code changes.
 
 ## 2. Adjusting for the effects of corporate actions
 
-The `CumulativeFactor` column can be used to adjust the closing price for the effects of corporate actions, e.g. stock splits or entitlement offers, or dividends.
+The `cumulativefactor` column can be used to adjust the closing price for the effects of corporate actions, e.g. stock splits or entitlement offers, or dividends.
 
 The following plot shows a large drop in the closing price of BHP in late June 2001.
 
@@ -164,7 +163,6 @@ bhp <-
 
 ```{r}
 bhp |>
-  collect() |>
   ggplot(aes(x = date, y = close)) +
   geom_line()
 ```
@@ -248,7 +246,8 @@ cba |> collect(n = 10)
 ## 4. `dayssince` column
 
 It is important to note that price relatives calculated in the previous section may not always be over consecutive trading days.
-Although CBA is a stock that is consistently traded, a less-liquid security may show large gaps in trading activity, leading to price relatives that span larger time periods An example of this is shown below, using the `datesince` column.
+Although CBA is a stock that is consistently traded, a less-liquid security may show large gaps in trading activity, leading to price relatives that span longer time periods.
+An example of this is shown below, using the `datesince` column.
 This column contains the number of elapsed days since a point in time, and provides a way to measure the liquidity of a security.
 
 ```{r}
@@ -344,18 +343,15 @@ si_au_prc_daily |>
   arrange(date)
 ```
 
-# 6. Negative factors and zero `volumeonmkt` values
+## 6. Negative factors and zero `volumeonmkt` values
 
 The `factor` field may show a value of `-1` in some cases.
 In order for a factor to be calculated for an event, there must be an observed trade price before the event and a price after the event.
 When either of these prices does not exist, a factor of `-1` is assigned to the event.
 This can occur both in the beginning and the end of the lifetime of the security.
 
-The following example shows a dividend on `2004-07-05`.
-However, no price was observed after the event, and hence the `factor` and `dividendfactor` fields contain a value of `-1`.
-Note that there is a price in the `close` field on `2004-07-05` but it was not observed that day, after the dividend event.
-This is evident from the 0 value for `VolumeOnMkt`, and confirmed by `NA` or `0` values for `open`, `high`, `low`.
-This price is simply the previous observed trade price carried forward.
+The following example shows dividends between `2000-03-06` and `2001-09-28` without any trading.
+As no trading was observed prior to these dividend events, the `factor` and `dividendfactor` fields contain a value of `-1`.
 
 ```{r}
 si_au_prc_daily |> 
@@ -364,8 +360,11 @@ si_au_prc_daily |>
   collect()
 ```
 
-The following example shows dividends between `2000-03-06` and `2001-09-28` without any trading.
-As no trading was observed prior to these dividend events, the `factor` and `dividendfactor` fields contain a value of `-1`.
+The following example shows a dividend on `2004-07-05`.
+However, no price was observed after the event, and hence the `factor` and `dividendfactor` fields contain a value of `-1`.
+Note that there is a price in the `close` field on `2004-07-05` but it was not observed that day, after the dividend event.
+This is evident from the 0 value for `VolumeOnMkt`, and confirmed by `NA` or `0` values for `open`, `high`, `low`.
+This price is simply the previous observed trade price carried forward.
 
 ```{r}
 si_au_prc_daily |> 
@@ -416,10 +415,10 @@ si_au_prc_daily |>
 ```
 
 Use the `adjustmentfactor` field, which does not account for dividends.
-Visualise the new adjustment and compare to the adjustment from the example in part 1 Note that the CorporateOnlyAdjustedPrice, which is calculated without including dividends, looks identical to the Close price as no corporate actions have occurred within this time frame.
+Visualise the new adjustment and compare to the adjustment from the example in part 1 Note that the `CorpAdjustedPrice`, which is calculated without including dividends, looks identical to the `close` price as no corporate actions have occurred within this time frame.
 
 The following shows the effect that dividends can have on the adjusted price series.
-The AdjustedPrice series incorporates both CORAX factors and dividend factors, whereas the CorpAdjustedPrice series incorporates only CORAX adjustments and ignores any dividends.
+The `AdjustedPrice` series incorporates both CORAX factors and dividend factors, whereas the `CorpAdjustedPrice` series incorporates only CORAX adjustments and ignores dividends.
 The CORAX-only price series shows a visible fall at the time when the dividend occurs as the value of the dividend is not accounted for.
 
 ```{r}
@@ -430,7 +429,7 @@ adj_rets <-
   mutate(corporatefactor = exp(cumsum(log(abs(adjustmentfactor))))) |>
   mutate(corporatefactor = lag(corporatefactor) *
            sign(lag(adjustmentfactor))) |>
-  mutate(CorporateOnlyAdjustedPrice = corporatefactor * close,
+  mutate(CorpAdjustedPrice = corporatefactor * close,
          AdjustedPrice = close * cumulativefactor) |>
   window_order() |>
   ungroup()
@@ -440,7 +439,7 @@ adj_rets <-
 anz_cum <-
   adj_rets |>
   filter(gcode == "anz1") |>
-  select(gcode, date, CorporateOnlyAdjustedPrice, AdjustedPrice, close) |>
+  select(gcode, date, CorpAdjustedPrice, AdjustedPrice, close) |>
   compute()
 ```
   
@@ -456,9 +455,9 @@ anz_cum |>
 anz_cum |>
   group_by(gcode) |>
   window_order(date) |>
-  mutate(across(c(AdjustedPrice, CorporateOnlyAdjustedPrice),
+  mutate(across(c(AdjustedPrice, CorpAdjustedPrice),
                 \(x) coalesce(x / lag(x), 1)),
-         across(c(AdjustedPrice, CorporateOnlyAdjustedPrice),
+         across(c(AdjustedPrice, CorpAdjustedPrice),
                 \(x) exp(cumsum(log(x))))) |>
   window_order() |>
   pivot_longer(cols = ends_with("Price"), 
@@ -481,13 +480,13 @@ As revealed by the command above, this is due to the dividend of 0.4497 on `2012
 Adjusting only for CORAX events can clearly lead to significantly different measures of share price performance when dividends are also present.
 CORAX adjustments may also be used to standardise earnings information through time.
 
-# 8. Segmentation by Trade Type
+## 8. Segmentation by trade type
 
-The `si_au_prc_daily` table also contains information on the count/volume/value of trades by various trade type categories.
-This following section will show examples of how trading activity can be aggregated by different trade types:
+The `si_au_prc_daily` table also contains information on the count, volume, and value of trades by various  categories.
+This section provides examples of aggregating trading activity by different trade types:
 
-1.  Trading activity across the whole market.
-2.  Segmentation by on vs off-market trades.
+1.  Trading activity across the whole market
+2.  Segmentation by on vs off-market trades
 3.  Proportion of on-market non-crossing trades that are carried out through ASX Centre Point
 4.  Comparison of lit-pool and dark-pool trading
 
@@ -495,30 +494,27 @@ A graph from the following command shows the value of trading activity across th
 Trading activity can vary significantly from month to month.
 
 ```{r}
-#| eval: false
-wholemkt <- sql(" SELECT
-Date,
-sum(ValueOnMKt + ValueOffMkt) AS ValueWholeMkt FROM si_au_prc_daily
-WHERE Date BETWEEN '2016-01-01' AND '2019-12-31' GROUP BY Date
-ORDER BY Date
-") 
-display(wholemkt)
+si_au_prc_daily |>
+  filter(between(date, '2016-01-01', '2019-12-31')) |>
+  group_by(date) |>
+  summarize(ValueWholeMkt = sum(valueonmkt + valueoffmkt)) |>
+  ggplot(aes(x = date, y = ValueWholeMkt)) +
+  geom_line()
 ```
 
 ```{r}
-#| eval: false
-onvsoff <- sql(" SELECT
-Date,
-sum(VolumeOnMkt) AS VolumeOnMkt, sum(VolumeOffMkt) AS VolumeOffMkt
-FROM si_au_prc_daily
-WHERE Date BETWEEN '2019-01-01' AND '2019-12-31' GROUP BY Date
-ORDER BY Date")
-display(onvsoff)
+si_au_prc_daily |>
+  filter(between(date, '2016-01-01', '2019-12-31')) |>
+  group_by(date) |>
+  summarize(across(c(valueonmkt, valueoffmkt), sum)) |>
+  pivot_longer(-date, names_to = "location", values_to = "value") |>
+  ggplot(aes(x = date, y = value, color = location)) +
+  geom_line()
 ```
 
-Another distinction in trading activity is CentrePoint trades.
+Another distinction in trading activity is Centre Point trades.
 The ASX Centre Point matching system is a market for dark pool liquidity (more information on dark trades in the next section).
-As such, CentrePoint trades are a subset of On-market trades.
+As such, Centre Point trades are a subset of on-market trades.
 More information on ASX Centre Point can be found on the [ASX website](https://www.asx.com.au/markets/trade-our-cash-market/asx-equities-trading/asx-centre-point.html).
 The composition of each market segment is displayed at the bottom of the `si_au_prc_daily` tab in our data dictionary for this service.
 The following example shows the average proportion of on-market non-crossing trades that are directed through ASX Centre Point over a period of time.
@@ -554,9 +550,9 @@ si_au_prc_daily |>
 As mentioned above, it is possible to segment the market by the visibility of trades.
 In the lit pool, or LIT market, the order book is public and all bid/offer orders are visible to all participants.
 That is in contrast to the dark pool, or DARK market, where the order book is not visible until trades are executed.
-The dark pool consists of both on-market and off-market crossing trades, as well as any CentrePoint trades as noted previously.
+The dark pool consists of both on-market and off-market crossing trades, as well as any Centre Point trades as noted previously.
 This following section shows the distribution of activity across the LIT/DARK markets over time.
-Note: As our CentrePoint trade measures include crossing trades, CentrePoint crossing trade volumes need to be subtracted to avoid double-counting these trades in the calculation of the dark pool trading.
+Note: As our Centre Point trade measures include crossing trades, Centre Point crossing trade volumes need to be subtracted to avoid double-counting these trades in the calculation of the dark pool trading.
 
 ```{r}
 si_au_prc_daily |>
