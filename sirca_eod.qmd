@@ -50,7 +50,7 @@ With these data sets you can:
 SIRCA's ASX end of day price collection includes the following tables:
 
 | Table              | Description                                                                  | Primary key                                 |
-|------------------------|------------------------------------------------------------------|-------------------|
+|----------------|----------------------------------------|----------------|
 | `si_au_ref_names`  | Complete name histories and change dates for companies listed from 01Jan2000 | `GCode`, ASX SecurityTicker, SeniorSecurity |
 | `si_au_prc_daily`  | Complete daily price, volume and value histories, with issued share numbers  | `GCode`, ASX SecurityTicker, SeniorSecurity |
 | `si_au_retn_mkt`   | Daily value- and equal-weighted whole market returns                         | `date`                                      |
@@ -423,6 +423,51 @@ The AdjustedPrice series incorporates both CORAX factors and dividend factors, w
 The CORAX-only price series shows a visible fall at the time when the dividend occurs as the value of the dividend is not accounted for.
 
 ```{r}
+adj_rets <-
+  si_au_prc_daily |>
+  group_by(gcode, seniorsecurity) |>
+  window_order(desc(date)) |>
+  mutate(corporatefactor = exp(cumsum(log(abs(adjustmentfactor))))) |>
+  mutate(corporatefactor = lag(corporatefactor) *
+           sign(lag(adjustmentfactor))) |>
+  mutate(CorporateOnlyAdjustedPrice = corporatefactor * close,
+         AdjustedPrice = close * cumulativefactor) |>
+  window_order() |>
+  ungroup()
+```
+
+```{r}
+anz_cum <-
+  adj_rets |>
+  filter(gcode == "anz1") |>
+  select(gcode, date, CorporateOnlyAdjustedPrice, AdjustedPrice, close) |>
+  compute()
+```
+  
+```{r}
+anz_cum |>
+  pivot_longer(cols = ends_with("Price"), 
+               names_to = "series", values_to = "price") |>
+  filter(!is.na(price)) |>
+  ggplot(aes(x = date, y = price, color = series)) +
+  geom_line()
+```
+```{r}
+anz_cum |>
+  group_by(gcode) |>
+  window_order(date) |>
+  mutate(across(c(AdjustedPrice, CorporateOnlyAdjustedPrice),
+                \(x) coalesce(x / lag(x), 1)),
+         across(c(AdjustedPrice, CorporateOnlyAdjustedPrice),
+                \(x) exp(cumsum(log(x))))) |>
+  window_order() |>
+  pivot_longer(cols = ends_with("Price"), 
+               names_to = "series", values_to = "price") |>
+  filter(!is.na(price)) |>
+  ggplot(aes(x = date, y = price, color = series)) +
+  geom_line()
+```
+```{r}
 si_au_prc_daily |> 
  filter(gcode == 'dmg1', 
         between(date, "2012-07-01", "2012-07-31"), 
@@ -431,17 +476,8 @@ si_au_prc_daily |>
   collect()
 ```
 
-```{r}
-#| eval: false
-dmg <- sql("SELECT * FROM si_au_prc_daily WHERE GCode = '' AND Date BETWEEN '2012-07-01' AND '2012-07-31' AND SeniorSecurity = 1")
-dmg <- collect(dmg)
-dmg$CorpFactor <- cumulativeFactor(dmg$AdjustmentFactor) # Use the AdjustmentFactor field, covering corporate adjustments only (no dividends).
-dmg$CorpAdjustedPrice <- dmg$CorpFactor * dmg$Close # Not accounting for dividends. dmg$AdjustedPrice <- dmg$CumulativeFactor * dmg$Close # Calculated using the provided CumulativeFactor field, which accounts for dividends.
-display(dmg)
-```
-
 Note the large difference between the different forms of adjusted price.
-As revealed by the command above, this is due to the dividend of 0.4497 on 2012-07-09, which precedes a fall in Close price from 0.575 to 0.019.
+As revealed by the command above, this is due to the dividend of 0.4497 on `2012-07-09`, which precedes a fall in `close` price from 0.575 to 0.019.
 Adjusting only for CORAX events can clearly lead to significantly different measures of share price performance when dividends are also present.
 CORAX adjustments may also be used to standardise earnings information through time.
 
@@ -485,36 +521,34 @@ The ASX Centre Point matching system is a market for dark pool liquidity (more i
 As such, CentrePoint trades are a subset of On-market trades.
 More information on ASX Centre Point can be found on the [ASX website](https://www.asx.com.au/markets/trade-our-cash-market/asx-equities-trading/asx-centre-point.html).
 The composition of each market segment is displayed at the bottom of the `si_au_prc_daily` tab in our data dictionary for this service.
-The following example shows the average proportion of on-market non- crossing trades that are directed through ASX Centre Point over a period of time.
+The following example shows the average proportion of on-market non-crossing trades that are directed through ASX Centre Point over a period of time.
 
 ```{r}
-#| eval: false
-centrepoint <- sql(" SELECT
-Date,
-avg((ValueCentrePt - ValueCentrePtCross) / (ValueOnMkt - ValueOnMktCross)) AS AvgPropCentrePtNonCross
-FROM si_au_prc_daily
-WHERE Date BETWEEN '2018-01-01' AND '2019-12-31'
-AND ValueOnMkt > 0 AND ValueCentrePt > 0 GROUP BY Date
-ORDER BY Date
-")
-display(centrepoint)
+si_au_prc_daily |>
+  filter(valueonmkt > 0, valuecentrept > 0) |>
+  mutate(month = floor_date(date, "month")) |>
+  group_by(month) |>
+  summarize(AvgPropCentrePtNonCross = 
+              mean((valuecentrept - valuecentreptcross) /
+                     (valueonmkt - valueonmktcross))) |>
+  ggplot(aes(x = month, y = AvgPropCentrePtNonCross)) +
+  geom_line()
 ```
 
 It is a simple matter to focus on particular market segments.
-For example the previous query can be targeted on companies whose market capitalisation is less then \$50 million.
+For example the previous query can be targeted on companies whose market capitalisation is less than \$50 million.
 
 ```{r}
-#| eval: false
-centrepoint_small <- sql(" SELECT
-Date,
-avg((ValueCentrePt - ValueCentrePtCross) / (ValueOnMkt - ValueOnMktCross)) AS AvgPropSmlCtPtNonCross
-FROM si_au_prc_daily
-WHERE Date BETWEEN '2018-01-01' AND '2019-12-31'
-AND ValueOnMkt > 0 AND ValueCentrePt > 0 AND (Close * Shares) < 50000000
-GROUP BY Date
-ORDER BY Date
-") 
-display(centrepoint_small)
+si_au_prc_daily |>
+  filter((close * shares) < 50000000,
+         valueonmkt > 0, valuecentrept > 0) |>
+  mutate(month = floor_date(date, "month")) |>
+  group_by(month) |>
+  summarize(AvgPropCentrePtNonCross = 
+              mean((valuecentrept - valuecentreptcross) /
+                     (valueonmkt - valueonmktcross))) |>
+  ggplot(aes(x = month, y = AvgPropCentrePtNonCross)) +
+  geom_line()
 ```
 
 As mentioned above, it is possible to segment the market by the visibility of trades.
@@ -525,15 +559,16 @@ This following section shows the distribution of activity across the LIT/DARK ma
 Note: As our CentrePoint trade measures include crossing trades, CentrePoint crossing trade volumes need to be subtracted to avoid double-counting these trades in the calculation of the dark pool trading.
 
 ```{r}
-#| eval: false
-litvsdark <- sql(" SELECT
-Date, 
-sum(VolumeOffMktCross + VolumeOnMktCross + VolumeCentrePt - VolumeCentrePtCross) AS
-VolumeDark,
-sum(VolumeOnMKt + VolumeOffMkt - (VolumeOffMktCross + VolumeOnMktCross + VolumeCentrePt - VolumeCentrePtCross)) AS VolumeLit
-FROM si_au_prc_daily
-WHERE Date BETWEEN '2017-01-01' AND '2019-12-31'
-AND VolumeOnMkt > 0 GROUP BY Date ORDER BY Date
-")
-display(litvsdark)
+si_au_prc_daily |>
+  filter(between(date, '2017-01-01', '2019-12-31'),
+         volumeonmkt > 0) |>
+  group_by(date) |>
+  summarize(Dark = sum(volumeoffmktcross + volumeonmktcross +
+                         volumecentrept - volumecentreptcross),
+            Lit = sum(volumeonmkt + volumeoffmkt - 
+                        (volumeoffmktcross + volumeonmktcross +
+                           volumecentrept - volumecentreptcross))) |>
+  pivot_longer(cols = -date, names_to = "market", values_to = "volume") |>
+  ggplot(aes(x = date, y = volume, color = market)) +
+  geom_line()
 ```
