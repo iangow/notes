@@ -66,11 +66,7 @@ I show how one can use the SIRCA ASX EOD collection to do the following analyses
 library(tidyverse)
 library(DBI)
 library(dbplyr, warn.conflicts = FALSE)
-library(duckdb)
 library(farr)
-
-# conflicted::conflict_prefer("filter", "dplyr")
-# conflicted::conflict_prefer("lag", "dplyr")
 ```
 
 ```{r}
@@ -94,7 +90,6 @@ One way of searching for a `gcode` is to look up the company name, for example, 
 
 ```{sql}
 #| connection: db
-#| eval: false
 SELECT gcode, securityticker, abbrevcompanyname
 FROM si_au_ref_names
 WHERE fullcompanyname LIKE '%WESTPAC%'
@@ -113,7 +108,6 @@ Alternatively, searching by the ticker code will also yield a result.
 
 ```{sql}
 #| connection: db
-#| eval: false
 SELECT gcode, securityticker, abbrevcompanyname
 FROM si_au_ref_names 
 WHERE securityticker = 'ANZ'
@@ -149,20 +143,12 @@ Since Arena REIT remained the same entity during this process, the `gcode` remai
 
 ## 2. Adjusting for the effects of corporate actions
 
-The `cumulativefactor` column can be used to adjust the closing price for the effects of corporate actions, e.g. stock splits or entitlement offers, or dividends.
-
 The following plot shows a large drop in the closing price of BHP in late June 2001.
 
 ```{r}
-bhp <- 
-  si_au_prc_daily |>
+si_au_prc_daily |>
   filter(gcode == 'bhp1',
          between(date, '2001-01-01', '2001-12-31')) |>
-  select(gcode, date, close, coraxdescription)
-```
-
-```{r}
-bhp |>
   ggplot(aes(x = date, y = close)) +
   geom_line()
 ```
@@ -170,12 +156,15 @@ bhp |>
 Examining the `coraxdescription` column, it seems that the change is due to a `1:0.94` bonus issue.
 
 ```{r}
-bhp |>
+si_au_prc_daily |>
+  filter(gcode == 'bhp1',
+         between(date, '2001-01-01', '2001-12-31')) |>
   filter(!is.na(coraxdescription)) |>
+  select(gcode, date, close, coraxdescription) |>
   collect()
 ```
 
-The `coraxdescription` column provides details of CORAX (Corporate Action) events, when available.
+The `coraxdescription` column provides details of corporate action (CORAX) events, when available.
 However, descriptions are not always available.
 The `numberofdilutionevents` field will always show a value greater than 0 when a dilution event (CORAX or dividend) has been considered and applied and `numberofcoraxevents > 0` specifically indicates CORAX events.
 Likewise, `numberofdividendevents > 0` can be used to find all dividend events, even when other descriptive fields are not available.
@@ -184,52 +173,70 @@ Likewise, `numberofdividendevents > 0` can be used to find all dividend events, 
 si_au_prc_daily |>
   filter(gcode == 'bhp1', 
           between(date, '2001-06-27', '2001-07-02')) |>
-  select(gcode, date, close, numberofcoraxevents, coraxdescription) |>
+  select(gcode, date, close, factor, numberofcoraxevents) |>
   collect()
 ```
 
+The `cumulativefactor` column can be used to adjust the closing price for the effects of corporate actions, e.g. stock splits or entitlement offers, or dividends.
 Simply multiplying the `close` column by the `cumulativefactor` column will produce the adjusted price.
 
 ```{r}
-bhp <- 
-  si_au_prc_daily |>
+ si_au_prc_daily |>
   filter(gcode == 'bhp1',
          between(date, '2001-01-01', '2001-12-31')) |>
   mutate(adjustedprice = close * cumulativefactor) |>
-  select(gcode, date, close, adjustedprice, coraxdescription) |>
+  ggplot(aes(x = date, y = adjustedprice)) +
+  geom_line()
+```
+
+```{r}
+si_au_prc_daily |>
+  filter(gcode == 'bhp1', 
+          between(date, '2001-06-27', '2001-07-02')) |>
+  select(gcode, date, close, factor, numberofcoraxevents) |>
   collect()
 ```
 
-In this case the new `adjustedprice` series is everywhere lower than `close` because `cumulativefactor` is affected by all CORAX events to the end of each series of Close prices.
+In this case the new `adjustedprice` series is everywhere lower than `close` because `cumulativefactor` is affected by all CORAX events to the end of each series of `close` prices.
 This is so the resulting `adjustedprice` series is consistent over its entire history and can reliably measure returns between any two trading dates for `bhp1`.
+
+
+```{r}
+si_au_prc_daily |>
+  group_by(gcode, seniorsecurity) |>
+  window_order(desc(date)) |>
+  mutate(cum_factor_calc = exp(cumsum(log(abs(factor))))) |>
+  mutate(cum_factor_calc = lag(cum_factor_calc) * sign(lag(factor))) |>
+  window_order() |>
+  ungroup() |>
+  filter(gcode == 'bhp1', 
+          between(date, '2001-06-27', '2001-07-02')) |>
+  select(gcode, date, close, factor, cumulativefactor, cum_factor_calc) |>
+  arrange(date) |>
+  collect()
+```
+
+
 Exactly the same process for `cumulativefactor` applies for dividends as well as corporate actions.
 `AAA` is a security that pays regular dividends, and the effect of its dividends on the closing price can be observed from a graph.
 
 ```{r}
-aaa <-
-  si_au_prc_daily |>
+si_au_prc_daily |>
   filter(gcode == 'aaa2', between(date, '2017-01-01', '2018-01-05')) |>
   mutate(adjustedprice = close * cumulativefactor) |>
-  select(date, close, adjustedprice, cumulativefactor) |>
-  collect()
-
-aaa
-
-aaa |>
-  select(-cumulativefactor) |>
+  select(date, close, adjustedprice) |>
   pivot_longer(-date, names_to = "variable", values_to = "price") |>
   ggplot(aes(x = date, y = price, color = variable)) +
   geom_line()
 ```
 
-## 3. Plotting a distribution of price relatives for a security.
+## 3. Plotting a distribution of price relatives for a security
 
 The following function can calculate the price relative, or total shareholder return, for a security.
-Note that it requires the price to be adjusted for Corporate Actions and Dividends, and to be ordered by Date.
+Note that it requires the price to be adjusted for corporate actions and dividends, and to be ordered by `date`.
 
 ```{r}
-cba <- 
-  si_au_prc_daily |>
+si_au_prc_daily |>
   filter(gcode == 'cba1') |>
   mutate(adjustedprice = close * cumulativefactor) |>
   group_by(gcode) |>
@@ -237,10 +244,9 @@ cba <-
   mutate(prel = adjustedprice / lag(adjustedprice)) |>
   ungroup() |>
   window_order() |>
-  select(gcode, date, close, adjustedprice, prel, dayssince) |>
-  compute()
-
-cba |> collect(n = 10)
+  filter(!is.na(prel)) |>
+  ggplot(aes(x = prel)) +
+  geom_histogram(binwidth = 0.005)
 ```
 
 ## 4. `dayssince` column
@@ -251,14 +257,16 @@ An example of this is shown below, using the `datesince` column.
 This column contains the number of elapsed days since a point in time, and provides a way to measure the liquidity of a security.
 
 ```{r}
-cba |>
+si_au_prc_daily |>
+  filter(gcode == 'cba1') |>
   group_by(gcode) |>
   window_order(date) |>
   mutate(days_elapsed = dayssince - lag(dayssince)) |>
-  count(days_elapsed, sort = TRUE)
+  count(days_elapsed, sort = TRUE) |>
+  filter(!is.na(days_elapsed)) |>
+  ggplot(aes(x = days_elapsed, y = n)) +
+  geom_col()
 ```
-
-Note we need to use `window_order()` in place of `arrange()` when using "remote" data frames.
 
 ```{r}
 si_au_prc_daily |> 
@@ -321,7 +329,8 @@ days_elapsed_df |>
 
 ```{r}
 days_elapsed_df |>
-  filter(gcode == 'cba1', days_elapsed > 1)
+  filter(gcode == 'cba1', days_elapsed > 1) |>
+  collect()
 ```
 
 It turns out there was a trading halt placed on [12 August 2015](https://announcements.asx.com.au/asxpdf/20150812/pdf/430fwrn8xk90lg.pdf).
@@ -387,18 +396,6 @@ The function may not be appropriate for your particular application if that assu
 si_au_prc_daily |>
   filter(adjustmentfactor < 0) |>
   count(adjustmentfactor)
-```
-
-```{r}
-si_au_prc_daily |>
-  group_by(gcode, seniorsecurity) |>
-  window_order(desc(date)) |>
-  mutate(cumulativefactor2 = exp(cumsum(log(abs(factor))))) |>
-  window_order() |>
-  ungroup() |>
-  filter(gcode == "ikw1", between(date, "2018-11-20", "2018-11-30")) |>
-  select(gcode, date, adjustmentfactor, cumulativefactor, close, cumulativefactor2) |>
-  arrange(desc(date))
 ```
 
 ```{r}
@@ -512,8 +509,29 @@ si_au_prc_daily |>
   geom_line()
 ```
 
-Another distinction in trading activity is Centre Point trades.
-The ASX Centre Point matching system is a market for dark pool liquidity (more information on dark trades in the next section).
+As mentioned above, it is possible to segment the market by the visibility of trades.
+In the lit market, the order book is public and all orders (bid and offer)  are visible to all participants.
+Im contrast, in the dark market, the order book is not visible until trades are executed.
+The dark pool consists of both on-market and off-market crossing trades, as well as any Centre Point trades.
+This following section shows the distribution of activity across the lit and dark markets over time.
+Note: As our Centre Point trade measures include crossing trades, Centre Point crossing trade volumes need to be subtracted to avoid double-counting these trades in the calculation of the dark pool trading.
+
+```{r}
+si_au_prc_daily |>
+  filter(between(date, '2017-01-01', '2019-12-31'),
+         volumeonmkt > 0) |>
+  group_by(date) |>
+  summarize(Dark = sum(volumeoffmktcross + volumeonmktcross +
+                         volumecentrept - volumecentreptcross),
+            Lit = sum(volumeonmkt + volumeoffmkt - 
+                        (volumeoffmktcross + volumeonmktcross +
+                           volumecentrept - volumecentreptcross))) |>
+  pivot_longer(cols = -date, names_to = "market", values_to = "volume") |>
+  ggplot(aes(x = date, y = volume, color = market)) +
+  geom_line()
+```
+
+The ASX Centre Point matching system provides a market for dark pool liquidity.
 As such, Centre Point trades are a subset of on-market trades.
 More information on ASX Centre Point can be found on the [ASX website](https://www.asx.com.au/markets/trade-our-cash-market/asx-equities-trading/asx-centre-point.html).
 The composition of each market segment is displayed at the bottom of the `si_au_prc_daily` tab in our data dictionary for this service.
@@ -532,7 +550,7 @@ si_au_prc_daily |>
 ```
 
 It is a simple matter to focus on particular market segments.
-For example the previous query can be targeted on companies whose market capitalisation is less than \$50 million.
+For example, the previous query can be targeted on companies whose market capitalisation is less than \$50 million.
 
 ```{r}
 si_au_prc_daily |>
@@ -547,24 +565,15 @@ si_au_prc_daily |>
   geom_line()
 ```
 
-As mentioned above, it is possible to segment the market by the visibility of trades.
-In the lit pool, or LIT market, the order book is public and all bid/offer orders are visible to all participants.
-That is in contrast to the dark pool, or DARK market, where the order book is not visible until trades are executed.
-The dark pool consists of both on-market and off-market crossing trades, as well as any Centre Point trades as noted previously.
-This following section shows the distribution of activity across the LIT/DARK markets over time.
-Note: As our Centre Point trade measures include crossing trades, Centre Point crossing trade volumes need to be subtracted to avoid double-counting these trades in the calculation of the dark pool trading.
-
 ```{r}
 si_au_prc_daily |>
-  filter(between(date, '2017-01-01', '2019-12-31'),
-         volumeonmkt > 0) |>
-  group_by(date) |>
+  filter(valueonmkt > 0, valuecentrept > 0) |>
+  mutate(month = floor_date(date, "month")) |>
+  group_by(month) |>
   summarize(Dark = sum(volumeoffmktcross + volumeonmktcross +
                          volumecentrept - volumecentreptcross),
-            Lit = sum(volumeonmkt + volumeoffmkt - 
-                        (volumeoffmktcross + volumeonmktcross +
-                           volumecentrept - volumecentreptcross))) |>
-  pivot_longer(cols = -date, names_to = "market", values_to = "volume") |>
-  ggplot(aes(x = date, y = volume, color = market)) +
+            CentrePt = sum(volumecentrept - volumecentreptcross)) |>
+  pivot_longer(cols = -month, names_to = "market", values_to = "volume") |>
+  ggplot(aes(x = month, y = volume, color = market)) +
   geom_line()
 ```
