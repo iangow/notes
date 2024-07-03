@@ -1,5 +1,5 @@
 ---
-title: "Importing SIRCA ASX EOD data"
+title: "Data curation and the data science workflow"
 author: Ian D. Gow
 date: 2024-06-29
 date-format: "D MMMM YYYY"
@@ -17,41 +17,102 @@ format:
 bibliography: papers.bib
 ---
 
-Two levels:
+The goal of this note is to outline one part of extended version of model of the data science "whole game" proposed in [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
+The original "whole game" comprises three steps. It starts with an *import-and-tidy* process (this comprises *import* and *tidy*), then an *Understand* process (this involves iteration between *transform*, *visualize*, and *model* steps), followed by a *Communicate* process.^[The terms "process" and "step" are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original "whole game" model has just a single step after the *Understand* process and I upgrade that single step to a process.]
 
-1. Importing the *specific details* of the data sets comprised by the SIRCA ASX EOD library.
-2. Illustrating *general principles* for importing data using the SIRCA ASX EOD library as a case study.
+My extension of the "whole game"---depicted in @fig-whole-game below---adds a *persist* step to the  *import-and-tidy* process and labels this process as *Curate*.
+As a complement to the new *persist* step, I also add a *load* step to the *Understand* process.
+As will be seen this, *load* step will not generally be an elaborate one.
+The inclusion of a separate *load* step serves more to better delineate the distinction between the *Curate* process and the *Understand* process.
+
+In this note, I focus on the data curation (*Curate*) process.
+My rationale for separating *Curate* from *Understand* is that I believe it clarifies certain best practices in the curation of data.
+As will be seen, my conception of *Curate* will encompass some tasks that are included in the *transform* step (part of the *Understand* process) in [R for Data Science](https://r4ds.hadley.nz/transform).
+
+While I will argue that even the sole analyst who will perform all three processes can benefit from thinking about *Curate* separate from *Understand*, it is perhaps easiest to conceive of the *Curate* and *Understand* processes as involving different individuals or organizational units of the "whole game" of a data analysis workflow.^[The authors of *R for Data Science* call the "whole game" a process, but I've already used that term to describe the next level down. So I choose *workflow* to denote the whole shebang here.]
+
+## Possible data curation scenarios
+
+In a *university* a "data lab" might be responsible for curating data sets for research and teaching, with researchers and students serving as the clients.
+Given the significance of data in a lot of research conducted in universities, my experience is that teams that might perform this role steadfastly refuse to do so.
+As a result, almost all data curation is performed by researchers themselves, often at great cost and with little expertise.
+At Harvard Business School, the Research Computing Services team were either uninterested in data curation or not very good at it.^[To be fair, things may have changed since I left there in mid-2017.]
+While HBS did provide a database server that hosted databases for individual faculty members, actually populating these databases was left to the faculty member, which was challenging because the database server was effectively air-gapped from any plausible source for such data.
+I never used these databases during my time there.^[Within business schools, my sense is that Chicago offers the best data curation support to faculty.
+While much of this occurs in a fairly decentralized fashion through the employment of [research professionals](https://www.chicagobooth.edu/faculty/research-staff) who work closely with one or two faculty members, Chicago Booth also provides excellent research computing infrastructure, such as provisioning PostgreSQL databases for faculty use.]
+I effectively provided a data curation service to a senior faculty member at Stanford beginning during my time as a PhD student there and continuing during my academic career.
+All attempts to pass along the data curation to someone at Stanford, which has a the [Data, Analytics, and Research Computing (DARC) team](https://gsbresearchhub.stanford.edu/support-units/darc), were fruitless.
+Requests to get help to host the data in a database server were met with either "not possible" or "figure it out yourself".^[Perhaps any talent in these fields had better opportunities given Stanford's Silicon Valley location.]
+And either of those institutions is better than my current one, where I've had only a couple of interactions with technology services.
+One was a failed attempt to get an HDMI cable in a classroom.
+I did have more success with getting support to set up an SFTP server to facilitate acquisition of [StreetEvents data](https://www.lseg.com/en/data-analytics/financial-data/company-data/events/earnings-transcripts-briefs/transcripts-database) from Refinitiv.^[The contract we had with Refinitiv was cancelled during Covid. As discussed below, significant parts of the data curation were handled by me using code available [here](https://github.com/iangow/se_core).]
+
+In principle, *information vendors* are in the business of data curation.
+In reality they are often very bad at it.
+
+Hedge fund
+
+
+
+Research assistant
+
+Single analyst
+
+## The service-level agreement
+
+It is perhaps helpful to think of dividing the data science workflow into processes with different teams being responsible for the different processes.
+From this perspective, the *Curate* team manufactures data that are delivered the *Understand* team.^[By "manufacture" I merely mean to connote some notion of a production process, not some idea of [untoward processes for producing data](https://datacolada.org/117).]
+While I won't discuss transfer pricing (i.e., how much the  *Understand* team needs to pay the *Curate* team for the data), we might consider the analogy of a [service-level agreement](https://en.wikipedia.org/wiki/Service-level_agreement) between the two teams.
+
+One template for a service-level agreement would specify that data from a particular source will be delivered to the *Understand* team with the following conditions:
+
+1. The data will be presented as a set of tables in a modern storage format.
+2. The division into tables will adhere to a pragmatic version of good database principles. 
+3. The **primary key** of each table will be identified (and confirmed to be a valid primary key).
+4. Each variable (column) of each table will be of the correct type.
+5. The entire process will be documented in some way.
+6. There will be no manual steps that cannot be reproduced.
+7. A process for updating the curated data will be established.
+8. Some process for version control of data will be maintained.
+
+### Storage format
+
+In principle, the storage format should fairly minor detail determined by the needs of the *Understand* team.
+For example, if the *Understand* team works in Stata or Excel, then perhaps they will want the data in some kind of Stata format or as Excel files.
+However, I think it can be appropriate to push back on notions that data will be delivered in form that involves downgrading the data or otherwise compromises the process in a way that may ultimately add to the cost and complexity of the task for the *Curate* team.
+For example, "please send the final data as an Excel file attachment as a reply email" might be a request to be resisted because the process of converting to Excel can entail the degradation of data (e.g., time stamps or encoding of text).
+Instead it may be better to choose a more robust storage format and a script for turning that into a preferred format.
+
+One storage format that I have used in the past would deliver data as tables in a database.
+The *Understand* team could be given 
+Data from a particular source might be organized as a **schema** in a database
+
+
+
 
 What are these principles?
 
 One principle is that the process of importing and tidying data is best handled as a discrete step separate from the modelling process. 
-See @fig-whole-game.
+@fig-whole-game, which comes from  has "import" feeding "tidy" feeding an iterative process grouped together under "understand".
+In this note, I will focus on the steps proceeding the "understand" processes, but I will tweak the arrow from "tidy" to "understand" by adding "persist" and "load" processes, which I will explain below.
+
+
 
 ```{r}
 #| label: fig-whole-game 
 #| echo: false
 #| out.width: NULL
 #| fig-cap: |
-#|   A representation of the data analysis process
+#|   A representation of the data science workflow
 #| fig-alt: |
-#|   A diagram displaying the data science cycle: Import -> Tidy ->
-#|   Understand  (which has the phases Transform -> Visualize -> Model in a
-#|   cycle) -> Communicate. Surrounding all of these is Program 
-#|   Import, Tidy, Transform, and Visualize is highlighted.
+#|   A diagram displaying the data science workfow.
 
-knitr::include_graphics("images/whole-game.png", dpi = 270)
+knitr::include_graphics("images/data-science.png", dpi = 270)
 ```
-
-
 
 In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "janitor"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd).
-
-```{r}
-Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data/")
-Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
-```
 
 ```{r}
 #| include: false
@@ -67,6 +128,27 @@ library(DBI)
 library(arrow)
 library(farr)
 library(janitor)
+```
+
+
+## A data curation case study: SIRCA ASX EOD data
+
+
+1. Importing the *specific details* of the data sets comprised by the SIRCA ASX EOD library.
+2. Illustrating *general principles* for importing data using the SIRCA ASX EOD library as a case study.
+
+SIRCA's ASX end of day price collection includes the following tables:
+
+| Table              | Description                                                                  |
+|--------------------|------------------------------------------------------------------------------|
+| `si_au_ref_names`  | Name histories and change dates for companies listed since 1 January 2000    |
+| `si_au_prc_daily`  | Complete daily price, volume and value histories, with issued share numbers  |
+| `si_au_retn_mkt`   | Daily value- and equal-weighted whole-market returns                         |
+| `si_au_ref_trdday` | Record of ASX trading dates since 1 January 2000                             |
+
+```{r}
+Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data/")
+Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
 ```
 
 ```{r}
