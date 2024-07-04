@@ -654,12 +654,12 @@ si_au_prc_daily |>
 ```{r}
 si_au_prc_daily |>
   filter(valueonmkt > 0, valuecentrept > 0) |>
+  mutate(Dark = volumeoffmktcross + volumeonmktcross +
+                         volumecentrept - volumecentreptcross,
+         CentrePt = volumecentrept - volumecentreptcross) |>
   mutate(month = floor_date(date, "month")) |>
   group_by(month) |>
-  summarize(Dark = sum(volumeoffmktcross + volumeonmktcross +
-                         volumecentrept - volumecentreptcross),
-            CentrePt = sum(volumecentrept - volumecentreptcross)) |>
-  pivot_longer(cols = -month, names_to = "market", values_to = "volume") |>
-  ggplot(aes(x = month, y = volume, color = market)) +
+  summarize(AvgPropCentrePtDark = mean(CentrePt / Dark)) |>
+  ggplot(aes(x = month, y = AvgPropCentrePtDark)) +
   geom_line()
 ```
