@@ -1,7 +1,7 @@
 ---
 title: "ASX End of Day Prices"
-author: Ian D. Gow (based on SIRCA document)
-date: 2024-05-23
+author: Ian D. Gow
+date: 2024-07-03
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -29,7 +29,7 @@ SIRCA's ASX end of day price collection includes the following tables:
 | `si_au_ref_names`  | Complete name histories and change dates for companies listed from 01Jan2000 | `gcode`, ASX SecurityTicker, SeniorSecurity |
 | `si_au_prc_daily`  | Complete daily price, volume and value histories, with issued share numbers  | `gcode`, ASX SecurityTicker, SeniorSecurity |
 | `si_au_retn_mkt`   | Daily value- and equal-weighted whole market returns                         | `date`                                      |
-| `si_au_ref_trdday` | Record of ASX trading dates since 01Jan2000                                  | `date`                                      |
+| `si_au_ref_trddays` | Record of ASX trading dates since 01Jan2000                                  | `date`                                      |
 
 Starting from January 2000, the `si_au_ref_names` table includes all available end-of-day trade prices for the equity securities of all ASX companies.
 This table also includes dividend and franking histories; capital returns; adjustments for numerous corporate action events, such as splits, consolidation, bonus issues, renounceable and non-renounceable issues; total daily traded volume and value, divided into categories to expose activity in lit and dark ASX markets; numbers of issued shares; are all provided in `si_au_ref_names`.
@@ -46,6 +46,10 @@ Finally SIRCA provides a detailed description of all tables and fields in a data
 
 This entire collection is an ideal choice for researchers considering event studies for ASX listed companies.
 
+# Getting SIRCA ASX EOF data
+
+
+
 # Examples
 
 The following examples demonstrate ways in which you might extract content of interest to you, or work with data from more than one data set.
@@ -61,6 +65,18 @@ I show how one can use the SIRCA ASX EOD collection to do the following analyses
 8. Segment market trading activity by trade type and venue
 
 ```{r}
+#| include: false
+library(tinytable)
+
+knit_print_alt <- function(x, ...) {
+  #res <- knitr::knit_print(theme_tt(tt(x), "bootstrap"))
+  res <- knitr::knit_print(knitr::kable(x, digits = 3))
+  # res <- knitr::knit_print(kableExtra::kbl(x, booktabs =...))
+  knitr::asis_output(res)
+}
+```
+
+```{r}
 #| message: false
 #| warning: false
 library(tidyverse)
@@ -70,6 +86,7 @@ library(farr)
 ```
 
 ```{r}
+#| eval: false
 Sys.setenv(DATA_DIR = "~/Dropbox/pq_data")
 ```
 
@@ -86,7 +103,9 @@ si_au_ref_trddays <- load_parquet(db, "si_au_ref_trddays", "sirca")
 
 ## 1. Finding `gcodes` from company names or ticker codes
 
-One way of searching for a `gcode` is to look up the company name, for example, every company name including Westpac, such as Westpac Banking Corporation, Westpac Office Trust, Westpac Property Trust.
+One way of searching for a `gcode` is to look up the company name.
+For example, we could search for every `gcode` with a company name including `WESTPAC`.
+Because we specified `compute(name = "si_au_ref_names")`, we can refer to that table in SQL such as the following:
 
 ```{sql}
 #| connection: db
@@ -95,13 +114,23 @@ FROM si_au_ref_names
 WHERE fullcompanyname LIKE '%WESTPAC%'
 ```
 
-The same query could be run using `dplyr` code:
+However, the same query could be run using `tidyverse` code:
+
+```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+si_au_ref_names |>
+  filter(str_like(fullcompanyname, '%WESTPAC%')) |>
+  select(gcode, securityticker, abbrevcompanyname) |>
+  collect()
+```
+
+Behind the scenes, the `tidyverse` package is translating our code into SQL:
 
 ```{r}
 si_au_ref_names |>
   filter(str_like(fullcompanyname, '%WESTPAC%')) |>
   select(gcode, securityticker, abbrevcompanyname) |>
-  collect()
+  show_query()
 ```
 
 Alternatively, searching by the ticker code will also yield a result.
@@ -113,20 +142,25 @@ FROM si_au_ref_names
 WHERE securityticker = 'ANZ'
 ```
 
-Again the same query could be run using `dplyr` code:
+Again the same query could be run using `tidyverse` code.
+Because it is so straightforward to run SQL queries using R (`tidyverse`) code, we will just provide R code going forward.^[Users with a background in SQL may find the SQL primer I wrote [here] to be a useful introduction to the `dplyr` package (this is the component of the `tidyverse` package that provides the relevant functions).]
+Note that using R code greatly facilitates bringing the data into R for analysis or (as we will do here) data visualization.
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
   filter(securityticker == 'ANZ') |>
   select(gcode, securityticker, abbrevcompanyname) |>
   collect()
 ```
 
+
 As another example, suppose one is interested in Arena REIT which has a CompanyTicker of `ARF`.
 Searching for this ticker code reveals the `gcode` of Arena REIT is `arf2`.
 This `gcode` can then be used to search the `si_au_prc_daily` table for information about the securities of Arena REIT.
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
   filter(companyticker == 'ARF') |>
   select(gcode, securityticker, abbrevcompanyname, 
@@ -156,6 +190,7 @@ si_au_prc_daily |>
 Examining the `coraxdescription` column, it seems that the change is due to a `1:0.94` bonus issue.
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   filter(gcode == 'bhp1',
          between(date, '2001-01-01', '2001-12-31')) |>
@@ -170,6 +205,7 @@ The `numberofdilutionevents` field will always show a value greater than 0 when 
 Likewise, `numberofdividendevents > 0` can be used to find all dividend events, even when other descriptive fields are not available.
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   filter(gcode == 'bhp1', 
           between(date, '2001-06-27', '2001-07-02')) |>
@@ -190,6 +226,7 @@ Simply multiplying the `close` column by the `cumulativefactor` column will prod
 ```
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   filter(gcode == 'bhp1', 
           between(date, '2001-06-27', '2001-07-02')) |>
@@ -202,6 +239,7 @@ This is so the resulting `adjustedprice` series is consistent over its entire hi
 
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   group_by(gcode, seniorsecurity) |>
   window_order(desc(date)) |>
@@ -267,33 +305,21 @@ si_au_prc_daily |>
   ggplot(aes(x = days_elapsed, y = n)) +
   geom_col()
 ```
-
 ```{r}
-si_au_prc_daily |> 
-  filter(gcode == '1st1') |>
-  group_by(gcode) |>
-  window_order(date) |>
-  mutate(days_elapsed = dayssince - lag(dayssince)) |>
-  ungroup() |>
-  count(gcode, days_elapsed, sort = TRUE) |>
-  collect()
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+si_au_ref_trddays |> collect(n = 10)
 ```
 
 ```{r}
-si_au_ref_trddays
-
-si_au_prc_daily_dates <-
-  si_au_prc_daily |>
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+si_au_prc_daily |>
   distinct(date) |>
-  compute()
-
-si_au_prc_daily_dates |>
   anti_join(si_au_ref_trddays, by = "date") |>
   inner_join(si_au_prc_daily, by = "date") |>
   count(date) |>
   mutate(wday = wday(date, label = TRUE)) |>
   arrange(desc(n)) |>
-  collect()
+  collect(n = 10)
 ```
 
 ```{r}
@@ -307,29 +333,32 @@ trading_days <-
 ```
 
 ```{r}
-days_elapsed_df <-
+tdays_elapsed_df <-
   si_au_prc_daily |>
-  filter(gcode %in% c('cba1', '1st1')) |>
   inner_join(trading_days, by = "date") |>
   group_by(gcode) |>
   window_order(date) |>
-  mutate(days_elapsed = td - lag(td),
+  mutate(tdays_elapsed = td - lag(td),
          lag_date = lag(date)) |>
-  select(gcode, date, lag_date, days_elapsed) |>
-  ungroup() |>
-  compute()
+  select(gcode, date, lag_date, tdays_elapsed) |>
+  ungroup()
 ```
 
 ```{r}
-days_elapsed_df |>
-  count(gcode, days_elapsed) |>
-  arrange(desc(gcode), desc(days_elapsed)) |>
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+tdays_elapsed_df |>
+  filter(gcode %in% c('cba1', '1st1'),
+         !is.na(tdays_elapsed)) |>
+  count(gcode, tdays_elapsed) |>
+  pivot_wider(names_from = "gcode", values_from = "n", values_fill = 0) |>
+  arrange(tdays_elapsed) |>
   collect()
 ```
 
 ```{r}
-days_elapsed_df |>
-  filter(gcode == 'cba1', days_elapsed > 1) |>
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+tdays_elapsed_df |>
+  filter(gcode == 'cba1', tdays_elapsed > 1) |>
   collect()
 ```
 
@@ -346,25 +375,75 @@ These are evident from the different `securityticker` values: `TLS` and `TLSCA`.
 Notice the `seniorsecurity` field correctly separates these two series.
 
 ```{r}
+#| label: tbl-telstra
+#| tbl-cap: "Sample of `securityticker` values for Telstra (`tls1`)"
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
-  filter(gcode == 'tls1', between(date, "2008-05-01", "2008-05-31")) |>
+  filter(gcode == 'tls1', between(date, "2008-05-01", "2008-05-07")) |>
   select(gcode, date, securityticker, seniorsecurity) |>
-  arrange(date)
+  arrange(date) |>
+  collect()
 ```
 
-## 6. Negative factors and zero `volumeonmkt` values
+## 6. Negative `factor` values and zero `volumeonmkt` values
 
 The `factor` field may show a value of `-1` in some cases.
-In order for a factor to be calculated for an event, there must be an observed trade price before the event and a price after the event.
-When either of these prices does not exist, a factor of `-1` is assigned to the event.
+When there is either no observed trade price before an event or no price after the event, a factor of `-1` is assigned to the event.
 This can occur both in the beginning and the end of the lifetime of the security.
+Relatively few observations have negative `factor` values.
+
+```{r}
+#| label: tbl-num-neg-factors
+#| tbl-cap: "Number of observations by negative factors"
+#| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
+si_au_prc_daily |>
+  mutate(neg_factor = factor < 0) |>
+  count(neg_factor)
+```
+
+```{r}
+#| label: tbl-neg-cum-factors
+#| tbl-cap: "Values of `cumulativefactor` when `factor` is negative"
+#| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
+si_au_prc_daily |>
+  filter(factor == -1) |>
+  count(factor, cumulativefactor)
+```
+
+But it turns out that when `factor == -1` and `cumulativefactor != -1`, there is no value of `close`.
+So there is no risk of calculating an adjusted close price that has no trades behind it.
+
+```{r}
+si_au_prc_daily |>
+  filter(factor == -1, cumulativefactor != -1, !is.na(close)) |>
+  select(gcode, date, seniorsecurity, factor, cumulativefactor) |>
+  count() |>
+  pull()
+```
+
+```{r}
+#| label: tbl-strange-factor
+#| tbl-cap: "Difficult to explain `factor` values"
+#| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
+si_au_prc_daily |>
+  filter(gcode == "gcm2", seniorsecurity == 1,
+         factor != 1) |>
+  select(gcode, date, factor, cumulativefactor)
+```
+
+
 
 The following example shows dividends between `2000-03-06` and `2001-09-28` without any trading.
 As no trading was observed prior to these dividend events, the `factor` and `dividendfactor` fields contain a value of `-1`.
+This makes sense, as one could not meaningfully push the sequence of stock returns back to dates before `2002-03-15`, as there are no traded prices.
+There is a non-negative factor value for `2002-03-18`, presumably because there are prices reported after `2002-03-18`.
 
 ```{r}
+#| label: tbl-npx1-factor
+#| tbl-cap: "Negative `factor` values and `npx1`"
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |> 
-  filter(gcode == 'npx1', date <= '2002-03-18', seniorsecurity == 1) |>
+  filter(gcode == 'npx1', date <= '2002-09-23', seniorsecurity == 1) |>
   select(gcode, date, close, dividend, factor, dividendfactor, volumeonmkt) |>
   collect()
 ```
@@ -374,8 +453,10 @@ However, no price was observed after the event, and hence the `factor` and `divi
 Note that there is a price in the `close` field on `2004-07-05` but it was not observed that day, after the dividend event.
 This is evident from the 0 value for `VolumeOnMkt`, and confirmed by `NA` or `0` values for `open`, `high`, `low`.
 This price is simply the previous observed trade price carried forward.
+This makes sense, as one could not meaningfully push the sequence of stock returns forward to dates after `2004-07-02`, as there are no traded prices.
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |> 
  filter(gcode == 'wsf1', date >= '2004-07-01', seniorsecurity == 1) |>
   select(gcode, date, close, dividend, factor, dividendfactor, volumeonmkt) |>
@@ -393,12 +474,14 @@ This is appropriate if the unobserved price does not change following the event 
 The function may not be appropriate for your particular application if that assumed pricing behaviour is invalid.
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
 si_au_prc_daily |>
   filter(adjustmentfactor < 0) |>
   count(adjustmentfactor)
 ```
 
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   group_by(gcode, seniorsecurity) |>
   window_order(desc(date)) |>
@@ -448,6 +531,7 @@ anz_cum |>
   ggplot(aes(x = date, y = price, color = series)) +
   geom_line()
 ```
+
 ```{r}
 anz_cum |>
   group_by(gcode) |>
@@ -463,10 +547,12 @@ anz_cum |>
   ggplot(aes(x = date, y = price, color = series)) +
   geom_line()
 ```
+
 ```{r}
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |> 
  filter(gcode == 'dmg1', 
-        between(date, "2012-07-01", "2012-07-31"), 
+        between(date, "2012-07-01", "2012-07-13"), 
         seniorsecurity == 1) |>
   select(gcode, date, close, dividend, factor, dividendfactor, volumeonmkt) |>
   collect()
@@ -494,7 +580,7 @@ Trading activity can vary significantly from month to month.
 si_au_prc_daily |>
   filter(between(date, '2016-01-01', '2019-12-31')) |>
   group_by(date) |>
-  summarize(ValueWholeMkt = sum(valueonmkt + valueoffmkt)) |>
+  summarize(ValueWholeMkt = sum(valueonmkt + valueoffmkt, na.rm = TRUE)) |>
   ggplot(aes(x = date, y = ValueWholeMkt)) +
   geom_line()
 ```
@@ -503,7 +589,7 @@ si_au_prc_daily |>
 si_au_prc_daily |>
   filter(between(date, '2016-01-01', '2019-12-31')) |>
   group_by(date) |>
-  summarize(across(c(valueonmkt, valueoffmkt), sum)) |>
+  summarize(across(c(valueonmkt, valueoffmkt), \(x) sum(x, na.rm = TRUE))) |>
   pivot_longer(-date, names_to = "location", values_to = "value") |>
   ggplot(aes(x = date, y = value, color = location)) +
   geom_line()
