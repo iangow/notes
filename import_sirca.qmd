@@ -25,6 +25,18 @@ As a complement to the new *persist* step, I also add a *load* step to the *Unde
 As will be seen this, *load* step will not generally be an elaborate one.
 The inclusion of a separate *load* step serves more to better delineate the distinction between the *Curate* process and the *Understand* process.
 
+```{r}
+#| label: fig-whole-game 
+#| echo: false
+#| out.width: NULL
+#| fig-cap: |
+#|   A representation of the data science workflow
+#| fig-alt: |
+#|   A diagram displaying the data science workfow.
+
+knitr::include_graphics("images/data-science.png", dpi = 270)
+```
+
 In this note, I focus on the data curation (*Curate*) process.
 My rationale for separating *Curate* from *Understand* is that I believe it clarifies certain best practices in the curation of data.
 As will be seen, my conception of *Curate* will encompass some tasks that are included in the *transform* step (part of the *Understand* process) in [R for Data Science](https://r4ds.hadley.nz/transform).
@@ -35,28 +47,23 @@ While I will argue that even the sole analyst who will perform all three process
 
 In a *university* a "data lab" might be responsible for curating data sets for research and teaching, with researchers and students serving as the clients.
 Given the significance of data in a lot of research conducted in universities, my experience is that teams that might perform this role steadfastly refuse to do so.
-As a result, almost all data curation is performed by researchers themselves, often at great cost and with little expertise.
-At Harvard Business School, the Research Computing Services team were either uninterested in data curation or not very good at it.^[To be fair, things may have changed since I left there in mid-2017.]
-While HBS did provide a database server that hosted databases for individual faculty members, actually populating these databases was left to the faculty member, which was challenging because the database server was effectively air-gapped from any plausible source for such data.
-I never used these databases during my time there.^[Within business schools, my sense is that Chicago offers the best data curation support to faculty.
+As a result, almost all data curation is performed by researchers themselves, often at great cost and with little expertise.^[Within business schools, my sense is that Chicago offers the best data curation support to faculty.
 While much of this occurs in a fairly decentralized fashion through the employment of [research professionals](https://www.chicagobooth.edu/faculty/research-staff) who work closely with one or two faculty members, Chicago Booth also provides excellent research computing infrastructure, such as provisioning PostgreSQL databases for faculty use.]
-I effectively provided a data curation service to a senior faculty member at Stanford beginning during my time as a PhD student there and continuing during my academic career.
-All attempts to pass along the data curation to someone at Stanford, which has a the [Data, Analytics, and Research Computing (DARC) team](https://gsbresearchhub.stanford.edu/support-units/darc), were fruitless.
-Requests to get help to host the data in a database server were met with either "not possible" or "figure it out yourself".^[Perhaps any talent in these fields had better opportunities given Stanford's Silicon Valley location.]
-And either of those institutions is better than my current one, where I've had only a couple of interactions with technology services.
-One was a failed attempt to get an HDMI cable in a classroom.
-I did have more success with getting support to set up an SFTP server to facilitate acquisition of [StreetEvents data](https://www.lseg.com/en/data-analytics/financial-data/company-data/events/earnings-transcripts-briefs/transcripts-database) from Refinitiv.^[The contract we had with Refinitiv was cancelled during Covid. As discussed below, significant parts of the data curation were handled by me using code available [here](https://github.com/iangow/se_core).]
 
 In principle, *information vendors* are in the business of data curation.
-In reality they are often very bad at it.
+Some vendors do an excellent job of data curation and this makes it relatively easy for researchers to work with their data.
+For example, [CRSP](https://www.crsp.org) has long been the gold standard for researchers requiring data on US stock prices.
+For me, working with CRSP data is mostly a matter of getting it into my PostgreSQL database using [a script](https://github.com/iangow/wrds_pg/tree/master/crsp).^[More recently I have moved to also downloading CRSP data as parquet files using my [`db2pq` Python package](https://pypi.org/project/db2pq/).]
+Often, however, data vendors supply data in a way that requires significant additional data curation.
 
-Hedge fund
+I imagine that larger quantitative *hedge funds* employ specialists to handle data curation tasks, with analysts and portfolio managers focusing on the tasks they are better suited to.
+No doubt there is iteration between data and IT specialists and those analysts and portfolio managers, as the output of the latter group needs to rigorously back-tested and put into production.
 
+*Research assistants* might be hired by academic researchers to provide data curation services.
+In many cases, these research assistants will also do significant work from the *Understand* process, such as running regressions or other analyses.
+Even a *solo analyst* will be doing data curation, though the "client" will be analyst herself.
 
-
-Research assistant
-
-Single analyst
+I suspect that some of the principles I outline here will be useful in all of these scenarios.
 
 ## The service-level agreement
 
@@ -70,9 +77,9 @@ One template for a service-level agreement would specify that data from a partic
 2. The division into tables will adhere to a pragmatic version of good database principles. 
 3. The **primary key** of each table will be identified (and confirmed to be a valid primary key).
 4. Each variable (column) of each table will be of the correct type.
-5. The entire process will be documented in some way.
-6. There will be no manual steps that cannot be reproduced.
-7. A process for updating the curated data will be established.
+5. There will be no manual steps that cannot be reproduced.
+6. A process for updating the curated data will be established.
+7. The entire process will be documented in some way.
 8. Some process for version control of data will be maintained.
 
 ### Storage format
@@ -81,34 +88,58 @@ In principle, the storage format should fairly minor detail determined by the ne
 For example, if the *Understand* team works in Stata or Excel, then perhaps they will want the data in some kind of Stata format or as Excel files.
 However, I think it can be appropriate to push back on notions that data will be delivered in form that involves downgrading the data or otherwise compromises the process in a way that may ultimately add to the cost and complexity of the task for the *Curate* team.
 For example, "please send the final data as an Excel file attachment as a reply email" might be a request to be resisted because the process of converting to Excel can entail the degradation of data (e.g., time stamps or encoding of text).
-Instead it may be better to choose a more robust storage format and a script for turning that into a preferred format.
+Instead it may be better to choose a more robust storage format and supply a script for turning that into a preferred format.
 
-One storage format that I have used in the past would deliver data as tables in a database.
-The *Understand* team could be given 
-Data from a particular source might be organized as a **schema** in a database
+One storage format that I have used in the past would deliver data as tables in a (PostgreSQL) database.
+The *Understand* team could be given access data from a particular source organized as a **schema** in a database.
+Accessing the data in this form is easy for any modern software package.
+One virtue of this approach is that the data might be curated using, say, Python even though the client will analyse it using, say, Stata.^[One project I worked on involved Python code analysing text and putting results in a PostgreSQL database and a couple of lines of code were sufficient for a co-author in a different city to load these data into Stata.]
 
+### Good database principles
 
+I included the word "pragmatic" because I think it's not necessary in most cases to get particularly fussy about [database normalization](https://en.wikipedia.org/wiki/Database_normalization).
+That said, it's probably bad practice to succumb to requests for One Big Table that the *Understand* team might make.
+It is reasonable to impose some obligation to merge tables that are naturally different tables on the client *Understand* team.
 
+### Primary keys
 
+The *Curate* team should communicate the primary key of each table to the *Understand* team.^[Sometimes there will be more than one primary key for a table.]
+A primary key of a table will be a set of variables that can be used to uniquely identify a row in that table.
+In general a primary key will have no missing values.
+Part of data curation will be confirming that a proposed primary key is in fact a valid primary key.
+
+### Data types
+
+Each variable of each table should be of the correct type.
+For example, dates should be of type `DATE`, variables that only take integer values should be of `INTEGER` type.^[Here I used PostgreSQL data types, but the equivalent types in other formats should be fairly clear.]
+Date-times should generally be given with `TIMESTAMP WITH TIME ZONE` type.
+[Logical columns](https://r4ds.hadley.nz/logicals) should be supplied with type `BOOLEAN`.
+
+Note that there is an interaction between this element of the service-level agreement and the storage format.
+If the data are supplied in a PostgreSQL database or as parquet files, then it is quite feasible to prescribe the data types of each variable.
+But if the storage format is Excel files (not recommended!) or CSV files, then it is difficult for the data curator to control how each variable is understood by the *Understand* team.^[SAS and Stata are somewhat loose with their "data types". In effect SAS has just two data types---fixed-width character and floating-point numeric---and the other types are just formatting overlays over these. These types can be easily upset depending on how the data are used.]
+
+In some cases, it may seem unduly prescriptive to specify the types in a particular way.
+For example, a logical variable can easily be represented as `INTEGER` type (`0` for `FALSE`, `1` for `TRUE`).
+Even in such cases, I think there is merit in choosing the most logical type (no pun intended) because of the additional information it conveys about the data.
+For example, a logical type should be checked to ensure that it only takes two values (`TRUE` or `FALSE`) plus perhaps `NULL` and that this checking has occurred is conveyed by the encoding of that variable as `BOOLEAN`.
+
+### No manual steps
+
+### Update process
+ 
+### Data curation documentation 
+
+### Data version control
+
+```{comment}
 What are these principles?
 
 One principle is that the process of importing and tidying data is best handled as a discrete step separate from the modelling process. 
 @fig-whole-game, which comes from  has "import" feeding "tidy" feeding an iterative process grouped together under "understand".
 In this note, I will focus on the steps proceeding the "understand" processes, but I will tweak the arrow from "tidy" to "understand" by adding "persist" and "load" processes, which I will explain below.
-
-
-
-```{r}
-#| label: fig-whole-game 
-#| echo: false
-#| out.width: NULL
-#| fig-cap: |
-#|   A representation of the data science workflow
-#| fig-alt: |
-#|   A diagram displaying the data science workfow.
-
-knitr::include_graphics("images/data-science.png", dpi = 270)
 ```
+
 
 In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "janitor"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -130,33 +161,97 @@ library(farr)
 library(janitor)
 ```
 
+```{r}
+#| include: false
+library(tinytable)
+
+knit_print_alt <- function(x, ...) {
+  #res <- knitr::knit_print(theme_tt(tt(x), "bootstrap"))
+  res <- knitr::knit_print(knitr::kable(x, digits = 3))
+  # res <- knitr::knit_print(kableExtra::kbl(x, booktabs =...))
+  knitr::asis_output(res)
+}
+```
 
 ## A data curation case study: SIRCA ASX EOD data
 
-
+```{comment}
 1. Importing the *specific details* of the data sets comprised by the SIRCA ASX EOD library.
 2. Illustrating *general principles* for importing data using the SIRCA ASX EOD library as a case study.
+```
 
-SIRCA's ASX end of day price collection includes the following tables:
+The tables included with the SIRCA ASX EOD price collection are listed in @tbl-asx-eod.
+Each of these tables is supplied by SIRCA in the form of a compressed comma-separated values (CSV) file.
+For example, `si_au_ref_names` is supplied as `si_au_ref_names.csv.gz`.
+
+The first step of our process will be to obtain these four CSV files and save them in a subdirectory named `sirca` on your computer.
+You should specify the location of that subdirectory by editing the following command, replacing with `"~/Library/CloudStorage/Dropbox/raw_data/"` with, say, `"C:\Data\CSV Files"`, if that is where you have created this `sirca` directory on your computer.
+
+```{r}
+Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data")
+```
+
+Thus, the CSV files should be stored in the location that we will assign to the variable `csv_dir`.
+
+```{r}
+csv_dir <- file.path(Sys.getenv("RAW_DATA_DIR"), "sirca")
+```
+
+From @tbl-csv-files, we can see that we have three files of fairly modest size and one large file (`si_au_prc_daily.csv.gz`).
+Note that the largest file will be about 10 times larger when decompressed.
+Because larger files present their own issues, we will start with `si_au_ref_names`, which presents some complexity while being fairly easy to work with.
+
+```{r}
+#| label: tbl-csv-files
+#| tbl-cap: "Data on supplied CSV files from SIRCA"
+#| echo: false
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+file.info(dir(path = csv_dir, full.names = TRUE)) |>
+  as_tibble(rownames = "file_name") |>
+  mutate(file_name = basename(file_name),
+         size = case_when(size > 1e9 ~ str_c(round(size / 1e9, 2), " GB"),
+                           size > 1e6 ~ str_c(round(size / 1e6, 2), " MB"),
+                           size > 1e3 ~ str_c(round(size / 1e3, 2), " kB"),
+                           .default = str_c(size, " B"))) |>
+  select(file_name, size, mtime)
+```
+
 
 | Table              | Description                                                                  |
 |--------------------|------------------------------------------------------------------------------|
 | `si_au_ref_names`  | Name histories and change dates for companies listed since 1 January 2000    |
 | `si_au_prc_daily`  | Complete daily price, volume and value histories, with issued share numbers  |
 | `si_au_retn_mkt`   | Daily value- and equal-weighted whole-market returns                         |
-| `si_au_ref_trdday` | Record of ASX trading dates since 1 January 2000                             |
+| `si_au_ref_trddays` | Record of ASX trading dates since 1 January 2000                            |
+
+: SIRCA ASX EOD price collection {#tbl-asx-eod}
+
+
+Here we choose parquet files as our target storage format.
+We will store our data in a `sirca` subdirectory in a different location from `RAW_DATA_DIR` specified above.
+You should specify the location `DATA_DIR` by editing the line of code below, much as you specified `RAW_DATA_DIR` above.^[Using environment variables to specify `RAW_DATA_DIR` and `DATA_DIR` may not have an obvious payoff in the context of this note. The benefit comes more from follow-on work using the data and also from applying the approach to managing raw data more broadly.]
 
 ```{r}
-Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data/")
 Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
 ```
 
-```{r}
-csv_dir <- file.path(Sys.getenv("RAW_DATA_DIR"), "sirca")
+## Importing `si_au_ref_names`
 
+As discussed above, we start with `si_au_ref_names`.
+We first specify the name of the CSV file `si_au_ref_names_csv`, then quickly move on to reading the data using the `read_csv()` function.
+The displayed output from invoking `read_csv()` provides a good starting point for the next steps.
+As can be seen, `si_au_ref_names` contains 20 columns that `read_csv()` parses as character columns and 9 columns that `read_csv()` parses as numeric columns.
+
+```{r}
 si_au_ref_names_csv <- file.path(csv_dir, "si_au_ref_names.csv.gz")
 si_au_ref_names <- read_csv(si_au_ref_names_csv)
 ```
+The next step we take is to inspect the columns to determine whether refinement of types makes sense.
+In practice, we can infer appropriate types by looking at the data.
+
+We start with three of the numeric columns.
+The first three appear to be integers, either based on casual inspection of the values displayed or inferences from the variable names (e.g., "days since" seems likely to be an integer).
+
 ```{r}
 si_au_ref_names |> 
   select_if(is.numeric) |>
@@ -166,15 +261,31 @@ si_au_ref_names |>
 ```{r}
 si_au_ref_names |> 
   select_if(is.numeric) |>
-  select(6:9)
+  select(1, 4:5) |>
+  summarize(across(everything(), \(x) all(x == as.integer(x), na.rm = TRUE)))
 ```
+
+```{r}
+si_au_ref_names |> 
+  select_if(is.numeric) |>
+  select(6:9) |>
+  summarize(across(everything(), \(x) all(x == as.integer(x), na.rm = TRUE)))
+```
+The remaining numeric variables appear to be dates in `ymd` form read by `read_csv()` as numeric variables.
+
+```{r}
+si_au_ref_names |> 
+  select_if(is.numeric) |>
+  select(2:3)
+```
+
 
 ```{r}
 si_au_ref_names |>
   distinct() |>
   count(Gcode, SecurityTicker, ListDate, name = "num_rows") |>
   filter(num_rows > 1) |>
-  inner_join(si_au_ref_names) |>
+  inner_join(si_au_ref_names, by = join_by(Gcode, SecurityTicker, ListDate)) |>
   select(Gcode, ListDate, SecurityTicker, GICSIndustry, SIRCAIndustryClassCode)
 ```
 
@@ -183,19 +294,20 @@ si_au_ref_names |>
   select_if(is.character) |>
   select(1:5)
 ```
+
 ```{r}
 si_au_ref_names |>
   select_if(is.character) |>
   select(6:7, 10:11) |>
   filter(if_all(everything(), \(x) !is.na(x)))
 ```
+
 ```{r}
 si_au_ref_names <-
   read_csv(si_au_ref_names_csv, show_col_types = FALSE) |>
   mutate(across(ends_with("_YMD"), ymd),
          ListDateNew = dmy(ListDate),
          DelistDateNew = dmy(DelistDate))
-         
 ```
 
 ```{r}
@@ -224,6 +336,7 @@ si_au_ref_names |>
   select(Gcode, starts_with("DelistDate")) |>
   filter(DelistDate_DaysSince == days_since)
 ```
+
 So it seems that `DelistDate` is to be preferred here, if only in terms of internal consistency.
 
 ```{r}
@@ -267,6 +380,26 @@ si_au_ref_names |>
   select_if(is.character) |>
   select(16:20) |>
   filter(if_all(everything(), \(x) !is.na(x)))
+```
+
+```{r}
+get_dupes <- function(df) {
+  df |> 
+    group_by_all() |>
+    summarize(count = n(), .groups = "drop") |>
+    filter(count > 1)
+}
+```
+
+```{r}
+si_au_ref_names |>
+  get_dupes()
+```
+
+```{r}
+si_au_ref_names |>
+  distinct() |>
+  get_dupes()
 ```
 
 ```{r}
@@ -357,12 +490,16 @@ si_au_retn_mkt <-
   system_time()
 ```
 
+
 ```{r}
-#| cache: true
-#| cache-lazy: false
 si_au_prc_daily_csv <- file.path(csv_dir, "si_au_prc_daily.csv.gz")
 si_au_prc_daily_pq <- file.path(pq_dir, "si_au_prc_daily.parquet")
+```
 
+```{r}
+#| eval: false
+#| cache: true
+#| cache-lazy: false
 si_au_prc_daily <-
   read_csv(si_au_prc_daily_csv,
            guess_max = 1e6,
@@ -379,6 +516,7 @@ si_au_prc_daily <-
 ```{r}
 #| cache: true
 #| cache-lazy: false
+#| eval: false
 si_au_prc_daily |>
   select(-date) |>
   rename(date = dateymd) |>
@@ -417,3 +555,5 @@ si_au_prc_daily <-
 
 dbDisconnect(db)
 ```
+
+## References {-}
