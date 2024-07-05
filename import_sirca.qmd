@@ -18,9 +18,9 @@ bibliography: papers.bib
 ---
 
 The goal of this note is to outline one part of extended version of model of the data science "whole game" proposed in [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
-The original "whole game" comprises three steps. It starts with an *import-and-tidy* process (this comprises *import* and *tidy*), then an *Understand* process (this involves iteration between *transform*, *visualize*, and *model* steps), followed by a *Communicate* process.^[The terms "process" and "step" are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original "whole game" model has just a single step after the *Understand* process and I upgrade that single step to a process.]
+The original "whole game" comprises three steps. It starts with an *Import-and-tidy* process (this comprises *import* and *tidy*), then an *Understand* process (this involves iteration between *transform*, *visualize*, and *model* steps), followed by a *Communicate* process.^[The terms "process" and "step" are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original "whole game" model has just a single step after the *Understand* process and I upgrade that single step to a process.]
 
-My extension of the "whole game"---depicted in @fig-whole-game below---adds a *persist* step to the  *import-and-tidy* process and labels this process as *Curate*.
+My extension of the "whole game"---depicted in @fig-whole-game below---adds a *persist* step to the  *Import-and-tidy* process and re-labels this process as *Curate*.
 As a complement to the new *persist* step, I also add a *load* step to the *Understand* process.
 As will be seen this, *load* step will not generally be an elaborate one.
 The inclusion of a separate *load* step serves more to better delineate the distinction between the *Curate* process and the *Understand* process.
@@ -141,7 +141,7 @@ In this note, I will focus on the steps proceeding the "understand" processes, b
 ```
 
 
-In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "janitor"))` within R to install all the packages you need to run the code in this note.]
+In writing this note, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd).
 
@@ -158,7 +158,6 @@ library(tidyverse)
 library(DBI)
 library(arrow)
 library(farr)
-library(janitor)
 ```
 
 ```{r}
@@ -240,6 +239,9 @@ Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
 As discussed above, we start with `si_au_ref_names`.
 We first specify the name of the CSV file `si_au_ref_names_csv`, then quickly move on to reading the data using the `read_csv()` function.
 The displayed output from invoking `read_csv()` provides a good starting point for the next steps.
+
+### Setting data types
+
 As can be seen, `si_au_ref_names` contains 20 columns that `read_csv()` parses as character columns and 9 columns that `read_csv()` parses as numeric columns.
 
 ```{r}
@@ -258,6 +260,8 @@ si_au_ref_names |>
   select(1, 4:5)
 ```
 
+We can check that converting these variables to integers using `as.integer()` does not change any of their values.
+
 ```{r}
 si_au_ref_names |> 
   select_if(is.numeric) |>
@@ -265,12 +269,15 @@ si_au_ref_names |>
   summarize(across(everything(), \(x) all(x == as.integer(x), na.rm = TRUE)))
 ```
 
+We can do the same for four of the remaining numeric columns.
+
 ```{r}
 si_au_ref_names |> 
   select_if(is.numeric) |>
   select(6:9) |>
   summarize(across(everything(), \(x) all(x == as.integer(x), na.rm = TRUE)))
 ```
+
 The remaining numeric variables appear to be dates in `ymd` form read by `read_csv()` as numeric variables.
 
 ```{r}
@@ -278,16 +285,21 @@ si_au_ref_names |>
   select_if(is.numeric) |>
   select(2:3)
 ```
-
+We can convert these columns to dates with the `ymd()` function.
+In the following code snippet, we convert the numeric variables to the types we determined to be appropriate throught the analysis above.
+Here this code just tests that nothing untoward happens; we will actually implement these type conversions in code below.
 
 ```{r}
-si_au_ref_names |>
-  distinct() |>
-  count(Gcode, SecurityTicker, ListDate, name = "num_rows") |>
-  filter(num_rows > 1) |>
-  inner_join(si_au_ref_names, by = join_by(Gcode, SecurityTicker, ListDate)) |>
-  select(Gcode, ListDate, SecurityTicker, GICSIndustry, SIRCAIndustryClassCode)
+si_au_ref_names |> 
+  select_if(is.numeric) |>
+  mutate(across(c(SeniorSecurity, ListDate_DaysSince, DelistDate_DaysSince,
+                  RecordCount, GICSIndustry, SIRCAIndustryClassCode, 
+                  SIRCASectorCode), as.integer),
+         across(ends_with("_YMD"), ymd))
 ```
+
+We can now move onto the 20 columns read as character vectors.
+The first five  character vectors seem correctly identified as such.
 
 ```{r}
 si_au_ref_names |>
@@ -295,49 +307,7 @@ si_au_ref_names |>
   select(1:5)
 ```
 
-```{r}
-si_au_ref_names |>
-  select_if(is.character) |>
-  select(6:7, 10:11) |>
-  filter(if_all(everything(), \(x) !is.na(x)))
-```
-
-```{r}
-si_au_ref_names <-
-  read_csv(si_au_ref_names_csv, show_col_types = FALSE) |>
-  mutate(across(ends_with("_YMD"), ymd),
-         ListDateNew = dmy(ListDate),
-         DelistDateNew = dmy(DelistDate))
-```
-
-```{r}
-si_au_ref_names |>
-  select(ListDate_YMD, ListDate, ListDateNew) |>
-  filter(!is.na(ListDate), ListDateNew != ListDate_YMD)
-```
-
-```{r}
-si_au_ref_names |>
-  select(starts_with("DelistDate")) |>
-  filter(!is.na(DelistDate), DelistDateNew != DelistDate_YMD)
-```
-
-```{r}
-#| include: false
-days_since <- 
-  si_au_ref_names |>
-  filter(!is.na(DelistDate), DelistDateNew != DelistDate_YMD) |>
-  select(DelistDate_DaysSince) |>
-  pull()
-```
-
-```{r}
-si_au_ref_names |>
-  select(Gcode, starts_with("DelistDate")) |>
-  filter(DelistDate_DaysSince == days_since)
-```
-
-So it seems that `DelistDate` is to be preferred here, if only in terms of internal consistency.
+The same is true for character vectors 8 and 9 ...
 
 ```{r}
 si_au_ref_names |>
@@ -345,12 +315,22 @@ si_au_ref_names |>
   select(8:9) 
 ```
 
+... and character vectors 14 through 20.
+
 ```{r}
 si_au_ref_names |>
   select_if(is.character) |>
-  select(12:14) |>
+  select(14:15) |>
+  filter(if_all(everything(), \(x) !is.na(x)))
+
+si_au_ref_names |>
+  select_if(is.character) |>
+  select(16:20) |>
   filter(if_all(everything(), \(x) !is.na(x)))
 ```
+
+This leaves character columns 12 and 13.
+Focusing on the cases where neither is `NA`, we see that these columns appear to be lists of codes separated by semi-colons (`;`).
 
 ```{r}
 si_au_ref_names |>
@@ -358,93 +338,346 @@ si_au_ref_names |>
   select(12:13) |>
   filter(if_all(everything(), \(x) !is.na(x)))
 ```
+```{r}
+si_au_ref_names |>
+  mutate(CompanyRelatedGCodes = CompanyRelatedGCode) |>
+  filter(CompanyRelatedGCode != "") |>
+  mutate(related_gcode = str_split(CompanyRelatedGCode, "[;\\s]+")) |>
+  select(Gcode, CompanyRelatedGCode, related_gcode) 
+```
+
 
 ```{r}
 si_au_ref_names |>
-  select(Gcode, SecurityTicker, ListDate, CompanyDelistReasonCode) |>
-  mutate(CompanyDelistReasonCode = str_split(CompanyDelistReasonCode, "[;\\.]")) |>
-  unnest(CompanyDelistReasonCode) |>
-  count(CompanyDelistReasonCode) |>
-  arrange(n)
+  filter(CompanyRelatedGCode != "") |>
+  mutate(related_gcode = str_split(CompanyRelatedGCode, "[;\\s]+")) |>
+  unnest(related_gcode) |>
+  select(Gcode, CompanyRelatedGCode, related_gcode) 
 ```
+
+:::{.callout-note}
+
+### Friends don't let friends use Excel
+
+From casual observation, it appears that valid `Gcode` values contain only lower case characters (`[a-z]` in regular expressions) or numbers (`[0-9]` in regular expressions).
+Are there any `CompanyRelatedGCode` values that contain other characters?
+It turns out that that there are.
+
+```{r}
+si_au_ref_names |>
+  mutate(related_gcode = str_split(CompanyRelatedGCode, "[;\\s]+")) |>
+  unnest(related_gcode) |>
+  filter(str_detect(related_gcode, "[^a-z0-9]")) |>
+  select(Gcode, related_gcode, CompanyDelistReasonComment) 
+```
+
+What's happened here?
+`May-01` looks more like a date than a `Gcode`.
+This has all the hallmarks of someone importing data into Microsoft Excel as part of their process.
+Microsoft Excel has a well-known tendency to mangle values that it aggressively interprets as dates.
+It seems likely that the `Gcode` for Mayne Nickless was `may1` and Excel read this as `May-01` (a date).^[Whoever did this also had their computer set to format dates in the US-style `Mmm-dd` format, rather than the `dd-Mmm` style I see on my computer.]
+Is it true that `Gcode` values contain only lower-case characters and numbers?
+
+
+```{r}
+weird_gcodes <-
+  si_au_ref_names |>
+  filter(str_detect(Gcode, "[^a-z0-9]")) |>
+  distinct(Gcode) 
+```
+
+It seems not; some `Gcodes` have underscores (`_`):
+
+```{r}
+str_flatten(pull(weird_gcodes), ", ")
+```
+
+To see why underscores are used, we can remove the underscore and save the `Gcodes` in a CSV file.
+
+```{r}
+weird_gcodes |>
+  mutate(Gcode = str_remove(Gcode, "_")) |>
+  write_csv("weird_gcodes.csv")
+```
+
+Try opening `weird_gcodes.csv` in Excel.
+What do you see?
+
+To be frank, I struggle to see any reason why Excel should have any part in the data science workflow.
+
+:::
+
+We can examine `CompanyDelistReasonCode` in much the same way we did `CompanyRelatedGCode`.
+For reasons of brevity, I spare you the coding details and focus on the processed data, information about which is shown in @tbl-delist-codes.
+
+One problem is evident from @tbl-delist-codes and that is the presence of what appears to be junk in the `CompanyDelistReasonCode` field (e.g., `18` or `R-apx`).
+Another problem is evident only after looking that the documentation for `si_au_ref_names` and that is that even when the codes appear well-formed (e.g., `N` or `C`), we have no information about what these codes mean.
+
+```{r}
+#| label: tbl-delist-codes
+#| tbl-cap: "Delisting reason codes on `si_au_ref_names`"
+#| echo: false
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+delist_codes <-
+  si_au_ref_names |>
+  filter(CompanyDelistReasonCode != "") |>
+  mutate(delist_code = str_split(CompanyDelistReasonCode, "[;\\.]")) |>
+  unnest(delist_code) |>
+  count(delist_code, sort = TRUE)
+
+bind_cols(delist_codes[1:14, ], 
+          tibble(` ` = ""),
+          bind_rows(delist_codes[15:28, ]),
+          .name_repair = "minimal")
+          # tibble(delist_code = "", n = NA)
+```
+
+Given the issues apparent in both `CompanyRelatedGCode` and `CompanyDelistReasonCode`, I have elected to collect those, but keep them as simple character columns.
+
+For those keeping track, we have four character columns left.
+It turns out that the name for each of these ends with `Date`.
+In the following, I focus on the observations with non-`NA` values in all of these columns.
 
 ```{r}
 si_au_ref_names |>
   select_if(is.character) |>
-  select(14:15) |>
+  select(ends_with("Date")) |>
   filter(if_all(everything(), \(x) !is.na(x)))
 ```
+
+From the above, it seems clear that we have dates in `dmy` form.
+It turns out that a couple of observations have the value `"0/01/1900"`, which is not a valid date and I convert these to missing values using the code below.
 
 ```{r}
 si_au_ref_names |>
-  select_if(is.character) |>
-  select(16:20) |>
-  filter(if_all(everything(), \(x) !is.na(x)))
+  select(ends_with("Date")) |>
+  mutate(across(ends_with("Date"), 
+                \(x) dmy(if_else(x == "0/01/1900", NA, x))))
+```
+
+Looking at `ListDate_YMD` and `ListDate` are always equal.
+
+```{r}
+si_au_ref_names |>
+  select(matches("ListDate")) |>
+  mutate(across(ends_with("Date"), 
+                \(x) dmy(if_else(x == "0/01/1900", NA, x))),
+         across(ends_with("_YMD"), ymd)) |>
+  filter(ListDate_YMD != ListDate)
+```
+
+But there is one instance where `DeistDate_YMD` and `DelistDate` differ.
+
+```{r}
+si_au_ref_names |>
+  select(matches("^DelistDate")) |>
+  mutate(across(ends_with("Date"), 
+                \(x) dmy(if_else(x == "0/01/1900", NA, x))),
+         across(ends_with("_YMD"), ymd)) |>
+  filter(DelistDate_YMD != DelistDate)
+```
+So we have two version of the date variables related to listing dates (`ListDate_YMD` and `ListDate`) and delisting dates (`DelistDate_YMD` and `DelistDate`) and perhaps it makes sense to keep just one of each.
+If the values in each of the pair is the same as the other, then there's no reason to 
+
+Which one to choose?
+One approach would be to look to external sources to verify which date is correct.
+But for present purposes we will choose the one that keeps our data internally consistent.
+Specifically, we should choose whichever of `DelistDate_YMD` and `DelistDate` that is consisten with `DelistDate_DaysSince`.
+
+```{r}
+#| include: false
+date_diffs <- 
+  si_au_ref_names |>
+  select(matches("^DelistDate")) |>
+  mutate(across(ends_with("Date"), 
+                \(x) dmy(if_else(x == "0/01/1900", NA, x))),
+         across(ends_with("_YMD"), ymd)) |>
+  filter(DelistDate_YMD != DelistDate)
 ```
 
 ```{r}
-get_dupes <- function(df) {
+#| include: false
+days_since <-
+  date_diffs |> 
+  select(DelistDate_DaysSince) |>
+  pull()
+```
+
+Looking for other rows where `DelistDate_DaysSince == 45051`, we see that that value is elsewhere consistent with the value in `DelistDate`, so here I choose to drop the `_YMD` variables.
+
+```{r}
+si_au_ref_names |>
+  select(Gcode, starts_with("DelistDate")) |>
+  filter(DelistDate_DaysSince == 45051)
+```
+Putting all the pieces above we have the following:
+
+```{r}
+si_au_ref_names <-
+  read_csv(si_au_ref_names_csv, show_col_types = FALSE) |>
+  mutate(across(c(SeniorSecurity, ListDate_DaysSince, DelistDate_DaysSince,
+                  RecordCount, GICSIndustry, SIRCAIndustryClassCode, 
+                  SIRCASectorCode), as.integer),
+         across(ends_with("Date"), 
+                \(x) dmy(if_else(x == "0/01/1900", NA, x)))) |>
+  select(-ends_with("_YMD"))
+```
+       
+### Identifying the primary key
+
+Before considering possible primary keys, we first determine if there are any duplicate rows.
+When there are duplicate rows, no possible combination of columns will work as a primary key.
+
+The following function returns any rows that are duplicated in a data set.
+
+```{r}
+get_dupes <- function(df, count_var = "count") {
   df |> 
-    group_by_all() |>
-    summarize(count = n(), .groups = "drop") |>
-    filter(count > 1)
+    count(pick(everything()), name = count_var) |>
+    filter(.data[[count_var]] > 1)
 }
 ```
 
+Applying this function to `si_au_ref_names`, we see that we have one row that appears twice in the data set.
+
+
 ```{r}
 si_au_ref_names |>
-  get_dupes()
+  get_dupes() |>
+  select(Gcode, SecurityTicker, ListDate, count)
 ```
+To address this, we will simply use the `distinct()` function.
+
+Moving on to consider potential primary keys, we see immediately that `(Gcode, SecurityTicker)` is not a valid primary key.
+As seen in the output below, a given `(Gcode, SecurityTicker)` combination can appear as many as seven times in the data.
 
 ```{r}
 si_au_ref_names |>
   distinct() |>
-  get_dupes()
+  count(Gcode, SecurityTicker, name = "num_rows") |>
+  count(num_rows)
 ```
+
+Looking across the columns, we see that `(Gcode, SecurityTicker, ListDate)` *almost* works, as we have just one case where `(Gcode, SecurityTicker, ListDate)` fails to identify a single row.
+In this particular case, it seems that we have differences only in `GICSIndustry` and `SIRCAIndustryClassCode`.
+In one row, these variables are missing; in the other there are values.
+
+```{r}
+si_au_ref_names |>
+  distinct() |>
+  group_by(Gcode, SecurityTicker, ListDate) |>
+  filter(n() > 1) |>
+  ungroup() |>
+  arrange(Gcode, SecurityTicker, ListDate) |>
+  select(Gcode, SecurityTicker, ListDate, GICSIndustry, SIRCAIndustryClassCode)
+```
+If we take the row with non-`NA` values for `GICSIndustry` and `SIRCAIndustryClassCode` to be the correct one, then we need to delete the other row.
+
+```{r}
+si_au_ref_names |>
+  filter(Gcode == "rgwb1") |>
+  select(Gcode, GICSIndustry)
+```
+
+It turns out that these are the only two rows where `Gcode == "rgwb1"`, so if we eliminate the row with `NA` value in `GICSIndustry` we should have it that `(Gcode, SecurityTicker, ListDate)` uniquely identifies each row.
+
+```{r}
+si_au_ref_names |>
+  distinct() |>
+  filter(!(Gcode == "rgwb1" & is.na(GICSIndustry))) |>
+  count(Gcode, SecurityTicker, ListDate, name = "num_rows") |>
+  count(num_rows)
+```
+To confirm that `(Gcode, SecurityTicker, ListDate)` is a valid primary key for our filtered `si_au_ref_names`, we also need to check that there are no `NA` values in any of these fields, which the following code confirms.
+
+```{r}
+si_au_ref_names |>
+  distinct() |>
+  filter(!(Gcode == "rgwb1" & is.na(GICSIndustry))) |>
+  summarize(across(c(Gcode, SecurityTicker, ListDate),
+                   \(x) all(!is.na(x))))
+```
+
+### Writing the parquet file
+
+So, we can put the reading of raw data, the conversion of data types, and the filters needed to have a valid primary key together.
+But we have one final adjustment to make and that is to convert all variable names to lower case, as we will see later that the variable names embedded in `si_au_prc_daily.csv.gz` are all lower case (e.g., `gcode`), so we probably make our lives easier my converting our variables here to lower case (e.g., so we can join on `gcode` without worrying about slight differences in variable names).
+
+With that final adjustment, we can then write to a parquet file, as we do here.
+We will use the environment variable `DATA_DIR` that you set above to specify the location.
 
 ```{r}
 #| cache: true
 pq_dir <- file.path(Sys.getenv("DATA_DIR"), "sirca")
-
 if (!dir.exists(pq_dir)) dir.create(pq_dir)
 
-si_au_ref_names_pq <- file.path(pq_dir, "si_au_ref_names.parquet")
-
 si_au_ref_names <-
-  read_csv(si_au_ref_names_csv,
-           show_col_types = FALSE,
-           name_repair = str_to_lower) |>
-  select(-ends_with("_ymd")) |>
-  mutate(across(ends_with("date"), dmy),
-         across(c(seniorsecurity, ends_with("dayssince"),
-                  recordcount, gicsindustry, sircaindustryclasscode,
-                  sircasectorcode),
-                as.integer)) |>
-  write_parquet(sink = si_au_ref_names_pq) |>
+  read_csv(si_au_ref_names_csv, show_col_types = FALSE) |>
+  mutate(across(c(SeniorSecurity, ListDate_DaysSince, DelistDate_DaysSince,
+                  RecordCount, GICSIndustry, SIRCAIndustryClassCode, 
+                  SIRCASectorCode), as.integer),
+         across(ends_with("Date"), 
+                \(x) dmy(if_else(x == "0/01/1900", NA, x)))) |>
+  select(-ends_with("_YMD")) |>
+  distinct() |>
+  filter(!(Gcode == "rgwb1" & is.na(GICSIndustry))) |>
+  rename_with(str_to_lower) |>
+  write_parquet(sink = file.path(pq_dir, "si_au_ref_names.parquet")) |>
   system_time()
 ```
 
-```{r}
-si_au_ref_names
-```
+## Importing `si_au_ref_trddays`
+
+A similar process to that used for `si_au_ref_names` can be applied to `si_au_ref_trddays`.
+However, `si_au_ref_trddays` is a much simpler file and we conclude that the types of the five columns can be specified using `col_types = "ciDii"`, where `c` means character, `i` means integer, and `D` means date.^[See the help for `read_csv()` to learn more.]
 
 ```{r}
 si_au_ref_trddays_csv <- file.path(csv_dir, "si_au_ref_trddays.csv.gz")
-si_au_ref_trddays_pq <- file.path(pq_dir, "si_au_ref_trddays.parquet")
 
 si_au_ref_trddays <-
   read_csv(si_au_ref_trddays_csv, col_types = "ciDii") |>
   mutate(dateymd = ymd(dateymd))
 ```
 
+We can easily confirm that `date` is a valid primary key:
+
+```{r}
+si_au_ref_trddays |> 
+  count(date, name = "num_rows") |>
+  count(num_rows)
+
+si_au_ref_trddays |> 
+  summarize(across(date, \(x) all(!is.na(x))))
+```
+
+We can also confirm that we don't need `dateymd`, as it contains the same information as `date`.
+
 ```{r}
 si_au_ref_trddays |>
-  filter(dateymd != date)
+  filter(dateymd != date) |>
+  count() |>
+  pull()
+```
 
+We can specify `-` in `col_types` to omit `dateymd` when we read the data.
+Since `date` will be our primary key, we put that column first using the `relocate()` function.
+
+```{r}
+si_au_ref_trddays <- 
+  read_csv(si_au_ref_trddays_csv, col_types = "-iDii") |>
+  relocate(date)
+```
+
+We also confirm that `dayssince` simply represents the number of dates since `1899-12-30`.
+
+```{r}
 si_au_ref_trddays |>
-  mutate(some_date = date - dayssince,
-         weekday_calc = wday(date))
+  mutate(some_date = date - dayssince) |> 
+  count(some_date)
+```
+We can also confirm that `weekday` represents the day of the week in the US system that starts the week on Sunday.^[The ISO 8601 convention is more consistent with the idea that Sunday is at the *end* of the week---hence "week*end*"---and starts the week on Monday. But these distinctions are not important here.]
 
+```{r}
 si_au_ref_trddays |>
   mutate(
     weekday_calc = wday(date),
@@ -458,38 +691,34 @@ si_au_ref_trddays <-
   read_csv(si_au_ref_trddays_csv,
            col_types = "-iDii") |>
   relocate(date) |>
-  write_parquet(sink = si_au_ref_trddays_pq) |>
+  write_parquet(sink = file.path(pq_dir, "si_au_ref_trddays.parquet")) |>
   system_time()
 ```
 
+## Importing `si_au_retn_mkt`
+
+We omit the details, but we can confirm that much of what we saw with `si_au_ref_trddays` applies to `si_au_retn_mkt`:
+
+ - `Date` is a valid primary key
+ - `DateYMD` is redundant
+ - `DaysSince` represents the number of days since `1899-12-30`
+
+Again we convert all column names to lower case so that `date` is a common field across `si_au_ref_trddays`, `si_au_retn_mkt`, and `si_au_prc_daily`.
+
 ```{r}
 si_au_retn_mkt_csv <- file.path(csv_dir, "si_au_retn_mkt.csv.gz")
-si_au_retn_mkt_pq <- file.path(pq_dir, "si_au_retn_mkt.parquet")
 
-si_au_retn_mkt <-
-  read_csv(si_au_retn_mkt_csv,
-           col_types = "ciDdddddd",
-           locale = locale(date_format = "%d/%m/%Y"),
-           name_repair = str_to_lower) |>
-  mutate(dateymd = ymd(dateymd))
-```
-
-```{r}
-si_au_retn_mkt |>
-  filter(dateymd != date | is.na(dateymd) | is.na(date))
-```
-
-```{r}
 si_au_retn_mkt <-
   read_csv(si_au_retn_mkt_csv,
            col_types = "-iDdddddd",
            locale = locale(date_format = "%d/%m/%Y"),
            name_repair = str_to_lower) |>
   relocate(date) |>
-  write_parquet(sink = si_au_retn_mkt_pq) |>
+  write_parquet(sink = file.path(pq_dir, "si_au_retn_mkt.parquet")) |>
   system_time()
 ```
 
+## Importing `si_au_prc_daily`
 
 ```{r}
 si_au_prc_daily_csv <- file.path(csv_dir, "si_au_prc_daily.csv.gz")
@@ -526,12 +755,12 @@ si_au_prc_daily |>
 
 ```{r}
 export_parquet <- function(df, file) {
- db <- df[["src"]][["con"]]
- df <- dplyr::collapse(df)
- sql <- paste0("COPY (", dbplyr::remote_query(df),
-               ") TO '", file, "'")
- DBI::dbExecute(db, sql)
- invisible(df)
+  db <- df[["src"]][["con"]]
+  df <- dplyr::collapse(df)
+  sql <- paste0("COPY (", dbplyr::remote_query(df),
+                ") TO '", file, "'")
+  DBI::dbExecute(db, sql)
+  invisible(df)
 }
 ```
 
