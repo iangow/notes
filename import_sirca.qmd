@@ -785,4 +785,29 @@ si_au_prc_daily <-
 dbDisconnect(db)
 ```
 
+
+```{r}
+#| label: tbl-pq-files
+#| tbl-cap: "Data on processed parquet files"
+#| echo: false
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+file.info(dir(path = pq_dir, full.names = TRUE)) |>
+  as_tibble(rownames = "file_name") |>
+  mutate(file_name = basename(file_name),
+         size = case_when(size > 1e9 ~ str_c(round(size / 1e9, 2), " GB"),
+                           size > 1e6 ~ str_c(round(size / 1e6, 2), " MB"),
+                           size > 1e3 ~ str_c(round(size / 1e3, 2), " kB"),
+                           .default = str_c(size, " B"))) |>
+  select(file_name, size, mtime)
+```
+
+
+## Service-level agreement revisited
+
+ - Good database principles
+ - No manual steps
+ - Update process
+ - Documentation
+ - Data version control
+
 ## References {-}
