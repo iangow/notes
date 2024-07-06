@@ -1,7 +1,7 @@
 ---
 title: "Data curation and the data science workflow"
 author: Ian D. Gow
-date: 2024-07-05
+date: 2024-07-06
 number-sections: true
 date-format: "D MMMM YYYY"
 format:
@@ -44,6 +44,9 @@ As will be seen, my conception of *Curate* will encompass some tasks that are in
 
 While I will argue that even the sole analyst who will perform all three processes can benefit from thinking about *Curate* separate from *Understand*, it is perhaps easiest to conceive of the *Curate* and *Understand* processes as involving different individuals or organizational units of the "whole game" of a data analysis workflow.^[The authors of *R for Data Science* call the "whole game" a process, but I've already used that term to describe the next level down. So I choose *workflow* to denote the whole shebang here.]
 
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd).
+
 # Possible data curation scenarios
 
 In a *university* a "data lab" might be responsible for curating data sets for research and teaching, with researchers and students serving as the clients.
@@ -62,7 +65,7 @@ No doubt there is iteration between data and IT specialists and those analysts a
 
 *Research assistants* might be hired by academic researchers to provide data curation services.
 In many cases, these research assistants will also do significant work from the *Understand* process, such as running regressions or other analyses.
-Even a *solo analyst* will be doing data curation, though the "client" will be analyst herself.
+Even a *solo analyst* will be doing data curation, though the "client" will be the analyst herself.
 
 I suspect that some of the principles I outline here will be useful in all of these scenarios.
 
@@ -127,11 +130,46 @@ For example, a logical type should be checked to ensure that it only takes two v
 
 ## No manual steps
 
+When data vendors are providing well-curated data sets, much about the curation process will be obscure to the user.
+This makes some sense, as the data curation process has elements of trade secrets.
+But often data will be supplied by vendors in an imperfect state and significant data curation will be performed by the *Curate* team working for or within the same organization as the *Understand* team.
+
+Focusing on the case where the data curation process transforms an existing data set---say, one purchased from an outside vendor---into a curated data set in sense used here, there are a few ground rules regarding manual steps.
+
+First, *the original data files should not be modified in any way*.
+If data are supplied as CSV files, then merely opening them in Excel and saving them can mutilate the original data.^[An example where this could happen is provided in @tip-friends.]
+I have encountered people whose idea of data curation extended to opening the original files, saving them as Excel files, and then proceeding to manually edit those files.
+This approach leads to a completely unreproducible set of data files, which is problematic not only in a world in which reproducibility is starting to be expected, but also when a new version of the data will be supplied by the vendor in the future.
+
+Second, any manual steps should be extensively documented and applied in a transparent automated fashion.
+For example, if a data set on financial statement items of US firms contains errors that can be corrected by reviewing original SEC filings, then any corrections should be clearly documented in separate files with links to the original filings and explanations.
+And the corrections should be implemented through code, not manual steps.
+For example, there should be code that imports the original data and the corrections and applies the latter to the former to create the final data set.
+
+## Documentation 
+
+The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise.
+Often that need will arise when the vendor provides an updated data set.
+Perhaps the best way to understand what I have in mind here is through a case study and I provide on in @sec-case.
+
 ## Update process
  
-## Data curation documentation 
+Part of the rationale for having a well-documented process with no manual steps is that it greatly facilitates updating the data when the data vendor or other data source provides updated data.
+In some cases, updating the data will entail little more than downloading the new raw data and running a pre-existing script on those data.
+In other cases, the data may change in significant ways, such as addition of new variables, renaming of existing ones, or reorganization of data into different tables.
+
+As future changes may be difficult to predict, the analyst might be able to do little more than describe the anticipated update process if no major changes occur.
+If major changes do subsequently occur, it likely makes sense for the analyst handling the update to extensively document the changes needed to process the new data, especially if earlier versions of the data remain relevant (e.g., they have been used in published research).
 
 ## Data version control
+
+@Welch:2019aa argues that, to ensure that results can be reproduced, "the author should keep a private copy of the full data set with which the results were obtained."
+This imposes a significant cost on the *Understand* team to maintain archives of data sets that may run to several gigabytes or more and it would seem much more efficient for these obligations to reside with the parties with the relevant expertise.
+
+Unfortunately, even when data vendors provide curated data sets, they generally provide little in the way of version control.
+For example, there is no evidence that Wharton Research Data Services (WRDS), perhaps the largest data vendor in academic business research, provides any version control for its datasets, even though it should have much greater expertise for doing this than the users of its services.
+
+Nonetheless, some notion of version control of data probably has a place in data curation, even if this is little more than archiving of various versions of data supplied to research teams.
 
 ```{comment}
 What are these principles?
@@ -141,7 +179,7 @@ One principle is that the process of importing and tidying data is best handled 
 In this note, I will focus on the steps proceeding the "understand" processes, but I will tweak the arrow from "tidy" to "understand" by adding "persist" and "load" processes, which I will explain below.
 ```
 
-# A data curation case study: SIRCA ASX EOD data
+# A data curation case study: SIRCA ASX EOD data {#sec-case}
 
 In this section, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -359,9 +397,8 @@ si_au_ref_names |>
   select(Gcode, CompanyRelatedGCode, related_gcode) 
 ```
 
-:::{.callout-note}
-
-### Friends don't let friends use Excel {#sec-friends}
+:::{#tip-friends .callout-tip}
+### Friends don't let friends use Excel
 
 From casual observation, it appears that valid `Gcode` values contain only lower case characters (`[a-z]` in regular expressions) or numbers (`[0-9]` in regular expressions).
 Are there any `CompanyRelatedGCode` values that contain other characters?
@@ -377,11 +414,10 @@ si_au_ref_names |>
 
 What's happened here?
 `May-01` looks more like a date than a `Gcode`.
-This has all the hallmarks of someone importing data into Microsoft Excel as part of their process.
+This has all the hallmarks of someone having imported data into Microsoft Excel as part of their process.
 Microsoft Excel has a well-known tendency to mangle values that it aggressively interprets as dates.
 It seems likely that the `Gcode` for Mayne Nickless was `may1` and Excel read this as `May-01` (a date).^[Whoever did this also had their computer set to format dates in the US-style `Mmm-dd` format, rather than the `dd-Mmm` style I see on my computer.]
 Is it true that `Gcode` values contain only lower-case characters and numbers?
-
 
 ```{r}
 weird_gcodes <-
@@ -725,18 +761,24 @@ si_au_retn_mkt <-
 
 ## Importing `si_au_prc_daily`
 
+By this point, we should be getting the hang of the workflow.
+We now move on to the largest file in the set, `si_au_prc_daily.csv.gz`.
+We start by identifying the CSV source and the parquet destination.
+
 ```{r}
 si_au_prc_daily_csv <- file.path(csv_dir, "si_au_prc_daily.csv.gz")
 si_au_prc_daily_pq <- file.path(pq_dir, "si_au_prc_daily.parquet")
 ```
 
+Using a process similar to that above, we identify those columns needing special handling in the import process.
+Note that we specify `guess_max = 1e6` because the default value for `guess_max` reads too few rows to infer the types of some variables that are most `NA`.
+
 ```{r}
 #| eval: true
 #| cache: true
-#| cache-lazy: true
+#| cache-lazy: false
 si_au_prc_daily <-
   read_csv(si_au_prc_daily_csv,
-           n_max = 10000,
            guess_max = 1e6,
            show_col_types = FALSE) |>
   mutate(dateymd = ymd(dateymd),
@@ -772,7 +814,7 @@ So in saving to parquet, we keep `dateymd`, but rename it to `date` for consiste
 
 ```{r}
 #| cache: true
-#| cache-lazy: true
+#| cache-lazy: false
 #| eval: false
 si_au_prc_daily |>
   select(-date) |>
@@ -782,7 +824,7 @@ si_au_prc_daily |>
 ```
 
 One issue with the code above is that it is quite slow and requires the full data set to be loaded in RAM.
-Given that `si_au_prc_daily` occupies `r lobstr::obj_size(si_au_prc_daily)` of RAM when loaded, this can be a problem if you have modest computing resources.
+Given that `si_au_prc_daily` occupies `r round(lobstr::obj_size(si_au_prc_daily) / 1e9, 2)` GB of RAM when loaded, this can be a problem if you have modest computing resources.
 
 An alternative approach would be to use DuckDB's facility for reading CSV files and writing to parquet files.
 The small `export_parquet()` function accepts a remote data frame in a DuckDB connection and writes it to parquet.
@@ -851,9 +893,23 @@ Now that we are done with out DuckDB connection, we can disconnect from it.
 dbDisconnect(db)
 ```
 
+## The final script
+
+I organize the code above (e.g., removed redundate elements) and placed it in a script [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R).
+With the raw data in `RAW_DATA_DIR` and the necessary packages installed, I can create parquet data files by simply running the following code:^[Note that I set `DATA_DIR`  to a different directory to avoid overwriting the files I just created and creating problems with Dropbox having to sync new files before it's even uploaded old ones.]
+
+```{r}
+Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data")
+t <- tempdir()
+Sys.setenv(DATA_DIR = t)
+source("https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R") |>
+  system.time()
+```
+
 # Service-level agreement revisited
 
 We return to our service-level agreement (SLA) to take stock of where we are after the above.
+Given that much of our focus above was on data types, I do not revisit that here and instead focus on those elements of the SLA, including those that I did not address above.
 
 ## Storage format
 
@@ -890,19 +946,42 @@ file.info(dir(path = pq_dir, full.names = TRUE)) |>
 
 : SIRCA ASX EOD price collection: Primary keys {#tbl-asx-eod-keys}
 
-And of course much of our focus was on **data types**.
-So we now turn to the elements of the SLA that we have not addressed.
 
 ## Good database principles
 
+In general, I think one wants to be fairly conservative in considering database principles with a data library.
+If the data are workable and make sense in the form they come in, then it may make most sense to keep them in that form.
 
+The SIRCA ASX EOD data are organized into four tables with easy-to-understand primary keys and a fairly natural structure.
+At some level, the two primary tables are `si_au_ref_names` and `si_au_prc_daily`.^[It seems possible that `si_au_retn_mkt` and  `si_au_ref_trddays` are generated from `si_au_prc_daily`.]
+These two tables are naturally distinct, with one about companies and the other about daily security returns.
+
+While there might be merit in splitting `si_au_prc_daily` into separate tables to reduce its size, it is actually quite manageable in its current form.
 
 ## No manual steps
 
-## Update process
+There are no manual steps in creating the parquet files except for the initial download of the CSV files from SIRCA.
+While some data vendors allow users to download files using scripts (e.g., the scripts I have [here](https://github.com/iangow/wrds_pg/tree/master/crsp) for WRDS), this does not appear to be an option for SIRCA.
+But once the data have been downloaded, the subsequent steps are automatic.
+
+While some of the checks and data-cleaning had manual elements (e.g., identifying the near-duplicate with `Gcode=="rgwb1"` in `si_au_ref_names`), the resulting code implements the fix in an automated fashion.
+So long as the SIRCA data remain unchanged, the fix will continue to work.
 
 ## Documentation
 
+A important principle here is that the code for processing the data is documentation in its own right.
+Beyond that the document you are reading now is a form of documentation.
+If the goal of this document were to provide details explaining the process used to produce the final data sets, then it might make sense to edit this document to reflect that different purpose, but in many ways I hope this document already acts as good documentation.
+
+## Update process
+
+In some ways, the update process is straightforward: when new CSV files become available, download them into `RAW_DATA_DIR` and run the script.
+However, it would probably be necessary to retrace some of the steps above to ensure that no data issues have crept in (e.g., duplicated keys). 
+It may make sense to document the update process as part of performing it the first time.
+
 ## Data version control
+
+I achieve a modest level of data version control by using Dropbox, which offers the ability to restore previous versions of data files.
+As discussed earlier, version control of data is a knotty problem.
 
 # References {-}
