@@ -22,14 +22,17 @@ bibliography: papers.bib
 SIRCA's ASX EOD (end of day) data collection is designed to give users everything needed to find daily closing price for ASX listed companies, and to generate reliable daily measures of total shareholder returns, with all data being retained for delisted companies.
 
 
-SIRCA's ASX end of day price collection includes the following tables:
+SIRCA's ASX end of day price collection includes the tables listed in @tbl-asx-eod-keys.
+More details can be found in my separate document on importing SIRCA ASX EOF data [here](https://github.com/iangow/notes/blob/main/import_sirca.pdf).
 
-| Table              | Description                                                                  | Primary key                                 |
-|----------------|----------------------------------------|----------------|
-| `si_au_ref_names`  | Complete name histories and change dates for companies listed from 01Jan2000 | `gcode`, ASX SecurityTicker, SeniorSecurity |
-| `si_au_prc_daily`  | Complete daily price, volume and value histories, with issued share numbers  | `gcode`, ASX SecurityTicker, SeniorSecurity |
-| `si_au_retn_mkt`   | Daily value- and equal-weighted whole market returns                         | `date`                                      |
-| `si_au_ref_trddays` | Record of ASX trading dates since 01Jan2000                                  | `date`                                      |
+| Table               | Description  | Primary key                            |
+|---------------------|--------------|-------------------------:|
+| `si_au_ref_names`   | Name and ticker histories for listed companies from January 2000 | `gcode`, `securityticker`, `listdate`  |
+| `si_au_prc_daily`   | Complete daily price, volume and value histories | `gcode`, `date`, `seniorsecurity`      |
+| `si_au_retn_mkt`    | Daily value- and equal-weighted whole market returns | `date`                                 |
+| `si_au_ref_trddays` | Record of ASX trading dates since January 2000  | `date`                                 |
+
+: SIRCA ASX EOD price collection: Primary keys {#tbl-asx-eod-keys}
 
 Starting from January 2000, the `si_au_ref_names` table includes all available end-of-day trade prices for the equity securities of all ASX companies.
 This table also includes dividend and franking histories; capital returns; adjustments for numerous corporate action events, such as splits, consolidation, bonus issues, renounceable and non-renounceable issues; total daily traded volume and value, divided into categories to expose activity in lit and dark ASX markets; numbers of issued shares; are all provided in `si_au_ref_names`.
@@ -46,23 +49,9 @@ Finally SIRCA provides a detailed description of all tables and fields in a data
 
 This entire collection is an ideal choice for researchers considering event studies for ASX listed companies.
 
-# Getting SIRCA ASX EOF data
-
-
-
-# Examples
-
-The following examples demonstrate ways in which you might extract content of interest to you, or work with data from more than one data set.
-I show how one can use the SIRCA ASX EOD collection to do the following analyses:
-
-1. Find `gcode`s from company names or ticker codes
-2. Apply the `cumulativefactor` field to adjust prices for different dividend and corporate action events.
-3. Generate and plot total shareholder returns
-4. Use the `dayssince` column to identify return intervals between consecutive trades
-5. Use the `seniorsecurity` column to restrict attention to the residual risk security of each company
-6. Recognise and accommodate negative factors and zero volumes
-7. Calculate cumulative factor without dividends
-8. Segment market trading activity by trade type and venue
+The code in this note uses the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "dbplyr"))` within R to install all the packages you need to run the code in this note. While `duckdb` and `arrow` are not listed below, they are needed to run the download script and to create the database we will use.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/sirca_eod.qmd).
 
 ```{r}
 #| include: false
@@ -85,10 +74,104 @@ library(dbplyr, warn.conflicts = FALSE)
 library(farr)
 ```
 
+# Getting SIRCA ASX EOF data
+
+SIRCA supplies the data we will use as four compressed CSV files.
+The original SIRCA note assumes that you have processed the data into an SQL database, but does not provide any details for doing this.
+In contrast, I provide the code needed to prepare the data for the analysis below.
+I merely assume that you have access to SIRCA and downloaded the raw data from SIRCA along the lines discussed below.
+One you have done that you should be able to execute all the code in this note and thereby produce all the output (tables and graphs) contained herein.
+
+You should download these files and place them *as is* in a single `sirca` directory and you should edit the code below to tell my script where to look for that directory.
+
+In my case, `sirca` is found in `~/Library/CloudStorage/Dropbox/raw_data` and so I execute the following command in RStudio:
+
+```{r}
+Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data")
+```
+
+@tbl-csv-files provides details on the contents of the `sirca` subdirectory of `RAW_DATA_DIR` on my computer.
+
+```{r}
+#| label: tbl-csv-files
+#| tbl-cap: "Data on supplied CSV files from SIRCA"
+#| echo: false
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+csv_dir <- file.path(Sys.getenv("RAW_DATA_DIR"), "sirca")
+
+file.info(dir(path = csv_dir, full.names = TRUE)) |>
+  as_tibble(rownames = "file_name") |>
+  mutate(file_name = basename(file_name),
+         size = case_when(size > 1e9 ~ str_c(round(size / 1e9, 2), " GB"),
+                           size > 1e6 ~ str_c(round(size / 1e6, 2), " MB"),
+                           size > 1e3 ~ str_c(round(size / 1e3, 2), " kB"),
+                           .default = str_c(size, " B"))) |>
+  select(file_name, size) 
+```
+
+The script also needs to know where to put the processed data files, which will be in parquet format.
+You should edit the following line to refer to a location on *your* computer that you would like to use to store processed SIRCA data.
+
 ```{r}
 #| eval: false
-Sys.setenv(DATA_DIR = "~/Dropbox/pq_data")
+Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data")
 ```
+
+```{r}
+#| include: false
+t <- tempdir()
+Sys.setenv(DATA_DIR = t)
+```
+
+With the needed packages installed, and `RAW_DATA_DIR` and `DATA_DIR` set, we can run the script to process the SIRCA raw data with the following line.
+On my computer, this script takes about 6 seconds to run.
+If you wish to learn more about what the script is doing, please see the separate document on importing SIRCA ASX EOF data [here](https://github.com/iangow/notes/blob/main/import_sirca.pdf).
+
+```{r}
+#| cache: true
+source("https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R", 
+       echo = FALSE) |>
+  system.time()
+```
+
+Details on the resulting parquet files that I have on my computer are provided in @tbl-pq-files.
+
+```{r}
+#| include: false
+Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
+```
+
+```{r}
+#| label: tbl-pq-files
+#| tbl-cap: "Data on processed parquet files"
+#| echo: false
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+pq_dir <- file.path(Sys.getenv("DATA_DIR"), "sirca")
+
+file.info(dir(path = pq_dir, full.names = TRUE)) |>
+  as_tibble(rownames = "file_name") |>
+  mutate(file_name = basename(file_name),
+         size = case_when(size > 1e9 ~ str_c(round(size / 1e9, 2), " GB"),
+                           size > 1e6 ~ str_c(round(size / 1e6, 2), " MB"),
+                           size > 1e3 ~ str_c(round(size / 1e3, 2), " kB"),
+                           .default = str_c(size, " B"))) |>
+  select(file_name, size)
+```
+
+
+# Examples
+
+The following examples demonstrate ways in which you might extract content of interest to you, or work with data from more than one data set.
+I show how one can use the SIRCA ASX EOD collection to do the following analyses:
+
+1. Find `gcode`s from company names or ticker codes
+2. Apply the `cumulativefactor` field to adjust prices for different dividend and corporate action events.
+3. Generate and plot total shareholder returns
+4. Use the `dayssince` column to identify return intervals between consecutive trades
+5. Use the `seniorsecurity` column to restrict attention to the residual risk security of each company
+6. Recognise and accommodate negative factors and zero volumes
+7. Calculate cumulative factor without dividends
+8. Segment market trading activity by trade type and venue
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
