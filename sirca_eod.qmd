@@ -178,10 +178,10 @@ Specifically, I show how one can use the SIRCA ASX EOD collection to do the foll
 2. Apply the `cumulativefactor` field to adjust prices for different dividend and corporate action events
 3. Generate and plot total shareholder returns
 4. Use the `dayssince` column to identify return intervals between consecutive trades
-5. Use the `seniorsecurity` column to restrict attention to the residual risk security of each company
-6. Recognise and accommodate negative factors and zero volumes
-7. Calculate the cumulative factor without dividends
-8. Segment market trading activity by trade type and venue
+5. Use the `seniorsecurity` column to focus on the residual risk security for each company
+6. Handle negative factors and zero volumes
+7. Calculate a cumulative factor excluding dividends
+8. Segment trading activity by trade type and venue
 
 All of the examples here use an in-memory DuckDB database connection.
 The following code creates this database connection and reads in three of the four SIRCA ASX EOD tables.
@@ -364,8 +364,8 @@ si_au_prc_daily |>
 
 
 Exactly the same process for `cumulativefactor` applies for dividends as well as corporate actions.
-`AAA` (`gcode`: `aaa2`) is an exchange-traded fund that deposits money in accounts with Australian banks and  pays regular dividends 
-The effect of its dividends on its closing price can be observed from a graph.
+`AAA` (`gcode`: `aaa2`) is an exchange-traded fund that deposits money in accounts with Australian banks and  pays regular dividends.
+The effect of its dividends on its closing price can be observed in @fig-aaa2.
 
 ```{r}
 #| label: fig-aaa2
@@ -382,46 +382,61 @@ si_au_prc_daily |>
 
 ## 3. Plotting a distribution of price relatives for a security
 
-The following function can calculate the price relative, or total shareholder return, for a security.
-Note that it requires the price to be adjusted for corporate actions and dividends, and to be ordered by `date`.
+The following code calculates `prel`, the price relative or gross shareholder return, for securities on `si_au_prc_daily`.
+By using `cumulativefactor`, it adjusts for corporate actions and dividends.
+
+```{r}
+prels <-
+  si_au_prc_daily |>
+  mutate(adjustedprice = close * cumulativefactor) |>
+  group_by(gcode, seniorsecurity) |>
+  window_order(date) |>
+  mutate(prel = adjustedprice / lag(adjustedprice)) |>
+  ungroup() |>
+  window_order()
+```
+
+@fig-cba1 shows the distribution of returns from Commonwealth Bank.
 
 ```{r}
 #| label: fig-cba1
 #| fig-cap: "Distribution of daily returns for Commonwealth Bank"
-si_au_prc_daily |>
-  filter(gcode == 'cba1', seniorsecurity == 1L) |>
-  mutate(adjustedprice = close * cumulativefactor) |>
-  group_by(gcode) |>
-  window_order(date) |>
-  mutate(prel = adjustedprice / lag(adjustedprice)) |>
-  ungroup() |>
-  window_order() |>
+prels |>
   filter(!is.na(prel)) |>
+  filter(gcode == 'cba1', seniorsecurity == 1L) |>
   ggplot(aes(x = prel)) +
   geom_histogram(binwidth = 0.005)
 ```
 
 ## 4. `dayssince` column
 
-It is important to note that price relatives calculated in the previous section may not always be over consecutive trading days.
-Although CBA is a stock that is consistently traded, a less-liquid security may show large gaps in trading activity, leading to price relatives that span longer time periods.
+It is important to note that price relatives calculated in the previous section may not always relate to consecutive trading days.
+The following code calculates the number of days between consecutive observations for a given security on `si_au_prc_daily`.
+
+```{r}
+elapsed_days <-
+  si_au_prc_daily |>
+  group_by(gcode, seniorsecurity) |>
+  window_order(date) |>
+  mutate(days_elapsed = dayssince - lag(dayssince)) 
+```
+
 @fig-cba1-days shows the distribution of `days_elapsed`, the number of elapsed days between trading dates calculated using using the `datesince` column, for Commonwealth Bank.
-As a measure of the liquidity of a security, `days_elapsed` is problematic because it does not distinguish between days on which the market is open and those on which it is closed.
+Although CBA is a stock that is consistently traded, a less-liquid security may show large gaps in trading activity, leading to price relatives that span longer time periods.
 
 ```{r}
 #| label: fig-cba1-days
 #| fig-cap: "Distribution of days between trading dates for Commonwealth Bank"
-si_au_prc_daily |>
-  filter(gcode == 'cba1', seniorsecurity == 1L) |>
-  group_by(gcode) |>
-  window_order(date) |>
-  mutate(days_elapsed = dayssince - lag(dayssince)) |>
+elapsed_days |>
   count(days_elapsed, sort = TRUE) |>
+  filter(gcode == 'cba1', seniorsecurity == 1L) |>
   filter(!is.na(days_elapsed)) |>
   ggplot(aes(x = days_elapsed, y = n)) +
   geom_col() +
   scale_x_continuous(breaks = 1:5)
 ```
+
+As a measure of the liquidity of a security, `days_elapsed` is problematic because it does not distinguish between days on which the market is open and those on which it is closed.
 We can improve on this measure using data from `si_au_ref_trddays`, a sample of which is shown in @tbl-trddays.
 
 ```{r}
@@ -510,9 +525,9 @@ At times, some `gcodes` have multiple securities trading simultaneously.
 This is because these companies have more than one class of security and a junior security class has been included in `si_au_prc_daily`.
 Over time, other junior security classes may be included too, which means it is important to keep the different price series consistent.
 The `seniorsecurity` column is included so you can focus on just the senior security series for any company.
-In the next example, two classes of security are shown to be simultaneously trading for Telstra Corporation Ltd, whose `gcode` is `tls1`.
+In @tbl-telstra, two classes of security are shown to be simultaneously trading for Telstra Corporation Ltd, whose `gcode` is `tls1`.
 These are evident from the different `securityticker` values: `TLS` and `TLSCA`.
-Notice the `seniorsecurity` field correctly separates these two series.
+Notice the `seniorsecurity` field distinguishes these two series.
 
 ```{r}
 #| label: tbl-telstra
@@ -531,7 +546,7 @@ si_au_prc_daily |>
 The `factor` field may show a value of `-1` in some cases.
 When there is either no observed trade price before an event or no price after the event, a factor of `-1` is assigned to the event.
 This can occur both in the beginning and the end of the lifetime of the security.
-Relatively few observations have negative `factor` values.
+@tbl-num-neg-factors shows that relatively few observations have negative `factor` values.
 
 ```{r}
 #| label: tbl-num-neg-factors
@@ -542,6 +557,8 @@ si_au_prc_daily |>
   count(neg_factor)
 ```
 
+@tbl-neg-cum-factors shows that there are actually some cases where `factor == -1`, but `cumulativefactor` is not negative.
+
 ```{r}
 #| label: tbl-neg-cum-factors
 #| tbl-cap: "Values of `cumulativefactor` when `factor` is negative"
@@ -551,7 +568,7 @@ si_au_prc_daily |>
   count(factor, cumulativefactor)
 ```
 
-But it turns out that when `factor == -1` and `cumulativefactor != -1`, there is no value of `close`.
+The following query confirms that when `factor == -1` and `cumulativefactor != -1`, there is no value of `close`.
 So there is no risk of calculating an adjusted close price that has no trades behind it.
 
 ```{r}
@@ -676,7 +693,8 @@ anz_cum |>
                names_to = "series", values_to = "price") |>
   filter(!is.na(price)) |>
   ggplot(aes(x = date, y = price, color = series)) +
-  geom_line()
+  geom_line() +
+  theme(legend.position = "top")
 ```
 
 ```{r}
@@ -694,7 +712,8 @@ anz_cum |>
                names_to = "series", values_to = "price") |>
   filter(!is.na(price)) |>
   ggplot(aes(x = date, y = price, color = series)) +
-  geom_line()
+  geom_line() +
+  theme(legend.position = "top")
 ```
 
 ```{r}
@@ -720,21 +739,22 @@ The `si_au_prc_daily` table also contains information on the count, volume, and 
 This section provides examples of aggregating trading activity by different trade types:
 
 1.  Trading activity across the whole market
-2.  Segmentation by on vs off-market trades
+2.  Segmentation by on- versus off-market trades
 3.  Proportion of on-market non-crossing trades that are carried out through ASX Centre Point
 4.  Comparison of lit-pool and dark-pool trading
+3.  Proportion of dark market trades that are carried out through ASX Centre Point
 
-A graph from the following command shows the value of trading activity across the year plotted against time.
+@fig-trd shows the value of trading activity across the year plotted against time.
 Trading activity can vary significantly from month to month.
 
 ```{r}
 #| label: fig-trd
 #| fig-cap: "Trading activity"
 si_au_prc_daily |>
-  filter(between(date, '2016-01-01', '2019-12-31')) |>
-  group_by(date) |>
+  mutate(month = floor_date(date, "month")) |>
+  group_by(month) |>
   summarize(ValueWholeMkt = sum(valueonmkt + valueoffmkt, na.rm = TRUE)) |>
-  ggplot(aes(x = date, y = ValueWholeMkt)) +
+  ggplot(aes(x = month, y = ValueWholeMkt)) +
   geom_line()
 ```
 
@@ -742,17 +762,18 @@ si_au_prc_daily |>
 #| label: fig-trd-on-off
 #| fig-cap: "Trading activity: On- versus off-market"
 si_au_prc_daily |>
-  filter(between(date, '2016-01-01', '2019-12-31')) |>
-  group_by(date) |>
+  mutate(month = floor_date(date, "month")) |>
+  group_by(month) |>
   summarize(across(c(valueonmkt, valueoffmkt), \(x) sum(x, na.rm = TRUE))) |>
-  pivot_longer(-date, names_to = "location", values_to = "value") |>
-  ggplot(aes(x = date, y = value, color = location)) +
-  geom_line()
+  pivot_longer(-month, names_to = "location", values_to = "value") |>
+  ggplot(aes(x = month, y = value, color = location)) +
+  geom_line() +
+  theme(legend.position = "top")
 ```
 
 As mentioned above, it is possible to segment the market by the visibility of trades.
 In the lit market, the order book is public and all orders (bid and offer)  are visible to all participants.
-Im contrast, in the dark market, the order book is not visible until trades are executed.
+In contrast, in the dark market, the order book is not visible until trades are executed.
 The dark pool consists of both on-market and off-market crossing trades, as well as any Centre Point trades.
 This following section shows the distribution of activity across the lit and dark markets over time.
 Note: As our Centre Point trade measures include crossing trades, Centre Point crossing trade volumes need to be subtracted to avoid double-counting these trades in the calculation of the dark pool trading.
@@ -761,25 +782,24 @@ Note: As our Centre Point trade measures include crossing trades, Centre Point c
 #| label: fig-trd-dark-lit
 #| fig-cap: "Trading activity: Dark versus lit market"
 si_au_prc_daily |>
-  filter(between(date, '2017-01-01', '2019-12-31'),
-         volumeonmkt > 0) |>
-  group_by(date) |>
+  mutate(month = floor_date(date, "month")) |>
+  filter(volumeonmkt > 0) |>
+  group_by(month) |>
   summarize(Dark = sum(volumeoffmktcross + volumeonmktcross +
-                         volumecentrept - volumecentreptcross,
-                       na.rm = TRUE),
+                         volumecentrept - volumecentreptcross, na.rm = TRUE),
             Lit = sum(volumeonmkt + volumeoffmkt - 
                         (volumeoffmktcross + volumeonmktcross +
-                           volumecentrept - volumecentreptcross),
-                      na.rm = TRUE)) |>
-  pivot_longer(cols = -date, names_to = "market", values_to = "volume") |>
-  ggplot(aes(x = date, y = volume, color = market)) +
-  geom_line()
+                           volumecentrept - volumecentreptcross), na.rm = TRUE)) |>
+  pivot_longer(cols = -month, names_to = "market", values_to = "volume") |>
+  ggplot(aes(x = month, y = volume, color = market)) +
+  geom_line() +
+  theme(legend.position = "top")
 ```
 
 The ASX Centre Point matching system provides a market for dark pool liquidity.
 As such, Centre Point trades are a subset of on-market trades.
 More information on ASX Centre Point can be found on the [ASX website](https://www.asx.com.au/markets/trade-our-cash-market/asx-equities-trading/asx-centre-point.html).
-The composition of each market segment is displayed at the bottom of the `si_au_prc_daily` tab in our data dictionary for this service.
+The composition of each market segment is displayed at the top of the `si_au_prc_daily` tab in our data dictionary for this service.
 The following example shows the average proportion of on-market non-crossing trades that are directed through ASX Centre Point over a period of time.
 
 ```{r}
@@ -791,7 +811,7 @@ si_au_prc_daily |>
   group_by(month) |>
   summarize(AvgPropCentrePtNonCross = 
               mean((valuecentrept - valuecentreptcross) /
-                     (valueonmkt - valueonmktcross))) |>
+                     (valueonmkt - valueonmktcross), na.rm = TRUE)) |>
   ggplot(aes(x = month, y = AvgPropCentrePtNonCross)) +
   geom_line()
 ```
@@ -803,13 +823,13 @@ For example, the previous query can be targeted on companies whose market capita
 #| label: fig-prop-cen-pt-small
 #| fig-cap: "Centre Point market share: Small caps"
 si_au_prc_daily |>
-  filter((close * shares) < 50000000,
+  filter(close * shares < 50000000,
          valueonmkt > 0, valuecentrept > 0) |>
   mutate(month = floor_date(date, "month")) |>
   group_by(month) |>
   summarize(AvgPropCentrePtNonCross = 
               mean((valuecentrept - valuecentreptcross) /
-                     (valueonmkt - valueonmktcross))) |>
+                     (valueonmkt - valueonmktcross), na.rm = TRUE)) |>
   ggplot(aes(x = month, y = AvgPropCentrePtNonCross)) +
   geom_line()
 ```
