@@ -205,7 +205,7 @@ Because we specified `compute(name = "si_au_ref_names")`, we can refer to that t
 #| connection: db
 #| label: tbl-wbc-sql
 #| tbl-cap: "Securities matching `WESTPAC`: SQL"
-SELECT gcode, securityticker, abbrevcompanyname
+SELECT gcode, seniorsecurity, securityticker, abbrevcompanyname
 FROM si_au_ref_names
 WHERE fullcompanyname LIKE '%WESTPAC%'
 ```
@@ -218,7 +218,7 @@ However, the same query could be run using `tidyverse` code:
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
   filter(str_like(fullcompanyname, '%WESTPAC%')) |>
-  select(gcode, securityticker, abbrevcompanyname) |>
+  select(gcode, seniorsecurity, securityticker, abbrevcompanyname) |>
   collect()
 ```
 
@@ -227,7 +227,7 @@ Behind the scenes, the `tidyverse` package is translating our code into SQL:
 ```{r}
 si_au_ref_names |>
   filter(str_like(fullcompanyname, '%WESTPAC%')) |>
-  select(gcode, securityticker, abbrevcompanyname) |>
+  select(gcode, seniorsecurity, securityticker, abbrevcompanyname) |>
   show_query()
 ```
 
@@ -252,7 +252,7 @@ Note that using R code greatly facilitates bringing the data into R for analysis
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
   filter(securityticker == 'ANZ') |>
-  select(gcode, securityticker, abbrevcompanyname) |>
+  select(gcode, seniorsecurity, securityticker, abbrevcompanyname) |>
   collect()
 ```
 
@@ -267,7 +267,7 @@ Results of this search are seen in @tbl-arf.
 #| tbl-cap: "Securities with ticker `ARF`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
-  filter(companyticker == 'ARF') |>
+  filter(companyticker == 'ARF', seniorsecurity == 1L) |>
   select(gcode, securityticker, abbrevcompanyname, 
          listdate, delistdate) |>
   arrange(listdate) |>
@@ -288,7 +288,7 @@ If the holders of units in Arena REIT in 2013 participated in these conversions,
 #| label: fig-bhp-unadj
 #| fig-cap: BHP stock price during 2001
 si_au_prc_daily |>
-  filter(gcode == 'bhp1',
+  filter(gcode == 'bhp1', seniorsecurity == 1L,
          between(date, '2001-01-01', '2001-12-31')) |>
   ggplot(aes(x = date, y = close)) +
   geom_line()
@@ -301,7 +301,7 @@ Examining the `coraxdescription` column, it seems likely that the change is due 
 #| tbl-cap: "Corporate action events for BHP in 2001"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
-  filter(gcode == 'bhp1',
+  filter(gcode == 'bhp1', seniorsecurity == 1L,
          between(date, '2001-01-01', '2001-12-31')) |>
   filter(!is.na(coraxdescription)) |>
   select(gcode, date, close, coraxdescription) |>
@@ -317,7 +317,7 @@ Likewise, `numberofdividendevents > 0` can be used to find all dividend events, 
 #| tbl-cap: "Values of `factor` for BHP around 27 June 2001"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
-  filter(gcode == 'bhp1', 
+  filter(gcode == 'bhp1', seniorsecurity == 1L,
           between(date, '2001-06-27', '2001-07-02')) |>
   select(gcode, date, close, factor, numberofcoraxevents) |>
   collect()
@@ -330,7 +330,7 @@ Simply multiplying the `close` column by the `cumulativefactor` column will prod
 #| label: fig-bhp-adj
 #| fig-cap: BHP adjusted stock price during 2001
  si_au_prc_daily |>
-  filter(gcode == 'bhp1',
+  filter(gcode == 'bhp1', seniorsecurity == 1L,
          between(date, '2001-01-01', '2001-12-31')) |>
   mutate(adjustedprice = close * cumulativefactor) |>
   ggplot(aes(x = date, y = adjustedprice)) +
@@ -352,7 +352,7 @@ si_au_prc_daily |>
   mutate(cum_factor_calc = lag(cum_factor_calc) * sign(lag(factor))) |>
   window_order() |>
   ungroup() |>
-  filter(gcode == 'bhp1', 
+  filter(gcode == 'bhp1', seniorsecurity == 1L,
           between(date, '2001-06-27', '2001-07-02')) |>
   select(gcode, date, close, factor, cumulativefactor, cum_factor_calc) |>
   arrange(date) |>
@@ -368,7 +368,8 @@ The effect of its dividends on its closing price can be observed from a graph.
 #| label: fig-aaa2
 #| fig-cap: "Adjusted and unadjusted closing prices for `AAA`"
 si_au_prc_daily |>
-  filter(gcode == 'aaa2', between(date, '2017-01-01', '2018-12-31')) |>
+  filter(gcode == 'aaa2', seniorsecurity == 1L,
+         between(date, '2017-01-01', '2018-12-31')) |>
   mutate(adjustedprice = close * cumulativefactor) |>
   select(date, close, adjustedprice) |>
   pivot_longer(-date, names_to = "variable", values_to = "price") |>
@@ -385,7 +386,7 @@ Note that it requires the price to be adjusted for corporate actions and dividen
 #| label: fig-cba1
 #| fig-cap: "Distribution of daily returns for Commonwealth Bank"
 si_au_prc_daily |>
-  filter(gcode == 'cba1') |>
+  filter(gcode == 'cba1', seniorsecurity == 1L) |>
   mutate(adjustedprice = close * cumulativefactor) |>
   group_by(gcode) |>
   window_order(date) |>
@@ -408,7 +409,7 @@ As a measure of the liquidity of a security, `days_elapsed` is problematic becau
 #| label: fig-cba1-days
 #| fig-cap: "Distribution of days between trading dates for Commonwealth Bank"
 si_au_prc_daily |>
-  filter(gcode == 'cba1') |>
+  filter(gcode == 'cba1', seniorsecurity == 1L) |>
   group_by(gcode) |>
   window_order(date) |>
   mutate(days_elapsed = dayssince - lag(dayssince)) |>
@@ -461,7 +462,7 @@ In @tbl-tdays, it can be seen that there are very few cases in which the trading
 #| tbl-cap: "Trading days between trading dates: `cba1` and `1st1`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 tdays_elapsed_df |>
-  filter(gcode %in% c('cba1', '1st1'),
+  filter(gcode %in% c('cba1', '1st1'), seniorsecurity == 1L,
          !is.na(tdays_elapsed)) |>
   count(gcode, tdays_elapsed) |>
   pivot_wider(names_from = "gcode", values_from = "n", values_fill = 0) |>
@@ -478,7 +479,7 @@ Looking at the longest gap, it turns out there was a trading halt placed on [12 
 #| tbl-cap: "Gaps in trading for Commonwealth Bank"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 tdays_elapsed_df |>
-  filter(gcode == 'cba1', tdays_elapsed > 1) |>
+  filter(gcode == 'cba1',  seniorsecurity == 1L, tdays_elapsed > 1) |>
   collect()
 ```
 
@@ -515,8 +516,9 @@ Notice the `seniorsecurity` field correctly separates these two series.
 #| tbl-cap: "Sample of `securityticker` values for Telstra (`tls1`)"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
-  filter(gcode == 'tls1', between(date, "2008-05-01", "2008-05-07")) |>
-  select(gcode, date, securityticker, seniorsecurity) |>
+  filter(gcode == 'tls1',
+         between(date, "2008-05-01", "2008-05-07")) |>
+  select(gcode, seniorsecurity, date, securityticker) |>
   arrange(date) |>
   collect()
 ```
@@ -567,14 +569,14 @@ si_au_prc_daily |>
   select(gcode, date, factor, cumulativefactor)
 ```
 
-The following example shows dividends between `2000-03-06` and `2001-09-28` without any trading.
+The example provided in @tbl-npx1-factor shows dividends between `2000-03-06` and `2001-09-28` without any trading.
 As no trading was observed prior to these dividend events, the `factor` and `dividendfactor` fields contain a value of `-1`.
 This makes sense, as one could not meaningfully push the sequence of stock returns back to dates before `2002-03-15`, as there are no traded prices.
 There is a non-negative factor value for `2002-03-18`, presumably because there are prices reported after `2002-03-18`.
 
 ```{r}
 #| label: tbl-npx1-factor
-#| tbl-cap: "Negative `factor` values and `npx1`"
+#| tbl-cap: "Negative `factor` values: `npx1`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |> 
   filter(gcode == 'npx1', date <= '2002-09-23', seniorsecurity == 1) |>
@@ -582,7 +584,7 @@ si_au_prc_daily |>
   collect()
 ```
 
-The following example shows a dividend on `2004-07-05`.
+Table @tbl-wsf1-factor shows another example with a dividend on `2004-07-05`.
 However, no price was observed after the event, and hence the `factor` and `dividendfactor` fields contain a value of `-1`.
 Note that there is a price in the `close` field on `2004-07-05` but it was not observed that day, after the dividend event.
 This is evident from the 0 value for `VolumeOnMkt`, and confirmed by `NA` or `0` values for `open`, `high`, `low`.
@@ -590,6 +592,8 @@ This price is simply the previous observed trade price carried forward.
 This makes sense, as one could not meaningfully push the sequence of stock returns forward to dates after `2004-07-02`, as there are no traded prices.
 
 ```{r}
+#| label: tbl-wsf1-factor
+#| tbl-cap: "Dividend example: `npx1`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |> 
  filter(gcode == 'wsf1', date >= '2004-07-01', seniorsecurity == 1) |>
@@ -597,7 +601,7 @@ si_au_prc_daily |>
   collect()
 ```
 
-## 7. Calculating cumulative factor without including dividends
+## 7. Calculating a cumulative factor excluding dividends
 
 The provided `cumulativefactor` field is calculated by cumulating the `factor` column.
 This adjustment includes both corporate actions and dividends and is included in the table for convenience.
@@ -608,6 +612,8 @@ This is appropriate if the unobserved price does not change following the event 
 The function may not be appropriate for your particular application if that assumed pricing behaviour is invalid.
 
 ```{r}
+#| label: tbl-neg-adj-fct
+#| tbl-cap: "Frequency of negative `adjustmentfactor` values"
 #| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
 si_au_prc_daily |>
   filter(adjustmentfactor < 0) |>
@@ -615,6 +621,8 @@ si_au_prc_daily |>
 ```
 
 ```{r}
+#| label: tbl-calc-cumfactor
+#| tbl-cap: "Calculating `cumulativefactor`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   group_by(gcode, seniorsecurity) |>
@@ -658,6 +666,8 @@ anz_cum <-
 ```
   
 ```{r}
+#| label: fig-anz-back
+#| fig-cap: "ANZ: `CorpAdjustedPrice` and `AdjustedPrice`"
 anz_cum |>
   pivot_longer(cols = ends_with("Price"), 
                names_to = "series", values_to = "price") |>
@@ -667,6 +677,8 @@ anz_cum |>
 ```
 
 ```{r}
+#| label: fig-anz-fwd
+#| fig-cap: "ANZ: Fixed plot of `CorpAdjustedPrice` and `AdjustedPrice`"
 anz_cum |>
   group_by(gcode) |>
   window_order(date) |>
@@ -683,9 +695,11 @@ anz_cum |>
 ```
 
 ```{r}
+#| label: tbl-dmg1
+#| tbl-cap: Something about `dmg1`
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |> 
- filter(gcode == 'dmg1', 
+ filter(gcode == "dmg1", 
         between(date, "2012-07-01", "2012-07-13"), 
         seniorsecurity == 1) |>
   select(gcode, date, close, dividend, factor, dividendfactor, volumeonmkt) |>
@@ -711,6 +725,8 @@ A graph from the following command shows the value of trading activity across th
 Trading activity can vary significantly from month to month.
 
 ```{r}
+#| label: fig-trd
+#| fig-cap: "Trading activity"
 si_au_prc_daily |>
   filter(between(date, '2016-01-01', '2019-12-31')) |>
   group_by(date) |>
@@ -720,6 +736,8 @@ si_au_prc_daily |>
 ```
 
 ```{r}
+#| label: fig-trd-on-off
+#| fig-cap: "Trading activity: On- versus off-market"
 si_au_prc_daily |>
   filter(between(date, '2016-01-01', '2019-12-31')) |>
   group_by(date) |>
@@ -737,15 +755,19 @@ This following section shows the distribution of activity across the lit and dar
 Note: As our Centre Point trade measures include crossing trades, Centre Point crossing trade volumes need to be subtracted to avoid double-counting these trades in the calculation of the dark pool trading.
 
 ```{r}
+#| label: fig-trd-dark-lit
+#| fig-cap: "Trading activity: Dark versus lit market"
 si_au_prc_daily |>
   filter(between(date, '2017-01-01', '2019-12-31'),
          volumeonmkt > 0) |>
   group_by(date) |>
   summarize(Dark = sum(volumeoffmktcross + volumeonmktcross +
-                         volumecentrept - volumecentreptcross),
+                         volumecentrept - volumecentreptcross,
+                       na.rm = TRUE),
             Lit = sum(volumeonmkt + volumeoffmkt - 
                         (volumeoffmktcross + volumeonmktcross +
-                           volumecentrept - volumecentreptcross))) |>
+                           volumecentrept - volumecentreptcross),
+                      na.rm = TRUE)) |>
   pivot_longer(cols = -date, names_to = "market", values_to = "volume") |>
   ggplot(aes(x = date, y = volume, color = market)) +
   geom_line()
@@ -758,6 +780,8 @@ The composition of each market segment is displayed at the bottom of the `si_au_
 The following example shows the average proportion of on-market non-crossing trades that are directed through ASX Centre Point over a period of time.
 
 ```{r}
+#| label: fig-prop-cen-pt
+#| fig-cap: "Centre Point market share"
 si_au_prc_daily |>
   filter(valueonmkt > 0, valuecentrept > 0) |>
   mutate(month = floor_date(date, "month")) |>
@@ -773,6 +797,8 @@ It is a simple matter to focus on particular market segments.
 For example, the previous query can be targeted on companies whose market capitalisation is less than \$50 million.
 
 ```{r}
+#| label: fig-prop-cen-pt-small
+#| fig-cap: "Centre Point market share: Small caps"
 si_au_prc_daily |>
   filter((close * shares) < 50000000,
          valueonmkt > 0, valuecentrept > 0) |>
@@ -786,6 +812,8 @@ si_au_prc_daily |>
 ```
 
 ```{r}
+#| label: fig-prop-cen-dark
+#| fig-cap: "Centre Point share of dark market"
 si_au_prc_daily |>
   filter(valueonmkt > 0, valuecentrept > 0) |>
   mutate(Dark = volumeoffmktcross + volumeonmktcross +
