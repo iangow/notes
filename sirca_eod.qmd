@@ -62,7 +62,7 @@ For example, where the SIRCA guide suggests the use of `dayssince` variables to 
 
 The code in this note uses the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "dbplyr"))` within R to install all the packages you need to run the code in this note. While `duckdb` and `arrow` are not listed below, they are needed to run the download script and to create the database we will use.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/sirca_eod.qmd).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/sirca_eod.qmd) and the latest PDF version is available [here](https://raw.githubusercontent.com/iangow/notes/main/sirca_eod.pdf).
 
 ```{r}
 #| include: false
@@ -327,6 +327,43 @@ si_au_prc_daily |>
   collect()
 ```
 
+How is `factor` calculated?
+As seen in @tbl-bhp-factor, on most dates `factor` will be 1, but when a CORAX or dividend event occurs, `factor` will reflect the factor that allows the previous day's price to be compared with the current one.
+With a `1:0.94` bonus issue, if I have $0.94$ shares one day, I will have $1.94$ shares the next, so `factor` equals $0.94 / 1.94 = `r round(0.94 / 1.94, 3)`$.
+In other words, the share price of $21.420$ on 28 June 2001 is equivalent to a share price of $21.420 \times `r round(0.94 / 1.94, 3)` = `r round(0.94 / 1.94 * 21.42, 3)`$ on 29 June 2001.
+
+The variable `cumulativefactor` is calculated from `factor` to facilitate adjustment of prices along the whole time series.
+In creating `cum_factor_calcs`, I replicate the calculation of `cumulativefactor` from `factor`. 
+Note that the calculation of `cumulativefactor` moves from the *end* of the price series (implied by `window_order(desc(date))`) for each security (implied by `group_by(gcode, seniorsecurity)`) and accumulates the absolute value of `factor` in a multiplicative fashion.^[The reason for taking absolute values and accounting for the sign of `factor` is discussed below in @sec-neg-fct.]
+The calculation uses the `lag()` function because the first date we want to apply `factor` for 29 June 2001 to prices is the "next" date (in the reverse-ordered price series) or 28 June 2001.^[Note that the calculation of `cum_factor_calc` occurs on two separate lines, as DuckDB does not allow nesting of **window functions**, such as `cumsum()` and `lag()`. For more on window functions, see [here](https://iangow.github.io/far_book/fin-state-reprise.html#across-statement-articulation).]
+
+```{r}
+cum_factor_calcs <-
+  si_au_prc_daily |>
+  group_by(gcode, seniorsecurity) |>
+  window_order(desc(date)) |>
+  mutate(cum_factor_calc = exp(cumsum(log(abs(factor))))) |>
+  mutate(cum_factor_calc = lag(cum_factor_calc) * sign(lag(factor))) |>
+  window_order() |>
+  ungroup() |>
+  select(gcode, seniorsecurity, date, close, factor, 
+         cumulativefactor, cum_factor_calc)
+```
+
+@tbl-bhp-factor-calc presents `cumulativefactor`, as calculated by SIRCA, and `cum_factor_calc`, where I replicate the calculation of `cumulativefactor` from `factor`.
+
+```{r}
+#| label: tbl-bhp-factor-calc
+#| tbl-cap: "Calculated values of `factor` for BHP around 27 June 2001"
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+cum_factor_calcs |>
+  filter(gcode == 'bhp1', seniorsecurity == 1L,
+          between(date, '2001-06-27', '2001-07-02')) |>
+  select(gcode, date, close, factor, cumulativefactor, cum_factor_calc) |>
+  arrange(date) |>
+  collect()
+```
+
 The `cumulativefactor` column can be used to adjust the closing price for the effects of corporate actions, such stock splits or entitlement offers, and dividends.
 Simply multiplying the `close` column by the `cumulativefactor` column will produce the adjusted price.
 
@@ -337,32 +374,14 @@ Simply multiplying the `close` column by the `cumulativefactor` column will prod
   filter(gcode == 'bhp1', seniorsecurity == 1L,
          between(date, '2001-01-01', '2001-12-31')) |>
   mutate(adjustedprice = close * cumulativefactor) |>
-  ggplot(aes(x = date, y = adjustedprice)) +
+  pivot_longer(c(adjustedprice, close), 
+               names_to = "variable", values_to = "price") |>
+  ggplot(aes(x = date, y = price, color = variable)) +
   geom_line()
 ```
 
-In this case the new `adjustedprice` series is everywhere lower than `close` because `cumulativefactor` is affected by all CORAX events to the end of each series of `close` prices.
-This is so the resulting `adjustedprice` series is consistent over its entire history and can reliably measure returns between any two trading dates for `bhp1`.
-
-
-```{r}
-#| label: tbl-bhp-factor-calc
-#| tbl-cap: "Calculated values of `factor` for BHP around 27 June 2001"
-#| render: !expr function(x, ...) knit_print_alt(x, ...)
-si_au_prc_daily |>
-  group_by(gcode, seniorsecurity) |>
-  window_order(desc(date)) |>
-  mutate(cum_factor_calc = exp(cumsum(log(abs(factor))))) |>
-  mutate(cum_factor_calc = lag(cum_factor_calc) * sign(lag(factor))) |>
-  window_order() |>
-  ungroup() |>
-  filter(gcode == 'bhp1', seniorsecurity == 1L,
-          between(date, '2001-06-27', '2001-07-02')) |>
-  select(gcode, date, close, factor, cumulativefactor, cum_factor_calc) |>
-  arrange(date) |>
-  collect()
-```
-
+In @fig-bhp-adj, `adjustedprice` series is everywhere lower than `close` because `cumulativefactor` adjusts for all subsequent CORAX events and these tend to cause adjusted prices to be lower as one moves back through time (e.g., bonus issues or dividends).
+The important thing is that the resulting `adjustedprice` series is consistent over its entire history and can be used to reliably measure returns for `bhp1` between any two trading dates.
 
 Exactly the same process for `cumulativefactor` applies for dividends as well as corporate actions.
 `AAA` (`gcode`: `aaa2`) is an exchange-traded fund that deposits money in accounts with Australian banks and  pays regular dividends.
@@ -520,15 +539,11 @@ si_au_prc_daily |>
   collect(n = 10)
 ```
 
-## 5. `seniorsecurity` column
+## 5. Using the `seniorsecurity` column
 
-At times, some `gcodes` have multiple securities trading simultaneously.
-This is because these companies have more than one class of security and a junior security class has been included in `si_au_prc_daily`.
-Over time, other junior security classes may be included too, which means it is important to keep the different price series consistent.
-The `seniorsecurity` column is included so you can focus on just the senior security series for any company.
+At times, some `gcodes` have multiple securities trading simultaneously and SIRCA provides the `seniorsecurity` field to distinguish different securities for a given firm.
 In @tbl-telstra, two classes of security are shown to be simultaneously trading for Telstra Corporation Ltd, whose `gcode` is `tls1`.
 These are evident from the different `securityticker` values: `TLS` and `TLSCA`.
-Notice the `seniorsecurity` field distinguishes these two series.
 
 ```{r}
 #| label: tbl-telstra
@@ -542,10 +557,9 @@ si_au_prc_daily |>
   collect()
 ```
 
-## 6. Negative `factor` values and zero `volumeonmkt` values
+## 6. Negative `factor` values and zero `volumeonmkt` values {#sec-neg-fct}
 
-The `factor` field may show a value of `-1` in some cases.
-When there is either no observed trade price before an event or no price after the event, a factor of `-1` is assigned to the event.
+When there is either no observed trade price before an event or no price after the event, a `factor` of `-1` is assigned to that event.
 This can occur both in the beginning and the end of the lifetime of the security.
 @tbl-num-neg-factors shows that relatively few observations have negative `factor` values.
 
@@ -558,36 +572,49 @@ si_au_prc_daily |>
   count(neg_factor)
 ```
 
-@tbl-neg-cum-factors shows that there are actually some cases where `factor == -1`, but `cumulativefactor` is not negative.
+The calculation of `cumulativefactor` when `factor` is negative seems to follow the calculation of `cum_factor_calc` provided above.
+That is the absolute value is accumulated and multiplied by the sign of the applicable `factor` value.
+@tbl-calc-cumfactor shows the alignment of `cumulativefactor` and `cum_factor_calc` calculated in this way for a stock with a negative value of `factor`.
 
 ```{r}
-#| label: tbl-neg-cum-factors
-#| tbl-cap: "Values of `cumulativefactor` when `factor` is negative"
-#| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
-si_au_prc_daily |>
-  filter(factor == -1) |>
-  count(factor, cumulativefactor)
+#| label: tbl-calc-cumfactor
+#| tbl-cap: "Calculating `cumulativefactor` with negative `factor` values"
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+cum_factor_calcs |>
+  filter(gcode == "par1", seniorsecurity == 1L,
+         between(date, "2018-12-03", "2019-02-18")) |>
+  select(-seniorsecurity) |>
+  arrange(date)
 ```
 
-The following query confirms that when `factor == -1` and `cumulativefactor != -1`, there is no value of `close`.
-So there is no risk of calculating an adjusted close price that has no trades behind it.
-
-```{r}
-si_au_prc_daily |>
-  filter(factor == -1, cumulativefactor != -1, !is.na(close)) |>
-  select(gcode, date, seniorsecurity, factor, cumulativefactor) |>
-  count() |>
-  pull()
-```
+@tbl-strange-factor shows that the calculation used to produce `cum_factor_calc` does not always match the valye in `cumulativefactor`.
+In this case, it seems that `cumulativefactor` is mysteriously "reset" to $1$ on 27 September 2018.
+Further research would be needed to determine 
 
 ```{r}
 #| label: tbl-strange-factor
-#| tbl-cap: "Difficult-to-explain `factor` values"
+#| tbl-cap: "Case of mysterious `factor` values"
 #| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
-si_au_prc_daily |>
+cum_factor_calcs |>
   filter(gcode == "gcm2", seniorsecurity == 1,
          factor != 1) |>
-  select(gcode, date, factor, cumulativefactor)
+  select(-seniorsecurity) |>
+  arrange(date)
+```
+
+@tbl-strange-factors flags other difficult-to-explain `cumulativefactor` values (excluding those where there are sign differences between `cum_factor_calc` and `cumulativefactor`).
+While further research would be needed to understand these, these are fortunately quite rare.
+
+```{r}
+#| label: tbl-strange-factors
+#| tbl-cap: "Other difficult-to-explain `factor` values"
+#| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
+cum_factor_calcs |>
+  filter(gcode != "gcm2") |>
+  filter(abs(abs(cumulativefactor) - abs(cum_factor_calc)) > 0.001) |>
+  distinct(gcode, cumulativefactor, cum_factor_calc) |>
+  arrange(gcode, cumulativefactor) |>
+  collect()
 ```
 
 The example provided in @tbl-npx1-factor shows dividends between `2000-03-06` and `2001-09-28` without any trading.
@@ -605,7 +632,7 @@ si_au_prc_daily |>
   collect()
 ```
 
-Table @tbl-wsf1-factor shows another example with a dividend on `2004-07-05`.
+@tbl-wsf1-factor shows another example with a dividend on `2004-07-05`.
 However, no price was observed after the event, and hence the `factor` and `dividendfactor` fields contain a value of `-1`.
 Note that there is a price in the `close` field on `2004-07-05` but it was not observed that day, after the dividend event.
 This is evident from the 0 value for `VolumeOnMkt`, and confirmed by `NA` or `0` values for `open`, `high`, `low`.
@@ -622,14 +649,6 @@ si_au_prc_daily |>
   collect()
 ```
 
-## 7. Calculating a cumulative factor excluding dividends
-
-The provided `cumulativefactor` field of `si_au_prc_daily` is calculated by cumulating the `factor` column, whcih adjusts for both corporate actions and dividends.
-The following example shows how to calculate an adjustment *excluding* dividends, 
-It uses the `adjustmentfactor` field, which provides dilution factors for just the CORAX events (when followed at some time by a valid `close` price).
-Please note the following code converts all factors of `-1` into factors of `1`.
-This is appropriate if the unobserved price does not change following the event leading to the factor of `-1`.
-
 ```{r}
 #| label: tbl-neg-adj-fct
 #| tbl-cap: "Frequency of negative `adjustmentfactor` values"
@@ -639,21 +658,11 @@ si_au_prc_daily |>
   count(adjustmentfactor)
 ```
 
-```{r}
-#| label: tbl-calc-cumfactor
-#| tbl-cap: "Calculating `cumulativefactor`"
-#| render: !expr function(x, ...) knit_print_alt(x, ...)
-si_au_prc_daily |>
-  group_by(gcode, seniorsecurity) |>
-  window_order(desc(date)) |>
-  mutate(cumulativefactor2 = exp(cumsum(log(abs(factor))))) |>
-  mutate(cumulativefactor2 = lag(cumulativefactor2) * sign(lag(factor))) |>
-  window_order() |>
-  ungroup() |>
-  filter(gcode == "par1", between(date, "2018-12-03", "2019-02-18")) |> # par1
-  select(gcode, date, adjustmentfactor, cumulativefactor, close, cumulativefactor2) |>
-  arrange(desc(date))
-```
+## 7. Calculating a cumulative factor excluding dividends
+
+The provided `cumulativefactor` field of `si_au_prc_daily` is calculated by cumulating the `factor` column, whcih adjusts for both corporate actions and dividends.
+The following example shows how to calculate an adjustment *excluding* dividends, 
+It uses the `adjustmentfactor` field, which provides dilution factors for just the CORAX events (when followed at some time by a valid `close` price).
 
 Use the `adjustmentfactor` field, which does not account for dividends.
 Visualise the new adjustment and compare to the adjustment from the example in part 1 Note that the `CorpAdjustedPrice`, which is calculated without including dividends, looks identical to the `close` price as no corporate actions have occurred within this time frame.
@@ -676,13 +685,19 @@ adj_rets <-
   ungroup()
 ```
 
+To plot some date, we first construct `anz_cum`, which is a version of `adj_rets` focused on ANZ's stock price.
+
 ```{r}
 anz_cum <-
   adj_rets |>
-  filter(gcode == "anz1") |>
+  filter(gcode == "anz1", seniorsecurity == 1L) |>
   select(gcode, date, CorpAdjustedPrice, AdjustedPrice, close) |>
   compute()
 ```
+  
+@fig-anz-back provides a plot of `CorpAdjustedPrice` (no adjustment for dividends) and `AdjustedPrice` (adjusted for dividends) for ANZ.
+One thing that makes this plot difficult to interpret is that the adjustment factors are calculated retrospectively.
+So *going back in time* the plots "start" at the same point and "end" at different prices.
   
 ```{r}
 #| label: fig-anz-back
@@ -695,6 +710,11 @@ anz_cum |>
   geom_line() +
   theme(legend.position = "top")
 ```
+
+@fig-anz-fwd provides a more intuitive presentation.
+Rather than calculating returns using the adjusted prices directly, an alternative measure of returns is constructed by calculating a price relative using adjusted prices and then accumulating those returns.
+As can be seen in @fig-anz-fwd, the two price series start at the same point (no scare quotes because this plot is going forward in time) and end at different points.
+As would be expected the cumulative returns without dividends are significantly lower by the end of the price series.
 
 ```{r}
 #| label: fig-anz-fwd
@@ -715,22 +735,23 @@ anz_cum |>
   theme(legend.position = "top")
 ```
 
+@tbl-dmg1 presents an example of an even larger difference between the different forms of adjusted price.
+The dividend of 0.4497 on `2012-07-09` precedes a fall in `close` price from 0.575 to 0.019.
+Adjusting only for CORAX events clearly leads to significantly different measures of share price performance when dividends are also present.
+If done with case, CORAX adjustments might also be used to standardise earnings information through time.
+
 ```{r}
 #| label: tbl-dmg1
 #| tbl-cap: Something about `dmg1`
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
-si_au_prc_daily |> 
+adj_rets |> 
  filter(gcode == "dmg1", 
         between(date, "2012-07-01", "2012-07-13"), 
         seniorsecurity == 1) |>
-  select(gcode, date, close, dividend, factor, dividendfactor, volumeonmkt) |>
-  collect()
+  select(gcode, date, close, dividend, CorpAdjustedPrice, AdjustedPrice) |>
+  arrange(date) |>
+  collect() 
 ```
-
-Note the large difference between the different forms of adjusted price.
-As revealed by the command above, this is due to the dividend of 0.4497 on `2012-07-09`, which precedes a fall in `close` price from 0.575 to 0.019.
-Adjusting only for CORAX events can clearly lead to significantly different measures of share price performance when dividends are also present.
-CORAX adjustments may also be used to standardise earnings information through time.
 
 ## 8. Segmentation by trade type
 
