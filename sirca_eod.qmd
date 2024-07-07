@@ -85,7 +85,7 @@ library(farr)
 SIRCA supplies the data we will use as four compressed CSV files.
 The original SIRCA note assumes that you have processed the data into an SQL database, but does not provide any details for doing this.
 In contrast, I provide the code needed to prepare the data for the analysis below.
-I merely assume that you have access to SIRCA and downloaded the raw data from SIRCA along the lines discussed below.
+I merely assume that you have access to SIRCA and downloaded the raw data from SIRCA along the lines discussed below.^[See [SIRCA's documentation](http://www.sirca.org.au/wp-content/uploads/2023/11/How-to-use-the-Data-Library.pdf) for details on getting the data.]
 One you have done that you should be able to execute all the code in this note and thereby produce all the output (tables and graphs) contained herein.
 
 You should download these files and place them *as is* in a single `sirca` directory and you should edit the code below to tell my script where to look for that directory.
@@ -231,20 +231,24 @@ si_au_ref_names |>
   show_query()
 ```
 
-Alternatively, searching by the ticker code will also yield a result.
+Alternatively, one can also search by ticker code, as seen in @tbl-anz-sql using the `securityticker` of `ANZ`.
 
-```{sql}
+```{sql, tab.cap = NA}
 #| connection: db
+#| label: tbl-anz-sql
+#| tbl-cap: "Securities with ticker `ANZ`: SQL"
 SELECT gcode, securityticker, abbrevcompanyname
 FROM si_au_ref_names 
 WHERE securityticker = 'ANZ'
 ```
 
-Again the same query could be run using `tidyverse` code.
+Again the same query could be run using `tidyverse` code, with results show in @tbl-anz-dplyr.
 Because it is so straightforward to run SQL queries using R (`tidyverse`) code, we will just provide R code going forward.^[Users with a background in SQL may find the SQL primer I wrote [here] to be a useful introduction to the `dplyr` package (this is the component of the `tidyverse` package that provides the relevant functions).]
 Note that using R code greatly facilitates bringing the data into R for analysis or (as we will do here) data visualization.
 
 ```{r}
+#| label: tbl-anz-dplyr
+#| tbl-cap: "Securities with ticker `ANZ`: Tidyverse"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
   filter(securityticker == 'ANZ') |>
@@ -256,8 +260,11 @@ si_au_ref_names |>
 As another example, suppose one is interested in Arena REIT which has a `companyticker` of `ARF`.
 Searching for this ticker code reveals the `gcode` of Arena REIT is `arf2`.
 This `gcode` can then be used to search the `si_au_prc_daily` table for information about the securities of Arena REIT.
+Results of this search are seen in @tbl-arf.
 
 ```{r}
+#| label: tbl-arf
+#| tbl-cap: "Securities with ticker `ARF`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
   filter(companyticker == 'ARF') |>
@@ -290,6 +297,8 @@ si_au_prc_daily |>
 Examining the `coraxdescription` column, it seems likely that the change is due to a `1:0.94` bonus issue.
 
 ```{r}
+#| label: tbl-bhp-corax
+#| tbl-cap: "Corporate action events for BHP in 2001"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   filter(gcode == 'bhp1',
@@ -304,6 +313,8 @@ The `numberofdilutionevents` field will always show a value greater than 0 when 
 Likewise, `numberofdividendevents > 0` can be used to find all dividend events, even when data are not available in other descriptive fields .
 
 ```{r}
+#| label: tbl-bhp-factor
+#| tbl-cap: "Values of `factor` for BHP around 27 June 2001"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   filter(gcode == 'bhp1', 
@@ -326,20 +337,13 @@ Simply multiplying the `close` column by the `cumulativefactor` column will prod
   geom_line()
 ```
 
-```{r}
-#| render: !expr function(x, ...) knit_print_alt(x, ...)
-si_au_prc_daily |>
-  filter(gcode == 'bhp1', 
-          between(date, '2001-06-27', '2001-07-02')) |>
-  select(gcode, date, close, factor, numberofcoraxevents) |>
-  collect()
-```
-
 In this case the new `adjustedprice` series is everywhere lower than `close` because `cumulativefactor` is affected by all CORAX events to the end of each series of `close` prices.
 This is so the resulting `adjustedprice` series is consistent over its entire history and can reliably measure returns between any two trading dates for `bhp1`.
 
 
 ```{r}
+#| label: tbl-bhp-factor-calc
+#| tbl-cap: "Calculated values of `factor` for BHP around 27 June 2001"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_prc_daily |>
   group_by(gcode, seniorsecurity) |>
@@ -357,11 +361,14 @@ si_au_prc_daily |>
 
 
 Exactly the same process for `cumulativefactor` applies for dividends as well as corporate actions.
-`AAA` is a security that pays regular dividends, and the effect of its dividends on the closing price can be observed from a graph.
+`AAA` (`gcode`: `aaa2`) is an exchange-traded fund that deposits money in accounts with Australian banks and  pays regular dividends 
+The effect of its dividends on its closing price can be observed from a graph.
 
 ```{r}
+#| label: fig-aaa2
+#| fig-cap: "Adjusted and unadjusted closing prices for `AAA`"
 si_au_prc_daily |>
-  filter(gcode == 'aaa2', between(date, '2017-01-01', '2018-01-05')) |>
+  filter(gcode == 'aaa2', between(date, '2017-01-01', '2018-12-31')) |>
   mutate(adjustedprice = close * cumulativefactor) |>
   select(date, close, adjustedprice) |>
   pivot_longer(-date, names_to = "variable", values_to = "price") |>
@@ -375,6 +382,8 @@ The following function can calculate the price relative, or total shareholder re
 Note that it requires the price to be adjusted for corporate actions and dividends, and to be ordered by `date`.
 
 ```{r}
+#| label: fig-cba1
+#| fig-cap: "Distribution of daily returns for Commonwealth Bank"
 si_au_prc_daily |>
   filter(gcode == 'cba1') |>
   mutate(adjustedprice = close * cumulativefactor) |>
@@ -392,10 +401,12 @@ si_au_prc_daily |>
 
 It is important to note that price relatives calculated in the previous section may not always be over consecutive trading days.
 Although CBA is a stock that is consistently traded, a less-liquid security may show large gaps in trading activity, leading to price relatives that span longer time periods.
-An example of this is shown below, using the `datesince` column.
-This column contains the number of elapsed days since a point in time, and provides a way to measure the liquidity of a security.
+@fig-cba1-days shows the distribution of `days_elapsed`, the number of elapsed days between trading dates calculated using using the `datesince` column, for Commonwealth Bank.
+As a measure of the liquidity of a security, `days_elapsed` is problematic because it does not distinguish between days on which the market is open and those on which it is closed.
 
 ```{r}
+#| label: fig-cba1-days
+#| fig-cap: "Distribution of days between trading dates for Commonwealth Bank"
 si_au_prc_daily |>
   filter(gcode == 'cba1') |>
   group_by(gcode) |>
@@ -404,24 +415,19 @@ si_au_prc_daily |>
   count(days_elapsed, sort = TRUE) |>
   filter(!is.na(days_elapsed)) |>
   ggplot(aes(x = days_elapsed, y = n)) +
-  geom_col()
+  geom_col() +
+  scale_x_continuous(breaks = 1:5)
 ```
+We can improve on this measure using data from `si_au_ref_trddays`, a sample of which is shown in @tbl-trddays.
+
 ```{r}
+#| label: tbl-trddays
+#| tbl-cap: "Sample rows from `si_au_ref_trddays`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_trddays |> collect(n = 10)
 ```
 
-```{r}
-#| render: !expr function(x, ...) knit_print_alt(x, ...)
-si_au_prc_daily |>
-  distinct(date) |>
-  anti_join(si_au_ref_trddays, by = "date") |>
-  inner_join(si_au_prc_daily, by = "date") |>
-  count(date) |>
-  mutate(wday = wday(date, label = TRUE)) |>
-  arrange(desc(n)) |>
-  collect(n = 10)
-```
+Using an approach described in more detail [here](https://iangow.github.io/far_book/beaver68.html#a-re-evaluation-of-beaver1968vf), in place of `dayssince`, we can create a variable `td` to represent the "trading date" for each date on `si_au_ref_trddays` where `td` equals `1` on the first trading date, `2` the second trading date, and so on.
 
 ```{r}
 trading_days <- 
@@ -433,19 +439,26 @@ trading_days <-
   compute()
 ```
 
+With `trading_days` in hand, we can calculate `tdays_elapsed` as the number of trading dates between the current date and the previous date on `si_au_prc_daily` for each security and date. 
+
 ```{r}
 tdays_elapsed_df <-
   si_au_prc_daily |>
   inner_join(trading_days, by = "date") |>
-  group_by(gcode) |>
+  group_by(gcode, seniorsecurity) |>
   window_order(date) |>
   mutate(tdays_elapsed = td - lag(td),
          lag_date = lag(date)) |>
-  select(gcode, date, lag_date, tdays_elapsed) |>
+  select(gcode, seniorsecurity, date, lag_date, tdays_elapsed) |>
   ungroup()
 ```
 
+@tbl-tdays provides data on our improved measure of trading days between trading dates for both Commonwealth Bank (`cba1`) and a less liquid security (`1st1`).
+In @tbl-tdays, it can be seen that there are very few cases in which the trading days between dates is more than one for `cba1`, but quite a few such cases for `1st1`.
+
 ```{r}
+#| label: tbl-tdays
+#| tbl-cap: "Trading days between trading dates: `cba1` and `1st1`"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 tdays_elapsed_df |>
   filter(gcode %in% c('cba1', '1st1'),
@@ -456,14 +469,36 @@ tdays_elapsed_df |>
   collect()
 ```
 
+@tbl-cba1-gaps provides additional information on the apparent gaps in trading for Commonwealth Bank.
+We can use these data to investigate the cause of these gaps.
+Looking at the longest gap, it turns out there was a trading halt placed on [12 August 2015](https://announcements.asx.com.au/asxpdf/20150812/pdf/430fwrn8xk90lg.pdf).
+
 ```{r}
+#| label: tbl-cba1-gaps
+#| tbl-cap: "Gaps in trading for Commonwealth Bank"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 tdays_elapsed_df |>
   filter(gcode == 'cba1', tdays_elapsed > 1) |>
   collect()
 ```
 
-It turns out there was a trading halt placed on [12 August 2015](https://announcements.asx.com.au/asxpdf/20150812/pdf/430fwrn8xk90lg.pdf).
+A natural question might be whether there are dates on `si_au_prc_daily` not found on `si_au_ref_trddays`.
+@tbl-non-trddays shows that there are, but a small number of securities (in most cases, just one) have data on `si_au_prc_daily` on those days.
+I leave it as an exercise for the reader to understand what's going on in these cases.
+
+```{r}
+#| label: tbl-non-trddays
+#| tbl-cap: "Observations on `si_au_prc_daily` on non-trading days"
+#| render: !expr function(x, ...) knit_print_alt(x, ...)
+si_au_prc_daily |>
+  distinct(date) |>
+  anti_join(si_au_ref_trddays, by = "date") |>
+  inner_join(si_au_prc_daily, by = "date") |>
+  count(date) |>
+  mutate(wday = wday(date, label = TRUE)) |>
+  arrange(desc(n)) |>
+  collect(n = 10)
+```
 
 ## 5. `seniorsecurity` column
 
@@ -761,4 +796,8 @@ si_au_prc_daily |>
   summarize(AvgPropCentrePtDark = mean(CentrePt / Dark)) |>
   ggplot(aes(x = month, y = AvgPropCentrePtDark)) +
   geom_line()
+```
+
+```{r}
+dbDisconnect(db)
 ```
