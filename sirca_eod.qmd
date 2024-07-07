@@ -1,7 +1,7 @@
 ---
-title: "ASX End of Day Prices"
+title: "SIRCA ASX End of Day (EOD) collection"
 author: Ian D. Gow
-date: 2024-07-03
+date: 2024-07-07
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -19,10 +19,10 @@ bibliography: papers.bib
 
 # Overview
 
-SIRCA's ASX EOD (end of day) data collection is designed to give users everything needed to find daily closing price for ASX listed companies, and to generate reliable daily measures of total shareholder returns, with all data being retained for delisted companies.
+SIRCA's ASX EOD (end of day) collection provides daily prices for ASX-listed companies and facilitates reliable measurement of security returns, with all data being retained for delisted companies.
+This note, based on SIRCA's own `Guide to ASX End of Day Prices.pdf`, provides an introduction to the SIRCA ASX EOD collection.
 
-
-SIRCA's ASX end of day price collection includes the tables listed in @tbl-asx-eod-keys.
+The SIRCA ASX EOD collection includes the tables listed in @tbl-asx-eod-keys.
 More details can be found in my separate document on importing SIRCA ASX EOF data [here](https://github.com/iangow/notes/blob/main/import_sirca.pdf).
 
 | Table               | Description  | Primary key                            |
@@ -32,22 +32,30 @@ More details can be found in my separate document on importing SIRCA ASX EOF dat
 | `si_au_retn_mkt`    | Daily value- and equal-weighted whole market returns | `date`                                 |
 | `si_au_ref_trddays` | Record of ASX trading dates since January 2000  | `date`                                 |
 
-: SIRCA ASX EOD price collection: Primary keys {#tbl-asx-eod-keys}
-
-Starting from January 2000, the `si_au_ref_names` table includes all available end-of-day trade prices for the equity securities of all ASX companies.
-This table also includes dividend and franking histories; capital returns; adjustments for numerous corporate action events, such as splits, consolidation, bonus issues, renounceable and non-renounceable issues; total daily traded volume and value, divided into categories to expose activity in lit and dark ASX markets; numbers of issued shares; are all provided in `si_au_ref_names`.
+: SIRCA ASX EOD price collections {#tbl-asx-eod-keys}
 
 All company names and ticker codes are recorded in a separate table---`si_au_ref_names`---which links names and tickers through time with a permanent "group code" identifier created by SIRCA named `gcode`.
 SIRCA designed `gcode` to allow users to build price and return series for series for a company's shares over time even if its ticker code changes.
 The same `gcodes` are used across a number of SIRCA's data sets.
 
+he `si_au_prc_daily` table includes all end-of-day trade prices for the equity securities of all ASX companies starting from January 2000.
+This table also includes dividend and franking events; capital returns; adjustments for numerous corporate action events, such as splits, consolidation, bonus issues, renounceable and non-renounceable issues; and total daily traded volume and value; and, the number of issued shares.
+
 Other components of the SIRCA ASX EOD library are `si_au_retn_mkt` which provides value- and equal-weighted all-of-market daily returns, which SIRCA generates from all observable daily company returns.
 
 SIRCA provides `si_au_ref_trdday`, which identifies all ASX trading days since the start of January 2000 and can be used to identify gaps in company price series, from suspensions or thin trading.
 
-Finally SIRCA provides a detailed description of all tables and fields in a data dictionary created just for this collection.
+Finally SIRCA provides a detailed description of all tables and fields in a data dictionary.
 
-This entire collection is an ideal choice for researchers considering event studies for ASX listed companies.
+While this note is based on SIRCA's own `Guide to ASX End of Day Prices.pdf`, it goes beyond that guide in a number of respects.
+First, I provide detailed instructions on preparing the SIRCA ASX EOD data for use and illustrate analysis using DuckDB and parquet files, a high-performance state-of-the-art approach to data analysis.
+The SIRCA guide assumes that the user has access to an SQL database containing the four tables listed in @tbl-asx-eod-keys, but provides no guidance on creating that database.
+
+Second, I provide output---both tables and graphs---for the example queries provided here.
+While the SIRCA guide describes observed patterns, it does not provide the output from its queries.
+
+Third, I expand on or refine the queries used in the SIRCA guide.
+For example, where the SIRCA guide suggests the use of `dayssince` variables to identify non-trading days, I propose a more robust approach.
 
 The code in this note uses the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "dbplyr"))` within R to install all the packages you need to run the code in this note. While `duckdb` and `arrow` are not listed below, they are needed to run the download script and to create the database we will use.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -58,9 +66,7 @@ The source code for this note is available [here](https://raw.githubusercontent.
 library(tinytable)
 
 knit_print_alt <- function(x, ...) {
-  #res <- knitr::knit_print(theme_tt(tt(x), "bootstrap"))
   res <- knitr::knit_print(knitr::kable(x, digits = 3))
-  # res <- knitr::knit_print(kableExtra::kbl(x, booktabs =...))
   knitr::asis_output(res)
 }
 ```
@@ -139,7 +145,7 @@ Details on the resulting parquet files that I have on my computer are provided i
 ```{r}
 #| include: false
 Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
-```
+```   
 
 ```{r}
 #| label: tbl-pq-files
@@ -161,17 +167,22 @@ file.info(dir(path = pq_dir, full.names = TRUE)) |>
 
 # Examples
 
-The following examples demonstrate ways in which you might extract content of interest to you, or work with data from more than one data set.
-I show how one can use the SIRCA ASX EOD collection to do the following analyses:
+The following examples demonstrate how to do certain analyses using the SIRCA ASX EOD data.
+These examples are based on examples provide in the SIRCA guide.
+Specifically, I show how one can use the SIRCA ASX EOD collection to do the following analyses:
 
-1. Find `gcode`s from company names or ticker codes
-2. Apply the `cumulativefactor` field to adjust prices for different dividend and corporate action events.
+1. Find a `gcode` from a company's name or ticker code
+2. Apply the `cumulativefactor` field to adjust prices for different dividend and corporate action events
 3. Generate and plot total shareholder returns
 4. Use the `dayssince` column to identify return intervals between consecutive trades
 5. Use the `seniorsecurity` column to restrict attention to the residual risk security of each company
 6. Recognise and accommodate negative factors and zero volumes
-7. Calculate cumulative factor without dividends
+7. Calculate the cumulative factor without dividends
 8. Segment market trading activity by trade type and venue
+
+All of the examples here use an in-memory DuckDB database connection.
+The following code creates this database connection and reads in three of the four SIRCA ASX EOD tables.
+In the cases of `si_au_ref_names`, the code also names that table so that we can refer to it using SQL written "by hand".^[While we access the data in a database throughout, most of the SQL is generated from `tidyverse` (R) code rather than being written by us directly.]
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
@@ -188,10 +199,12 @@ si_au_ref_trddays <- load_parquet(db, "si_au_ref_trddays", "sirca")
 
 One way of searching for a `gcode` is to look up the company name.
 For example, we could search for every `gcode` with a company name including `WESTPAC`.
-Because we specified `compute(name = "si_au_ref_names")`, we can refer to that table in SQL such as the following:
+Because we specified `compute(name = "si_au_ref_names")`, we can refer to that table in SQL like the following:
 
-```{sql}
+```{sql, tab.cap = NA}
 #| connection: db
+#| label: tbl-wbc-sql
+#| tbl-cap: "Securities matching `WESTPAC`: SQL"
 SELECT gcode, securityticker, abbrevcompanyname
 FROM si_au_ref_names
 WHERE fullcompanyname LIKE '%WESTPAC%'
@@ -200,6 +213,8 @@ WHERE fullcompanyname LIKE '%WESTPAC%'
 However, the same query could be run using `tidyverse` code:
 
 ```{r}
+#| label: tbl-wbc-dplyr
+#| tbl-cap: "Securities matching `WESTPAC`: Tidyverse"
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
 si_au_ref_names |>
   filter(str_like(fullcompanyname, '%WESTPAC%')) |>
@@ -238,7 +253,7 @@ si_au_ref_names |>
 ```
 
 
-As another example, suppose one is interested in Arena REIT which has a CompanyTicker of `ARF`.
+As another example, suppose one is interested in Arena REIT which has a `companyticker` of `ARF`.
 Searching for this ticker code reveals the `gcode` of Arena REIT is `arf2`.
 This `gcode` can then be used to search the `si_au_prc_daily` table for information about the securities of Arena REIT.
 
@@ -255,14 +270,16 @@ si_au_ref_names |>
 The previous search reveals that in 2000, the ticker code ARF was then associated with Arrowfield Group Limited.
 Arrowfield Group Limited is a different entity to Arena REIT, which was listed in 2013, so the two entities have separate `gcode`s.
 
-A search for `CompanyTicker` equalling ARF also shows that in 2013, the `SecurityTicker` of Arena REIT briefly changed from `ARF` to `ARFDA`, and then back to `ARF`, due to conversions to and from deferred units.
-Since Arena REIT remained the same entity during this process, the `gcode` remains `arf2` throughout this history, allowing for accurate comparisons across name changes and ticker code changes.
+A search for `companyticker` of `ARF` also shows that in 2013, the `securityticker` of Arena REIT briefly changed from `ARF` to `ARFDA`, and then back to `ARF`, due to conversions to and from deferred units.
+If the holders of units in Arena REIT in 2013 participated in these conversions, then it makes sense to consider them as a single security, which is possible if we accumulate returns using the `gcode` of `arf2`, which remains unchanged throughout this period.
 
 ## 2. Adjusting for the effects of corporate actions
 
-The following plot shows a large drop in the closing price of BHP in late June 2001.
+@fig-bhp-unadj shows a large drop in the closing price of BHP in late June 2001.
 
 ```{r}
+#| label: fig-bhp-unadj
+#| fig-cap: BHP stock price during 2001
 si_au_prc_daily |>
   filter(gcode == 'bhp1',
          between(date, '2001-01-01', '2001-12-31')) |>
@@ -270,7 +287,7 @@ si_au_prc_daily |>
   geom_line()
 ```
 
-Examining the `coraxdescription` column, it seems that the change is due to a `1:0.94` bonus issue.
+Examining the `coraxdescription` column, it seems likely that the change is due to a `1:0.94` bonus issue.
 
 ```{r}
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
@@ -283,9 +300,8 @@ si_au_prc_daily |>
 ```
 
 The `coraxdescription` column provides details of corporate action (CORAX) events, when available.
-However, descriptions are not always available.
-The `numberofdilutionevents` field will always show a value greater than 0 when a dilution event (CORAX or dividend) has been considered and applied and `numberofcoraxevents > 0` specifically indicates CORAX events.
-Likewise, `numberofdividendevents > 0` can be used to find all dividend events, even when other descriptive fields are not available.
+The `numberofdilutionevents` field will always show a value greater than 0 when a dilution event (CORAX or dividend) has occurred and `numberofcoraxevents > 0`  indicates CORAX events, even if `coraxdescription` is not available.
+Likewise, `numberofdividendevents > 0` can be used to find all dividend events, even when data are not available in other descriptive fields .
 
 ```{r}
 #| render: !expr function(x, ...) knit_print_alt(x, ...)
@@ -296,10 +312,12 @@ si_au_prc_daily |>
   collect()
 ```
 
-The `cumulativefactor` column can be used to adjust the closing price for the effects of corporate actions, e.g. stock splits or entitlement offers, or dividends.
+The `cumulativefactor` column can be used to adjust the closing price for the effects of corporate actions, such stock splits or entitlement offers, and dividends.
 Simply multiplying the `close` column by the `cumulativefactor` column will produce the adjusted price.
 
 ```{r}
+#| label: fig-bhp-adj
+#| fig-cap: BHP adjusted stock price during 2001
  si_au_prc_daily |>
   filter(gcode == 'bhp1',
          between(date, '2001-01-01', '2001-12-31')) |>
@@ -506,15 +524,13 @@ si_au_prc_daily |>
 
 ```{r}
 #| label: tbl-strange-factor
-#| tbl-cap: "Difficult to explain `factor` values"
+#| tbl-cap: "Difficult-to-explain `factor` values"
 #| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
 si_au_prc_daily |>
   filter(gcode == "gcm2", seniorsecurity == 1,
          factor != 1) |>
   select(gcode, date, factor, cumulativefactor)
 ```
-
-
 
 The following example shows dividends between `2000-03-06` and `2001-09-28` without any trading.
 As no trading was observed prior to these dividend events, the `factor` and `dividendfactor` fields contain a value of `-1`.
