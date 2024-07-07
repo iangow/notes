@@ -623,13 +623,11 @@ si_au_prc_daily |>
 
 ## 7. Calculating a cumulative factor excluding dividends
 
-The provided `cumulativefactor` field is calculated by cumulating the `factor` column.
-This adjustment includes both corporate actions and dividends and is included in the table for convenience.
-For users wishing to calculate an adjustment without including dividends, the following example is provided for reference.
+The provided `cumulativefactor` field of `si_au_prc_daily` is calculated by cumulating the `factor` column, whcih adjusts for both corporate actions and dividends.
+The following example shows how to calculate an adjustment *excluding* dividends, 
 It uses the `adjustmentfactor` field, which provides dilution factors for just the CORAX events (when followed at some time by a valid `close` price).
 Please note the following code converts all factors of `-1` into factors of `1`.
 This is appropriate if the unobserved price does not change following the event leading to the factor of `-1`.
-The function may not be appropriate for your particular application if that assumed pricing behaviour is invalid.
 
 ```{r}
 #| label: tbl-neg-adj-fct
@@ -800,7 +798,7 @@ The ASX Centre Point matching system provides a market for dark pool liquidity.
 As such, Centre Point trades are a subset of on-market trades.
 More information on ASX Centre Point can be found on the [ASX website](https://www.asx.com.au/markets/trade-our-cash-market/asx-equities-trading/asx-centre-point.html).
 The composition of each market segment is displayed at the top of the `si_au_prc_daily` tab in our data dictionary for this service.
-The following example shows the average proportion of on-market non-crossing trades that are directed through ASX Centre Point over a period of time.
+@fig-prop-cen-pt shows the average proportion of on-market non-crossing trades that are directed through ASX Centre Point over time.
 
 ```{r}
 #| label: fig-prop-cen-pt
@@ -817,7 +815,7 @@ si_au_prc_daily |>
 ```
 
 It is a simple matter to focus on particular market segments.
-For example, the previous query can be targeted on companies whose market capitalisation is less than \$50 million.
+For example, the previous query can be targeted on companies whose market capitalisation is less than \$50 million, with results depicted in @fig-prop-cen-pt-small.
 
 ```{r}
 #| label: fig-prop-cen-pt-small
@@ -834,6 +832,8 @@ si_au_prc_daily |>
   geom_line()
 ```
 
+Finally, @fig-prop-cen-dark shows the share of the dark market volumes traded on Centre Point.
+
 ```{r}
 #| label: fig-prop-cen-dark
 #| fig-cap: "Centre Point share of dark market"
@@ -844,7 +844,7 @@ si_au_prc_daily |>
          CentrePt = volumecentrept - volumecentreptcross) |>
   mutate(month = floor_date(date, "month")) |>
   group_by(month) |>
-  summarize(AvgPropCentrePtDark = mean(CentrePt / Dark)) |>
+  summarize(AvgPropCentrePtDark = mean(CentrePt / Dark, na.rm = TRUE)) |>
   ggplot(aes(x = month, y = AvgPropCentrePtDark)) +
   geom_line()
 ```
