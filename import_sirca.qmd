@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2024-07-06
+date: 2024-07-17
 number-sections: true
 date-format: "D MMMM YYYY"
 format:
@@ -22,7 +22,8 @@ bibliography: papers.bib
 ---
 
 The goal of this note is to outline one part of extended version of model of the data science "whole game" proposed in [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
-The original "whole game" comprises three steps. It starts with an *Import-and-tidy* process (this comprises *import* and *tidy*), then an *Understand* process (this involves iteration between *transform*, *visualize*, and *model* steps), followed by a *Communicate* process.^[The terms "process" and "step" are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original "whole game" model has just a single step after the *Understand* process and I upgrade that single step to a process.]
+The original "whole game" comprises three steps.
+It starts with an *Import-and-tidy* process (this comprises *import* and *tidy*), then an *Understand* process (this involves iteration between *transform*, *visualize*, and *model* steps), followed by a *Communicate* process.^[The terms "process" and "step" are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original "whole game" model has just a single step after the *Understand* process and I upgrade that single step to a process.]
 
 My extension of the "whole game"---depicted in @fig-whole-game below---adds a *persist* step to the  *Import-and-tidy* process and re-labels this process as *Curate*.
 As a complement to the new *persist* step, I also add a *load* step to the *Understand* process.
@@ -43,9 +44,15 @@ knitr::include_graphics("images/data-science.png", dpi = 270)
 
 In this note, I focus on the data curation (*Curate*) process.
 My rationale for separating *Curate* from *Understand* is that I believe it clarifies certain best practices in the curation of data.
+In particular, I see a lot of merit in applying the notion of a service-level agreement to delineating roles and responsibilities in the preparation and analysis of data.
 As will be seen, my conception of *Curate* will encompass some tasks that are included in the *transform* step (part of the *Understand* process) in [R for Data Science](https://r4ds.hadley.nz/transform).
+The current version of this note uses daily data on Australian stock prices as an application.
 
 While I will argue that even the sole analyst who will perform all three processes can benefit from thinking about *Curate* separate from *Understand*, it is perhaps easiest to conceive of the *Curate* and *Understand* processes as involving different individuals or organizational units of the "whole game" of a data analysis workflow.^[The authors of *R for Data Science* call the "whole game" a process, but I've already used that term to describe the next level down. So I choose *workflow* to denote the whole shebang here.]
+
+Inevitably, the distinction between *tidy* and *transform* can be difficult to draw.
+Nonetheless, I think it is useful to think of some "transform" steps as part of the process of data curation.^[I think it is interesting that *R for Data Science* places its part on [*transform*](https://r4ds.hadley.nz/transform) *before* its part on [*import*](https://r4ds.hadley.nz/import).]
+For example, if the raw data express dates as strings (e.g., `"25/12/2023"`), there is merit in transforming these into parsed dates as part of the *tidy* step rather than confronting the issues associated with date formatting for each analysis conducted as part of the *Understand* process.
 
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd) and the latest PDF version is available [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.pdf).
@@ -146,7 +153,7 @@ This approach leads to a completely unreproducible set of data files, which is p
 
 Second, any manual steps should be extensively documented and applied in a transparent automated fashion.
 For example, if a data set on financial statement items of US firms contains errors that can be corrected by reviewing original SEC filings, then any corrections should be clearly documented in separate files with links to the original filings and explanations.
-And the corrections should be implemented through code, not manual steps.
+And the corrections should be implemented through code, not manual steps.^[Best practices here could be the subject of a separate note, as there are a lot of subtleties and my experience is that people often have bad habits here.]
 For example, there should be code that imports the original data and the corrections and applies the latter to the former to create the final data set.
 
 ## Documentation 
@@ -183,6 +190,9 @@ In this note, I will focus on the steps proceeding the "understand" processes, b
 ```
 
 # A data curation case study: SIRCA ASX EOD data {#sec-case}
+
+As an application of the framework above, I will apply it to processing end-of-day (EOD) data on stock prices of shares traded on the Australian Stock Exchange (ASX) from SIRCA.
+The Securities Industry Research Centre of Asia-Pacific (SIRCA) is a standard source of financial data for academics at universities in Australia and New Zealand.
 
 In this section, I use the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -741,13 +751,13 @@ si_au_ref_trddays <-
 
 ## Importing `si_au_retn_mkt`
 
-We omit the details, but we can confirm that much of what we saw with `si_au_ref_trddays` applies to `si_au_retn_mkt`:
+While I omit the details here, I did confirm that much of what we saw with `si_au_ref_trddays` applies to `si_au_retn_mkt`:
 
  - `Date` is a valid primary key
  - `DateYMD` is redundant
  - `DaysSince` represents the number of days since `1899-12-30`
 
-Again we convert all column names to lower case so that `date` is a common field across `si_au_ref_trddays`, `si_au_retn_mkt`, and `si_au_prc_daily`.
+Again I convert all column names to lower case so that `date` is a common field across `si_au_ref_trddays`, `si_au_retn_mkt`, and `si_au_prc_daily`.
 
 ```{r}
 si_au_retn_mkt_csv <- file.path(csv_dir, "si_au_retn_mkt.csv.gz")
@@ -765,16 +775,16 @@ si_au_retn_mkt <-
 ## Importing `si_au_prc_daily`
 
 By this point, we should be getting the hang of the workflow.
-We now move on to the largest file in the set, `si_au_prc_daily.csv.gz`.
-We start by identifying the CSV source and the parquet destination.
+I now move on to the largest file in the set, `si_au_prc_daily.csv.gz`.
+I start by identifying the CSV source and the parquet destination.
 
 ```{r}
 si_au_prc_daily_csv <- file.path(csv_dir, "si_au_prc_daily.csv.gz")
 si_au_prc_daily_pq <- file.path(pq_dir, "si_au_prc_daily.parquet")
 ```
 
-Using a process similar to that above, we identify those columns needing special handling in the import process.
-Note that we specify `guess_max = 1e6` because the default value for `guess_max` reads too few rows to infer the types of some variables that are most `NA`.
+Using a process similar to that above, one can identify those columns needing special handling in the import process.
+Note that I specify `guess_max = 1e6` because the default value for `guess_max` reads too few rows to infer the types of some variables that are most `NA`.
 
 ```{r}
 #| eval: true
@@ -802,7 +812,6 @@ si_au_prc_daily |>
 
 Again `dateymd` seems to be the one of the two that is consistent with `dayssince`.
 
-
 ```{r}
 si_au_prc_daily |> 
   filter(dayssince == 40682) |>
@@ -813,7 +822,7 @@ si_au_prc_daily |>
   count(dateymd)
 ```
 
-So in saving to parquet, we keep `dateymd`, but rename it to `date` for consistency across data sets.
+So in saving to parquet, I keep `dateymd`, but rename it to `date` for consistency across data sets.
 
 ```{r}
 #| cache: true
@@ -866,7 +875,7 @@ si_au_prc_daily <-
 
 ### Identifying the primary key
 
-Obviously `gcode` and `date` are going to be part of any primary key, but we quickly deduce from the documentation supplied by SIRCA that a single `gcode` can be associated with multiple securities at one time and that `seniorsecurity` is used to distinguish these.
+Obviously `gcode` and `date` are going to be part of any primary key, but one can quickly deduce from the documentation supplied by SIRCA that a single `gcode` can be associated with multiple securities at one time and that `seniorsecurity` is used to distinguish these.
 This suggests `(gcode, date, seniorsecurity)` as a candidate primary key, so let's check this.
 
 First, does each combination of `(gcode, date, seniorsecurity)` identify a single row?
@@ -887,10 +896,10 @@ si_au_prc_daily |>
   collect()
 ```
 
-One thing to note here is that we checked the primary key using the DuckDB version of the data rather than the `dplyr` data frame (or tibble).
+One thing to note here is that I checked the primary key using the DuckDB version of the data rather than the `dplyr` data frame (or tibble).
 One reason for this is that the code was much faster using the DuckDB version.
 
-Now that we are done with out DuckDB connection, we can disconnect from it.
+Now that I am done with the DuckDB connection, I can disconnect from it.
 
 ```{r}
 dbDisconnect(db)
@@ -909,10 +918,10 @@ source("https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R") |>
   system.time()
 ```
 
-# Service-level agreement revisited
+# The service-level agreement revisited
 
-We return to our service-level agreement (SLA) to take stock of where we are after the above.
-Given that much of our focus above was on data types, I do not revisit that here and instead focus on those elements of the SLA, including those that I did not address above.
+I now return to our service-level agreement (SLA) to take stock of where we are after the above.
+Given that much of the focus above was on data types, I do not revisit that here and instead focus on those elements of the SLA that I did not address above.
 
 ## Storage format
 
