@@ -17,17 +17,17 @@ format:
 bibliography: papers.bib
 ---
 
-As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in print form by CRC Press later in 2024 and will remain free online after publication.]
+As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
 That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times.
-That recent note covered hierarchical data and a forthcoming note will address spreadsheets.
+That [recent note]([here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) covered hierarchical data and a forthcoming note will address spreadsheets.
 
-The purpose of this note is provide the missing coverage of dates and times with a bit more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science*
-The application I work with is based on the SEC submissions data I discussed in my last note.
+The purpose of this note is address the missing coverage of dates and times with a bit more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science*
+The application I work with is based on the SEC submissions data I discussed in a recent note.
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.qmd).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/datetimes.qmd).
 
 ```{r}
 #| include: false
@@ -96,6 +96,7 @@ Teh
 
 ```{r}
 #| eval: true
+#| results: false
 db <- dbConnect(duckdb::duckdb())
 dbExecute(db, "INSTALL icu")
 dbExecute(db, "LOAD icu")
