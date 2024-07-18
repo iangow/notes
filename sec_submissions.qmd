@@ -580,14 +580,32 @@ Because we will use a persistent database to store the processed data, I store t
 
 ```{r}
 #| eval: true
+#| cache: true
 db_path <- file.path(data_dir, "submissions.duckdb")
 db <- dbConnect(duckdb::duckdb(), dbdir = db_path, read_only = FALSE)
 
+zip_ciks <- 
+  as_tibble(unzip(bulk_path, list = TRUE)) |>
+  mutate(cik = as.integer(str_extract(Name, "[0-9]{10}"))) |>
+  select(cik) |>
+  distinct() |>
+  copy_to(db, df = _, name = "zip_ciks", overwrite = TRUE,
+          temporary = FALSE)
+
+dbDisconnect(db)
+```
+
+```{r}
+#| eval: true
+db <- dbConnect(duckdb::duckdb(), dbdir = db_path, read_only = FALSE)
+
+zip_ciks <- tbl(db, "zip_ciks")
 sec_index <- load_parquet(db, "sec_index*", "edgar")
 ciks <-
   sec_index |>
   filter(str_detect(form_type, "^8-K")) |>
   distinct(cik) |>
+  semi_join(zip_ciks, by = "cik") |>
   compute(name = "ciks", overwrite = TRUE, temporary = FALSE)
 ```
 
@@ -732,11 +750,13 @@ get_ciks <- function(n_ciks = 100, dest_table = "companies",
   db <- dbConnect(duckdb::duckdb(), dbdir = dbdir, read_only = TRUE)
   
   ciks <- tbl(db, "ciks")
-
+  zip_ciks <- tbl(db, "zip_ciks")
+  
   if (dest_table %in% dbListTables(db)) {
     to_update <- tbl(db, dest_table)
     unprocessed <-
       ciks |>
+      semi_join(zip_ciks, by = "cik") |>
       anti_join(to_update, by = "cik")
   } else {
     unprocessed <- ciks
