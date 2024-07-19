@@ -786,7 +786,7 @@ One difference between the issues for the two list-columns in the company-level 
 An advantage of the while-loop structure is that when an error causes the code to stop, it is relatively easy to step through the code to identify the fields and observations that are causing problems.
 
 Another issue that only appeared after several thousand CIKs had been processed related to the field `ownerOrg`, which isn't even meant to be part of the data.
-But when dealing with data related to more than 40,000 entities strange issues can crop up and the mistaken inclusion of data for `ownerOrg` is one of these.
+But, when dealing with data related to more than 40,000 entities, strange issues can crop up and the mistaken inclusion of data for `ownerOrg` is one of these.
 Note that we write `select(-any_of("ownerOrg"))` because `select(-ownerOrg)` will result in an error if `ownerOrg` is not on the `company_data` table, as it generally isn't.
 
 Once we have created the three tables, we write them to the persistent DuckDB database we created above.
