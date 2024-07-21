@@ -1,7 +1,7 @@
 ---
 title: "Working with date and times"
 author: Ian D. Gow
-date: 2024-05-24
+date: 2024-07-19
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -19,13 +19,13 @@ bibliography: papers.bib
 
 As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
 That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times.
-That [recent note]([here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) covered hierarchical data and a forthcoming note will address spreadsheets.
+[One recent note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) covered hierarchical data and a forthcoming note will address spreadsheets.
 
-The purpose of this note is address the missing coverage of dates and times with a bit more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science*
+The purpose of this note is address the gap regarding dates and times in more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science*.
 The application I work with is based on the SEC submissions data I discussed in a recent note.
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 
-In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/datetimes.qmd).
 
@@ -51,16 +51,23 @@ library(scales)
  - **times** identify times within a day
  - **date-times** combine dates and times into a single data type.
  
-Like *R for Data Science*, I concentrate on dates and date-times.
+Like *R for Data Science*, I concentrate on dates and date-times.^[It it pointed out in that R does not have a native class for storing times [@Wickham:2023aa, p.296].]
 
 ## Dates
 
-A lot of the complexity surrounding dates and times arises from the existence of time zones.
-That said, one does not completely avoid this complexity with dates.
-For example, the date `2024-06-28` in the `America/New_York` time zone will include points of time that are associated with the date `2024-06-29` in the `Australia/Sydney` time zone.
-So if a date-time related to Australia is converted to a date based on UTC or `America/New_York`, then it may end up on a different date that would result if converted to a date using `Australia/Melbourne`.
+In some respects, dates are relatively straightforward.
+A constant bane of data analysts is the representation of dates in ambiguous formats.
+For example, in many parts of the world `"11/12/2023"` represents 11 December 2023; in other parts of the world (read "the United States of America"), `"11/12/2023"` represents November 12, 2023.
+Converting string representations of dates to dates is an important element of the data curation process.^[For more on the data curation process as part of the data science workflow, see my note [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.pdf).]
+*R for Data Science* provides an excellent discussion of issues that arise in converting string data to dates [@Wickham:2023aa, pp.296--302].
 
-One properly encoded as type `Date`, date data in R does not present particular difficult in many contexts.
+We might also encounter dates in data sets from other programs, such as SAS, Stata, or Excel.
+Functions such as `read_sas()`, `read_stata()`, and `read_excel()` will generally detect and convert dates.
+Otherwise exporting data from those programs to text with dates represented in an unambiguous text format is perhaps the best approach.
+For example, in my `wrds2pg` Python package, I apply SAS code that uses `format=YYMMDD10.` to represent dates using the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format discussed in [*R for Data Science*](https://r4ds.hadley.nz/datetimes#during-import).
+
+Dates are generally transferred without any issues from databases such as DuckDB or PostgreSQL to R or vice versa.
+Once properly encoded as type `Date`, dates do not present particular difficulties in R in many contexts.
 
 ```{r}
 a_date <- as.Date("2024-05-28")
@@ -69,12 +76,15 @@ year(a_date)
 month(a_date)
 ```
 
-Outside of R, we might encounter dates in either text data or data from other programs, such as SAS, Stata, or Excel.
-Functions such as `read_sas()`, `read_stata()`, and `read_excel()` will generally detect and convert dates.
-Otherwise exporting data to text with dates represented in an unambiguous text format is perhaps the best approach.
-For example, in my `wrds2pg` Python package, I apply SAS code that uses `format=YYMMDD10.` to represent dates using the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format discussed in [*R for Data Science*](https://r4ds.hadley.nz/datetimes#during-import).
+Much of the complexity surrounding dates and times arises from the existence of time zones.
+That said, one does not completely avoid this complexity with dates.
+For example, the date `2024-06-28` in the `America/New_York` time zone will include points of time that are associated with the date `2024-06-29` in the `Australia/Sydney` time zone.
+So if a date-time related to Australia is converted to a date based on UTC or `America/New_York`, then it may end up on a different date that would result if converted to a date using `Australia/Melbourne`.
 
-Dates are generally transferred without any issues from databases such as DuckDB or PostgreSQL to R or vice versa.
+Another aspect of dates that is easy to overlook is that some things that seem simple turn out to be complicated when examined more closely.
+For example, what date is one month after `2024-01-31`?
+For example, what date is one year after `2024-02-29`?
+In each case, R will return `NA` as the answer to each question.^[To see this, enter `as.Date("2024-01-31") + months(1)` and `as.Date("2024-02-29") + years(1)`, respectively.]
 
 ## Date-times
 
