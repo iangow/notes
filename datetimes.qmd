@@ -129,12 +129,11 @@ addresses <- load_parquet(db, table = "addresses", schema = "submissions")
 ```{r}
 filing_times <- 
   filings |>
-  mutate(acceptanceDateTimeStr = as.character(acceptanceDateTime)) |>
   mutate(year = year(acceptanceDateTime),
          hour = hour(acceptanceDateTime),
-         acceptance_time = make_time(hour(acceptanceDateTime),
-                                     minute(acceptanceDateTime),
-                                     date_part('microseconds', acceptanceDateTime) / 1e6)) |>
+         minute = minute(acceptanceDateTime),
+         second = second(acceptanceDateTime),
+         acceptance_time = make_time(hour, minute, second)) |>
   mutate(acceptance_time = as.Date("2000-01-01") + acceptance_time) |>
   select(cik, year, hour, accessionNumber, acceptanceDateTime, acceptance_time) |>
   compute() 
@@ -194,13 +193,7 @@ filing_times |>
 ```
 
 ```{r}
-filings |>
-  mutate(acceptanceDateTime =	timezone('America/New_York', acceptanceDateTime)) |>
-  mutate(year = year(acceptanceDateTime),
-         acceptance_time = make_time(hour(acceptanceDateTime),
-                                     minute(acceptanceDateTime),
-                                     date_part('microseconds', acceptanceDateTime) / 1e6)) |>
-  mutate(acceptance_time = as.Date("2000-01-01") + acceptance_time) |>
+filing_times |>
   filter(year > 2003) |>
   ggplot(aes(x = acceptance_time)) + 
   geom_histogram(binwidth = 5 * 60) +
@@ -217,9 +210,6 @@ sample_calls <-
   mutate(start_date =	timezone('UTC', start_date)) |>
   mutate(filingDate = as.Date(start_date)) |>
   compute()
-
-filings <- load_parquet(db, table = "filings", schema = "submissions")
-tickers <- load_parquet(db, table = "tickers", schema = "submissions")
 
 earnings_filings <-
   filings |>
