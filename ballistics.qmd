@@ -1,0 +1,116 @@
+---
+title: "Solving SAT questions on ballistics"
+author: 
+  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2024-08-12
+date-format: "D MMMM YYYY"
+bibliography: papers.bib
+abstract: "Solving SAT questions on ballistics"
+title-block-style: plain
+csl: jfe.csl
+format: 
+    pdf:
+        toc: false
+        number-sections: true
+        colorlinks: true
+        mainfont: TeX Gyre Pagella
+        sansfont: TeX Gyre Pagella
+    docx:
+        number-sections: true
+---
+
+The first thing to note is that the path of a projectile under gravity will take the form of a parabola, which can be represented as a quadratic equation, where $x$ represents time since launch and $y$ represents vertical displacement (i.e., height).^[Note that horizontal displacement will be a linear function of $x$, so the projectile will form a parabola in that plane also.]
+
+$$ y = a x^2 + b x + c $$
+
+It turns out that this equation can be rewritten in the form 
+
+$$ y = a (x - h)^2 + k $$
+
+The term $(x - h)^2$ will always be non-negative (i.e., $(x - h)^2 \geq 0$) and it will reach its maximum when $x = h \Rightarrow (x - h)^2 = 0$.
+
+## First question
+
+> A quadratic function models the height, in feet, of an object above the ground in terms of the time, in seconds, after the object is launched off an elevated surface.
+> The model indicates the object has an initial height of 10 feet above the ground and reaches its maximum height of 1,034 feet above the ground 8 seconds after being launched.
+> Based on the model, what is the height, in feet, of the object above the ground 10 seconds after being launched?
+
+The easiest part is to solve for $k$ using our knowledge of the value of $y$ when it is at its maximum (so $a (x - h)^2 = 0$).
+We can immediately see that $k = 1034$ and that at that time $x = 8 \Rightarrow h = 8$.
+
+Now, when $x = 0$, we have $y = 10$.
+
+$$
+\begin{aligned}
+y &= a \times (x - 8)^2 + 1034 \\
+10 &= a \times 8^2 + 1034 \\
+-1024 &= 64 a \\
+a &= -1024 \div 64 \\
+&= -16
+\end{aligned}
+$$
+Thus the full equation is 
+
+$$ y = -16 (x - 8)^2 + 1034 $$
+Substituting in $x = 10$, we have
+
+
+$$
+\begin{aligned}
+y &= -16 (10 - 8)^2 + 1034 \\
+&= -16 (10 - 8)^2 + 1034 \\
+&= -16 \times 4 + 1034 \\
+&= 1034 - 64 \\
+&= 970 
+\end{aligned}
+$$
+
+So the answer is 970.
+
+## Second question
+
+> The table shows three values of x and their corresponding values of $y$, where $y = f(x) + 4$ and $f$ is a
+quadratic function.
+> What is the y-coordinate of the y-intercept of the graph of $y = f(x)$ in the xy-plane?
+
+| $x$  | $f(x) + 4$ |  $f(x)$ |
+|-----:|-----------:|--------:|
+| $21$ |       $-8$ |   $-12$ | 
+| $23$ |        $8$ |     $4$ |
+| $25$ |       $-8$ |   $-12$ |
+
+: Values of $x$ and $y$ {#tbl-q2}
+
+I think the critical observation here is that the quadratic equation is symmetric around $x = 23$, which must be its maximum.
+Therefore you can use the same logic as above.
+Note that the original table is for $f(x) + 4$; it is less confusing to add a column for $y = f(x)$, as I have done in @tbl-q2.
+
+The easiest part is to solve for $k$ using our knowledge of the value of $y$ when it is at its maximum (so $a (x - h)^2 = 0$)
+We can immediately see that $k = 4$ and that at that time $x = 23 \Rightarrow h = 23$.
+
+Now, when $x = 21$, we have $f(x) = y = -12$.
+
+$$
+\begin{aligned}
+y &= a \times (x - 23)^2 + 4\\
+-12 &= a \times (21 - 23)^2 + 4 \\
+-16 &= 4 a \\
+a &= -16 \div 4 \\
+&= -4
+\end{aligned}
+$$
+Thus the full equation is 
+
+$$ y = -4 (x - 23)^2 + 4 $$
+Substituting in $x = 0$ (i.e., the $y$-intercept) we have
+
+$$
+\begin{aligned}
+y &= -4 (- 23)^2 + 4 \\
+&= -4 \times 529 + 4 \\
+&= -2116 + 4 \\
+&= -2112
+\end{aligned}
+$$
