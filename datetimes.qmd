@@ -1,7 +1,7 @@
 ---
 title: "Working with date and times"
 author: Ian D. Gow
-date: 2024-07-19
+date: 2024-08-13
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -22,12 +22,12 @@ That said, I identified a few gaps, including spreadsheets, hierarchical data, a
 [One recent note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) covered hierarchical data and a forthcoming note will address spreadsheets.
 
 The purpose of this note is address the gap regarding dates and times in more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science*.
-The application I work with is based on the SEC submissions data I discussed in a recent note.
+The application I work with is based on the SEC submissions data I discussed in [another recent note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf).
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/datetimes.qmd).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/datetimes.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf).
 
 ```{r}
 #| include: false
@@ -47,9 +47,9 @@ library(scales)
 
 [Chapter 17](https://r4ds.hadley.nz/datetimes) of *R for Data Science* identifies three data types related to dates and times:
 
- - **dates**
+ - **dates** are specified as a year, month, and day
  - **times** identify times within a day
- - **date-times** combine dates and times into a single data type.
+ - **date-times** combine dates and times into a single data type
  
 Like *R for Data Science*, I concentrate on dates and date-times.^[It it pointed out in that R does not have a native class for storing times [@Wickham:2023aa, p.296].]
 
@@ -64,67 +64,142 @@ Converting string representations of dates to dates is an important element of t
 We might also encounter dates in data sets from other programs, such as SAS, Stata, or Excel.
 Functions such as `read_sas()`, `read_stata()`, and `read_excel()` will generally detect and convert dates.
 Otherwise exporting data from those programs to text with dates represented in an unambiguous text format is perhaps the best approach.
-For example, in my `wrds2pg` Python package, I apply SAS code that uses `format=YYMMDD10.` to represent dates using the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format discussed in [*R for Data Science*](https://r4ds.hadley.nz/datetimes#during-import).
+For example, in my `wrds2pg` Python package, I apply SAS code that uses `format=YYMMDD10.` to represent dates using the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format discussed in [*R for Data Science*](https://r4ds.hadley.nz/datetimes#during-import) before exporting to CSV using SAS's `PROC EXPORT` command.
 
 Dates are generally transferred without any issues from databases such as DuckDB or PostgreSQL to R or vice versa.
 Once properly encoded as type `Date`, dates do not present particular difficulties in R in many contexts.
+The `as.Date()` function converts an ISO 8601 string to a date (i.e., an object with class  class `Date` in R):
 
 ```{r}
 a_date <- as.Date("2024-05-28")
 class(a_date)
+```
+
+Functions provided by the `lubridate` package (part of the core Tidyverse) allow us to extract information about dates, such as the year ...
+
+```{r}
 year(a_date)
+```
+
+... the month (as a number) ...
+
+```{r}
 month(a_date)
 ```
 
+... and the month (as a word in the relevant locale; I'm using English).
+
+```{r}
+month(a_date, label = TRUE)
+```
+
 Much of the complexity surrounding dates and times arises from the existence of time zones.
-That said, one does not completely avoid this complexity with dates.
+It is important to note that one does not completely avoid this complexity with dates.
 For example, the date `2024-06-28` in the `America/New_York` time zone will include points of time that are associated with the date `2024-06-29` in the `Australia/Sydney` time zone.
 So if a date-time related to Australia is converted to a date based on UTC or `America/New_York`, then it may end up on a different date that would result if converted to a date using `Australia/Melbourne`.
 
 Another aspect of dates that is easy to overlook is that some things that seem simple turn out to be complicated when examined more closely.
 For example, what date is one month after `2024-01-31`?
-For example, what date is one year after `2024-02-29`?
-In each case, R will return `NA` as the answer to each question.^[To see this, enter `as.Date("2024-01-31") + months(1)` and `as.Date("2024-02-29") + years(1)`, respectively.]
+Also, what date is one year after `2024-02-29`?
+Note that R will return `NA` as the answer to each of these questions.^[To see this, enter `as.Date("2024-01-31") + months(1)` and `as.Date("2024-02-29") + years(1)`, respectively.]
 
 ## Date-times
 
 A date-time, also known as a **timestamp**, combines a date with a time and thus represents an instant in time.
-From this perspective, I would argue that a timestamp only has meaning if understood in the context of a time-zone, as a date-time with a different time zone represents a different instant in time, as can be seen from the following examples.
+From this perspective, I would argue that a timestamp only has meaning if understood in the context of a time zone, as a date-time with a different time zone represents a different instant in time, as can be seen from the following examples.
 
 ```{r}
-ts <- "2008-12-31 16:52:26"
+ts <- "2008-06-30 16:52:26"
 t1 <- parse_date_time(ts, orders = "ymdHMS")
-t2 <- parse_date_time(ts, tz = "America/New_York", orders = "ymdHMS")
-t3 <- parse_date_time(ts, tz = "Australia/Melbourne", orders = "ymdHMS")
-t3 - t1
-t1 - t2
+t2 <- parse_date_time(ts, tz = "Australia/Melbourne", orders = "ymdHMS")
+t3 <- parse_date_time(ts, tz = "America/New_York", orders = "ymdHMS")
 ```
 
-Teh
+It turns out that `t1` is a date-time representing `2008-12-31 16:52:26 UTC`, which is a different point in time from both `t2`, which is the "same" time in the `Australia/Melbourne` time zone, and `t3`, which is the "same" time in the `America/New_York` time zone.
 
-## DuckDB
+```{r}
+t1 - t2
+t1 - t3
+```
+
+To determine the correct string to use for a given time zone, inspect the output of `OlsonNames()`.
+Many denizens of US time zone will indicate them using abbreviations such as `EST` for New York even at times of the year when that time zone does not apply (e.g., in June, when `EDT` is the applicable time zone).
+In this regard, using `America/New_York` obviates the risk of a mismatch such as that implied by `2008-06-30 16:52:26 EST`.
+
+## DuckDB and time zones
+
+We create a DuckDB instance by connecting to it as follows.
 
 ```{r}
 #| eval: true
 #| results: false
-db <- dbConnect(duckdb::duckdb())
+db <- dbConnect(duckdb::duckdb(), timezone_out ="America/New_York")
+```
+
+We specify `timezone_out ="America/New_York"` so that data returned to R are in the time zone that makes most sense for plotting and such like.
+Note that this does not change the actual moment in time reflected in the data, just how it is displayed.
+
+By default, DuckDB does not load information about time zones.
+These are found in the package `icu`, which can be installed and loaded using the commands below.^[The `INSTALL icu` command is only needed if you have not already installed it, but it's harmless to run it if it's already present.]
+
+```{r}
+#| eval: true
+#| results: false
 dbExecute(db, "INSTALL icu")
 dbExecute(db, "LOAD icu")
 ```
 
-```{r}
-sec_index <- load_parquet(db, "sec_index*", "edgar")
-ciks <-
-  sec_index |>
-  filter(str_detect(form_type, "^8-K")) 
-```
+We will use functions like `hour()`, `minute()`, and `second()` to prepare data for plotting.
+To understand these functions, we create a table containing just one value.
 
 ```{r}
-filings <- load_parquet(db, table = "filings", schema = "submissions")
-companies <- load_parquet(db, table = "companies", schema = "submissions")
-tickers <- load_parquet(db, table = "tickers", schema = "submissions")
-addresses <- load_parquet(db, table = "addresses", schema = "submissions")
+a_datetime <- "2008-12-31 16:52:26 America/New_York"
+sample <- tbl(db, sql(str_c("SELECT '", a_datetime, "'::TIMESTAMPTZ AS a_datetime")))
 ```
+
+Intuitively, we would expect `hour(a_datetime)` to return `16`, `minute(a_datetime)` to return `52`, and `second()` to return `26`.
+However, these functions are interpreted with respect to the time zone setting of the database.
+The default setting for DuckDB is the local time, but we can set this to UTC using the following command.
+
+```{r}
+#| output: false
+dbExecute(db, "SET TIME ZONE 'UTC'")
+```
+
+Thus we get the value `21` because UTC was five hours ahead of New York time on 31 December 2008.
+
+```{r}
+sample |> mutate(hour = hour(a_datetime)) |> collect()
+```
+
+So, we set the DuckDB time zone to New York time ...
+
+```{r}
+#| output: false
+dbExecute(db, "SET TIME ZONE 'America/New_York'")
+```
+
+... and try again.
+
+```{r}
+sample |> mutate(hour = hour(a_datetime)) |> collect()
+```
+
+## Working with SEC filings data
+
+We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). If you have set up a parquet data repository with this data in the `submissions` schema, then use `filings <- load_parquet(db, table = "filings", schema = "submissions")` instead.]
+
+```{r}
+filings <- load_parquet(db, table = "filings", data_dir = "data")
+```
+
+An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC.
+For example, the original text representation of `acceptanceDateTime` was of the form `2024-04-25T17:04:01.000Z`.
+The `Z` is meant to indicate that the timestamp is expressed in UTC.^[See the [Wikipedia page for ISO 8601](https://en.m.wikipedia.org/wiki/ISO_8601).]
+However, I ignored that in importing the data and interpreted these timestamps as relating to `America/New_York`.
+As we will see shortly, this interpretation is correct based on other information.^[Note that the information is stored in parquet files in UTC.]
+
+To understand the date-times on `filings`, I extract some components of the timestamp to create a variable `acceptance_time` that converts the date component of each `acceptanceDateTime` to the same date (`2000-01-01`) as this facilitates plotting the times ignoring the dates.^[As mentioned above, R has no native type for times, but a set of date-times with the date fixed on a common date will provide us with what we need.]
 
 ```{r}
 filing_times <- 
@@ -133,91 +208,224 @@ filing_times <-
          hour = hour(acceptanceDateTime),
          minute = minute(acceptanceDateTime),
          second = second(acceptanceDateTime),
-         acceptance_time = make_time(hour, minute, second)) |>
-  mutate(acceptance_time = as.Date("2000-01-01") + acceptance_time) |>
-  select(cik, year, hour, accessionNumber, acceptanceDateTime, acceptance_time) |>
-  compute() 
+         acceptance_time = make_timestamptz(2000L, 01L, 01L, 
+                                            hour, minute, second)) |>
+  select(cik, year, accessionNumber, acceptanceDateTime, acceptance_time) |>
+  compute()
 ```
 
-```{r}
-filing_times |>
-  ggplot(aes(x = acceptance_time)) + 
-  geom_histogram(binwidth = 5 * 60) +
-  scale_x_datetime(date_breaks = "1 hour",
-                   date_labels = "%H:%M") +
-  theme(axis.text.x = element_text(angle = 90))
-```
+@fig-time-all plots the acceptance times for all filings in our sample.
+One observation is that we have over a million filings right around midnight.
 
 ```{r}
-filing_times |> 
-  mutate(year = year(acceptanceDateTime)) |> 
-  filter(year < 2002,
-         acceptance_time != "2000-01-01 00:00:00") |>
-  ggplot(aes(x = acceptance_time)) + 
-  geom_histogram(binwidth = 5 * 60) +
-  scale_x_datetime(date_breaks = "1 hour",
-                   date_labels = "%H:%M") +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-```{r}
-filing_times |>
-  filter(acceptance_time > "2000-01-01") |>
-  ggplot(aes(x = acceptance_time)) + 
-  geom_histogram(binwidth = 5 * 60) +
-  scale_x_datetime(date_breaks = "1 hour",
-                   date_labels = "%H:%M") +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-```{r}
-filing_times |> 
-  mutate(year = year(acceptanceDateTime)) |> 
-  filter(year > 2003,
-         acceptance_time == "2000-01-01 00:00:00") |>
-  ggplot(aes(x = acceptanceDateTime)) + 
-  geom_histogram(binwidth = 60 * 60 * 24 * 7) +
-  scale_x_datetime(date_breaks = "1 month", date_labels = "%Y-%m-%d") +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-```{r}
-filing_times |> 
-  mutate(year = year(acceptanceDateTime)) |> 
-  filter(year > 2003,
-         acceptance_time == "2000-01-01 00:00:00") |>
-  ggplot(aes(x = acceptanceDateTime)) + 
-  geom_histogram(binwidth = 60 * 60 * 24 * 7) +
-  scale_x_datetime(date_breaks = "1 month", date_labels = "%Y-%m-%d") +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-```{r}
-filing_times |>
-  filter(year > 2003) |>
-  ggplot(aes(x = acceptance_time)) + 
-  geom_histogram(binwidth = 5 * 60) +
-  scale_x_datetime(date_breaks = "1 hour",
-                   date_labels = "%H:%M") +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-```{r}
+#| label: fig-time-all
+#| fig-cap: Distribution of acceptance time for all filings
 #| cache: true
+filing_times |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+@fig-midnight digs into these "midnight" filings based on the year of filing.
+It appears that the majority of these are from 2002 or earlier.
+A plausible explanation is that most filings during that earlier period only have filing *dates* and `acceptanceDateTime` is expressed as midnight on those filing dates.
+
+In @fig-midnight, we also see evidence of a small number of filings for years 1980 and 1993.
+The former value probably relates to errors, but a small number of filings did occur in 1993.
+
+```{r}
+#| label: fig-midnight
+#| fig-cap: "Year of 'midnight' filings"
+#| cache: true
+filing_times |>
+  mutate(midnight = acceptance_time == "2000-01-01") |>
+  mutate(year = as.character(year)) |>
+  ggplot(aes(x = year, fill = midnight)) + 
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+@fig-time-early-timed focuses on cases before 2002 with non-midnight acceptance times.
+While there are some, these appear to be very few in number, perhaps reflecting a pilot program of some sort.^[Though we might expect a preponderance of these filings to occur in the years just before 2002 in this case, and the filings appear to be fairly spread out over the pre-2002 years.]
+Note that---with one stray exception before 07:00---filings appear to occur between 08:00 and 22:00 during this period.
+
+```{r}
+#| label: fig-time-early-timed
+#| fig-cap: "Distribution of acceptance time--pre-2002 with times"
+#| cache: true
+filing_times |> 
+  filter(year < 2002,
+         acceptance_time != "2000-01-01") |>
+  mutate(year = as.character(year)) |>
+  ggplot(aes(x = acceptance_time, fill = year)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+@fig-time-later-timed focuses on non-midnight filings in 2002 or later, we see that the bulk of filings are between 06:00 and 22:00, consistent with the statement on [the SEC website](https://www.sec.gov/submit-filings) that "EDGAR is available to accept filings from 6 a.m. to 10 p.m. ET weekdays (except federal holidays)."
+In fact, it was this information that allowed me to conclude that the timestamps in the underlying JSON files are in New York times, as interpreting them as UTC times put many filings outside this window.
+
+However, some pre-08:00 filings appear in @fig-time-later-timed.
+
+```{r}
+#| label: fig-time-later-timed
+#| fig-cap: "Distribution of acceptance time--post-2002 with times"
+#| cache: true
+filing_times |>
+  filter(year >= 2002,
+         acceptance_time > "2000-01-01") |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+@fig-early-morning examines the pre-08:00 filings that appear in @fig-time-later-timed.
+It appears that these are oddly concentrated at around 00:15 and are perhaps data errors.
+
+```{r}
+#| label: fig-early-morning
+#| fig-cap: "Distribution of acceptance time--early-morning outliers"
+filing_times |>
+  filter(between(acceptance_time, "2000-01-01 00:00:01", "2000-01-01 01:00:00")) |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 1 * 60) +
+  scale_x_datetime(date_breaks = "5 min",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+While not apparent in @fig-midnight, @fig-later-midnight reveals that there are some post-2003 midnight filings.
+However, these are all concentrated in 2009 and are perhaps evidence of data issues.
+
+```{r}
+#| label: fig-later-midnight
+#| fig-cap: "Distribution of dates--post-2003 midnight filers"
+#| cache: true
+filing_times |>
+  mutate(year = year(acceptanceDateTime)) |> 
+  filter(year > 2003,
+         acceptance_time == "2000-01-01 00:00:00") |>
+  ggplot(aes(x = acceptanceDateTime)) + 
+  geom_histogram(binwidth = 60 * 60 * 24 * 7) +
+  scale_x_datetime(date_breaks = "1 month", date_labels = "%Y-%m-%d") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+Given the issues revealed above, @fig-valid---our final plot of acceptance times---focuses on filings after 2003 and with filing times after 05:00 and before 23:00.
+ 
+```{r}
+#| label: fig-valid
+#| fig-cap: "Distribution of acceptance times with valid times"
+#| cache: true
+filing_times |>
+  filter(year > 2003,
+         between(acceptance_time,
+                 "2000-01-01 05:00:00",
+                 "2000-01-01 23:00:00")) |>
+  ggplot(aes(x = acceptance_time)) + 
+  geom_histogram(binwidth = 5 * 60) +
+  scale_x_datetime(date_breaks = "1 hour",
+                   date_labels = "%H:%M") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+There are some interesting patterns to be observed in @fig-valid.
+
+ - For filings before 10:00, there are spikes in the number of filings on the hour. This may reflect filings that are pre-programmed at specific times in pre-trading hours.^[[NYSE and NASDAQ trading hours](https://www.tradinghours.com/markets/nasdaq) are 09:30--16:00.]
+ - These spikes are not apparent during trading hours.
+ - There is a big spike in the number of filings just after 16:00, consistent with many filings being delayed until the close of trading.
+ - Putting aside the pre-trading spikes, there is a steady rise int he number of filings until about 12:00, then a flattening out till about 13:30, when filings steadily rise until 16:00.
+ - There is a sharp drop in the number of filings at about 17:30.
+ - After 17:30, the number of filings steadily decreases until 22:00.
+ - There are tiny spike on the hour after 17:00.
+
+# Merging with other data sets
+
+To illustrate how one can merge across data sets we use a small sample related to the timing of earnings conference calls for Apple and Microsoft.
+The data are stored online, so we make use of the `https` package to read the data directly into DuckDB.
+
+```{r}
+#| output: false
+dbExecute(db, "INSTALL https")
+dbExecute(db, "LOAD https")
+```
+
+In this case, we force DuckDB's `read_csv()` function to store `start_date` with a time zone by setting the `columns` argument.
+
+
+```{r}
+url <- "https://raw.githubusercontent.com/iangow/notes/main/data/sample_calls.csv"
+sql <- str_c("read_csv('", url, "', ", 
+                "columns = {'ticker': 'TEXT','start_date': 'TIMESTAMPTZ'})")
+```
+
+We create the variable `filingDate`, as we will merge using this variable and `ticker`.
+
+```{r}
 sample_calls <-
-  tbl(db, "read_csv('data/sample_calls.csv')") |>
-  mutate(start_date = sql("start_date::timestamp")) |>
-  mutate(start_date =	timezone('UTC', start_date)) |>
+  tbl(db, sql) |>
   mutate(filingDate = as.Date(start_date)) |>
   compute()
+```
 
+If you compare the output below with underlying data (e.g., `browseURL(url)`), you can see that the underlying UTC timestamps are displayed below in the New York time zone because of the settings we chose above.
+
+```{r}
+sample_calls |>
+  collect(n = 5)
+```
+
+If inspect `filings` for Form 8-K filings, we can see that the `items` field contains a comma-separated list of the items to which the 8-K relates.
+
+```{r}
+filings |>
+  filter(form == "8-K") |>
+  select(cik, accessionNumber, acceptanceDateTime, items) |>
+  collect(n = 3)
+```
+
+We can use the DuckDB function `regexp_split_to_table()` to extract each item as a separate row.
+We will be interested in 8-K filings with item 2.02 ("Results of Operations and Financial Condition").^[See [here](https://www.sec.gov/answers/form8k.htm) for information about each of the items.]
+
+```{r}
+filings |>
+  filter(form == "8-K") |>
+  mutate(item = regexp_split_to_table(items, ",")) |>
+  select(cik, accessionNumber, acceptanceDateTime, item) |>
+  collect(n = 9)
+```
+
+To merge `sample_calls` with `filings`, we need a mapping from tickers to CIKs.
+We can get the `tickers` file from Dropbox using the code below.^[See [the note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) discussed earlier for details on how this file was created from data on SEC EDGAR.]
+
+```{r}
+url <- str_c("https://www.dropbox.com/scl/fi/04jv6e1gwx0ngbwgqde5a/", 
+             "tickers.parquet?rlkey=gic68c86u1rl05hig7j623jpr&dl=1")
+sql <- str_c("read_parquet('", url, "')")
+tickers <- tbl(db, sql) |> compute()
+```
+
+We can now create the table `earnings_filings` containing all 8-K filings with item 2.02.^[Note that we don't strictly "create" this table in the sense of SQL's `CREATE TABLE` using `compute()`, as we will only use a small portion of it and it would be expensive---about 10 seconds and 1.5GB of RAM---to `compute()` this whole table.]
+
+```{r}
 earnings_filings <-
   filings |>
   inner_join(tickers, by = "cik") |>
   mutate(item = regexp_split_to_table(items, ",")) |>
   filter(form == "8-K", item == "2.02") |>
   select(cik, ticker, filingDate, acceptanceDateTime, item)
+```
 
+We merge `earnings_filings` with `sample_calls` and calculate `time_diff`, the time between the filing of the 8-K and the start of the conference call.
+
+```{r}
+#| cache: true
 sample_merged <-
   earnings_filings |>
   inner_join(sample_calls, join_by(ticker, filingDate)) |>
@@ -226,15 +434,24 @@ sample_merged <-
   system_time()
 ```
 
+We can now make a plot of `time_diff`, converting `time_diff` from seconds to minutes by dividing by 60 and converting to numeric.^[By default, the result is a `difftime`, which `ggplot2` is unsure about.]
+
 ```{r}
+#| label: fig-time-diff
+#| fig-cap: "Distribution of times between 8-K filings and conference calls"
 sample_merged |>
   mutate(time_diff = as.double(time_diff / 60)) |>
   ggplot(aes(x = time_diff, fill = ticker)) +
   geom_histogram(binwidth = 5)
 ```
 
+From @fig-time-diff, we see that Microsoft (MSFT) and Apple (AAPL) have different approaches to filing 8-Ks before conference calls.
+In most cases, Apple files right around 30 minutes before the call.
+In contrast, Microsoft has more variation in its filing time, but it is generally gives the market more time to process the 8-K before the start of its call and the modal time is over 80 minutes.
+That said, there does appear to be one call where the 8-K was made right around the start of teh conference call, though there is no y discussion of this in the conference call.
 
 ```{r}
+#| include: false
 dbDisconnect(db)
 ```
 
