@@ -371,7 +371,7 @@ We create the variable `filingDate`, as we will merge using this variable and `t
 sample_calls <-
   tbl(db, sql) |>
   mutate(filingDate = as.Date(start_date)) |>
-  compute()
+  compute(name = "sample_calls", overwrite = TRUE)
 ```
 
 If you compare the output below with underlying data (e.g., `browseURL(url)`), you can see that the underlying UTC timestamps are displayed below in the New York time zone because of the settings we chose above.
@@ -408,7 +408,9 @@ We can get the `tickers` file from Dropbox using the code below.^[See [the note]
 url <- str_c("https://www.dropbox.com/scl/fi/04jv6e1gwx0ngbwgqde5a/", 
              "tickers.parquet?rlkey=gic68c86u1rl05hig7j623jpr&dl=1")
 sql <- str_c("read_parquet('", url, "')")
-tickers <- tbl(db, sql) |> compute()
+tickers <- 
+  tbl(db, sql) |> 
+  compute(name = "tickers", overwrite = TRUE)
 ```
 
 We can now create the table `earnings_filings` containing all 8-K filings with item 2.02.^[Note that we don't strictly "create" this table in the sense of SQL's `CREATE TABLE` using `compute()`, as we will only use a small portion of it and it would be expensive---about 10 seconds and 1.5GB of RAM---to `compute()` this whole table.]
@@ -448,7 +450,129 @@ sample_merged |>
 From @fig-time-diff, we see that Microsoft (MSFT) and Apple (AAPL) have different approaches to filing 8-Ks before conference calls.
 In most cases, Apple files right around 30 minutes before the call.
 In contrast, Microsoft has more variation in its filing time, but it is generally gives the market more time to process the 8-K before the start of its call and the modal time is over 80 minutes.
-That said, there does appear to be one call where the 8-K was made right around the start of teh conference call, though there is no y discussion of this in the conference call.
+That said, there does appear to be one call where the 8-K was made right around the start of the conference call, though there is no discussion of this in the conference call transcript.
+
+## Appendix: PostgreSQL
+
+At the outset I alluded to using PostgreSQL and DuckDB.
+In this appendix, I show how one can achieve the same result as shown in @fig-time-diff using PostgreSQL.
+
+### Getting data into PostgreSQL
+
+If we were starting with data already in PostgreSQL, we could skip this step.
+However, a big attraction of DuckDB is its ability to glue together data from many different sources and we can use DuckDB to populate PostgreSQL.
+
+We first need to install and load the `postgres` extension for DuckDB, which is done with the following lines of code.
+
+```{r}
+#| results: false
+dbExecute(db, "INSTALL postgres")
+dbExecute(db, "LOAD postgres")
+```
+
+I have a PostgreSQL database running on my computer, so I can connect to it with an empty connection string.
+See the [documentation](https://duckdb.org/docs/extensions/postgres) for the `postgres` extension if you need to supply additional information to connect to a PostgreSQL database.^[Note that you will need to have write access to this database.]
+
+```{r}
+#| results: false
+dbExecute(db, "ATTACH '' AS pg (TYPE POSTGRES)")
+```
+
+The first step is to copy the data in `filings.parquet` to PostgreSQL.
+We need to go from the parquet file as we did not materialize a table with these data in DuckDB.
+This step takes some time, but would be a one-off step.
+I include `IF NOT EXISTS` to avoid overwriting any existing table you might have.
+
+```{r}
+#| cache: true
+sql <- "CREATE TABLE IF NOT EXISTS pg.filings AS
+        SELECT * FROM 'data/filings.parquet'"
+dbExecute(db, sql) |> system_time()
+```
+
+We did materialize named (temporary) tables for `tickers` and `sample_calls`, so we can copy directly from those to PostgreSQL.
+These small tables are populated very quickly.
+
+```{r}
+#| cache: true
+#| results: false
+dbExecute(db, "CREATE TABLE IF NOT EXISTS pg.tickers AS
+               SELECT * FROM tickers")
+dbExecute(db, "CREATE TABLE IF NOT EXISTS pg.sample_calls AS
+               SELECT * FROM sample_calls")
+```
+### Re-running the analysis using PostgreSQL
+
+The first step is to connect to PostgreSQL, again using the `timezone` argument for the same reasons we discussed above with DuckDB.
+
+```{r}
+pg <- dbConnect(RPostgres::Postgres(), timezone = "America/New_York")
+```
+
+We next create remote data tables for each of the three underlying data tables we used above.
+
+```{r}
+filings <- tbl(pg, "filings")
+tickers <- tbl(pg, "tickers")
+sample_calls <- tbl(pg, "sample_calls")
+```
+
+Note that DuckDB creates tables with lower-case column names, so we need to adapt the code above to reflect this.
+This is not an inherent limitation of PostgreSQL, which can support case-sensitive column names.
+Apart from the lower-case column names, the following query converts `hour` and `minute` to integers, as the `make_timestamptz()` function in PostgreSQL expects integers in those slots.
+Note that I do not compute the table `filing_times`, as doing so is unnecessary and actually slows the code down.
+
+```{r}
+filing_times <- 
+  filings |>
+  mutate(year = year(acceptancedatetime),
+         hour = as.integer(hour(acceptancedatetime)),
+         minute = as.integer(minute(acceptancedatetime)),
+         second = second(acceptancedatetime),
+         acceptance_time = make_timestamptz(2000L, 1L, 1L, 
+                                            hour, minute, second)) |>
+  select(cik, year, accessionnumber, acceptancedatetime, acceptance_time)
+```
+
+The code for creating `earnings_filings` is unchanged from above apart from using lower-case column names, as PostgreSQL offers the same `regexp_split_to_table()` function that we used in DuckDB.
+
+```{r}
+earnings_filings <-
+  filings |>
+  inner_join(tickers, by = "cik") |>
+  mutate(item = regexp_split_to_table(items, ",")) |>
+  filter(form == "8-K", item == "2.02") |>
+  select(cik, ticker, filingdate, acceptancedatetime, item)
+```
+
+The code creating `sample_merged` differs slightly (apart from using lower-case column names) because `start_date - acceptancedatetime` results in a column of type `interval` in PostgreSQL that R is unable to interpret easily.
+To address this, I use the `date_part('epoch', x)` function to convert it to the number of seconds between the two timestamps.
+
+```{r}
+sample_merged <-
+  earnings_filings |>
+  inner_join(sample_calls, join_by(ticker, filingdate)) |>
+  mutate(time_diff = date_part('epoch', start_date - acceptancedatetime)) |>
+  collect() |>
+  system_time()
+```
+
+Finally, the code to produce @fig-time-diff-pg is unchanged from the equivalent code above.
+Happily, @fig-time-diff-pg looks identical to @fig-time-diff.
+
+```{r}
+#| label: fig-time-diff-pg
+#| fig-cap: "Distribution of times between 8-K filings and conference calls: PostgreSQL version"
+sample_merged |>
+  mutate(time_diff = time_diff / 60) |>
+  ggplot(aes(x = time_diff, fill = ticker)) +
+  geom_histogram(binwidth = 5)
+```
+
+My experience is that DuckDB generally offers better performance than PostgreSQL, but in this case PostgreSQL seems quite performant relative to DuckDB *once the data have been loaded into PostgreSQL*.
+PostgreSQL does offer some benefits, including the ease of sharing data with others and avoidance of messy details of data files.
+For example, I could easily run the code to create data on my server in Massachusetts and access the data from my current location in Melbourne, Australia.
+In any case, the code above shows that the task can be accomplished in either DuckDB or PostgreSQL, so we are not forced to choose in this case.
 
 ```{r}
 #| include: false
