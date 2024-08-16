@@ -1,0 +1,191 @@
+---
+title: "A basic benchmark: grouping"
+author: Ian D. Gow
+date: 2024-08-13
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(DBI)
+```
+
+
+```{r}
+system_time <- function(expr) {
+  print(system.time(expr))
+  expr
+}
+```
+
+# Generating the data
+
+First, I generate the data using code I got from [here](https://github.com/Rdatatable/data.table/wiki/Benchmarks-%3A-Grouping).
+I shrunk the data by an order of magnitude, as this seemed sufficient for my purposes.
+Here it seems that `write_rds()` (108 seconds) is a bit faster than `write_csv()` (158 seconds), but creating and writing the data set if not the focus here.
+
+```{r}
+#| cache: true
+#| eval: false
+N <- 2e8; K <- 100
+set.seed(1)
+df <- data.frame(id1 = sample(sprintf("id%03d", 1:K), N, TRUE),
+                 id2 = sample(sprintf("id%03d", 1:K), N, TRUE),
+                 id3 = sample(sprintf("id%010d", 1:(N/K)), N, TRUE),
+                 id4 = sample(K, N, TRUE),                          
+                 id5 = sample(K, N, TRUE),                         
+                 id6 = sample(N/K, N, TRUE),                       
+                 v1 =  sample(5, N, TRUE),                         
+                 v2 =  sample(5, N, TRUE),                       
+                 v3 =  sample(round(runif(100, max = 100), 4), N, TRUE)
+)
+
+rs <- write_csv(df, "df.csv") |> system_time()
+rs <- write_rds(df, "df.rds") |> system_time()
+rm(df, rs)
+cat("GB =", round(sum(gc()[,2])/1024, 3), "\n")
+```
+
+# Benchmark: Reading an RDS file and using `dplyr`
+
+```{r}
+#| cache: true
+df <- read_rds("df.rds") |> system_time()
+
+df |>
+  group_by(id1) |> 
+  summarise(sum(v1)) |>
+  arrange(id1) |>
+  system_time()
+
+df |> 
+  group_by(id1, id2) |>
+  summarise(sum(v1)) |> 
+  arrange(id1, id2) |>
+  system_time()
+
+df |> 
+  group_by(id3) |>
+  summarise(sum(v1), mean(v3)) |> 
+  arrange(id3) |>
+  system_time()
+
+df |> 
+  group_by(id4) |> 
+  summarize(across(v1:v2, mean)) |> 
+  arrange(id4) |>
+  system_time()
+
+df |> 
+  group_by(id6) |> 
+  summarize(across(v1:v2, sum)) |> 
+  arrange(id6) |>
+  system_time()
+
+rm(df)
+```
+
+# Benchmark: Using DuckDB with the CSV file
+
+```{r}
+#| cache: true
+db <- dbConnect(duckdb::duckdb())
+df <- tbl(db, "'df.csv'") |> system_time()
+
+df |> 
+  group_by(id1) |> 
+  summarise(sum(v1)) |>
+  arrange(id1) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id1, id2) |>
+  summarise(sum(v1)) |> 
+  arrange(id1, id2) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id3) |>
+  summarise(sum(v1), mean(v3)) |> 
+  arrange(id3) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id4) |> 
+  summarize(across(v1:v2, mean)) |> 
+  arrange(id4) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id6) |> 
+  summarize(across(v1:v2, sum)) |> 
+  arrange(id6) |>
+  collect() |> 
+  system_time()
+
+dbDisconnect(db)
+```
+
+# Benchmark: Using DuckDB with the CSV file and a materialized table
+
+```{r}
+#| cache: true
+db <- dbConnect(duckdb::duckdb())
+
+dbExecute(db, "COPY 'df.csv' TO 'df.parquet'") |> system_time()
+
+df <- tbl(db, "'df.parquet'")
+
+df |> 
+  group_by(id1) |> 
+  summarise(sum(v1)) |>
+  arrange(id1) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id1, id2) |>
+  summarise(sum(v1)) |> 
+  arrange(id1, id2) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id3) |>
+  summarise(sum(v1), mean(v3)) |> 
+  arrange(id3) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id4) |> 
+  summarize(across(v1:v2, mean)) |> 
+  arrange(id4) |>
+  collect() |> 
+  system_time()
+
+df |> 
+  group_by(id6) |> 
+  summarize(across(v1:v2, sum)) |> 
+  arrange(id6) |>
+  collect() |> 
+  system_time()
+dbDisconnect(db)
+```
