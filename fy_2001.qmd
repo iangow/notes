@@ -1,0 +1,191 @@
+---
+title: "Basic programming for accounting researchers: Assignment #1 (2014)"
+author: Ian D. Gow
+date: 2024-09-15
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+# Assignment
+
+You are interested in performing an analysis similar to @Fairfield_2001 with alternative variable specifications. 
+Essentially, you are interested in whether disaggregation helps in the prediction of ROA.
+To prepare for data analysis, you have decided to gather all of the necessary variables for fiscal years from 2000--2010.
+Based on the result in  @Fairfield_2001, you want to compare the results of the following regressions:^[Note: these regression specifications differ from @Fairfield_2001. They are set up to facilitate programming training as opposed to testing the research question. Refer to @Fairfield_2001 for proper specification and variable definitions.]
+
+$$
+\begin{aligned}
+(1) \, ROA_{t+1} &= ROA_t + \Delta ROA_t \\
+(2) \, ROA_{t+1} &= ROA_t + \Delta \textit{TURNOVER}_t + \Delta \textit{MARGIN}_t \\
+\end{aligned}
+$$
+Definitions are as follows:
+
+ - $ROA_t$: Net income in year $t$ divided by total assets at year $t -1$
+ - $\textit{TURNOVER}_t$: Sales in year $t$ divided by total assets at year $t - 1$
+ - $\textit{MARGIN}_t$: Net income in year $t$ divided by sales in year $t$.
+ 
+ 
+**Your task:** Create the data set that has the variables in the above regressions using annual Compustat data.
+
+# Response
+
+```{r}
+#| include: false
+Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
+           PGPORT = 9737L,
+           PGUSER = "iangow", 
+           PGDATABASE = "wrds")
+```
+
+In writing this answer, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "modelsummary", "dbplyr", "duckdb", "RPostgres", "farr"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/fy_2001.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/fy_2001.pdf).
+
+```{r}
+#| message: false
+library(tidyverse)
+library(modelsummary)
+library(DBI)
+library(dbplyr)
+library(farr)
+```
+I start by connecting with the WRDS PostgreSQL database.
+Note that you should use `Sys.setenv()` as described [here](https://iangow.github.io/far_book/fin-state.html#sec-wrds-setup) to set up *your* WRDS connection parameters before running this code.^[You may also need to confirm using the Duo app that WRDS uses for 2FA.]
+
+```{r}
+db <- dbConnect(RPostgres::Postgres())
+```
+
+I then create a remote data frame for Compustat North American annual data (`comp.funda`).
+
+```{r}
+funda <- tbl(db, I("comp.funda"))
+```
+
+From this I create the "standard" version of annual Compustat data (see [here](https://iangow.github.io/far_book/fin-state.html)).
+
+```{r}
+funda_mod <-
+  funda |>
+  filter(indfmt == "INDL", datafmt == "STD",
+         consol == "C", popsrc == "D")
+```
+
+In the code below, I exclude observations with either non-positive assets (`at`) or non-positive sales (`sale`).
+This filter also eliminates observations with missing `at` or missing `sale`.
+I include `system_time()` at the end to time the code.
+For me it takes between 7 and 12 seconds to run, as the final data have to be downloaded from the WRDS server.^[It is not clear to me why the run time is so variable. Perhaps varying usage of the server or blockages in getting the data from somewhere in the US to Australia.]
+Note that I keep `lag(datadate)`, as it's important to consider whether "stub" reporting periods or gaps in the time series need to be addressed.
+
+```{r}
+#| cache: true
+fy_2001_data <-
+  funda_mod |>
+  group_by(gvkey) |>
+  window_order(datadate) |>
+  filter(at > 0, sale > 0, !is.na(sale)) |>
+  mutate(lag_datadate = lag(datadate),
+         roa = ni / lag(at),
+         turnover = sale / lag(at),
+         margin = ni / sale,
+         d_roa = roa - lag(roa),
+         d_turnover = turnover - lag(turnover),
+         d_margin = margin - lag(margin)) |>
+  ungroup() |>
+  select(gvkey, datadate, lag_datadate, fyear, 
+         roa, turnover, margin, d_roa, d_turnover, d_margin) |>
+  filter(between(fyear, 2000, 2010)) |>
+  arrange(gvkey, datadate) |>
+  collect() |>
+  system_time()
+```
+
+Here is a quick snapshot of the data:
+
+```{r}
+fy_2001_data
+```
+
+From the descriptive statistics in @tbl-summ, it is clear that there are some wild outlier issues.
+
+```{r}
+#| label: tbl-summ
+#| tbl-cap: Summary statistics for data to replicate @Fairfield_2001
+fy_2001_data |> datasummary_skim()
+```
+
+Digging deeper, from @fig-roa-hist-5, it seems that there is a long tail to the left for ROA.
+
+```{r}
+#| label: fig-roa-hist-5
+#| fig-cap: Histogram for ROA (restricted to $\textit{ROA} \in (-5, 5)$)
+fy_2001_data |>
+  filter(between(roa, -5, 5)) |>
+  ggplot(aes(x = roa)) +
+  geom_histogram(binwidth = 0.25)
+```
+
+The histogram in @fig-roa-hist-1 is limited to $\textit{ROA} \in (-1, 1)$ (i.e., greater than $-100\%$ and less than $100\%$) and still a long thick tail to the left is evident.
+
+```{r}
+#| label: fig-roa-hist-1
+#| fig-cap: Histogram for ROA (restricted to $\textit{ROA} \in (-1, 1)$)
+fy_2001_data |>
+  filter(between(roa, -1, 1)) |>
+  ggplot(aes(x = roa)) +
+  geom_histogram(binwidth = 0.05)
+```
+
+I run the data step again, but using a local parquet repository (as described [here](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq-pg)) and DuckDB.
+Unsurprisingly, the code runs much faster.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+funda <- load_parquet(db, schema = "comp", table = "funda")
+
+funda_mod <-
+  funda |>
+  filter(indfmt == "INDL", datafmt == "STD",
+         consol == "C", popsrc == "D")
+
+fy_2001_data <-
+  funda_mod |>
+  group_by(gvkey) |>
+  window_order(datadate) |>
+  filter(at > 0, sale > 0, !is.na(sale)) |>
+  mutate(lag_datadate = lag(datadate),
+         roa = ni / lag(at),
+         turnover = sale / lag(at),
+         margin = ni / sale,
+         d_roa = roa - lag(roa),
+         d_turnover = turnover - lag(turnover),
+         d_margin = margin - lag(margin)) |>
+  ungroup() |>
+  select(gvkey, datadate, lag_datadate, fyear, 
+         roa, turnover, margin, d_roa, d_turnover, d_margin) |>
+  filter(between(fyear, 2000, 2010)) |>
+  arrange(gvkey, datadate) |>
+  collect() |>
+  system_time()
+```
+
+Yet the data appear to be the same.
+
+```{r}
+fy_2001_data
+```
+
+# References {-}
