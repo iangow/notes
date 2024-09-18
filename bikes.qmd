@@ -1,0 +1,152 @@
+---
+title: "A quick look at City of Melbourne bike data"
+author: Ian D. Gow
+date: 2024-09-20
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    classoption: [landscape]
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", duckdb", "tinytable"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/bikes.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/bikes.pdf).^[Some parts of the source code are ugly as I wrangled hurriedly with the output from SQL and LaTeX tables.]
+
+```{r}
+#| message: false
+library(tidyverse)
+library(duckdb)
+library(tinytable)
+```
+
+The following code downloads the data and unzips the single file therein.
+It is cached (`cache: true` in chunk options) to save time with repeated runs of the code.
+
+```{r}
+#| cache: true
+t <- tempfile(fileext = ".zip")
+url <- str_c("https://opendatasoft-s3.s3.amazonaws.com/",
+             "downloads/archive/74id-aqj9.zip")
+download.file(url, t)
+unzip(t)
+```
+I create a database connection and load the `icu` extension, which contains time-zone information.^[You may need to run `INSTALL icu` before `LOAD icu` depending on your DuckDB installation.]
+
+```{r}
+#| results: false
+db <- dbConnect(duckdb::duckdb(), timezone_out = "Australia/Melbourne")
+
+dbExecute(db, "LOAD icu")
+```
+
+The following SQL creates `bikes_raw`, which is fairly unprocessed data.
+Only `RUNDATE` is given a type, and this is `TIMESTAMP` because there is no time zone information in the data.
+
+```{sql}
+#| connection: db
+#| 
+CREATE OR REPLACE TABLE bikes_raw AS
+  SELECT *
+  FROM read_csv('74id-aqj9.csv',
+                timestampformat='%Y%m%d%H%M%S',
+                types={'RUNDATE': 'TIMESTAMP'});
+```
+
+The following SQL produces some information on the contents of `bikes_raw` that is shown in @tbl-bikes-raw.
+
+```{sql}
+#| connection: db
+#| max.print: -1
+#| output.var: results
+SELECT column_name, column_type, max, null_percentage
+FROM (SUMMARIZE bikes_raw);
+```
+
+```{r}
+#| label: tbl-bikes-raw
+#| echo: false
+#| eval: true
+#| tbl-cap: Information on unprocessed data (`bikes_raw`)
+results |> tt() |> format_tt(escape = TRUE)
+```
+
+The following function is created in R, but generates SQL.
+The [documentation](https://duckdb.org/docs/sql/functions/timestamptz.html) for `make_timestamptz()` says that it returns "the `TIMESTAMP WITH TIME ZONE` for the given µs since the epoch."
+But it seems the data we have are in milliseconds, not microseconds, so we need to multiply by 1000.
+
+```{r}
+epoch_to_ts <- function(x) {
+  x <- rlang::as_name(rlang::enquo(x))
+  dplyr::sql(stringr::str_c("make_timestamptz(", x, " * 1000)"))
+}
+```
+
+The following code converts `rundate` to `TIMESTAMPTZ` assuming the original data are Melbourne times.
+It also converts `lastcommwithserver`, `latestupdatetime`, and `installdate` to `TIMESTAMPTZ`.
+Note that attention needs to be paid to time zones, because the **epoch** is [defined](https://www.postgresql.org/docs/current/functions-datetime.html) as "the number of seconds since `1970-01-01 00:00:00 UTC`", which would be a different point in time from `1970-01-01 00:00:00` in Melbourne time.
+
+```{r}
+bikes <-
+  tbl(db, "bikes_raw") |>
+  rename_with(str_to_lower) |>
+  select(-installed, -temporary, -removaldate) |>
+  mutate(rundate = timezone("Australia/Melbourne", rundate),
+         lastcommwithserver = !!epoch_to_ts(lastcommwithserver),
+         latestupdatetime = !!epoch_to_ts(latestupdatetime),
+         installdate = !!epoch_to_ts(installdate)) |>
+  compute(name = "bikes", overwrite = TRUE)
+```
+
+The following SQL produces some information on the contents of `bikes` that is shown in @tbl-bikes.
+
+```{sql}
+#| connection: db
+#| max.print: -1
+#| output.var: results
+SELECT column_name, column_type, max, null_percentage
+FROM (SUMMARIZE bikes);
+```
+
+```{r}
+#| label: tbl-bikes
+#| echo: false
+#| eval: true
+#| tbl-cap: Information on processed data (`bikes`)
+results |> tt() |> format_tt(escape = TRUE)
+```
+
+```{r}
+#| label: tbl-time-sample
+#| tbl-cap: Sample of date-time variables
+#| render: !expr function(x, ...) mutate(x, across(everything(), as.character)) |> tt()
+bikes |> 
+  select(lastcommwithserver, latestupdatetime, rundate, installdate) |>
+  collect(n = 10)
+```
+
+In making @fig-runtime, I convert the date component of `runtime` to the same date (`2017-01-01`).
+This facilitates plotting in R, as R has no native "time" type and thus things are easier using date-times.
+Unfortunately, it seems that all the timestamps in `bikes` are boring back-end times produced by systems, so there is nothing special about the distibution of these times.
+More interest plots might come from looking at when bikes are checked out and in (only net checkouts seem to be available) assuming that the data are sufficiently frequent.
+
+```{r}
+#| label: fig-runtime
+#| fig-cap: Distribution of times in `runtime`
+bikes |>
+  mutate(runtime = make_timestamptz(2017L, 1L, 1L, 
+                                    hour(rundate), minute(rundate), 
+                                    second(rundate))) |>
+  ggplot(aes(runtime)) +
+  geom_histogram() +
+  scale_x_datetime(date_breaks = "1 hour", date_labels = "%H")
+```
