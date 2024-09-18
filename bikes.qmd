@@ -1,7 +1,7 @@
 ---
 title: "A quick look at City of Melbourne bike data"
 author: Ian D. Gow
-date: 2024-09-20
+date: 2024-09-19
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -128,7 +128,7 @@ results |> tt() |> format_tt(escape = TRUE)
 ```{r}
 #| label: tbl-time-sample
 #| tbl-cap: Sample of date-time variables
-#| render: !expr function(x, ...) mutate(x, across(everything(), as.character)) |> tt()
+#| render: !expr function(x, ...) mutate(x, across(everything(), as.character)) |> tt() |> knitr::knit_print()
 bikes |> 
   select(lastcommwithserver, latestupdatetime, rundate, installdate) |>
   collect(n = 10)
@@ -147,6 +147,6 @@ bikes |>
                                     hour(rundate), minute(rundate), 
                                     second(rundate))) |>
   ggplot(aes(runtime)) +
-  geom_histogram() +
+  geom_histogram(binwidth = 60 * 60) +
   scale_x_datetime(date_breaks = "1 hour", date_labels = "%H")
 ```
