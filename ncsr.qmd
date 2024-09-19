@@ -1,0 +1,112 @@
+---
+title: "A quick look at N-CSR and N-CEN filings"
+author: Ian D. Gow
+date: 2024-09-19
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/ncsr.qmd).
+
+```{r}
+#| include: false
+options(width = 75,
+        tibble.width = 75,
+        pillar.print_min = 5)
+```
+
+```{r}
+#| message: false
+library(tidyverse)
+library(DBI)
+library(farr)
+```
+I have SEC filing index files downloaded as discussed [here](https://iangow.github.io/far_book/glms.html#appendix-maintaining-a-repository-of-sec-index-files).
+
+```{r}
+#| eval: true
+db <- dbConnect(duckdb::duckdb())
+
+sec_index <- load_parquet(db, "sec_index*", "edgar")
+```
+
+It's often helpful to look for variants of a `form_type`.
+
+```{r}
+sec_index |>
+  filter(str_detect(form_type, "CSR")) |>
+  count(form_type, sort = TRUE) |>
+  collect()
+```
+
+Here I just grab a sample of N-CSR filings.
+
+```{r}
+sample_filings <-
+  sec_index |> 
+  filter(form_type == "N-CSR") |>
+  arrange(desc(date_filed)) |>
+  collect(n = 10)
+```
+
+I make `browse_sec()`, a small function for browsing filings on the SEC website.
+
+```{r}
+browse_sec <- function(file_name) {
+  url <- str_replace(file_name, 
+                     "([0-9]{10})-([0-9]{2})-([0-9]{6})\\.txt$",
+                     "\\1\\2\\3/\\1-\\2-\\3-index.htm")
+  url <- str_c("https://www.sec.gov/Archives/", url)
+  browseURL(url)
+}
+```
+
+And I use `browse_sec()` to look at the first filing.
+
+```{r}
+browse_sec(sample_filings$file_name[1])
+```
+
+I couldn't see any director names there, but I did find them in a "N-CEN" filing around the same time.
+
+It's often helpful to look for variants of a `form_type`.
+
+```{r}
+sec_index |>
+  filter(str_detect(form_type, "CEN")) |>
+  count(form_type, sort = TRUE) |>
+  collect()
+```
+This seems much rarer than N-CSR filings. Perhaps this a new form type.
+
+Anyway, I grab a sample of these ...
+
+```{r}
+sample_cen_filings <-
+  sec_index |> 
+  filter(form_type == "N-CEN") |>
+  arrange(desc(date_filed)) |>
+  collect(n = 10)
+```
+
+... and look at the first one.
+
+```{r}
+browse_sec(sample_cen_filings$file_name[1])
+```
+
+This filing has the directors' names in XML, so pretty easy to extract.
