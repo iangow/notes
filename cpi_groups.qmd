@@ -1,0 +1,97 @@
+---
+title: "Consumer Price Index"
+author: Ian D. Gow
+date: 2024-09-25
+date-format: "D MMMM YYYY"
+format:
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+
+In writing this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "readabs", "ggrepel"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/cpi_groups.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/cpi_groups.pdf).
+
+Load these three packages:
+
+```{r}
+#| message: false
+library(tidyverse)
+library(readabs)
+library(ggrepel)
+```
+
+Specify location for downloaded ABS data:
+
+```{r}
+Sys.setenv(R_READABS_PATH = "~/Downloads/")
+```
+
+
+Download and clean up ABS CPI data:
+
+```{r}
+#| message: false
+cpi <- 
+  read_abs("6401.0", tables = 3)|> 
+  separate_wider_regex(series,
+                       c(measure = "^.*?", "\\s+;\\s+",
+                         index = ".*?", "\\s+;\\s+",
+                         city = ".*?", "\\s+;"))
+```
+
+Prepare plot data:
+
+```{r}
+cpi_plot_df <-
+  cpi |>
+  filter(!is.na(value), 
+         data_type == "INDEX", 
+         date >= "2005-12-01") |>
+  group_by(index) |>
+  arrange(date) |>
+  mutate(year = year(date),
+         first_value = first(value),
+         last_date = date == max(date),
+         label = if_else(last_date, index, NA)) |>
+  mutate(value = 100 * value / first_value)
+```
+
+The following code produces the plot seen in @fig-cpi.
+
+```{r}
+#| label: fig-cpi
+#| fig-cap: CPI index by group
+#| warning: false
+#| fig-width: 8
+#| fig-height: 9
+cpi_plot_df |>
+  filter(index != "All groups CPI") |>
+  ggplot(aes(x = date, y = value, group = index, colour = index,
+             label = str_wrap(label, width = 10))) +
+  geom_line() +
+  theme(legend.position = "none") +
+  # xlim(as.Date(min(cpi_plot_df$date), m))
+  # expand_limits(x = as.Date("2028-12-31")) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y",
+               expand = expansion(mult = c(0, .1))) +
+  scale_y_log10() +
+  ylab(str_c("CPI index (", 
+             format(min(cpi_plot_df$date), "%B %Y"),
+             " = 100)")) +
+  xlab("Year") +
+  geom_text_repel(hjust = "left", 
+                  direction = "y",
+                  arrow = arrow(length = unit(0.015, "npc")),
+                  nudge_x = 365 * 1.3,
+                  na.rm = TRUE) +
+  theme(axis.text.x = element_text(angle = 90))
+```
