@@ -95,10 +95,12 @@ IBES CUSIP and CRSP NCUSIP are both 8-digit symbols.
 CUSIP has an advantage that its first 6 digits constitute the company identifier and the next 2 digits are issue specific.
 Every company's stock issue has a unique and distinct 8-digit CUSIP number that will never be reassigned to other companies or issues, even if the original company stock is delisted or discontinued. While CRSP data (e.g. price, returns, and shares outstanding) are issue specific, IBES provides earnings estimates, summary estimates, and recommendations that are company specific. However, most useful IBES figures (e.g. EPS estimates) are scaled by shares outstanding. Therefore, linking IBES with CRSP should be established by using the entire 8-digit CUSIP, in order to accurately link security specific information.
 
-Top of Section
 
-CUSIP Method to Link IBES TICKERS and CRSP PERMNOs
-The first step is to generate a complete list of the IBES TICKERs for US companies along with all associated historical CUSIPs. The USFIRM variable can be used to subset for all US companies tracked by IBES. Only observations with non-missing CUSIP are retained. In the code below, the start dates of the historical CUSIPs and company names will be used to flag CUSIP links.
+# CUSIP Method to Link IBES TICKERS and CRSP PERMNOs
+
+The first step is to generate a complete list of the IBES TICKERs for US companies along with all associated historical CUSIPs. 
+The `usfirm` variable can be used to subset for all US companies tracked by IBES. 
+Only observations with non-missing CUSIP are retained. In the code below, the start dates of the historical CUSIPs and company names will be used to flag CUSIP links.
 
 Below is the code to generate the complete list of the IBES TICKERs for all U.S. companies tracked by IBES (15,581 as of April 2006):
 
@@ -116,6 +118,8 @@ db <- dbConnect(duckdb::duckdb())
 ```{r}
 idsum <- load_parquet(db, "idsum", "ibes")
 stocknames <- load_parquet(db, "stocknames", "crsp")
+ic_link <- load_parquet(db, "ic_link", "ibes")
+actpsum_epsus <- load_parquet(db, "actpsum_epsus", "ibes")
 ```
 
 ```{r}
