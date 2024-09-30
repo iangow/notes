@@ -1,0 +1,39 @@
+---
+title: "Untitled"
+jupyter: python3
+---
+
+```{python}
+data_path = "~/Downloads/melbourne-housing-market/"
+
+import ibis
+from os.path import expanduser
+
+ibis.options.interactive = True
+
+con = ibis.duckdb.connect()
+```
+
+```{python}
+price_less_path = expanduser(data_path + "MELBOURNE_HOUSE_PRICES_LESS.csv")
+price_less = con.read_csv(price_less_path)
+price_less
+```
+
+```{python}
+from ibis import _
+price_full_path = expanduser(data_path + "Melbourne_housing_FULL.csv")
+price_full = con.read_csv(price_full_path)
+price_full
+```
+```{python}
+(price_full
+.Method.value_counts()
+.order_by(ibis.desc(_.Method_count)))
+```
+```{python}
+from ibis import _
+(price_full
+ .Rooms.value_counts()
+ .order_by(ibis.desc(_.Rooms_count)))
+```
