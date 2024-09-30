@@ -95,7 +95,7 @@ fy_2001_data <-
   funda_mod |>
   group_by(gvkey) |>
   window_order(datadate) |>
-  filter(at > 0, sale > 0, !is.na(sale)) |>
+  filter(at > 0, sale > 0) |>
   mutate(lag_datadate = lag(datadate),
          roa = ni / lag(at),
          turnover = sale / lag(at),
@@ -165,7 +165,7 @@ fy_2001_data <-
   funda_mod |>
   group_by(gvkey) |>
   window_order(datadate) |>
-  filter(at > 0, sale > 0, !is.na(sale)) |>
+  filter(at > 0, sale > 0) |>
   mutate(lag_datadate = lag(datadate),
          roa = ni / lag(at),
          turnover = sale / lag(at),
