@@ -24,6 +24,14 @@ csl: jfe.csl
 This code shows how one can use **list columns** (e.g., in a parquet file) to provide a single-file (or single-table) representation of data that might naturally be stored as multiple tables in a more traditional **relational database**.
 The code to produce the parquet file used in the following analysis is provided [here](https://github.com/iangow/acnc/blob/main/create_registry.R).
 
+In the original registry data supplied by the ACNC, the data I have stored in list columns were spread over multiple columns.
+For example, "Operating locations (columns R-Z)" included columns such as "Operates in ACT" and "Operates in VIC" with values equal to either `Y` or blank.
+I converted these columns to a single column, `states`, with values such as `VIC` or `VIC, NSW`.
+While these look like simply comma-separated text values when viewing the data in software such as [Tad](https://www.tadviewer.com), they are actually list columns.
+
+Other list columns include `operating_countries` (originally a single column, but as comma-separated text, not a list column), `subtypes` (originally "Subtypes (columns AA-AN)"), and `beneficiaries` (originally "Beneficiaries (columns AO-BN)").
+Below I provide examples of working with such columns.
+
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "arrow", "tinytable", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/acnc_registry_arrow.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/acnc_registry_arrow.pdf).
