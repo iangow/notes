@@ -1,0 +1,109 @@
+---
+title: "Does @Beardsley_2021 show anything?"
+author: Ian D. Gow
+date: 2024-10-01
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+A recurring problem in accounting research is poorly thought-out research designs where a null hypothesis is assumed to imply zero coefficients in some regression without any effort to check that this is the case.
+@Beardsley_2021 illustrates this problem nicely.
+@Beardsley_2021 [p. 1] state that "using year-end effective tax rate (ETR) manipulation as our setting, we find that firms decrease ETRs from 3rd to 4th quarter to meet or beat a greater percentage of individual forecast. ... Our study highlights the strategic nature of earnings management by providing evidence that managers consider individual forecasts to calibrate earnings management decisions."
+
+The main result from @Beardsley_2021 [p. 11] is provided by Table 5, which presents two regressions, one for each of two sub-samples.
+The key results are a positive coefficient on *PREBEAT_AMT* for *PREBEAT* firms and a negative coefficient on *PREMISS_AMT* for *PREMISS* firms.
+
+But I can simulate precisely these results with no earnings management.
+I assume nothing more than random variation in ETRs from Q3 to Q4 and that analysts know the Q4 effective tax rate.
+
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", modelsummary"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/tax_target.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/tax_target.pdf).
+
+```{r}
+#| message: false
+library(tidyverse)
+library(modelsummary)
+```
+
+In the code below, I generate data for 1,000 firms and draw ETRs for Q3 and Q4 from independent uniform distributions of the range 33%--37%.
+
+```{r}
+n <- 1000
+etr_3 <- runif(n = n, min = 0.33, max = 0.37)
+etr_4 <- runif(n = n, min = 0.33, max = 0.37)
+```
+
+I then draw forecasts of pretax earnings from a normal distribution.
+Forecasts of after-tax earnings are simply pre-tax earnings times a factor equal to one minus Q4 ETR.
+
+```{r}
+ebt_forecast <- rnorm(n = n, mean = 1, sd = 0.2)
+ni_forecast <- ebt_forecast * (1 - etr_4)
+```
+
+Realized pre-tax earnings are simply the forecast plus noise and realized after-tax earnings are realized pre-tax earnings times a factor equal to one minus Q4 ETR.
+
+```{r}
+ebt_actual <- ebt_forecast + rnorm(n = n, sd = 0.1)
+ni_actual <- ni_forecast * (1 - etr_4)
+```
+
+I combine the relevant data from above into a data frame and calculate variables for the regression following the descriptions in Appendix A of @Beardsley_2021 [p. 14--15]. 
+
+```{r}
+df <- 
+  tibble(etr_3, etr_4, ebt_actual, ni_forecast, ni_actual) |>
+  mutate(amount = ni_forecast - ebt_actual * (1 - etr_3),
+         premiss_amt = amount,
+         premiss = premiss_amt > 0,
+         prebeat = premiss_amt < 0,
+         prebeat_amt = -amount)
+```
+
+I then run the regressions shown in Table 5 of @Beardsley_2021 [p. 11].
+Results are shown in @tbl-5.
+There you can see I have reproduced the key results of @Beardsley_2021.
+However, the null result of "no earnings management" is true here.
+As such, it is not clear that @Beardsley_2021 show anything.
+
+I have written [elsewhere](https://github.com/iangow/notes/blob/main/elephants.pdf) that the scourge of near-ubiquitous p-hacking makes accounting research of very dubious merit.
+If null hypotheses can be rejected simply because it is assumed that they imply zero coefficients, then this only adds to these concerns.^[One doesn't even need to p-hack if one runs regressions where the null hypothesis implies non-zero coefficients and one assumes that they do not.]
+
+ @Beardsley_2021 was published in the *Journal of Accounting and Economics*, one of the top journals in accounting.
+ The acknowledgement note thanks an editor, a referee, at least three discussants, and many luminous members of the accounting firmament.
+ This suggests that plausibly mechanical nature of the results in @Beardsley_2021 never occurred to any of these people.^[One has to be careful here, as one should not interpret any kind of endorsement of a paper from mentions in the acknowledgements.]
+ From conceiving this simulation to writing this note took about half an hour; so the bar is not high!
+
+```{r}
+fms <- list(
+  lm(etr_4 - etr_3 ~ prebeat_amt, data = df, subset = prebeat),
+  lm(etr_4 - etr_3 ~ premiss_amt, data = df, subset = premiss)
+)
+```
+
+
+```{r}
+#| label: tbl-5
+#| tbl-cap: Replication of Table 5 of @Beardsley_2021
+#| echo: false
+modelsummary(fms,
+             estimate = "{estimate}{stars}",
+             statistic = "{statistic}",
+             gof_map = c("nobs", "r.squared"),
+             stars = c('*' = .1, '**' = 0.05, '***' = .01))
+```
+
+## References {-}
