@@ -1,5 +1,5 @@
 ---
-title: "Linking IBES and CRSP Data"
+title: "Linking IBES and CRSP"
 author: Ian D. Gow
 date: 2024-09-30
 date-format: "D MMMM YYYY"
@@ -17,24 +17,51 @@ format:
 bibliography: papers.bib
 ---
 
+# Identifiers
 
-IBES data with broker estimates of company earnings and CRSP data with the corresponding stock prices are often combined by linking common identifiers---particularly CUSIPs---in both datasets.
-This document explains a "Linking Table" approach for merging IBES and CRSP data and provides R code.
+Merging data on companies or securities from two different data sources typically requires mapping the company and security identifiers from one data source to those from the other.
+The leading source of data on equity analysts' forecasts of company earnings for researchers in accounting and finance is IBES.
+CRSP is the leading source for academics of data on stock prices and returns for US-listed companies.
+IBES's firm identifier is `ticker` and CRSP's security identifier is `permno`.
+
+## CUSIPs
+
+As the term suggests, an *identifier* for should uniquely identify a company or a security.
+The CUSIP is an identifier used to identify securities in the US and Canada.
+According to [CUSIP Global Services,](https://www.cusip.com/identifiers.html#/CUSIP) "CUSIP identifiers are the universally accepted standard for classifying financial instruments across institutions and exchanges worldwide. 
+Derived from the Committee on Uniform Security Identification Procedures, CUSIPs are 9-character identifiers that capture an issue's important differentiating characteristics for issuers and their financial instruments in the U.S. and Canada."
+
+[CUSIP Global Services](https://www.cusip.com/identifiers.html?section=CUSIP) uses the CUSIP of Amazon.com's common stock, `023135106`, as an example of the components of a 9-character CUSIP.
+The first six characters---`023135`---represent the issuer, which is Amazon.com.
+While in this case the issuer is a company, an issuer could be a municipality or a government agency.
+The next two characters (`10`) indicate the type of instrument (e.g., debt or equity), but also uniquely identifies the issue among the issuer's securities.
+The final character (`6`) is a check digit created by a mathematical formula.
+This last character will indicate any corruption of the preceding 8 characters.
+Note that the characters need not be digits.
+For example, according to an [SEC filing,](https://investors.delltechnologies.com/static-files/acf98957-c3f6-4363-bbaa-f0525ce5296d) the Class C Common Stock of Dell Technologies Inc. has a CUSIP of `24703L202`, which contains the letter `L`.
+
+While a full CUSIP always comprises nine characters, many data services abbreviate the CUSIP by omitting the check digit (to create an "eight-digit" CUSIP) or both the check digit and the issue identifier (to create a "six-digit" CUSIP).
+For example, both the IBES table (`ibes.id_sum`) and the CRSP table (`crsp.stocknames`) use eight-digit CUSIPs.^[The table names in parentheses refer to the identifiers of these tables on Wharton Research Data Services ("WRDS"), the commonly used data service for business school academics. For more on WRDS, see [here](https://iangow.github.io/far_book/fin-state.html).]
+
+## PERMNOs
+
+## IBES tickers
+
+with the corresponding stock prices are often combined by linking common identifiers---particularly CUSIPs---in both datasets.
+In this document, I discuss issues in merging IBES and CRSP, identify problems with the approach used by many researchers, and provide an alternative link-table along with R code to generate it.
 
 # Introduction
 
-Combining broker estimates of company earnings and other financials in the IBES database with stock returns and other items in the CRSP stock files requires knowledge of both data sets and how they use different company and security identification codes. 
 Both databases use primary identifiers (IBES TICKER and CRSP PERMNO) that are unique in the sense that a single primary identifier is associated with each company or security.
 This uniqueness feature makes querying and organizing data from these sets straightforward (as opposed to using non-unique company names, exchange tickers or CUSIPs as identifiers).
 However, because these primary identifiers are specific to each database, merging or combining the IBES and CRSP sets cannot be accomplished in a simple and direct manner.
 
 In order to merge IBES data with CRSP data, the best approach is to use common secondary identifiers to construct a 'linking table' that makes a one-to-one correspondence between the two sets of primary identifiers.
 This document explains the 'linking table' approach, which can be applied to datasets other than IBES and CRSP, and provides the SAS code to accomplish this task using the IBES and CRSP datasets as an example.
-*The complete code can be found in the WRDS Research Macros page under the macro `ICLINK.SAS`.*
+*The complete code can be found in the WRDS Research Macros page under the macro `iclink.sas`.*
 
 This document is based on a document explaining SAS code found [here](https://wrds-www.wharton.upenn.edu/pages/wrds-research/applications/linking-databases/linking-ibes-and-crsp-data/).
 WRDS provides a Python version of the linking code [here](https://wrds-www.wharton.upenn.edu/pages/wrds-research/applications/python-replications/linking-ibes-and-crsp-data-python/).
-
 
 # Identifier Files
 
