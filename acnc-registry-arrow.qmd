@@ -1,0 +1,139 @@
+---
+title: "ACNC Registry data: Arrow version"
+author: Ian D. Gow
+date: 2024-10-01
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+This code shows how one can use **list columns** (e.g., in a parquet file) to provide a single-file (or single-table) representation of data that might naturally be stored as multiple tables in a more traditional **relational database**.
+The code to produce the parquet file used in the following analysis is provided [here](https://github.com/iangow/acnc/blob/main/create_registry.R).
+
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "arrow", "tinytable", "farr"))` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/acnc_registry_arrow.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/acnc_registry_arrow.pdf).
+
+```{r}
+#| message: false
+library(tidyverse)
+library(tinytable)
+library(arrow)
+library(farr)
+```
+
+We start by downloading the data, which takes a few seconds.
+
+```{r}
+#| cache: true
+registry <-
+  read_parquet('https://go.unimelb.edu.au/5d78') |>
+  collect() |>
+  system_time()
+```
+
+We can construct the `beneficiaries` data frame by using `unnest()` with the list column `beneficiaries`.
+
+```{r}
+beneficiaries <-
+  registry |>
+  select(abn, beneficiaries) |>
+  unnest(beneficiaries) |>
+  rename(beneficiary = beneficiaries)
+```
+
+Charities vary in terms of the groups they serve, or **beneficiaries**.
+The results of the following code are shown in @tbl-benefs.
+
+```{r}
+#| label: tbl-benefs
+#| tbl-cap: Number of charities serving each beneficiary type
+registry |>
+  unnest(beneficiaries) |>
+  count(beneficiaries, sort = TRUE) |>
+  tt() |>
+  style_tt(align = "ld") |>
+  format_tt(escape = TRUE) 
+```
+
+Many charities serve multiple beneficiary types.
+The most common pairs of beneficiary types are given in @tbl-bene-pairs, which is produced using the following code.
+
+```{r}
+#| label: tbl-bene-pairs
+#| tbl-cap: Most common beneficiary pairs
+beneficiaries |>
+  inner_join(beneficiaries, by = "abn",
+             relationship = "many-to-many") |>
+  filter(beneficiary.x < beneficiary.y) |>
+  count(beneficiary.x, beneficiary.y) |>
+  arrange(desc(n)) |>
+  head(n = 10) |>
+  tt() |>
+  style_tt(align = "lld") |>
+  format_tt(escape = TRUE)
+```
+
+The results of the following code are shown in @tbl-countries.
+
+```{r}
+#| label: tbl-countries
+#| tbl-cap: Most common countries of operation
+registry |>
+  unnest(operating_countries) |>
+  select(abn, operating_countries) |>
+  filter(operating_countries != "AUS") |>
+  count(operating_countries, sort = TRUE) |>
+  head(n = 10) |>
+  tt() |>
+  format_tt(escape = TRUE)
+```
+
+
+The results of the following code are shown in @tbl-num-countries.
+
+```{r}
+#| label: tbl-num-countries
+#| tbl-cap: Number of countries of operation per charity
+registry |>
+  unnest(operating_countries) |>
+  distinct(abn, operating_countries) |>
+  filter(operating_countries != "AUS") |>
+  count(abn, name = "num_countries", sort = TRUE) |>
+  mutate(num_countries = if_else(num_countries > 10, "More than 10", 
+                                 as.character(num_countries)),
+         num_countries = fct_inorder(num_countries)) |>
+  count(num_countries) |>
+  arrange(desc(num_countries)) |>
+  tt() |>
+  style_tt(align = "ld") |>
+  format_tt(escape = TRUE) 
+```
+
+The results of the following code are shown in @tbl-subtypes.
+
+```{r}
+#| label: tbl-subtypes
+#| tbl-cap: Most common charity subtypes
+registry |>
+  unnest(subtypes) |>
+  count(subtypes, sort = TRUE) |>
+  head(n = 10) |>
+  tt() |>
+  style_tt(align = "ld") |>
+  format_tt(escape = TRUE)
+```
