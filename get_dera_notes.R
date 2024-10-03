@@ -1,7 +1,7 @@
 library(httr2)         # request(), req_*(), resp_body_html()
 library(rvest)
 
-
+# Get information on available zip files ----
 sec_url <- "https://www.sec.gov/data-research/financial-statement-notes-data-sets"
 
 resp <-
@@ -19,6 +19,7 @@ zip_files <-
   filter(str_detect(value, "zip")) |>
   mutate(file = str_replace(value, "^.*data-sets/(.*.zip).*$", "\\1"))
 
+# Function to process a zip file ----
 get_data <- function(file) {
   url <- str_c("https://www.sec.gov/files/dera/data/",
                "financial-statement-notes-data-sets/", file)
@@ -34,7 +35,7 @@ get_data <- function(file) {
 
   db <- dbConnect(duckdb())
 
-  # sub ----
+  ## sub ----
   sub <- read_tsv(unz(t, "sub.tsv"),
                   col_types = "cdcccccccccccccccccccdcdccddcdcddcdcddcd") |>
     mutate(across(c(changed, filed, period), ymd),
@@ -45,7 +46,7 @@ get_data <- function(file) {
 
   dbExecute(db, str_c("COPY sub_notes TO '", pq_file, "'"))
 
-  # tag ----
+  ## tag ----
   tag <- read_tsv(unz(t, "tag.tsv"),
                   col_types = "ccddccccc") |>
     copy_to(db, df = _, name = "tag_notes", overwrite = TRUE)
@@ -54,7 +55,7 @@ get_data <- function(file) {
 
   dbExecute(db, str_c("COPY tag_notes TO '", pq_file, "'"))
 
-  # dim ----
+  ## dim ----
   dim <- read_tsv(unz(t, "dim.tsv"), col_types = "ccd") |>
     copy_to(db, df = _, name = "dim_notes", overwrite = TRUE)
 
@@ -62,7 +63,7 @@ get_data <- function(file) {
 
   dbExecute(db, str_c("COPY dim_notes TO '", pq_file, "'"))
 
-  # num ----
+  ## num ----
   num <- read_tsv(unz(t, "num.tsv"),
                   col_types = "cccddccddcddcddd") |>
     mutate(across(c(ddate), ymd)) |>
@@ -72,7 +73,7 @@ get_data <- function(file) {
 
   dbExecute(db, str_c("COPY num_notes TO '", pq_file, "'"))
 
-  # txt ----
+  ## txt ----
   txt <- read_tsv(unz(t, "ren.tsv"),
                   col_types = "cdccccccdd") |>
     copy_to(db, df = _, name = "txt_notes", overwrite = TRUE)
@@ -81,7 +82,7 @@ get_data <- function(file) {
 
   dbExecute(db, str_c("COPY txt_notes TO '", pq_file, "'"))
 
-  # txt ----
+  ## txt ----
   ren <- read_tsv(unz(t, "ren.tsv"),
                   col_types = "cdccccccdd") |>
     copy_to(db, df = _, name = "ren_notes", overwrite = TRUE)
@@ -90,7 +91,7 @@ get_data <- function(file) {
 
   dbExecute(db, str_c("COPY ren_notes TO '", pq_file, "'"))
 
-  # pre ----
+  ## pre ----
   pre <-
     read_tsv(unz(t, "pre.tsv"), col_types = "cddcdccccd") |>
     copy_to(db, df = _, name = "pre_notes", overwrite = TRUE)
@@ -99,7 +100,7 @@ get_data <- function(file) {
 
   dbExecute(db, str_c("COPY pre_notes TO '", pq_file, "'"))
 
-  # cal ----
+  ## cal ----
   cal <- read_tsv(unz(t, "cal.tsv"), col_types = "cdddcccc") |>
     copy_to(db, df = _, name = "cal_notes", overwrite = TRUE)
 
