@@ -38,10 +38,11 @@ library(tidyverse)
 library(modelsummary)
 ```
 
-In the code below, I generate data for 1,000 firms and draw ETRs for Q3 and Q4 from independently from a uniform distribution over the range 33%--37%.
+In the code below, I generate data for 1,000 firms and draw ETRs for Q3 and Q4 independently from a uniform distribution over the range 33%--37%.
 
 ```{r}
-n <- 1000
+n <- 10000
+n_analysts <- 10
 set.seed(20241001)
 etr_3 <- runif(n = n, min = 0.33, max = 0.37)
 etr_4 <- runif(n = n, min = 0.33, max = 0.37)
@@ -51,27 +52,40 @@ I then draw forecasts of pretax earnings from a normal distribution.
 Forecasts of after-tax earnings are simply pre-tax earnings times a factor equal to one minus Q4 ETR.
 
 ```{r}
-ebt_forecast <- rnorm(n = n, mean = 1, sd = 0.2)
-ni_forecast <- ebt_forecast * (1 - etr_4)
+ebt_actual <- rnorm(n = n, mean = 1, sd = 0.1)
+ni_actual <- ebt_actual * (1 - etr_4)
 ```
 
 Realized pre-tax earnings are simply the forecast plus noise and realized after-tax earnings are realized pre-tax earnings times a factor equal to one minus Q4 ETR.
 
 ```{r}
-ebt_actual <- ebt_forecast + rnorm(n = n, sd = 0.1)
-ni_actual <- ni_forecast * (1 - etr_4)
+df_pre <- 
+  tibble(firm_id = 1:n, ebt_actual,
+            etr_3, etr_4, ni_actual) |>
+  cross_join(tibble(analyst_id = 1:n_analysts)) |>
+  mutate(ebt_forecast = ebt_actual + rnorm(n = n * n_analysts, sd = 0.2),
+         ni_forecast = ebt_forecast * (1 - etr_4),
+         ni_premanaged = ebt_actual * (1 - etr_3)) |>
+  group_by(firm_id) |>
+  summarize(percent_miss = mean(ni_premanaged < ni_forecast),
+            disp = sd(ni_forecast),
+            ni_forecast = mean(ni_forecast),
+            .groups = "drop")
+            
 ```
 
 I combine the relevant data from above into a data frame and calculate variables for the regression following the descriptions in Appendix A of @Beardsley_2021 [p. 14--15]. 
 
 ```{r}
 df <- 
-  tibble(etr_3, etr_4, ebt_actual, ni_forecast, ni_actual) |>
+  df_pre |>
   mutate(amount = ni_forecast - ebt_actual * (1 - etr_3),
          premiss_amt = amount,
          premiss = premiss_amt > 0,
          prebeat = premiss_amt < 0,
-         prebeat_amt = -amount)
+         prebeat_amt = -amount) |>
+  mutate(premiss_amt = if_else(premiss, premiss_amt, 0),
+         prebeat_amt = if_else(prebeat, prebeat_amt, 0))
 ```
 
 I then run the regressions shown in Table 5 of @Beardsley_2021 [p. 11].
@@ -90,9 +104,9 @@ If null hypotheses can be rejected simply because it is assumed that they imply 
 
 ```{r}
 fms <- list(
-  lm(etr_4 - etr_3 ~ prebeat_amt, data = df, subset = prebeat),
-  lm(etr_4 - etr_3 ~ premiss_amt, data = df, subset = premiss)
-)
+  lm(etr_4 - etr_3 ~ prebeat_amt + percent_miss + disp, data = df, subset = prebeat),
+  lm(etr_4 - etr_3 ~ premiss_amt + percent_miss + disp, data = df, subset = premiss),
+  lm(etr_4 - etr_3 ~ percent_miss, data = df))
 ```
 
 
