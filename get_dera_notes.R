@@ -110,4 +110,4 @@ get_data <- function(file) {
   dbDisconnect(db)
 }
 
-map(zip_files$file[10:20], get_data)
+map(zip_files$file, get_data)
