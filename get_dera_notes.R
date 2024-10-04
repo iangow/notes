@@ -1,5 +1,7 @@
 library(httr2)         # request(), req_*(), resp_body_html()
 library(rvest)
+library(tidyverse)
+library(DBI)
 
 # Get information on available zip files ----
 sec_url <- "https://www.sec.gov/data-research/financial-statement-notes-data-sets"
@@ -74,15 +76,15 @@ get_data <- function(file) {
   dbExecute(db, str_c("COPY num_notes TO '", pq_file, "'"))
 
   ## txt ----
-  txt <- read_tsv(unz(t, "ren.tsv"),
-                  col_types = "cdccccccdd") |>
+  txt <-
+    read_tsv(unz(t, "txt.tsv"), col_types = "cccdddcdddcdcdddcdcc") |>
     copy_to(db, df = _, name = "txt_notes", overwrite = TRUE)
 
   pq_file <- file.path(pq_dir, str_c("txt_notes_", period, ".parquet"))
 
   dbExecute(db, str_c("COPY txt_notes TO '", pq_file, "'"))
 
-  ## txt ----
+  ## ren ----
   ren <- read_tsv(unz(t, "ren.tsv"),
                   col_types = "cdccccccdd") |>
     copy_to(db, df = _, name = "ren_notes", overwrite = TRUE)
