@@ -35,7 +35,7 @@ get_data <- function(file) {
 
   if (!dir.exists(pq_dir)) dir.create(pq_dir, recursive = TRUE)
 
-  db <- dbConnect(duckdb())
+  db <- dbConnect(duckdb::duckdb())
 
   ## sub ----
   sub <- read_tsv(unz(t, "sub.tsv"),
@@ -78,6 +78,7 @@ get_data <- function(file) {
   ## txt ----
   txt <-
     read_tsv(unz(t, "txt.tsv"), col_types = "cccdddcdddcdcdddcdcc") |>
+    mutate(across(c(ddate), ymd)) |>
     copy_to(db, df = _, name = "txt_notes", overwrite = TRUE)
 
   pq_file <- file.path(pq_dir, str_c("txt_notes_", period, ".parquet"))
@@ -113,4 +114,5 @@ get_data <- function(file) {
   dbDisconnect(db)
 }
 
+# Apply function to get data ----
 map(zip_files$file, get_data)
