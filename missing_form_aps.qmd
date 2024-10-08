@@ -1,5 +1,5 @@
 ---
-title: "Missing data on Form APs?"
+title: "Missing Form APs?"
 author: Ian D. Gow
 date: 2024-10-08
 date-format: "D MMMM YYYY"
@@ -23,10 +23,11 @@ csl: jfe.csl
 
 In May of 2024, I [posted on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-form-ap-data-activity-7196971381010432001-Isyc) a brief note about working with data from Form APs filed with the PCAOB.
 In a comment on my LinkedIn posting, [Olga Usvyatsky](https://www.linkedin.com/in/olgausvyatsky/) suggested that "the variation is not limited to firms' names - for instance, I find errors in reporting CIK codes of the clients intriguing."
+I thouhght it would be interesting to investigate the issue raised by Olga, but doing so would be greatly facilitated by an alternative source for data on auditor-client relationships.
 
 Recently, I discovered that it is relatively straightforward to process XBRL data filed using SEC EDGAR using data sets prepared by the SEC and posted on its website.
 There are two data sets: the *Financial Statements* and *Financial Statement and Notes* data sets, with the latter being roughly ten times as large as the former.
-For the task we consider here, we need to use the *Financial Statement and Notes* data set.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")` to get these data.]
+For the task we consider here, we need to use the *Financial Statement and Notes* data set, as this data set includes data on auditor IDs associated with filings.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")` to get these data.]
 
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/missing_form_aps.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/missing_form_aps.pdf).
@@ -50,21 +51,19 @@ txt <- load_parquet(db, "txt_*", "dera_notes")
 form_aps <- load_parquet(db, "form_aps", "pcaob")
 ```
 
-```{r}
-#| include: false
-auditors <-
-  txt |> 
-  filter(str_detect(tag, "^Auditor")) |>
-  compute()
-```
+A key concept in XBRL is the **tag**.
+Each value will be associated with, *inter alia*, a tag that indicates what the value represents.
+For example, a value might be tagged as `AssetsCurrent` to indicate that the value represents the total of current assets.^[The *inter alia* refers to other things use to narrow down what the value relates to, such as the filing (`adsh`, also known as the **accession number**), the period (`ddate`), and the applicable XBRL version (`version`).]
 
-@tbl-tags
+To understand tags related to auditors, I begin by examining the tags that begin with the text `Auditor`.
+From @tbl-tags, it can be seen that there are three such tags in common use: `AuditorName`, `AuditorLocation`, and `AuditorFirmId`.^[In @tbl-tags, we do see `AuditorFirmId1` and `AuditorFirmId2`, but given how rare these tags are, we can ignore these for present purposes.]
 
 ```{r}
 #| echo: false
 #| label: tbl-tags
 #| tbl-cap: Tags beginning with `Auditor` on `txt`
-auditors |>
+txt |> 
+  filter(str_detect(tag, "^Auditor")) |>
   count(tag, sort = TRUE) |>
   collect() |>
   tt() |>
@@ -73,7 +72,61 @@ auditors |>
             num_mark_big = ",")
 ```
 
+From @tbl-tags, it appears that not every filing with non-missing `AuditorName` has non-missing `AuditorFirmId`.
+@tbl-missing-id-names provides more data on the distribution of missing values for these two fields, where `has_name` and `has_id` indicate non-missing values of `AuditorName` and `AuditorFirmId`, respectively.
+
 ```{r}
+#| label: missing
+#| cache: true
+#| include: false
+missing <-
+  txt |>
+  filter(tag %in% c("AuditorName", "AuditorFirmId")) |>
+  select(adsh, tag, ddate, value) |>
+  pivot_wider(names_from = "tag", 
+              values_from = "value") |>
+  mutate(has_name = !is.na(AuditorName),
+        has_id = !is.na(AuditorFirmId))  |>
+  collect()
+```
+
+```{r}
+#| echo: false
+#| label: tbl-missing-id-names
+#| tbl-cap: Distribution of missingness of `AuditorName` and `AuditorFirmId`
+#| cache: true
+#| dependson: missing
+missing |>
+  count(has_name, has_id) |>
+  collect() |>
+  tt() |>
+  style_tt(align = "ccr") |>
+  format_tt(digits = 0,
+            num_mark_big = ",")
+```
+
+@tbl-missing-ids provides some information on some cases where `AuditorName` is present, but `AuditorFirmId` is not.
+There's no clear pattern to these data, but they do suggest that firms are not always diligent in including `AuditorFirmId` in XBRL filings.
+
+```{r}
+#| echo: false
+#| label: tbl-missing-ids
+#| tbl-cap: Sample of auditor names with missing IDs
+#| cache: true
+#| dependson: missing
+missing |> 
+  filter(has_name, !has_id) |> 
+  count(AuditorName, sort = TRUE) |> 
+  filter(n > 2) |>
+  tt() |>
+  style_tt(align = "lr") |>
+  format_tt(digits = 0,
+            num_mark_big = ",",
+            escape = TRUE)
+```
+
+```{r}
+#| include: false
 auditor_id_tags <-
   txt |>
   filter(tag == "AuditorFirmId", is.na(coreg))
