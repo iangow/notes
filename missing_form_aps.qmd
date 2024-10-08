@@ -1,0 +1,142 @@
+---
+title: "Missing data on Form APs?"
+author: Ian D. Gow
+date: 2024-10-08
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+In May of 2024, I [posted on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-form-ap-data-activity-7196971381010432001-Isyc) a brief note about working with data from Form APs filed with the PCAOB.
+In a comment on my LinkedIn posting, [Olga Usvyatsky](https://www.linkedin.com/in/olgausvyatsky/) suggested that "the variation is not limited to firms' names - for instance, I find errors in reporting CIK codes of the clients intriguing."
+
+Recently, I discovered that it is relatively straightforward to process XBRL data filed using SEC EDGAR using data sets prepared by the SEC and posted on its website.
+There are two data sets: the *Financial Statements* and *Financial Statement and Notes* data sets, with the latter being roughly ten times as large as the former.
+For the task we consider here, we need to use the *Financial Statement and Notes* data set.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")` to get these data.]
+
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/missing_form_aps.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/missing_form_aps.pdf).
+
+```{r}
+#| message: false
+#| include: false
+library(tidyverse)
+library(DBI)
+library(farr)
+library(tinytable)
+library(dbplyr)
+```
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+
+sub <- load_parquet(db, "sub_*", "dera_notes")
+txt <- load_parquet(db, "txt_*", "dera_notes")
+form_aps <- load_parquet(db, "form_aps", "pcaob")
+```
+
+```{r}
+#| include: false
+auditors <-
+  txt |> 
+  filter(str_detect(tag, "^Auditor")) |>
+  compute()
+```
+
+```{r}
+#| echo: false
+#| label: tbl-tags
+#| tbl-cap: Tags beginning with `Auditor` on `txt`
+auditors |>
+  count(tag, sort = TRUE) |>
+  collect() |>
+  tt() |>
+  style_tt(align = "lr") |>
+  format_tt(digits = 0,
+            num_mark_big = ",")
+```
+
+```{r}
+#| include: false
+auditor_ids <-
+  auditors |>
+  filter(tag == "AuditorFirmId", is.na(coreg)) |>
+  select(adsh, ddate, value) |>
+  inner_join(sub |> select(adsh, cik, name, form, period), 
+             by = join_by(adsh)) |>
+  rename(issuer_cik = cik,
+         firm_id = value) |>
+  mutate(month = floor_date(period, "month")) |>
+  compute()
+```
+
+```{r}
+#| include: false
+auditor_ids_form_aps <-
+  form_aps |>
+  select(firm_id, issuer_cik, fiscal_period_end_date) |>
+  mutate(issuer_cik = as.double(issuer_cik)) |>
+  mutate(month = floor_date(fiscal_period_end_date, "month")) |>
+  compute()
+```
+
+```{r}
+#| include: false
+auditor_names <-
+  form_aps |>
+  group_by(firm_id) |>
+  window_order(audit_report_date) |>
+  summarize(firm_name = last(firm_name)) |>
+  arrange() |>
+  compute()
+
+match_data <-
+  auditor_ids |>
+  left_join(auditor_ids_form_aps,
+            by = join_by(issuer_cik, month),
+            suffix = c("", "_aps")) |>
+  inner_join(auditor_names, by = join_by(firm_id)) |>
+  mutate(matched = !is.na(firm_id_aps)) |>
+  compute()
+```
+
+```{r}
+#| label: tbl-top-non-matches
+#| tbl-cap: Number of cases without Form AP filings by auditor
+#| echo: false
+match_data |>
+  group_by(firm_id, firm_name) |>
+  summarize(unmatched = sum(as.integer(!matched), na.rm = TRUE),
+            total = n(),
+            .groups = "drop") |>
+  mutate(`% unmatched` = unmatched / total * 100) |>
+  arrange(desc(unmatched)) |>
+  collect(n = 20) |>
+  tt() |>
+  style_tt(align = "rlrrd") |>
+  format_tt(escape = TRUE) |>
+  format_tt(j = c(3, 4), digits = 0, num_mark_big = ",") |>
+  format_tt(j = 5,  num_fmt = "decimal", digits = 2, num_zero = TRUE) 
+```
+
+
+```{r}
+form_aps |>
+  filter(firm_id == 6778) |>
+  count()
+```
