@@ -3,6 +3,10 @@ library(rvest)
 library(tidyverse)
 library(DBI)
 
+if (!grepl("@", getOption("HTTPUserAgent"))) {
+  stop('You should run `options(HTTPUserAgent = "your_name@email.com") before running this script.')
+}
+
 # Get information on available zip files ----
 sec_url <- "https://www.sec.gov/data-research/financial-statement-notes-data-sets"
 

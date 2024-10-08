@@ -1,3 +1,10 @@
+library(tidyverse)
+library(DBI)
+
+if (!grepl("@", getOption("HTTPUserAgent"))) {
+  stop('You should run `options(HTTPUserAgent = "your_name@email.com") before running this script.')
+}
+
 files_df <-
   expand_grid(year = 2009:2024, quarter = 1:4) |>
   mutate(file = paste0(year, "q", quarter)) |>
@@ -15,7 +22,7 @@ get_data <- function(file) {
 
   if (!dir.exists(pq_dir)) dir.create(pq_dir, recursive = TRUE)
 
-  db <- dbConnect(duckdb())
+  db <- dbConnect(duckdb::duckdb())
 
   sub <- read_tsv(unz(t, "sub.txt"),
                   col_types = "cdcdcccccccccccccccccdcdccddcdcddcdc") |>
@@ -72,5 +79,4 @@ get_type_string <- function(df) {
     paste0(collapse = "")
 }
 
-map(files_df$file[9:64], get_data)
-
+map(files_df$file, get_data)
