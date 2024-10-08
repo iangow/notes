@@ -58,6 +58,8 @@ auditors <-
   compute()
 ```
 
+@tbl-tags
+
 ```{r}
 #| echo: false
 #| label: tbl-tags
@@ -72,10 +74,32 @@ auditors |>
 ```
 
 ```{r}
+auditor_id_tags <-
+  txt |>
+  filter(tag == "AuditorFirmId", is.na(coreg))
+```
+
+```{r}
+#| echo: false
+#| label: tbl-forms
+#| tbl-cap: Forms with information on `AuditorFirmId`
+auditor_id_tags |> 
+  inner_join(sub, by = join_by(adsh)) |> 
+  count(form) |> 
+  arrange(desc(n)) |>
+  collect() |>
+  tt() |>
+  style_tt(align = "lr") |>
+  format_tt(digits = 0,
+            num_mark_big = ",")
+```
+
+```{r}
 #| include: false
 auditor_ids <-
-  auditors |>
-  filter(tag == "AuditorFirmId", is.na(coreg)) |>
+  auditor_id_tags |>
+  inner_join(sub, by = join_by(adsh)) |>
+  filter(form %in% c("10-K", "10-K/A", "10-KT", "10-KT/A")) |>
   select(adsh, ddate, value) |>
   inner_join(sub |> select(adsh, cik, name, form, period), 
              by = join_by(adsh)) |>
