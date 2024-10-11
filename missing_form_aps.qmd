@@ -51,6 +51,8 @@ txt <- load_parquet(db, "txt_*", "dera_notes")
 form_aps <- load_parquet(db, "form_aps", "pcaob")
 ```
 
+## XBRL tags
+
 A key concept in XBRL is the **tag**.
 Each value will be associated with, *inter alia*, a tag that indicates what the value represents.
 For example, a value might be tagged as `AssetsCurrent` to indicate that the value represents the total of current assets.^[The *inter alia* refers to other things use to narrow down what the value relates to, such as the filing (`adsh`, also known as the **accession number**), the period (`ddate`), and the applicable XBRL version (`version`).]
@@ -106,7 +108,7 @@ missing |>
 ```
 
 @tbl-missing-ids provides some information on some cases where `AuditorName` is present, but `AuditorFirmId` is not.
-There's no clear pattern to these data, but they do suggest that firms are not always diligent in including `AuditorFirmId` in XBRL filings.
+While there's no clear pattern to these data, they do suggest that firms are not always diligent in including `AuditorFirmId` in XBRL filings.
 
 ```{r}
 #| echo: false
@@ -132,6 +134,7 @@ auditor_id_tags <-
   filter(tag == "AuditorFirmId", is.na(coreg))
 ```
 
+
 ```{r}
 #| echo: false
 #| label: tbl-forms
@@ -146,6 +149,9 @@ auditor_id_tags |>
   format_tt(digits = 0,
             num_mark_big = ",")
 ```
+
+From @tbl-forms, it can be seen that most filings containing information in `AuditorFirmId` are on variants of Form 10-K.
+So I focus on Form 10-K filings (and variants) in the analysis in this note.^[Specifically, I consider 10-K, 10-K/A, 10-KT, and 10-KT/A filings.]
 
 ```{r}
 #| include: false
@@ -162,13 +168,15 @@ auditor_ids <-
   compute()
 ```
 
+From the Form APs, I collect data on audit firm IDs, the CIKs of issuers and fiscal period-end dates.
+
 ```{r}
 #| include: false
 auditor_ids_form_aps <-
   form_aps |>
   select(firm_id, issuer_cik, fiscal_period_end_date) |>
-  mutate(issuer_cik = as.double(issuer_cik)) |>
-  mutate(month = floor_date(fiscal_period_end_date, "month")) |>
+  mutate(issuer_cik = as.double(issuer_cik),
+         month = floor_date(fiscal_period_end_date, "month")) |>
   compute()
 ```
 
@@ -181,7 +189,9 @@ auditor_names <-
   summarize(firm_name = last(firm_name)) |>
   arrange() |>
   compute()
+```
 
+```{r}
 match_data <-
   auditor_ids |>
   left_join(auditor_ids_form_aps,
@@ -191,6 +201,9 @@ match_data <-
   mutate(matched = !is.na(firm_id_aps)) |>
   compute()
 ```
+
+I then merge data from these 10-K filings with data on Form APs using **accession numbers** and period-end dates.
+@tbl-top-non-matches shows that roughly 3% of filings on Form 10-Ks involving Big Four auditors, Grant Thornton or BDO appear not to have corresponding matches in the Form APs data.
 
 ```{r}
 #| label: tbl-top-non-matches
@@ -211,9 +224,3 @@ match_data |>
   format_tt(j = 5,  num_fmt = "decimal", digits = 2, num_zero = TRUE) 
 ```
 
-
-```{r}
-form_aps |>
-  filter(firm_id == 6778) |>
-  count()
-```
