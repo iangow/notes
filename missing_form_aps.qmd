@@ -203,7 +203,7 @@ match_data <-
 ```
 
 I then merge data from these 10-K filings with data on Form APs using **accession numbers** and period-end dates.
-@tbl-top-non-matches shows that roughly 3% of filings on Form 10-Ks involving Big Four auditors, Grant Thornton or BDO appear not to have corresponding matches in the Form APs data.
+@tbl-top-non-matches shows that roughly 3% of filings on Form 10-Ks involving Big Four auditors (`firm_id` values of 34, 42, 238, and 185), Grant Thornton (248) or BDO (243) appear not to have corresponding matches in the Form APs data.
 
 ```{r}
 #| label: tbl-top-non-matches
@@ -224,3 +224,9 @@ match_data |>
   format_tt(j = 5,  num_fmt = "decimal", digits = 2, num_zero = TRUE) 
 ```
 
+```{r}
+#| include: false
+match_data |>
+  filter(firm_id %in% c("34", "42", "238", "185"),
+         !matched)
+```
