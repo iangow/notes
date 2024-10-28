@@ -1,0 +1,101 @@
+---
+jupyter: python3
+format: pdf
+---
+
+```{python}
+import duckdb
+
+from duckdb.typing import DATE, FLOAT
+```
+
+```{python}
+con = duckdb.connect()
+
+con.read_csv('data/FidelityAEF.csv')
+```
+
+The output above suggests that the data in `fid_aef` are daily.
+
+```{python}
+fid_aef = con.read_csv('data/FidelityAEF.csv', 
+                       columns = {'date': 'DATE', 
+                                  'price': 'FLOAT'})
+fid_aef
+```
+
+```{python}
+con.read_csv('data/ASX200.csv')
+```
+
+It appears from the output above that the observations are monthly, that `Date` actually indicates the month, and that the returns are in percentages that may need to be cleaned up.
+
+The function `percent_to_float()` below strips the `%` from the supplied argument and divides the result by 100.
+We can use `create_function()` to make this a function that can be accessed within DuckDB.
+Note that using type hints makes this last step much easier.
+
+```{python}
+#| output: false
+def percent_to_float(col:str) -> float:
+    """
+    Turns a human readable percentage string (e.g., "7.81%"),
+    into a computation-usable numeric value (e.g., 0.0781).
+    """
+    return float(col.replace('%', '')) / 100.0
+
+con.create_function('percent_to_float', percent_to_float)
+```
+
+```{python}
+asx200 = con.sql("""
+    SELECT month, percent_to_float(return) AS asx_ret
+    FROM read_csv('data/ASX200.csv', 
+                  dateformat = '%b %d, %Y', 
+                  columns = {'month': 'DATE',
+                             'return': 'TEXT'})
+""")
+asx200
+```
+
+To merge `asx200` and `fid_aef`, we need to make the `fid_aef` monthly.
+We can do this by retaining the last observation for each month and creating a `month` column.
+
+```{python}
+fid_aef_monthly = con.sql("""
+    WITH last_days AS (
+        SELECT date_trunc('month', date) AS month,
+            max(date) AS date
+        FROM fid_aef
+        GROUP BY month)
+
+    SELECT month, price / lag(price) OVER (ORDER BY month) - 1 AS fid_ret
+    FROM fid_aef
+    INNER JOIN last_days
+    USING (date)
+""")
+fid_aef_monthly
+```
+
+```{python}
+init_val = 10000
+
+final_sql = f"""
+    SELECT month,
+        product(1 + asx_ret) OVER w * {init_val} AS "ASX200 Return",
+        product(1 + fid_ret) OVER w * {init_val} AS "Fidelity AEF Return",
+    FROM fid_aef_monthly
+    INNER JOIN asx200
+    USING (month)
+    WINDOW w AS (ORDER BY month)
+"""
+```
+
+```{python}
+compare = con.sql(final_sql).df().set_index('month')
+
+(compare[['ASX200 Return', 'Fidelity AEF Return']]
+    .plot(color=['Grey','Black'], 
+          figsize=(12, 6)))
+```
+
+

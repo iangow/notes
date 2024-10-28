@@ -1,0 +1,128 @@
+---
+jupyter: python3
+format: pdf
+---
+
+A few packages are needed to get SQL running with DuckDB in Jupyter:
+
+`!pip3 install duckdb duckdb_engine jupysql`
+
+```{python}
+import duckdb
+
+from duckdb.typing import DATE, FLOAT
+```
+
+```{python}
+conn = duckdb.connect()
+```
+
+```{python}
+%load_ext sql
+```
+
+```{python}
+%sql conn
+```
+
+```{python}
+%%sql 
+SELECT *
+FROM read_csv('data/FidelityAEF.csv')
+```
+
+The output above suggests that the data in `FidelityAEF.csv` are daily.
+
+```{python}
+%%sql
+CREATE OR REPLACE TABLE fid_aef AS 
+SELECT * 
+FROM read_csv('data/FidelityAEF.csv', 
+                       columns = {'date': 'DATE', 
+                                  'price': 'DECIMAL(10, 4)'})
+```
+
+```{python}
+%%sql
+SELECT * 
+FROM fid_aef
+```
+
+```{python}
+%%sql 
+SELECT * 
+FROM read_csv('data/ASX200.csv')
+```
+
+It appears from the output above that the observations are monthly, that `Date` actually indicates the month, and that the returns are in percentages that may need to be cleaned up.
+
+The function `percent_to_float()` below strips the `%` from the supplied argument and divides the result by 100.
+We can use `create_function()` to make this a function that can be accessed within DuckDB.
+Note that using type hints makes this last step much easier.
+
+```{python}
+#| output: false
+from decimal import Decimal 
+
+def percent_to_float(col:str) -> float:
+    """
+    Turns a human readable percentage string (e.g., "7.81%"),
+    into a computation-usable numeric value (e.g., 0.0781).
+    """
+    return Decimal(col.replace('%', '')) / Decimal('100')
+
+conn.create_function('percent_to_float', percent_to_float)
+```
+
+```{python}
+%%sql
+CREATE OR REPLACE TABLE asx200 AS 
+SELECT month, percent_to_float(return) AS asx_ret
+FROM read_csv('data/ASX200.csv', 
+              dateformat = '%b %d, %Y', 
+              columns = {'month': 'DATE',
+                         'return': 'TEXT'})
+```
+
+To merge `asx200` and `fid_aef`, we need to make the `fid_aef` monthly.
+We can do this by retaining the last observation for each month and creating a `month` column.
+
+```{python}
+%%sql
+SELECT * FROM asx200
+```
+
+```{python}
+%%sql
+CREATE OR REPLACE TABLE fid_aef_monthly AS
+WITH last_days AS (
+    SELECT date_trunc('month', date) AS month,
+        max(date) AS date
+    FROM fid_aef
+    GROUP BY month)
+
+SELECT month, price / lag(price) OVER (ORDER BY month) - 1 AS fid_ret
+FROM fid_aef
+INNER JOIN last_days
+USING (date)
+```
+
+```{python}
+%%sql plot_data <<
+SELECT month,
+    product(1 + asx_ret) OVER w * 10000 AS "ASX200 Return",
+    product(1 + fid_ret) OVER w * 10000 AS "Fidelity AEF Return",
+FROM fid_aef_monthly
+INNER JOIN asx200
+USING (month)
+WINDOW w AS (ORDER BY month)
+```
+
+```{python}
+(plot_data
+  .DataFrame()
+  .set_index('month')
+  .plot(color=['Grey','Black'], 
+          figsize=(12, 6)))
+```
+
