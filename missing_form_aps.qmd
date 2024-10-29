@@ -60,6 +60,20 @@ For example, a value might be tagged as `AssetsCurrent` to indicate that the val
 To understand tags related to auditors, I begin by examining the tags that begin with the text `Auditor`.
 From @tbl-tags, it can be seen that there are three such tags in common use: `AuditorName`, `AuditorLocation`, and `AuditorFirmId`.^[In @tbl-tags, we do see `AuditorFirmId1` and `AuditorFirmId2`, but given how rare these tags are, we can ignore these for present purposes.]
 
+From @tbl-tags, it appears that not every filing with non-missing `AuditorName` has non-missing `AuditorFirmId`.
+@tbl-missing-id-names provides more data on the distribution of missing values for these two fields, where `has_name` and `has_id` indicate non-missing values of `AuditorName` and `AuditorFirmId`, respectively.
+
+@tbl-missing-ids provides some information on some cases where `AuditorName` is present, but `AuditorFirmId` is not.
+While there's no clear pattern to these data, they do suggest that firms are not always diligent in including `AuditorFirmId` in XBRL filings.
+
+From @tbl-forms, it can be seen that most filings containing information in `AuditorFirmId` are on variants of Form 10-K.
+So I focus on Form 10-K filings (and variants) in the analysis in this note.^[Specifically, I consider 10-K, 10-K/A, 10-KT, and 10-KT/A filings.]
+
+From the Form APs, I collect data on audit firm IDs, the CIKs of issuers and fiscal period-end dates.
+
+I then merge data from these 10-K filings with data on Form APs using **accession numbers** and period-end dates.
+@tbl-top-non-matches shows that roughly 1--2% of filings on Form 10-Ks involving Big Four auditors (`firm_id` values of 34, 42, 238, and 185), Grant Thornton (248) or BDO (243) appear not to have corresponding matches in the Form APs data.
+
 ```{r}
 #| echo: false
 #| label: tbl-tags
@@ -73,9 +87,6 @@ txt |>
   format_tt(digits = 0,
             num_mark_big = ",")
 ```
-
-From @tbl-tags, it appears that not every filing with non-missing `AuditorName` has non-missing `AuditorFirmId`.
-@tbl-missing-id-names provides more data on the distribution of missing values for these two fields, where `has_name` and `has_id` indicate non-missing values of `AuditorName` and `AuditorFirmId`, respectively.
 
 ```{r}
 #| label: missing
@@ -103,12 +114,10 @@ missing |>
   collect() |>
   tt() |>
   style_tt(align = "ccr") |>
-  format_tt(digits = 0,
+  format_tt(escape = TRUE,
+            digits = 0,
             num_mark_big = ",")
 ```
-
-@tbl-missing-ids provides some information on some cases where `AuditorName` is present, but `AuditorFirmId` is not.
-While there's no clear pattern to these data, they do suggest that firms are not always diligent in including `AuditorFirmId` in XBRL filings.
 
 ```{r}
 #| echo: false
@@ -129,11 +138,28 @@ missing |>
 
 ```{r}
 #| include: false
-auditor_id_tags <-
+auditor_id_tags_raw <-
   txt |>
-  filter(tag == "AuditorFirmId", is.na(coreg))
-```
+  filter(tag == "AuditorFirmId", is.na(coreg)) |>
+  select(adsh, ddate, tag, value) |>
+  pivot_wider(names_from = "tag", values_from = "value") |>
+  rename(firm_id = AuditorFirmId) |>
+  mutate(firm_id = as.integer(firm_id)) 
 
+auditor_id_dates <-
+  txt |>
+  filter(tag == "DocumentPeriodEndDate", is.na(coreg)) |>
+  select(adsh, ddate, tag, value) |>
+  pivot_wider(names_from = "tag", values_from = "value") |>
+  mutate(DocumentPeriodEndDate = as.Date(DocumentPeriodEndDate), 
+         month = floor_date(DocumentPeriodEndDate, "month"))
+
+auditor_id_tags <-
+  auditor_id_tags_raw |>
+  inner_join(auditor_id_dates, by = join_by(adsh, ddate)) |>
+  filter(!is.na(firm_id), !is.na(month)) |>
+  compute()
+```
 
 ```{r}
 #| echo: false
@@ -146,12 +172,10 @@ auditor_id_tags |>
   collect() |>
   tt() |>
   style_tt(align = "lr") |>
-  format_tt(digits = 0,
+  format_tt(escape = TRUE,
+            digits = 0,
             num_mark_big = ",")
 ```
-
-From @tbl-forms, it can be seen that most filings containing information in `AuditorFirmId` are on variants of Form 10-K.
-So I focus on Form 10-K filings (and variants) in the analysis in this note.^[Specifically, I consider 10-K, 10-K/A, 10-KT, and 10-KT/A filings.]
 
 ```{r}
 #| include: false
@@ -159,16 +183,10 @@ auditor_ids <-
   auditor_id_tags |>
   inner_join(sub, by = join_by(adsh)) |>
   filter(form %in% c("10-K", "10-K/A", "10-KT", "10-KT/A")) |>
-  select(adsh, ddate, value) |>
-  inner_join(sub |> select(adsh, cik, name, form, period), 
-             by = join_by(adsh)) |>
-  rename(issuer_cik = cik,
-         firm_id = value) |>
-  mutate(month = floor_date(period, "month")) |>
+  rename(issuer_cik = cik) |>
   compute()
 ```
 
-From the Form APs, I collect data on audit firm IDs, the CIKs of issuers and fiscal period-end dates.
 
 ```{r}
 #| include: false
@@ -192,6 +210,7 @@ auditor_names <-
 ```
 
 ```{r}
+#| include: false
 match_data <-
   auditor_ids |>
   left_join(auditor_ids_form_aps,
@@ -202,8 +221,6 @@ match_data <-
   compute()
 ```
 
-I then merge data from these 10-K filings with data on Form APs using **accession numbers** and period-end dates.
-@tbl-top-non-matches shows that roughly 3% of filings on Form 10-Ks involving Big Four auditors (`firm_id` values of 34, 42, 238, and 185), Grant Thornton (248) or BDO (243) appear not to have corresponding matches in the Form APs data.
 
 ```{r}
 #| label: tbl-top-non-matches
