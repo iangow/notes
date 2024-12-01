@@ -109,8 +109,8 @@ con = ibis.postgres.connect(user=wrds_id,
                             port=9737,
                             database="wrds")
 
-dsf = con.table("dsf", schema="crsp")
-stocknames = con.table("stocknames", schema="crsp")
+dsf = con.table("dsf", database="crsp")
+stocknames = con.table("stocknames", database="crsp")
 ```
 
 Now that we have our remote data frames set up, we can begin to interrogate the data.
@@ -189,12 +189,12 @@ We retrieve the (small) result set as a Pandas data frame.
 We sort this by descending value of `year` so that the most recent rows come first.
 
 ```{python}
-dsf. \
-    mutate(year=date_part("year", dsf.date)). \
-    group_by("year"). \
-    aggregate(n=dsf.count()). \
-    order_by([ibis.desc("year")]). \
-    to_pandas()
+(dsf
+  .mutate(year=date_part("year", dsf.date))
+  .group_by("year")
+  .aggregate(n=dsf.count())
+  .order_by([ibis.desc("year")])
+  .to_pandas())
 ```
 
 We will next take a subset of rows where `date` is 7 January 1986 and retrieve the (fairly small) result set as a Pandas data frame.
@@ -229,10 +229,10 @@ Given the line `select("permno", "date", "ret")` prior to `to_pandas()`, the `[[
 Try removing that portion of the code, or the `select("permno", "date", "ret")` line to see the effects of doing so.]
 
 ```{python}
-dsf_subset = dsf. \
-  filter(dsf.date == "1986-01-07"). \
-  select("permno", "date", "ret"). \
-  to_pandas()
+dsf_subset = (dsf
+  .filter(dsf.date == "1986-01-07")
+  .select("permno", "date", "ret")
+  .to_pandas())
 
 dsf_subset[["permno", "date", "ret"]]
 ```
@@ -242,11 +242,11 @@ Note that `permno` is a floating-point type in the WRDS PostgreSQL database, tho
 Now, we will use `crsp.stocknames` to look up the PERMNO for Apple so that we can make a plot of Apple's stock performance over time.
 
 ```{python}
-apple_permno = stocknames. \
-    filter(regexp_like(stocknames.comnam, "^APPLE COM")). \
-    select("permno"). \
-    to_pandas(). \
-    permno[0]
+apple_permno = (stocknames
+    .filter(regexp_like(stocknames.comnam, "^APPLE COM"))
+    .select("permno")
+    .to_pandas()
+    .permno[0])
 ```
 
 From this we learn that Apple's PERMNO is `r prettyNum(py$apple_permno)`.
@@ -263,12 +263,12 @@ from ibis import _
 
 w = ibis.window(group_by="permno", following=0)
 
-plot_data = dsf. \
-    filter(dsf.permno == apple_permno). \
-    mutate(log_ret = ln(1 + coalesce(dsf.ret, 0))). \
-    mutate(sum_ret = exp(_.log_ret.sum().over(w))). \
-    select("permno", "date", "ret", "sum_ret"). \
-    to_pandas()
+plot_data = (dsf
+    .filter(dsf.permno == apple_permno)
+    .mutate(log_ret = ln(1 + coalesce(dsf.ret, 0)))
+    .mutate(sum_ret = exp(_.log_ret.sum().over(w)))
+    .select("permno", "date", "ret", "sum_ret")
+    .to_pandas())
 ```
 
 With `plot_data` in hand, we can make our plot, which can be seen in @fig-aapl.
