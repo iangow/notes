@@ -1,7 +1,7 @@
 ---
 title: "Missing Form APs?"
 author: Ian D. Gow
-date: 2024-10-08
+date: 2024-12-01
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -28,6 +28,10 @@ I thought it would be interesting to investigate the issue raised by Olga, but d
 Recently, I discovered that it is relatively straightforward to process XBRL data filed using SEC EDGAR using data sets prepared by the SEC and posted on its website.
 There are two data sets: the [*Financial Statements*](https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets) and [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) data sets, with the latter being roughly ten times as large as the former.
 For the task we consider here, we need to use the *Financial Statement and Notes* data set.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")` to get these data.]
+
+In essence, I compare the auditors listed in firms' 10-K filings with data on Form APs, with a focus on my success rate in matching the two.
+In @tbl-top-non-matches, we can see that the auditor with the greatest number of non-matches is B F Borgers CPA PC, an auditor featured in a tongue-in-cheek *Financial Times* [article by George Steer](https://www.ft.com/content/2556fab5-d168-4d68-aedb-9be4b5ab739d) that showed that the auditor Ben Borgers had used 14 different names---including the name "Ben F orgers"---on Form AP filings.^[The analysis of the Form AP data in the FT article had been conducted by independent researcher [Stephen Walker](https://www.stephenwalker.me) and I showed how to reproduce Stephen's analysis in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
+While more research would be needed to investigate the reasons for "missing" data, having Borgers emerge as the "winner" yet again suggests that missing Form AP filings might be another red flag worth pursuing.
 
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/missing_form_aps.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/missing_form_aps.pdf).
@@ -73,6 +77,8 @@ From the Form APs, I collect data on audit firm IDs, the CIKs of issuers and fis
 
 I then merge data from these 10-K filings with data on Form APs using **accession numbers** and period-end dates.
 @tbl-top-non-matches shows that roughly 1--2% of filings on Form 10-Ks involving Big Four auditors (`firm_id` values of 34, 42, 238, and 185), Grant Thornton (248) or BDO (243) appear not to have corresponding matches in the Form APs data.
+
+While there might be a perfectly innocent explanation, it might be worth digging deeper to understand why (say) Gries & Associates, Yusufali & Associates, and Heaton & Company have such high rates of unmatched filings.
 
 ```{r}
 #| echo: false
