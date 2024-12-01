@@ -45,7 +45,7 @@ I create a database connection and load the `icu` extension, which contains time
 ```{r}
 #| results: false
 db <- dbConnect(duckdb::duckdb(), timezone_out = "Australia/Melbourne")
-
+dbExecute(db, "INSTALL icu")
 dbExecute(db, "LOAD icu")
 ```
 
