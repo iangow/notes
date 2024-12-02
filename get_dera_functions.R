@@ -49,7 +49,7 @@ get_zip_files_df <- function() {
     mutate(file = str_replace(value, "^.*data-sets/(.*.zip).*$", "\\1")) |>
     mutate(last_modified = get_file_modified_date(file)) |>
     select(file, last_modified)
-  last_modified_scraped
+  resp
 }
 
 
