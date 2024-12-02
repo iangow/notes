@@ -2,9 +2,16 @@ library(httr2)         # request(), req_*(), resp_body_html()
 library(rvest)
 library(tidyverse)
 library(DBI)
+library(arrow)
 
 if (!grepl("@", getOption("HTTPUserAgent"))) {
-  stop('You should run `options(HTTPUserAgent = "your_name@email.com") before running this script.')
+  stop(paste0('You should run `options(HTTPUserAgent = "your_name@email.com")`',
+              " before running this script."))
+}
+
+if (Sys.getenv("DATA_DIR") == "") {
+  stop(paste0('You should run `Sys.setenv(DATA_DIR = "some_dir")`',
+              " before running this script."))
 }
 
 # Get information on available zip files ----
@@ -63,6 +70,25 @@ to_update <-
   filter(is.na(last_modified_old) |
            last_modified_new != last_modified_old)
 
+
+get_coltypes_str <- function(df) {
+  type_to_str <- function(col) {
+    case_when(col == "character" ~ "c",
+              col == "numeric" ~ "d",
+              col == "POSIXct" ~ "c",
+              col == "POSIXt" ~ "c",
+              .default = "character")
+  }
+
+  res <-
+    tibble(type = unlist(map(sub, class))) |>
+    mutate(col_type = type_to_str(type))
+
+  paste(res$col_type, collapse = "")
+  type_to_str(unlist(res))
+
+}
+
 # Function to process a zip file ----
 get_data <- function(file) {
   url <- str_c("https://www.sec.gov/files/dera/data/",
@@ -82,7 +108,7 @@ get_data <- function(file) {
   ## sub ----
   sub <- read_tsv(unz(t, "sub.tsv"),
                   col_types = "cdcccccccccccccccccccdcdccddcdcddcdcddcd") |>
-    mutate(across(c(changed, filed, period), ymd),
+    mutate(across(c(changed, filed, period, floatdate), ymd),
            across(c(accepted), ymd_hms)) |>
     copy_to(db, df = _, name = "sub_notes", overwrite = TRUE)
 
@@ -158,6 +184,12 @@ get_data <- function(file) {
 
 # Apply function to get data ----
 map(to_update$file, get_data)
+
+save_parquet <- function(df, name, schema = "",
+                         path = Sys.getenv("DATA_DIR")) {
+  file_path <- file.path(path, schema, str_c(name, ".parquet"))
+  arrow::write_parquet(collect(df), sink = file_path)
+}
 
 last_modified_scraped |>
   save_parquet(name = "last_modified", schema = "dera_notes")
