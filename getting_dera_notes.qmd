@@ -1,0 +1,208 @@
+---
+title: "Getting SEC EDGAR XBRL data"
+author: Ian D. Gow
+date: 2024-12-02
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+In a [recent note](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), I used XBRL data to identify potentially missing Form AP filings.
+In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data.
+
+Recently, I discovered that it is relatively straightforward to process XBRL data filed using SEC EDGAR using data sets prepared by the SEC and posted on its website.
+
+
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/getting_dera_notes.qmd) and the latest version of this PDF is [here](https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf).
+
+```{r}
+#| message: false
+#| include: false
+library(tidyverse)
+library(DBI)
+library(farr)
+library(tinytable)
+library(dbplyr)
+```
+
+## Getting *Financial Statement and Notes* files
+
+There are two XBRL bulk data sets made available on SEC EDGAR: the [*Financial Statements*](https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets) and [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) data sets, with the latter being roughly ten times as large as the former.
+For the task considered in the [note discussed above](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf) here, we needed the *Financial Statement and Notes* data set, so I focus on that data set here.
+
+### Structure of processed data
+
+ - `tag` contains all standard taxonomy tags (not just those appearing in submissions to date) and all custom taxonomy tags defined in the submissions.
+The standard tags are derived from taxonomies in
+the SEC's [standard taxonomies file](https://www.sec.gov/info/edgar/edgartaxonomies.shtml) as of the date of submission.
+ - `dim` contains all of the combinations of XBRL axis and member used to tag any submission.
+ - `num` contains numeric data, one row per data point in the financial statements. 
+ - `txt` contains non-numeric data, one row per data point in the financial statements.
+ - `ren` summarizes for each filing the data provided by filers about each presentation group as defined in EDGAR filer manual. 
+ - `pre` contains one row for each line of the financial statements tagged by the filer.
+ - `cal` contains one row for each calculation relationship ("arc"). Note that XBRL allows a parent
+element to have more than one distinct set of arcs for a given parent element, thus the rationale for distinct
+fields for the group and the arc.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")` to get these data.]
+
+### Structure of unprocessed data
+
+If you visit the  [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) site, you will see something like the table seen in @fig-dera-notes.
+This table provides links to many ZIP files.
+The last year or so of data are found in monthly data files and earlier periods are found in quarterly data files.
+Each data file is found using a link provided in the table.
+
+![Financial Statement and Notes website](images/dera_notes.png){#fig-dera-notes}
+
+I start with the `2024_10` file, the [link to which](https://www.sec.gov/files/dera/data/financial-statement-notes-data-sets/2024_10_notes.zip) points to a file named `2024_10_notes.zip`.
+We can download that file and extract its contents, which are depicted in @fig-example.
+It seems that each of the data tables discussed above is found in an eponymous `.tsv` file.
+
+![Contents of `2024_10_notes.zip`](images/2024_10_notes.png){#fig-example}
+
+I start with `sub.tsv` and I repeat the download steps for the `.zip` file programmatically.
+
+```{r}
+#| cache: true
+#| eval: false
+file <- "2024_10_notes.zip"
+url <- str_c("https://www.sec.gov/files/dera/data/",
+             "financial-statement-notes-data-sets/", file)
+t <- "data/2024_10_notes.zip"
+download.file(url, t)
+```
+```{r}
+#| include: false
+t <- "data/2024_10_notes.zip"
+```
+
+We can start by simply applying `read_tsv()`.
+
+```{r}
+sub <- read_tsv(unz(t, "sub.tsv"))
+```
+
+Alas, we see problems.
+What's the cause?
+
+```{r}
+problems(sub)
+```
+
+It seems that `read_tsv()` guessed that column 39 is a logical variable (i.e., `TRUE` or `FALSE`), which is inconsistent with the value `"ClassOfStock"` observed in row 1620.
+Maybe setting `guess_max` to a higher value will help.
+
+```{r}
+sub <- read_tsv(unz(t, "sub.tsv"), guess_max = 10000)
+```
+
+OK, no problems now.
+What are the types of each column?
+Here I apply a small function `first_class` to `sub` to find out.^[It use `first_class()` to get just the first class for each column as one column has two classes associated with it. You can see this by running `unlist(map, sub, class))` and comparing the output with that from the code below.]
+
+```{r}
+first_class <- function(x) {
+  class(x)[[1]]
+}
+
+unlist(map(sub, first_class))
+table(unlist(map(sub, first_class)))
+```
+So most columns are either `character` or `numeric`.
+However, the column `accepted` is read as a date-time (`POSIXct`).
+
+The `read_tsv()` function has a `col_types` argument that allows us to "use a compact string representation where each character represents one column:"
+
+ - c = character
+ - i = integer
+ - n = number
+ - d = double
+ - l = logical
+ - f = factor
+ - D = date
+ - T = date time
+ - t = time
+ - ? = guess
+ - _ or - = skip
+
+The following `get_coltypes_str()` function creates a string that we can use to specify column types that we can give to `read_tsv()`.
+
+```{r}
+get_coltypes_str <- function(df) {
+  type_to_str <- function(col) {
+    case_when(col == "character" ~ "c",
+              col == "logical" ~ "l",
+              col == "numeric" ~ "d",
+              col == "POSIXct" ~ "T",
+              .default = "c")
+  }
+
+  res <-
+    tibble(type = unlist(map(sub, first_class))) |>
+    mutate(col_type = type_to_str(type))
+
+  paste(res$col_type, collapse = "")
+}
+
+get_coltypes_str(sub)
+```
+
+It is generally helpful to look at the data.
+In this case, we can see that four columns are actually dates coded as numbers of the form `yyyymmdd`.
+
+```{r}
+sub |>
+  select(changed, filed, period, floatdate) |>
+  arrange(floatdate)
+```
+
+In the following code, I read `accepted` initially as a character variable and convert it using `ymd_hms()` from the `lubridate` package to convert it to a date-time.
+I also use `ymd()` to convert `changed`, `filed`, `period`, and `floatdate` into dates.
+
+```{r}
+sub <- 
+  read_tsv(unz(t, "sub.tsv"),
+           col_types = "cdcccccccccccccccccccdcdccddcdcddcdcddcd") |>
+   mutate(across(c(changed, filed, period, floatdate), ymd),
+           across(accepted, ymd_hms))
+```
+
+Finally I create a DuckDB instance and copy the data frame `sub` to DuckDB, giving it the name `sub_notes`.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+sub |>
+  copy_to(db, df = _, name = "sub_notes", overwrite = TRUE)
+```
+
+Finally, I create a parquet file by exporting the data from the DuckDB table I just created.
+
+```{r}
+period <- str_replace(basename(t), "^(.*)_notes.*$", "\\1")
+pq_dir <- file.path(Sys.getenv("DATA_DIR"), "dera_notes")
+pq_file <- file.path(pq_dir, str_c("sub_notes_", period, ".parquet"))
+dbExecute(db, str_c("COPY sub_notes TO '", pq_file, "'"))
+```
+I then do similar work for the remaining tables (`dim`, `num`, `txt`, `ren`, `pre`, and `cal`).
+I then put all of this inside a function `get_data(file)` that downloads a `.zip` file and creates parquet files for each table.
+Finally I run this function to 
+
+Nearly 38 minutes.
+
+## Getting Form AP data
+
+Deleting obsolete files.
