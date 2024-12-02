@@ -17,13 +17,51 @@ resp <-
   resp_body_html() |>
   html_elements("body")
 
-zip_files <-
+get_last_modified <- function(url) {
+  resp <-
+    request(url) |>
+    req_method("HEAD") |>
+    req_user_agent(getOption("HTTPUserAgent")) |>
+    req_perform()
+
+  headers <- resp |> resp_headers()
+  headers[["last-modified"]]
+}
+
+get_file_modified_date <- function(file) {
+  url <- str_c("https://www.sec.gov/files/dera/data/",
+               "financial-statement-notes-data-sets/", file)
+  get_last_modified(url)
+}
+
+get_file_modified_date <- Vectorize(get_file_modified_date)
+
+last_modified_scraped <-
   resp |>
   html_elements("a") |>
   as.character(x = _) |>
   as_tibble() |>
   filter(str_detect(value, "zip")) |>
-  mutate(file = str_replace(value, "^.*data-sets/(.*.zip).*$", "\\1"))
+  mutate(file = str_replace(value, "^.*data-sets/(.*.zip).*$", "\\1")) |>
+  mutate(last_modified = get_file_modified_date(file)) |>
+  select(file, last_modified)
+
+pq_dir <- file.path(Sys.getenv("DATA_DIR"), "dera_notes")
+pq_path <- file.path(pq_dir, "last_modified.parquet")
+
+if (file.exists(pq_path)) {
+  last_modified <- read_parquet(pq_path)
+} else {
+  last_modified <- tibble(file = NA, last_modified = NA)
+}
+
+to_update <-
+  last_modified_scraped |>
+  left_join(last_modified,
+            by = "file",
+            suffix = c("_new", "_old")) |>
+  filter(is.na(last_modified_old) |
+           last_modified_new != last_modified_old)
 
 # Function to process a zip file ----
 get_data <- function(file) {
@@ -119,4 +157,7 @@ get_data <- function(file) {
 }
 
 # Apply function to get data ----
-map(zip_files$file, get_data)
+map(to_update$file, get_data)
+
+last_modified_scraped |>
+  save_parquet(name = "last_modified", schema = "dera_notes")
