@@ -88,6 +88,7 @@ Sys.setenv(PGHOST= "wrds-pgdata.wharton.upenn.edu")
 
 ```{python}
 import ibis
+from ibis import _
 ibis.options.interactive = True
 ```
 
@@ -192,7 +193,7 @@ We sort this by descending value of `year` so that the most recent rows come fir
 (dsf
   .mutate(year=date_part("year", dsf.date))
   .group_by("year")
-  .aggregate(n=dsf.count())
+  .aggregate(n=_.count())
   .order_by([ibis.desc("year")])
   .to_pandas())
 ```

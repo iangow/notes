@@ -80,6 +80,7 @@ Apart from importing Ibis, I also set `ibis.options.interactive` so that display
 
 ```{python}
 import ibis
+from ibis import _
 ibis.options.interactive = True
 ```
 
@@ -177,12 +178,12 @@ We retrieve the (small) result set as a Pandas data frame.
 We sort this by descending value of `year` so that the most recent rows come first.
 
 ```{python}
-dsf. \
-    mutate(year=date_part("year", dsf.date)). \
-    group_by("year"). \
-    aggregate(n=dsf.count()). \
-    order_by([ibis.desc("year")]). \
-    to_pandas()
+(dsf
+  .mutate(year=date_part("year", dsf.date))
+  .group_by("year")
+  .aggregate(n=_.count())
+  .order_by([ibis.desc("year")])
+  .to_pandas())
 ```
 
 We will next take a subset of rows where `date` is 7 January 1986 and retrieve the (fairly small) result set as a Pandas data frame.
@@ -217,11 +218,11 @@ Given the line `select("permno", "date", "ret")` prior to `to_pandas()`, the `[[
 Try removing that portion of the code, or the `select("permno", "date", "ret")` line to see the effects of doing so.]
 
 ```{python}
-dsf_subset = dsf. \
-  filter(dsf.date == "1986-01-07"). \
-  select("permno", "date", "ret"). \
-  to_pyarrow(). \
-  to_pandas()
+dsf_subset = (dsf
+  .filter(dsf.date == "1986-01-07")
+  .select("permno", "date", "ret")
+  .to_pyarrow()
+  .to_pandas())
   
 dsf_subset[["permno", "date", "ret"]]
 ```
@@ -231,11 +232,11 @@ Note that `permno` is a floating-point type in the WRDS PostgreSQL database, tho
 Now, we will use `crsp.stocknames` to look up the PERMNO for Apple so that we can make a plot of Apple's stock performance over time.
 
 ```{python}
-apple_permno = stocknames. \
-    filter(regexp_matches(stocknames.comnam, "^APPLE COM")). \
-    select("permno"). \
-    to_pandas(). \
-    permno[0]
+apple_permno = (stocknames
+  .filter(regexp_matches(stocknames.comnam, "^APPLE COM"))
+  .select("permno")
+  .to_pandas()
+  .permno[0])
 ```
 
 From this we learn that Apple's PERMNO is `r prettyNum(py$apple_permno)`.
