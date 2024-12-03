@@ -23,29 +23,38 @@ csl: jfe.csl
 
 In a [recent note](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), I used XBRL data to identify potentially missing Form AP filings.
 In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data.
-
-Recently, I discovered that it is relatively straightforward to process XBRL data filed using SEC EDGAR using data sets prepared by the SEC and posted on its website.
-
+However, I provided no real information on how to get the XBRL data from SEC EDGAR.
+This note aims to provide this missing information.^[Guidance on downloading the Form AP data is provided in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf) I wrote.]
 
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/getting_dera_notes.qmd) and the latest version of this PDF is [here](https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf).
 
+This note uses the following R packages:^[To install these packages, run `install.packages(c(tidyverse, "DBI", "farr", "httr2", "rvest", "arrow")` in the console of RStudio.]
+
 ```{r}
 #| message: false
-#| include: false
+#| include: true
 library(tidyverse)
 library(DBI)
 library(farr)
+library(httr2)  
+library(rvest)
+library(arrow)
+```
+
+```{r}
+#| include: false
 library(tinytable)
-library(dbplyr)
 ```
 
 ## Getting *Financial Statement and Notes* files
 
 There are two XBRL bulk data sets made available on SEC EDGAR: the [*Financial Statements*](https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets) and [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) data sets, with the latter being roughly ten times as large as the former.
-For the task considered in the [note discussed above](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf) here, we needed the *Financial Statement and Notes* data set, so I focus on that data set here.
+For the task considered in the [note discussed above](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), we needed the *Financial Statement and Notes* data set, so I focus on that data set here.
 
 ### Structure of processed data
+
+The *Financial Statement and Notes* data library comprises seven tables:
 
  - `tag` contains all standard taxonomy tags (not just those appearing in submissions to date) and all custom taxonomy tags defined in the submissions.
 The standard tags are derived from taxonomies in
@@ -61,20 +70,42 @@ fields for the group and the arc.^[Run `source("https://raw.githubusercontent.co
 
 ### Structure of unprocessed data
 
-If you visit the  [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) site, you will see something like the table seen in @fig-dera-notes.
+If you visit the  [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) site, you will see something like the table partially seen in @fig-dera-notes.
 This table provides links to many ZIP files.
 The last year or so of data are found in monthly data files and earlier periods are found in quarterly data files.
 Each data file is found using a link provided in the table.
 
-![Financial Statement and Notes website](images/dera_notes.png){#fig-dera-notes}
+![Financial Statement and Notes website](images/dera_notes.png){#fig-dera-notes width=50%, height=50%}
 
 I start with the `2024_10` file, the [link to which](https://www.sec.gov/files/dera/data/financial-statement-notes-data-sets/2024_10_notes.zip) points to a file named `2024_10_notes.zip`.
 We can download that file and extract its contents, which are depicted in @fig-example.
 It seems that each of the data tables discussed above is found in an eponymous `.tsv` file.
 
-![Contents of `2024_10_notes.zip`](images/2024_10_notes.png){#fig-example}
+![Contents of `2024_10_notes.zip`](images/2024_10_notes.png){#fig-example width=40%, height=40%}
 
 I start with `sub.tsv` and I repeat the download steps for the `.zip` file programmatically.
+To programmatically download data from SEC EDGAR, you will need to set `HTTPUserAgent` to *your* email address by running code like the following in R.
+
+```{r}
+#| include: false
+options(HTTPUserAgent = "iandgow@gmail.com")
+```
+
+```{r}
+#| eval: false
+options(HTTPUserAgent = "your_name@email_provider.com")
+```
+
+While we are on the topic of setting variables that are user-specific, we will later store data in a subdirectory of a directory that is identified by the environment variable `DATA_DIR`.
+I set `DATA_DIR` to a folder named `pq_data` inside my Dropbox location.
+You should run the following code but with a destination that is convenient for you.
+
+```{r}
+#| eval: false
+Sys.setenv(DATA_DIR = "~/Dropbox/pq_data")
+```
+
+Having set `HTTPUserAgent`, I begin by downloading the file for October 2024.
 
 ```{r}
 #| cache: true
@@ -90,7 +121,7 @@ download.file(url, t)
 t <- "data/2024_10_notes.zip"
 ```
 
-We can start by simply applying `read_tsv()`.
+We can start by simply applying `read_tsv()` to this file.^[Using `unz(t, "sub.tsv")` allows us to unzip just that one file in a way that does not leave detritus in our file system.]
 
 ```{r}
 sub <- read_tsv(unz(t, "sub.tsv"))
@@ -98,6 +129,7 @@ sub <- read_tsv(unz(t, "sub.tsv"))
 
 Alas, we see problems.
 What's the cause?
+Let's follow the prompt and use `problems()` to investigate.
 
 ```{r}
 problems(sub)
@@ -112,7 +144,7 @@ sub <- read_tsv(unz(t, "sub.tsv"), guess_max = 10000)
 
 OK, no problems now.
 What are the types of each column?
-Here I apply a small function `first_class` to `sub` to find out.^[It use `first_class()` to get just the first class for each column as one column has two classes associated with it. You can see this by running `unlist(map, sub, class))` and comparing the output with that from the code below.]
+Here I apply a small function `first_class()` to `sub` to find out.^[I use `first_class()` to get just the first class for each column as one column has two classes associated with it. You can see this by running `unlist(map, sub, class))` and comparing the output with that from the code I use below.]
 
 ```{r}
 first_class <- function(x) {
@@ -122,10 +154,9 @@ first_class <- function(x) {
 unlist(map(sub, first_class))
 table(unlist(map(sub, first_class)))
 ```
-So most columns are either `character` or `numeric`.
-However, the column `accepted` is read as a date-time (`POSIXct`).
+While most columns are either `character` or `numeric`, the `accepted` column is read as a date-time (`POSIXct`).
 
-The `read_tsv()` function has a `col_types` argument that allows us to "use a compact string representation where each character represents one column:"
+The `read_tsv()` function has a `col_types` argument that allows us to "use a compact string representation where each character represents one column" as follows:
 
  - c = character
  - i = integer
@@ -139,7 +170,7 @@ The `read_tsv()` function has a `col_types` argument that allows us to "use a co
  - ? = guess
  - _ or - = skip
 
-The following `get_coltypes_str()` function creates a string that we can use to specify column types that we can give to `read_tsv()`.
+The following `get_coltypes_str()` function creates a string that we can use to specify column types when calling `read_tsv()`.^[This function only handles a subset of the types that might be identified by `read_tsv()`, but it suffices for current purposes.]
 
 ```{r}
 get_coltypes_str <- function(df) {
@@ -161,7 +192,7 @@ get_coltypes_str <- function(df) {
 get_coltypes_str(sub)
 ```
 
-It is generally helpful to look at the data.
+Even though `read_tsv()` is able to guess most types, it is generally best to look at the data.
 In this case, we can see that four columns are actually dates coded as numbers of the form `yyyymmdd`.
 
 ```{r}
@@ -170,8 +201,8 @@ sub |>
   arrange(floatdate)
 ```
 
-In the following code, I read `accepted` initially as a character variable and convert it using `ymd_hms()` from the `lubridate` package to convert it to a date-time.
-I also use `ymd()` to convert `changed`, `filed`, `period`, and `floatdate` into dates.
+In the following code, I use `ymd()` to convert these four variables into dates.
+I also read `accepted` initially as a character variable and use `ymd_hms()` from the `lubridate` package to convert it to a date-time.^[I do not recall why I chose this option, but it may have been that the automatic type detection and conversion did not work with all files and setting it explicitly works best.]
 
 ```{r}
 sub <- 
@@ -190,19 +221,141 @@ sub |>
 ```
 
 Finally, I create a parquet file by exporting the data from the DuckDB table I just created.
+I then disconnect from the database, as I no longer need it.
 
 ```{r}
 period <- str_replace(basename(t), "^(.*)_notes.*$", "\\1")
 pq_dir <- file.path(Sys.getenv("DATA_DIR"), "dera_notes")
 pq_file <- file.path(pq_dir, str_c("sub_notes_", period, ".parquet"))
 dbExecute(db, str_c("COPY sub_notes TO '", pq_file, "'"))
+dbDisconnect(db)
 ```
 I then do similar work for the remaining tables (`dim`, `num`, `txt`, `ren`, `pre`, and `cal`).
-I then put all of this inside a function `get_data(file)` that downloads a `.zip` file and creates parquet files for each table.
-Finally I run this function to 
+I then put all of this inside a function `get_notes_data(file)` that downloads a `.zip` file and creates parquet files for each table.
+I can load this function by running the following code:
 
-Nearly 38 minutes.
+```{r}
+source(str_c("https://raw.githubusercontent.com/iangow/",
+             "notes/refs/heads/main/get_dera_functions.R"))
+```
 
-## Getting Form AP data
+This code also loads the function `get_zip_files_df()` that can be used to get the list of `.zip` files shown on SEC website.
 
-Deleting obsolete files.
+```{r}
+zip_files <- get_zip_files_df()
+zip_files
+```
+
+Next, I can apply the function `get_notes_data()` to each file in `zip_files` using `map()`:
+
+```{r}
+#| eval: false
+map(zip_files$file, get_notes_data)
+```
+
+```{r}
+#| include: false
+dir_size <-
+  pq_dir |> 
+  list.files(full.names = TRUE) |> 
+  map(file.info) |>
+  bind_rows() |> 
+  as_tibble() |> 
+  summarize(size = sum(size) / 1e9) |>
+  pull()
+```
+
+Doing this takes me a bit under 38 minutes.^[Obviously the time taken will depend on the speed of your internet connection and your "distance" from the SEC EDGAR server.]
+The resulting files take up about `r prettyNum(round(dir_size, 0))` GB of space, likely representing about 10 times that in terms of raw data due to compression.
+
+### Doing incremental updates
+
+While 38 minutes is a reasonable amount of time to download hundreds of gigabytes of data, it is not something that we would want to repeat on a regular basis.
+The astute reader will note that the `last_modified` field of `zip_files` contains information on the date on which the applicable file was modified.
+It seems we could use this information to limit ourselves to files that have been added or modified since we last updated the data.
+
+In the past I have use three different approaches to this kind of problem:
+
+ 1. Storing `last_modified` data in the metadata of parquet files containing the data.
+ 2. Modifying the file properties of the data file to match the `last_modified` data.
+ 3. Saving a table containing `last_modified` data that can be compared with the current data to identify files that need to be downloaded.
+ 
+Of these three approaches, the first is probably the most robust because the `last_modified` information is part of the parquet file itself.
+I use this first approach in `wrds_update_pq()` in two Python packages, [`wrds2pg`](https://pypi.org/project/wrds2pg/) and [`db2pq`](https://pypi.org/project/db2pq/).
+The second approach also collocates the information with the file, but is perhaps a little less robust.
+I use this approach in `wrds_update_csv()` in [`wrds2pg`](https://pypi.org/project/wrds2pg/) because the output files are CSV files where there is no place to store metadata.
+
+Here I will use the third approach just because it is simpler.
+However it is a little less robust.
+For example, if the download process is interrupted or the data files are moved around, the value of a directory-level file with `last_modified` might be limited.
+
+I start by loading a file called `last_modified.parquet` in the parquet data directory if one exists.
+The first time you run the code, there will be no such file and I create an empty data frame `last_modified` in that case.
+
+```{r}
+pq_dir <- file.path(Sys.getenv("DATA_DIR"), "dera_notes")
+pq_path <- file.path(pq_dir, "last_modified.parquet")
+
+if (file.exists(pq_path)) {
+  last_modified <- arrow::read_parquet(pq_path)
+} else {
+  last_modified <- tibble(file = NA, last_modified = NA)
+}
+```
+
+I then compare `zip_files` with `last_modified` to identify files on SEC EDGAR with a different modification date from that recorded in `last_modified`.
+These are the files that we will want to download and we store the list of such files in the data frame `to_update`.
+
+```{r}
+to_update <-
+  zip_files |>
+  left_join(last_modified,
+            by = "file",
+            suffix = c("_new", "_old")) |>
+  filter(is.na(last_modified_old) |
+           last_modified_new != last_modified_old)
+```
+
+Now I can apply `get_notes_data()` to the files in `to_update`.
+
+```{r}
+#| output: false
+map(to_update$file, get_notes_data)
+```
+
+Having updated the files, we now save the data in `zip_files` as the new copy of `last_updated`.
+This new `last_updated.parquet` will be used the next time we update the data.
+
+```{r}
+save_parquet <- function(df, name) {
+  file_path <- file.path(pq_dir, paste0(name, ".parquet"))
+  arrow::write_parquet(df, sink = file_path)
+}
+
+zip_files |>
+  save_parquet(name = "last_modified")
+```
+
+According to the SEC EDGAR website, "effective March 2024, monthly data sets will be consolidated into quarterly files after a year, so that only a year of monthly files will be available at a time."
+This will mean that monthly files will become obsolete after about a year and presumably need to be deleted to avoid duplicating data in quarterly files.
+A subsequent update to this note will discuss how we can identify and delete obsolete files.
+
+## Using *Financial Statement and Notes* data
+
+Now that we have downloaded the data, we can access it quite easily using DuckDB and the `load_parquet()` function from the `farr` library.^[The `farr` package was originally created to supplement the book by me and Tony Ding, [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).]
+Note that while the tables are split across several files, these are easily combined using wildcards in DuckDB.
+For example, `sub_notes_*` can be used to refer to all files that make up the submission data (`sub` table).
+As can be seen, working with parquet files using DuckDB is generally very fast.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+sub <- load_parquet(db, "sub_notes_*", schema = "dera_notes")
+
+sub |>
+  mutate(year = year(filed)) |>
+  count(year, sort = TRUE) |>
+  collect() |>
+  system_time()
+```
+
