@@ -354,7 +354,8 @@ sub <- load_parquet(db, "sub_notes_*", schema = "dera_notes")
 
 sub |>
   mutate(year = year(filed)) |>
-  count(year, sort = TRUE) |>
+  count(year) |> 
+  arrange(desc(year)) |>
   collect() |>
   system_time()
 ```
