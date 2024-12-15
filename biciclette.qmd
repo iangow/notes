@@ -1,0 +1,322 @@
+---
+title: "Bicicletta Globale"
+author: Ian D. Gow
+date: 2024-12-02
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+This note uses the following R packages:^[To install these packages, run `install.packages(c("tidyverse", "DBI", "dbplyr", "readxl")` in the console of RStudio.]
+
+```{r}
+#| message: false
+#| include: true
+library(tidyverse)
+library(DBI)
+library(dbplyr)
+library(readxl)
+```
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+sales <- 
+  read_xlsx("data-raw/Bicicletta Globale Sales Data.xlsx") |>
+  copy_to(db, df = _, name = "sales", overwrite = TRUE)
+```
+
+1. For how long has Bicicletta Globale been in business?
+
+```{r}
+sales |>
+  summarize(min_date = min(Date, na.rm = TRUE),
+            max_date = max(Date, na.rm = TRUE)) |>
+  collect()
+```
+
+```{r}
+sales |>
+  mutate(quarter = floor_date(Date, "quarter")) |>
+  ggplot(aes(x = quarter)) +
+  geom_bar() +
+  scale_x_date(breaks = "3 months") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+2. How many customers has Bicicletta Globale done business with?
+
+```{r}
+#| include: false
+num_customers <-
+  sales |>
+  summarize(n_customers = n_distinct(Customer)) |>
+  pull()
+```
+
+
+Bicicletta Globale has done business with `r num_customers` customers.
+
+3. How many sales orders have been placed by customers in 2016?
+
+```{r}
+#| include: false
+num_orders <-
+  sales |>
+  filter(year(Date) == 2016) |>
+  summarize(n_orders = n_distinct(OrderNumber)) |>
+  pull()
+```
+
+In 2016, customers have placed `r num_orders` orders.
+
+4. Which was the best selling product (by sales volume) in 2016?
+
+See @fig-prod-vol-2016.
+For an internal audience, `Product` is likely to work; for outsiders, using `ProdDescr` might make more sense.
+
+```{r}
+#| echo: false
+#| label: fig-prod-vol-2016
+#| fig-cap: Sales volumes in 2016 by product
+#| warning: false
+prod_cats <-
+  sales |>
+  distinct(Product, ProdCat) |>
+  collect() |>
+  mutate(ProdCat = as.factor(ProdCat)) |>
+  mutate(ProdCat = fct_expand(ProdCat, "Other"))
+
+colour_map = c(
+      "b" = "pink",
+      "ACC" = "red",
+      "EBI" = "orange", 
+      "ORB" = "brown",
+      "TRE" = "purple",
+      "TOU" = "lightblue",
+      "ROB" = "lightgreen",
+      "Other" = "grey")
+
+plot_data <-
+  sales |>
+  filter(year(Date) == 2016) |>
+  group_by(Product) |>
+  summarize(volume = sum(SalesQuantity)) |>
+  window_order(desc(volume)) |>
+  mutate(Product = if_else(row_number() >= 10, "Other", Product)) |>
+  group_by(Product) |>
+  summarize(volume = sum(volume)) |>
+  collect() |>
+  left_join(prod_cats, by = "Product") |>
+  mutate(ProdCat = fct_na_value_to_level(ProdCat, "Other")) |>
+  arrange(Product == "Other", desc(volume)) |>
+  mutate(Product = fct_inorder(Product))
+  
+plot_data |>  
+  ggplot(aes(x = Product, y = volume, fill = ProdCat)) +
+  geom_col() +
+  scale_fill_manual(values = colour_map) +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+5. Which was the best selling product (by revenue) in 2016?
+
+See @fig-prod-usd-2016.
+
+```{r}
+#| echo: false
+#| label: fig-prod-usd-2016
+#| fig-cap: "Sales volumes in 2016 by USD revenues ($ millions)"
+plot_data <-
+  sales |>
+  filter(year(Date) == 2016) |>
+  group_by(Product) |>
+  summarize(volume = sum(`Revenue USD`) / 1e6) |>
+  window_order(desc(volume)) |>
+  mutate(Product = if_else(row_number() >= 10, "Other", Product)) |>
+  group_by(Product) |>
+  summarize(volume = sum(volume)) |>
+  collect() |>
+  left_join(prod_cats, by = "Product") |>
+  mutate(ProdCat = fct_na_value_to_level(ProdCat, "Other")) |>
+  arrange(Product == "Other", desc(volume)) |>
+  mutate(Product = fct_inorder(Product))
+
+plot_data |>
+  ggplot(aes(x = Product, y = volume, fill = ProdCat)) +
+  geom_col() + 
+  scale_fill_manual(values = colour_map) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab("")
+```
+
+
+6. Which product category had the most profitable year, and in which year was that?
+
+From @fig-cat-profits, it can be seen that TOU is dominates the most profitable years by product category.
+The most profitable year for TOU was 2014.
+
+```{r}
+#| echo: false
+#| label: fig-cat-profits
+#| fig-cap: "Most profitable product category--year combinations"
+plot_data <- 
+  sales |>
+  mutate(year = year(Date),
+         profit = `Revenue USD` - `Discount USD` - `Costs in USD`) |>
+  group_by(year, ProdCat) |>
+  summarize(profit = sum(profit), .groups = "drop") |>
+  arrange(desc(profit)) |>
+  collect(n = 10)
+
+plot_data |>
+  mutate(year = fct_inorder(as.character(year))) |>
+  ggplot(aes(x = year, y = profit, fill = ProdCat)) +
+  geom_col() + 
+  scale_fill_manual(values = colour_map) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab("")
+```
+
+7. Which customers have been lost since opening?
+
+From @fig-tenures it can be seen that only one customer (Silicon Valley Bikes) has stopped purchasing from us.
+
+```{r}
+#| echo: false
+#| label: fig-tenures
+#| fig-cap: Customer tenures
+#| warning: false
+sales |>
+  mutate(Date = as.Date(Date)) |>
+  group_by(CustDescr) |>
+  summarize(first_sale = min(Date),
+            last_sale = max(Date)) |>
+  arrange(desc(last_sale)) |>
+  collect() |>
+  mutate(CustDescr = fct_inorder(CustDescr),
+         mid_sale = first_sale + (last_sale - first_sale) / 2) |>
+  ggplot(aes(fill = last_sale <= "2016-01-01")) +
+  geom_crossbar(aes(y = CustDescr,
+                    x = mid_sale,
+                    xmin = first_sale,
+                    xmax = last_sale), linetype = 0) +
+  theme(legend.position = "none") +
+  ylab("Customer") +
+  xlab("Sales periods")
+```
+
+8. What effect have exchange rate fluctuations had on European revenues, when consolidated into overall USD revenues?
+
+First, a little SQL tells us that there are only two currencies used by Bicicletta Globale:
+
+```{r}
+sales |> 
+  count(Currency) |>
+  collect()
+```
+```{r}
+avg_eur_usd <- 
+  sales |> 
+  filter(Currency == "EUR") |>
+  summarize(eur_rev = sum(Revenue),
+            usd_rev = sum(`Revenue USD`),
+            .groups = "drop") |>
+  mutate(eur_usd = usd_rev / eur_rev) |>
+  select(eur_usd) |>
+  pull()
+```
+
+```{r}
+monthly_revenues <-
+  sales |>
+  filter(Currency == "EUR") |>
+  mutate(month = floor_date(Date, "month")) |>
+  group_by(month) |>
+  summarize(`Actual exchange rate` = sum(`Revenue USD`),
+            `Average exchange rate` = sum(Revenue) * avg_eur_usd,
+            .groups = "drop") 
+```
+
+It appears that revenues are *slightly* more volatile if we assume that a constant exchange rate (the weighted-average over all history) had applied to all EUR-denominated sales.
+From @fig-exch-rates, however, it seems clear that exchange-rate fluctuations are not a big driver of USD revenue fluctuations from EUR-denominated sales; seasonality is a much bigger driver.
+
+```{r}
+#| echo: false
+#| label: fig-exch-rates
+#| fig-cap: USD value of EUR revenues using actual and average exchange rates
+monthly_revenues |>
+  pivot_longer(cols = -month) |>
+  ggplot(aes(x = month, y = value, linetype = name, colour = name)) +
+  geom_line() +
+  theme(legend.position = "bottom")
+```
+
+This can be confirmed by a little SQL:
+
+```{r}
+monthly_revenues |>
+  summarize(across(-month, sd)) |>
+  collect()
+```
+
+```{r}
+#| echo: false
+#| label: fig-usd-eur
+#| fig-cap: Monthly USD-EUR exchange rates
+#| warning: false
+sales |>
+  filter(Currency == "EUR") |>
+  mutate(month = floor_date(Date, "month")) |>
+  group_by(month) |>
+  summarize(rev_usd = sum(`Revenue USD`),
+            rev_eur = sum(Revenue),
+            .groups = "drop") |>
+  mutate(eur_usd = rev_usd / rev_eur) |>
+  ggplot(aes(x = month, y = eur_usd)) +
+  geom_line()
+```
+
+
+9. What is Bicicletta Globale's discounting policy? Per product (different discount for each sales order line item), or per order (same discount applied to all sales order line items)?
+
+```{r}
+#| echo: false
+#| label: fig-disc-rates
+#| fig-cap: Distribution of discount rates
+sales |> 
+  mutate(disc_rate = 100 * Discount / Revenue) |> 
+  filter(!is.na(disc_rate)) |>
+  ggplot(aes(x = disc_rate)) + 
+  geom_histogram(binwidth = 1 / 10) +
+  xlab("Discount rate (%)") +
+  ylab("Number of order items")
+```
+
+From @fig-disc-rates, it seems that there are three different discount rates: 0\%, 3\%, and 5\%.
+Note that if I use narrower bins (e.g., `binwidth = 1 / 100`), I see some variation from exactly 3\%. 
+I assume that this is rounding error.
+Using SQL I can see that *if I round to the nearest percentage point* there is only ever one discount rate applied to each item in any order:
+
+```{r}
+sales |> 
+  mutate(disc_rate = round(Discount / Revenue, 2)) |> 
+  group_by(OrderNumber) |> 
+  summarize(n_disc_rates = n_distinct(disc_rate), .groups = "drop") |> 
+  count(n_disc_rates) |> 
+  collect()
+```
