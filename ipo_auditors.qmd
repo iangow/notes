@@ -1,0 +1,143 @@
+---
+title: "Spreadsheets for data collection"
+subtitle: "Linking IPOs to auditor IDs"
+author: Ian D. Gow
+date: 2024-12-26
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+
+As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
+In that post, I identified a few gaps, including hierarchical data, dates and times, and spreadsheets.
+Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf).
+
+This note provides some coverage of spreadsheets.
+[Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa covers spreadsheets and Broman:2018aa is an excellent paper focused on using spreadsheets for data collection.
+
+In a [recent note](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), I used XBRL data to identify potentially missing Form AP filings.
+In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data.
+However, I provided no real information on how to get the XBRL data from SEC EDGAR.
+This note aims to provide this missing information.^[Guidance on downloading the Form AP data is provided in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf) I wrote.]
+
+In writing this note, I use the packages listed below.^[Execute `install.packages(c(tidyverse, "DBI", "duckdb", "farr", "googlesheets4"` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.pdf).
+
+```{r}
+#| message: false
+#| include: true
+library(tidyverse)
+library(DBI)
+library(farr)
+library(googlesheets4)
+```
+
+
+# Spreadsheets and data science
+
+My sense is that the use of spreadsheets in data science falls into one of two scenarios.
+In one scenario, the data are provided in a spreadsheet format that is outside the control of the reseacher.
+In another scenario, spreadsheets are used by the researcher as part of the data collection process.
+
+## Scenario 1: Importing spreadsheet data
+
+[Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa covers spreadsheets.
+The emphasis there is on importing data provided in spreadsheet form, in either a Microsoft Excel file or in a Google Sheets document.
+While the chapter in @Wickham:2023aa does cover writing data to Excel or Google Sheets, it does not discuss why you might want to do this.^In general, there are much better formats for exporting data than either of these approaches and I would argue that there is no reason to use Excel files as part of a data science workflow.]
+
+1. Write a script
+2. Do not modify source data files in any way.
+
+
+## Scenario 2: Using spreadsheets for data collection
+
+Broman has indicated that the paper focuses on settings where the user of the data is entering the data directly.
+However, a very common use case I have encountered is on where I (along with collaborators) will be using the data, but someone else is entering the data.
+This note focuses on this scenario.
+
+This note aims to expand on and refine the advice provided by @Broman:2018aa for situations where others---such as data entry specialists or research assistants---are entering data into spreadsheets.
+@Broman:2018aa provide a list of twelve recommendations.
+In this note, I will provide a set of recommendations specific to the approach I recommend here and then follow those with comments on the recommendations of @Broman:2018aa in light of the different context.
+
+As mentioned earlier, @Broman:2018aa is predicated on the user of the data also doing the data entry.
+References to things such as `Serum_batch1_2015-01-30.csv`, `Mouse153` and `glucose_6_weeks` suggest a setting of collection of observations and measurements from scientific experiments.
+
+In contrast, a more common setting in my experience is that of collecting relatively large amounts of somewhat messy data from documents found on the internet.
+Typically, researchers need people to collect these data because either they are too messy to be collected in an automated fashion with sufficiently low cost and high quality or their collection requires some element of judgement.
+
+Here are some cases where I have used spreadsheets to collect data.
+
+1. Data on director biographies. 
+These data were used to support the @Gow:2018aa.
+2. 
+
+# My recommendations
+
+## Use Google Sheets
+
+My primary recommendation is to use Google Sheets rather than Excel spreadsheets.
+While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, at this time there is no equivalent to Google Sheets in terms of functionality.^[If there is an alternative---or if such a product becomes available at a later date---hopefully much of what I say here will apply to that product.]
+
+From [issue](https://github.com/kbroman/dataorg/issues/5):
+
+### Benefits of Google Sheets:
+
+1. With distributed data entry, version control issues go away. These are _huge_ in my experience.
+2. One can monitor data entry in real-time. "Please don't put values like `2013-03-23 (need to check)` in the `date` column."
+3. Adding data validation on the fly is easy. (I think a reason why we often use spreadsheets is because we don't know what data we want to collect in advance. It's common to add columns, etc. So the idea of setting up a nice Excel spreadsheet with data validation, etc., before starting data entry is often not possible in practice.)
+4. Multiple people can enter data at once. (Alternative of different people having different Excel files is painful to even mention.)
+5. Data import is easy. Use `googlesheets` package from Jenny Bryan.
+6. Data access can be added and removed with ease.
+7. Access to data is continuous. No need for "please send me the updated spreadsheet before you go home today, as I'd like to run some numbers."
+8. Google Sheets has some functions (e.g., regular expression support) that can facilitate data entry.
+9. Data access is ensured. Some Excel spreadsheets I "have" are somewhere on the now-erased computers of long-departed research assistants of colleagues (i.e., gone). Google Sheets documents can always be found (putting the key in code also makes it easier to find them than `C:/Desktop/Best Project Ever/data collection_final_v3_3-4-1997.xls` does with Excel files).
+10. I haven't had encoding issues with Google Sheets.
+
+
+
+
+
+
+### Distributed monitoring
+
+### Version control
+
+
+
+
+
+
+
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+options(gargle_oauth_email = TRUE)
+
+ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
+ipos <- load_parquet(db, "ipos", "nasdaq")
+form_aps <- load_parquet(db, "form_aps", "pcaob")
+```
+
+```{r}
+#| include: false
+library(tinytable)
+```
+
+# References {-}
