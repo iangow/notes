@@ -24,16 +24,11 @@ csl: jfe.csl
 
 
 As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
-In that post, I identified a few gaps, including hierarchical data, dates and times, and spreadsheets.
-Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf).
+In that post, I identified a few gaps in our coverage of [*R for Data Science*](https://r4ds.hadley.nz), including hierarchical data, dates and times, and spreadsheets.
 
-This note provides some coverage of spreadsheets.
-[Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa covers spreadsheets and Broman:2018aa is an excellent paper focused on using spreadsheets for data collection.
-
-In a [recent note](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), I used XBRL data to identify potentially missing Form AP filings.
-In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data.
-However, I provided no real information on how to get the XBRL data from SEC EDGAR.
-This note aims to provide this missing information.^[Guidance on downloading the Form AP data is provided in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf) I wrote.]
+Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note discusses spreadsheets.
+My aim with these notes is not to replace existing resources such as [*R for Data Science*](https://r4ds.hadley.nz), but to build on such resources with applied examples using richer data sets.^[Two excellent resources are [Chapter 20](https://r4ds.hadley.nz/spreadsheets) @Wickham:2023aa and @Broman:2018aa and I discuss these in more detail below.]
+The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf) I wrote.]
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c(tidyverse, "DBI", "duckdb", "farr", "googlesheets4"` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -81,7 +76,7 @@ Importing spreadsheets falls clearly into the *Curate* portion of the extended "
 The whole *Curate* process should be documented and scripted as much as possible.
 For example, if the spreadsheet data come from a URL for a Microsoft Excel file, then the download step should be [if possible] part of the script.
 
-Second, the source data files in *any* way.
+Second, the source data files should not be modified in *any* way.
 While this point is closely related to the previous one, I believe that it warrants specific emphasis.
 Clearly one should not be opening Excel files and modifying data by deleting columns or reformatting values, as these steps are undocumented and not repeatable in an automated fashion.
 
