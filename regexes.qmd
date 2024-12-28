@@ -1,0 +1,99 @@
+---
+title: "Regular expressions"
+author: Ian D. Gow
+date: 2024-12-20
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+This note uses the following R packages:^[To install these packages, run `install.packages(c("tidyverse", "DBI", "dbplyr", "babynames")` in the console of RStudio.]
+
+```{r}
+#| message: false
+#| include: true
+library(tidyverse)
+library(babynames)
+library(DBI)
+library(farr)
+```
+
+
+```{r}
+babynames |> 
+  filter(str_detect(name, "x")) |> 
+  count(name, wt = n, sort = TRUE) |>
+  collect() |>
+  system_time()
+```
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+babynames <-
+  babynames::babynames |>
+  copy_to(db, df = _, name = "babynames", overwrite = TRUE)
+```
+
+
+
+```{r}
+babynames |> 
+  filter(str_detect(name, "x")) |> 
+  count(name, wt = n, sort = TRUE) |>
+  collect() |>
+  system_time()
+```
+
+Need to use `as.integer()` here.
+
+```{r}
+babynames |> 
+  group_by(year) |> 
+  summarize(prop_x = mean(as.integer(str_detect(name, "x")))) |> 
+  ggplot(aes(x = year, y = prop_x)) + 
+  geom_line()
+```
+
+```{r}
+babynames::babynames |> 
+  count(name) |> 
+  mutate(
+    vowels = str_count(name, "[aeiou]"),
+    consonants = str_count(name, "[^aeiou]")
+  ) |>
+  system_time()
+```
+
+```{r}
+str_count <- function(x, regex) {
+  sql(str_c("len(regexp_extract_all(", {{x}}, {{regex}}, '0L, "i"))'))
+}
+```
+
+
+```{r}
+babynames |> 
+  count(name) |> 
+  mutate(
+    vowels = len(regexp_extract_all(name, "[aeiou]", 0L, "i")),
+    consonants = len(regexp_extract_all(name, "[^aeiou]", 0L, "i"))
+  ) |>
+  arrange(name) |>
+  collect() |>
+  system_time()
+```
