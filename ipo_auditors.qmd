@@ -1,6 +1,5 @@
 ---
 title: "Spreadsheets for data collection"
-subtitle: "Linking IPOs to auditor IDs"
 author: Ian D. Gow
 date: 2024-12-26
 date-format: "D MMMM YYYY"
@@ -23,7 +22,6 @@ bibliography: papers.bib
 csl: jfe.csl
 ---
 
-
 As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
 In that post, I identified three gaps in our coverage relative to [*R for Data Science*](https://r4ds.hadley.nz).
 Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
@@ -31,7 +29,7 @@ Previous notes covered [hierarchical data](https://raw.githubusercontent.com/ian
 My aim with these notes is not to replace existing resources such as [*R for Data Science*](https://r4ds.hadley.nz), but to build on such resources with applied examples using richer data sets.^[Two excellent resources are [Chapter 20](https://r4ds.hadley.nz/spreadsheets) @Wickham:2023aa and @Broman:2018aa and I discuss these in more detail below.]
 The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [another earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
 
-In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4")` within R to install all the packages you need to run the code in this note.]
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4", "arrow")` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.pdf).
 
@@ -42,8 +40,13 @@ library(tidyverse)
 library(DBI)
 library(farr)
 library(googlesheets4)
+library(arrow)
 ```
 
+```{r}
+#| include: false
+library(tinytable)
+```
 
 # Spreadsheets and data science
 
@@ -107,7 +110,6 @@ test_date | cusip      | result | name  |
 
 Excel changed the first column so that the data are no longer in a consistent (`d/m/yyyy`) format, mangled the first `cusip` value, and messed up the encoding (and I wasn't even using Windows!) so that the Korean name in the third row is no longer legible.
 
-
 ## Scenario 2: Using spreadsheets for data collection
 
 While Chapter 20 of @Wickham:2023aa focuses on importing data from spreadsheets, @Broman:2018aa focuses on the use of spreadsheets for data collection.
@@ -135,23 +137,23 @@ I feel you are too sanguine about Excel-created CSVs (e.g., [here](http://kbroma
 
 I guess the advice might be "don't use Excel to handle CSV files."
 
-
-Here are some cases where I have used spreadsheets to collect data.
-
-1. Data on director biographies. 
-These data were used to support the @Gow:2018aa.
-2. 
-
-# My recommendations
-
-## Use Google Sheets
+# Google Sheets
 
 My primary recommendation is to use Google Sheets rather than Excel spreadsheets.
 While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, at this time there is no equivalent to Google Sheets in terms of functionality.^[If there is an alternative---or if such a product becomes available at a later date---hopefully much of what I say here will apply to that product.]
 
+Google Sheets offers a number of benefits over Excel even for a single user.
+For example, Google Sheets has some functions (e.g., support for regular expressions) that can greatly facilitate data entry.
+Also I haven't had encoding issues with Google Sheets of the kind we saw above with the Korean name `철수` being mangled into `_Êö÷`.
+
+But the benefits of Google Sheets become especially clear when there are several people working with the data, such as multiple researchers and possibly many research assistants.
+
+One issue I have encountered with Excel is version control.
+
+
 From [issue](https://github.com/kbroman/dataorg/issues/5):
 
-### Benefits of Google Sheets:
+## Benefits of Google Sheets:
 
 1. With distributed data entry, version control issues go away. These are _huge_ in my experience.
 2. One can monitor data entry in real-time. "Please don't put values like `2013-03-23 (need to check)` in the `date` column."
@@ -160,47 +162,30 @@ From [issue](https://github.com/kbroman/dataorg/issues/5):
 5. Data import is easy. For example, we can use the `googlesheets4` package from Jenny Bryan.
 6. Data access can be added and removed with ease.
 7. Access to data is continuous. No need for "please send me the updated spreadsheet before you go home today, as I'd like to run some numbers."
-8. Google Sheets has some functions (e.g., regular expression support) that can facilitate data entry.
 9. Data access is ensured. Some Excel spreadsheets I "have" are somewhere on the now-erased computers of long-departed research assistants of colleagues (i.e., gone). Google Sheets documents can always be found (putting the key in code also makes it easier to find them than `C:/Desktop/Best Project Ever/data collection_final_v3_3-4-1997.xls` does with Excel files).
-10. I haven't had encoding issues with Google Sheets.
 
 
 
-
-
-
-
-### Distributed monitoring
-
-### Version control
-
-
-
-
-
-
-
+# Case study: Linking IPOs with auditor IDs
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
-
-options(gargle_oauth_email = TRUE)
-
-ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
-ipos <- load_parquet(db, "ipos", "nasdaq")
-form_aps <- load_parquet(db, "form_aps", "pcaob")
 ```
 
-```{r}
-#| include: false
-library(tinytable)
-```
+## IPO data
 
 Nasdaq provides information about IPOs on its website.
-For example, details about the IPO Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found [here](https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581).
+For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581>.
 
 The Nasdaq page also includes information about the "experts" associated with each IPO.
 The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) that can be found in the `ipo_experts` data frame is shown in @tbl-glmd-experts.
+
+
+```{r}
+ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
+ipos <- load_parquet(db, "ipos", "nasdaq")
+```
+
 
 
 
@@ -224,6 +209,25 @@ Firms can change names.
 Names can be abbreviated or misspelt or change in subtle ways that are not obvious to a human reader, but that make them unusable as identifiers in code.
 Third, at least for some expert types, there can be more than one expert for a given IPO.
 
+I first get data on auditors and IPOs from the IPO data and store it in `ipo_auditors`.
+
+```{r}
+ipo_auditors <-
+  ipos |> 
+  select(dealID, companyName, CIK, pricedDate, CompanyAddress) |> 
+  inner_join(ipo_experts, by = "dealID") |>
+  filter(role == "Auditor") |>
+  rename(cik = CIK) |>
+  select(-role) |>
+  compute()
+```
+
+# Form APs data
+
+```{r}
+form_aps <- load_parquet(db, "form_aps", "pcaob")
+```
+
 We can collect auditor IDs associated with each CIK from `form_aps`.
 Of course, firms change auditors over time, but if we are interested in the auditors at the time of IPO, it might make sense to pick the first auditor associated with each CIK.^[Some firms have SEC filings long before their IPOs, so this is not a perfect approach, but it is good enough for our purposes here.]
 The following code creates `first_auditors` with information on the first auditor for each issuer.
@@ -237,19 +241,6 @@ first_auditors <-
   rename(cik = issuer_cik) |>
   mutate(cik = if_else(cik == "9999999999", NA, cik)) |>
   select(cik, firm_id, firm_name, firm_country, audit_report_date) |>
-  compute()
-```
-
-We get data on auditors and IPOs from the IPO data and store it in `ipo_auditors`.
-
-```{r}
-ipo_auditors <-
-  ipos |> 
-  select(dealID, companyName, CIK, pricedDate, CompanyAddress) |> 
-  inner_join(ipo_experts, by = "dealID") |>
-  filter(role == "Auditor") |>
-  rename(cik = CIK) |>
-  select(-role) |>
   compute()
 ```
 
@@ -275,6 +266,7 @@ Here I chose to create a new Google Sheets file using the `gs4_create()` from `g
 
 ```{r}
 #| eval: false
+options(gargle_oauth_email = TRUE)
 gs_target <- gs4_create(name = "ipo-auditors")
 ```
 
@@ -299,9 +291,7 @@ Spreadsheet name: ipo-auditors
 
 ── <sheets> ────────────────────────────────────────────────────────────────────────────────────────────
 (Sheet name): (Nominal extent in rows x columns)
-name_matches: 397 x 8
-deal_matches: 404 x 12
- extra_deals: 2 x 8
+      Sheet1: 1000 x 26
 ```
 
 After I've created the Google Sheets file, I will access it using the key seen in the output above.
@@ -497,5 +487,13 @@ all_matches |>
   arrow::write_parquet(sink = file.path(Sys.getenv("DATA_DIR"), 
                                         "nasdaq", "ipo_auditors.parquet"))
 ```
+
+# Additional case studies
+
+Here are some cases where I have used spreadsheets to collect data.
+
+1. Data on director biographies. 
+These data were used to support the @Gow:2018aa.
+2. 
 
 # References {-}
