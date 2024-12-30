@@ -18,19 +18,20 @@ format:
     papersize: a4
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
+    CJKmainfont: AppleMyungjo
 bibliography: papers.bib
 csl: jfe.csl
 ---
 
 
 As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
-In that post, I identified a few gaps in our coverage of [*R for Data Science*](https://r4ds.hadley.nz), including hierarchical data, dates and times, and spreadsheets.
+In that post, I identified three gaps in our coverage relative to [*R for Data Science*](https://r4ds.hadley.nz).
+Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
 
-Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note discusses spreadsheets.
 My aim with these notes is not to replace existing resources such as [*R for Data Science*](https://r4ds.hadley.nz), but to build on such resources with applied examples using richer data sets.^[Two excellent resources are [Chapter 20](https://r4ds.hadley.nz/spreadsheets) @Wickham:2023aa and @Broman:2018aa and I discuss these in more detail below.]
-The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf) I wrote.]
+The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [another earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
 
-In writing this note, I use the packages listed below.^[Execute `install.packages(c(tidyverse, "DBI", "duckdb", "farr", "googlesheets4"` within R to install all the packages you need to run the code in this note.]
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4")` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.pdf).
 
@@ -56,7 +57,7 @@ In the other scenario, spreadsheets are used by the researcher as part of the da
 While the chapter in @Wickham:2023aa does cover writing data to Excel or Google Sheets, it does not discuss *why* you would want to do this.^[In general, there are much better formats for exporting data than either of these approaches and I would see no good reason to use Excel files as part of a data science workflow.]
 
 The coverage provided in @Wickham:2023aa is excellent and I refer readers to that book for details on importing spreadsheet data.
-However, one weakness of [Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa is that it does not provide guidance on what I would regard as essential best practices for importing spreadsheet data.^[To be fair, earlier chapters of @Wickham:2023aa do discuss issues regarding importing data and scripts, but I think the importance of reproducibility is high enough---and the tendency for maany to neglect it in practice---that it really bears repetition and more detailed guidance in each context.]
+However, a weakness of [Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa is its limited guidance on what I would regard as essential best practices for importing spreadsheet data.^[To be fair, earlier chapters of @Wickham:2023aa do discuss issues regarding importing data and scripts, but I think the importance of reproducibility is high enough---and the tendency for many to neglect it in practice---that it really bears repetition and more detailed guidance in each context.]
 So I provide some guidance on these here.
 
 ```{r}
@@ -79,30 +80,61 @@ For example, if the spreadsheet data come from a URL for a Microsoft Excel file,
 Second, the source data files should not be modified in *any* way.
 While this point is closely related to the previous one, I believe that it warrants specific emphasis.
 Clearly one should not be opening Excel files and modifying data by deleting columns or reformatting values, as these steps are undocumented and not repeatable in an automated fashion.
+My advice here mirrors that of @Broman:2018aa [p. 7] in a slightly different context: "Your primary data file should be a pristine store of data. Write-protect it, back it up, and do not touch it."
 
 Even simply opening the source Excel files in Excel and clicking save can modify the underlying files in a way that affect later parts of the data science workflow.
 I had one project where the source data appeared to be `.xls` Excel files, but were in fact simply structured text in HTML format.
 Scripts written on this basis performed better than ones that read them as Excel data.^["Performed better" here means not only that the scripts were faster, but that the imported data were easier to work with.]
-However, when updated spreadsheets were received from the vendor they passed first through the data team at the institution I then worked at and the scripts no longer worked.
-The data team had "helpfully" opended the files in Excel and saved them before sending them along to me
-I had to insist that the data team pass along the data files *exactly* as they had received them without "helpful" steps in between.^[Some examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in [my earlier note](https://github.com/iangow/notes/blob/main/import_sirca.pdf).]
+However, when updated spreadsheets were received from the vendor they passed first through the data team at the institution I then worked at and my scripts no longer worked.
+The data team had "helpfully" opended the files in Excel and saved them before sending them along to me.
+I had to insist that the data team pass along the data files *exactly* as they had received them without "helpful" steps in between.^[Additional examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in [my earlier note](https://github.com/iangow/notes/blob/main/import_sirca.pdf).]
+
+test_date | cusip      | result | name  |
+----------|------------|--------|-------|
+1/7/2006  | "945324E7" | 1.7    | Bob   |
+8/3/2013  | "12345678" | 2.6    | Sarah |
+28/4/2016 | "23456789" | NA     | 철수  |
+
+: Original CSV data {#tbl-orig}
+
+test_date | cusip      | result | name  |
+----------|------------|--------|-------|
+1/7/06    | 9.45E+12   | 1.7    | Bob   |
+8/3/13    | "12345678" | 2.6    | Sarah |
+28/4/2016 | "23456789" | NA     | _Êö÷ |
+
+: Excel-exported CSV data {#tbl-excel}
+
+Excel changed the first column so that the data are no longer in a consistent (`d/m/yyyy`) format, mangled the first `cusip` value, and messed up the encoding (and I wasn't even using Windows!) so that the Korean name in the third row is no longer legible.
 
 
 ## Scenario 2: Using spreadsheets for data collection
 
-@Broman:2018aa emphasizes settings where the user of the data is entering the data directly.
+While Chapter 20 of @Wickham:2023aa focuses on importing data from spreadsheets, @Broman:2018aa focuses on the use of spreadsheets for data collection.
+Interestingly, @Wickham:2023aa does not discuss primary data collection in any detail and @Broman:2018aa does not *explicitly* cover the process of importing data into statistical analysis software.
+However, it does seem implicit in @Broman:2018aa that importing data into such software will be part of the process.
+For example, @Broman:2018aa [p. 9] suggest that "data rearrangement is best accomplished via code (such as with an R, Python, or Ruby script) so you never lose the record of what you did to the data."
+
+I view this note as building on @Broman:2018aa by adding some additional recommendations, linking data collection with data importation *à la* @Wickham:2023aa, and providing a more comprehensive use case to highlight some issues and ideas not addressed by either @Broman:2018aa or @Wickham:2023aa.
+
+@Broman:2018aa emphasizes cases where the user of the data is entering the data directly.
 However, a very common use case I have encountered is on where I (along with collaborators) will be using the data, but someone else is entering the data.
 This note focuses on this scenario.
 
 This note aims to expand on and refine the advice provided by @Broman:2018aa for situations where others---such as data entry specialists or research assistants---are entering data into spreadsheets.
 @Broman:2018aa provide a list of twelve recommendations.
-In this note, I will provide a set of recommendations specific to the approach I recommend here and then follow those with comments on the recommendations of @Broman:2018aa in light of the different context.
+In this note, I will provide a set of recommendations specific to the approach I recommend here and then follow those with comments on the recommendations in @Broman:2018aa in light of the different context.
 
 As mentioned earlier, @Broman:2018aa is predicated on the user of the data also doing the data entry.
 References to things such as `Serum_batch1_2015-01-30.csv`, `Mouse153` and `glucose_6_weeks` suggest a setting of collection of observations and measurements from scientific experiments.
 
 In contrast, a more common setting in my experience is that of collecting relatively large amounts of somewhat messy data from documents found on the internet.
 Typically, researchers need people to collect these data because either they are too messy to be collected in an automated fashion with sufficiently low cost and high quality or their collection requires some element of judgement.
+
+I feel you are too sanguine about Excel-created CSVs (e.g., [here](http://kbroman.org/dataorg/pages/csv_files.html)). While you do allude to one of the issues illustrated above [here](http://kbroman.org/dataorg/pages/avoid.html), I don't think you spell out _what_ to avoid in the first point. I think the thing to avoid is the "gone through Excel at some point" step. 
+
+I guess the advice might be "don't use Excel to handle CSV files."
+
 
 Here are some cases where I have used spreadsheets to collect data.
 
@@ -125,12 +157,13 @@ From [issue](https://github.com/kbroman/dataorg/issues/5):
 2. One can monitor data entry in real-time. "Please don't put values like `2013-03-23 (need to check)` in the `date` column."
 3. Adding data validation on the fly is easy. (I think a reason why we often use spreadsheets is because we don't know what data we want to collect in advance. It's common to add columns, etc. So the idea of setting up a nice Excel spreadsheet with data validation, etc., before starting data entry is often not possible in practice.)
 4. Multiple people can enter data at once. (Alternative of different people having different Excel files is painful to even mention.)
-5. Data import is easy. Use `googlesheets` package from Jenny Bryan.
+5. Data import is easy. For example, we can use the `googlesheets4` package from Jenny Bryan.
 6. Data access can be added and removed with ease.
 7. Access to data is continuous. No need for "please send me the updated spreadsheet before you go home today, as I'd like to run some numbers."
 8. Google Sheets has some functions (e.g., regular expression support) that can facilitate data entry.
 9. Data access is ensured. Some Excel spreadsheets I "have" are somewhere on the now-erased computers of long-departed research assistants of colleagues (i.e., gone). Google Sheets documents can always be found (putting the key in code also makes it easier to find them than `C:/Desktop/Best Project Ever/data collection_final_v3_3-4-1997.xls` does with Excel files).
 10. I haven't had encoding issues with Google Sheets.
+
 
 
 
@@ -161,6 +194,308 @@ form_aps <- load_parquet(db, "form_aps", "pcaob")
 ```{r}
 #| include: false
 library(tinytable)
+```
+
+Nasdaq provides information about IPOs on its website.
+For example, details about the IPO Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found [here](https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581).
+
+The Nasdaq page also includes information about the "experts" associated with each IPO.
+The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) that can be found in the `ipo_experts` data frame is shown in @tbl-glmd-experts.
+
+
+
+```{r}
+#| echo: false
+#| label: tbl-glmd-experts
+#| tbl-cap: Experts associated with GLMD IPO
+ipo_experts |>
+  filter(dealID == "926632-74581") |>
+  select(-dealID) |>
+  collect() |>
+  tt() |>
+  format_tt(escape = TRUE) 
+```
+
+Just from the one case shown in  @tbl-glmd-experts, we see a number of things.
+First, we appear to have "two auditors", albeit with names athat appear to differ only in the point at which the names are truncated with `...`.
+Second, there are no identifiers for the experts other than their names.
+Names are problematic for many reasons.
+Firms can change names.
+Names can be abbreviated or misspelt or change in subtle ways that are not obvious to a human reader, but that make them unusable as identifiers in code.
+Third, at least for some expert types, there can be more than one expert for a given IPO.
+
+We can collect auditor IDs associated with each CIK from `form_aps`.
+Of course, firms change auditors over time, but if we are interested in the auditors at the time of IPO, it might make sense to pick the first auditor associated with each CIK.^[Some firms have SEC filings long before their IPOs, so this is not a perfect approach, but it is good enough for our purposes here.]
+The following code creates `first_auditors` with information on the first auditor for each issuer.
+
+```{r}
+first_auditors <-
+  form_aps |>
+  group_by(issuer_cik) |>
+  filter(audit_report_date == min(audit_report_date, na.rm = TRUE)) |>
+  ungroup() |>
+  rename(cik = issuer_cik) |>
+  mutate(cik = if_else(cik == "9999999999", NA, cik)) |>
+  select(cik, firm_id, firm_name, firm_country, audit_report_date) |>
+  compute()
+```
+
+We get data on auditors and IPOs from the IPO data and store it in `ipo_auditors`.
+
+```{r}
+ipo_auditors <-
+  ipos |> 
+  select(dealID, companyName, CIK, pricedDate, CompanyAddress) |> 
+  inner_join(ipo_experts, by = "dealID") |>
+  filter(role == "Auditor") |>
+  rename(cik = CIK) |>
+  select(-role) |>
+  compute()
+```
+
+If a match between `expertName` (from IPOs) and `firm_id` and `firm_name` (from Form APs data) shows up many times, there's a good chance that it's valid match.
+In constructing `top_matches`, I require that a match be present at least five times.
+This threshold is arbitrary, but it's just a starting point in two ways.
+First, I will apply some judgement to the matches before flagging them as valid.
+Second, I will probably come back to additional candidate matches in subsequent analyses.
+
+```{r}
+top_matches <-
+  ipo_auditors |>
+  left_join(first_auditors, by = "cik") |> 
+  filter(!is.na(firm_name)) |> 
+  count(firm_id, expertName, firm_name, sort =  TRUE) |>
+  collect() |>
+  filter(n >= 5)
+```
+
+I will use a Google Sheets document to collect the data.
+In the past, I have often taken data such as that in `top_matches` and exported it to a CSV file that I open in Google Sheets.
+Here I chose to create a new Google Sheets file using the `gs4_create()` from `googlesheets4`: 
+
+```{r}
+#| eval: false
+gs_target <- gs4_create(name = "ipo-auditors")
+```
+
+```{r}
+#| include: false
+gs_target <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
+```
+
+```{r}
+#| cache: true
+#| eval: false
+gs_target
+```
+
+```
+── <googlesheets4_spreadsheet> ─────────────────────────────────────────────────────────────────────────
+Spreadsheet name: ipo-auditors                                
+              ID: 1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8
+          Locale: en_US                                       
+       Time zone: Etc/GMT                                     
+     # of sheets: 3                                           
+
+── <sheets> ────────────────────────────────────────────────────────────────────────────────────────────
+(Sheet name): (Nominal extent in rows x columns)
+name_matches: 397 x 8
+deal_matches: 404 x 12
+ extra_deals: 2 x 8
+```
+
+After I've created the Google Sheets file, I will access it using the key seen in the output above.
+
+```{r}
+#| include: true
+#| eval: false
+gs_target <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
+```
+
+I can put the data from `top_matches` in the Google Sheets spreadsheet using `write_sheet()`.
+
+```{r}
+#| eval: false
+write_sheet(top_matches, ss = gs_target, sheet = "top_matches")
+```
+
+```
+✔ Writing to ipo-auditors.
+✔ Writing to sheet top_matches.
+```
+The next step is to open the spreadsheet in a browser:
+
+```{r}
+gs4_browse(gs_target)
+```
+
+I then inserted a new column `valid` to the right of the existing columns.
+I also renamed the sheet from `top_matches` to `name_matches`.^[For one, the new name is more descriptive of how I will use the data it contains.
+Additionally, if I rerun the `write_sheet()` code above, it will not overwrite the sheet that I already have.
+Note that Google Sheets has excellent version history that makes it possible to restore an earlier version if you accidentally overwrite hand-collected data.]
+I looked at the matches and classified ones that looked good as valid by putting the value `TRUE` in the row under the `valid` column.
+Most of the first 30 or so rows looked good.
+But a match with `expertName` of "Ernst & Young LLP" and `firm_name` of "KPMG LLP" is not a valid match and I put `FALSE` in the `valid` column for this case.^[Note that I later deleted the entire rows for such clearly bad matches.]
+
+The next step I took was to look at cases where `expertName` was associated with more than one distinct `firm_id` value.
+
+```{r}
+#| include: true
+#| eval: true
+top_matches_processed <- read_sheet(ss = gs_target, sheet = "top_matches")
+
+top_match_problems <-
+  top_matches_processed |>
+  filter(valid) |>
+  group_by(expertName) |>
+  filter(n_distinct(firm_id) > 1) |>
+  ungroup() |>
+  select(-valid) |>
+  arrange(expertName, desc(n))
+```
+
+Looking at @tbl-top-match-problems, we see that there are multiple `firm_id` values for some values of `expertName` even when we have deemed a match to be valid.^[Note that further research was required to determine that the match of "Marcum Asia CPAs LLP" with "Friedman LLP" is valid; there was a name change that occurred in 2022.]
+
+
+```{r}
+#| echo: false
+#| label: tbl-top-match-problems
+#| tbl-cap: Contents of `top_match_problems`
+top_match_problems |>
+  collect() |>
+  tt() |>
+  format_tt(escape = TRUE) |>
+  style_tt(fontsize = 0.8,
+           align = "rllr") |>
+  theme_tt("spacing")
+```
+Some additional digging (using data in `form_aps`) confirms that the main explanation is that the different `firm_id` values relate to different national partnerships of Big Four audit firms.
+For example, as seen in @tbl-top-match-countries, `firm_id` of 34 is the US arm of Deloitte, while 1147 and 1208 refer to the UK and Canadian operations, respectively.
+
+```{r}
+#| echo: false
+#| label: tbl-top-match-countries
+#| tbl-cap: Countries of firms in `top_match_problems`
+form_aps |>
+  distinct(firm_id, firm_country) |>
+  inner_join(top_match_problems |> 
+               select(firm_id, firm_name), by = "firm_id", copy = TRUE) |>
+  select(firm_id, firm_name, firm_country) |>
+  arrange(firm_name) |>
+  collect() |> 
+  tt() |>
+  format_tt(escape = TRUE) |>
+  style_tt(fontsize = 0.8) |>
+  theme_tt("spacing")
+```
+
+One approach to handling these cases would be to get data on countries from the IPO data and use that to distinguish the `firm_id` values to be used for cases with multiple apparent matches.
+However, given the relatively small number of non-US matches to be handled, I instead chose to grab the `dealID` values for those cases and proceed to validate matches on a deal-by-deal basis.
+
+To start with, I identify the most common `firm_id` value for each `expertName`.
+In effect, I will set these as the default for the name-based matches.
+
+```{r}
+top_match_problem_top_ids <-
+  top_match_problems |>
+  group_by(expertName) |>
+  filter(n == max(n, na.rm = TRUE)) |>
+  ungroup() |> 
+  select(firm_id) |>
+  pull()
+
+top_match_problem_top_ids
+```
+
+I then collect data on all other cases where `expertName` is in `top_match_problems` and these is some match to Form APs data (i.e., `firm_name` is present).
+
+```{r}
+top_match_problems_countries <-
+  ipo_auditors |>
+  left_join(first_auditors, by = "cik") |>  
+  filter(expertName %in% top_match_problems$expertName,
+         !firm_id %in% top_match_problem_top_ids,
+         !is.na(firm_name)) 
+```
+
+I then export data related to these matches to an additional tab `deal_matches_add` that I can use to verify candidate matches for each `dealID`.
+
+```{r}
+#| eval: false
+top_match_problems_countries |>
+  select(dealID, cik, CompanyAddress, firm_id, firm_name, 
+         firm_country, audit_report_date) |>
+  collect() |>
+  write_sheet(ss = gs_target, sheet = "deal_matches_add")
+```
+
+In this case, I renamed the tab to `deal_matches`, added a `valid` column much as before, and also added additional columns such as `sec_filings` and `notes`.
+I use `sec_filings` to create a formula-based hyperlink to the SEC filings around the time of the IPO that I can use to check cases where the information in the spreadsheet does not suffice to give me confidence in validating a match.
+Looking at the formula for cells with "SEC Filings" in the `sec_filings` column of the `deal_matches` sheet, you will see that the formula keys off values in `cik` and `pricedDate` to make it easy to get to the relevant filings.
+
+While this might appear to violate the "No Calculations in the Raw Data Files" dictum of @Broman:2018aa, it reflects the different way that I am using the spreadsheet format.
+In effect, the Google Sheets file is a kind of notebook with supporting information for the data that will be used in analysis.
+
+Variants on the steps above are repeated until the tabs `name_matches` and `deal_matches` contain a fairly complete set of data on both name-based and deal-level matches of each IPO with the `firm_id` value for the auditor at the time of the IPO.
+
+The next step is to use the data in these sheets to create a link table between IPOs and `firm_id` values.
+Note that we give priority to deal-level matches: if a deal is matched in `deal_matches`, we do not consider a potential match using names in `name_matches`.
+This is accomplished by putting all valid matches from `deal_matches` in `deal_matches_processed` and then using an anti-join when constructing `name_matches_processed`.
+
+```{r}
+name_matches <- read_sheet(ss = gs_target, sheet = "name_matches")
+deal_matches <- read_sheet(ss = gs_target, sheet = "deal_matches")
+
+deal_matches_processed <-
+  deal_matches |>
+  filter(valid) |>
+  unnest(firm_id, keep_empty = TRUE) |>
+  select(dealID, firm_id)
+
+name_matches_processed <-
+  name_matches |>
+  filter(valid) |>
+  select(firm_id, expertName) |>
+  inner_join(ipo_auditors, by = "expertName", copy = TRUE) |>
+  anti_join(deal_matches_processed, by = "dealID") |>
+  select(dealID, firm_id)
+```
+
+Having constructed `deal_matches_processed` and `name_matches_processed`, we can combine them using `union_all()`.
+
+```{r}
+all_matches <-
+  deal_matches_processed |>
+  union_all(name_matches_processed) 
+```
+
+Finally, we look for any deals in `ipo_auditors` that are not matched in `all_matches` and add these to our Google Sheets file.
+One reason for these cases would be as new IPO deals get added to the data with `expertName` values not handled already.
+
+```{r}
+ipo_auditors |> 
+  anti_join(all_matches, by = "dealID", copy = TRUE) |>
+  mutate(firm_id = NA, firm_name = NA, firm_country = NA) |>
+  select(dealID, cik, CompanyAddress, firm_id, expertName,
+         firm_name, firm_country, pricedDate) |>
+  collect() |>
+  write_sheet(ss = gs_target, sheet = "extra_deals")
+```
+
+The cases in `extra_deals` sheet could be handled by added additional name-based matches to `name_matches` or additional deal-level matches to `deal_matches` as seems most appropriate.
+For the most part I handled cases added to `extra_deals` by moving them to `deal_matches` as the first step and processing as I did for other cases above.
+One this has been done, we can run the "`extra_deals`" code again and, if all is well, there will be no additional deals in `extra_deals` after doing so.
+
+At that point, we could take the data in `all_matches` and "persist" it to disk.
+In my case, I add `ipo_auditors.parquet` to the `nasdaq` "schema" of my parquet-based data repository.
+More details on this data repository can be found in [an appendix](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502).
+
+```{r}
+all_matches |>
+  mutate(firm_id = as.integer(firm_id)) |>
+  collect() |>
+  arrow::write_parquet(sink = file.path(Sys.getenv("DATA_DIR"), 
+                                        "nasdaq", "ipo_auditors.parquet"))
 ```
 
 # References {-}
