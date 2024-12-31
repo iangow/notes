@@ -381,6 +381,7 @@ write_sheet(top_matches, ss = gs_target, sheet = "top_matches")
 The next step is to open the spreadsheet in a browser:
 
 ```{r}
+#| eval: false
 gs4_browse(gs_target)
 ```
 
@@ -399,6 +400,7 @@ The next step I took was to look at cases where `expertName` was associated with
 ```{r}
 #| include: true
 #| eval: true
+#| message: false
 top_matches_processed <- read_sheet(ss = gs_target, sheet = "top_matches")
 
 top_match_problems <-
@@ -501,20 +503,29 @@ Variants on the steps above are repeated until the tabs `name_matches` and `deal
 ## Combining data to produce link table
 
 The next step is to use the data in these sheets to create a link table between IPOs and `firm_id` values.
-Note that we give priority to deal-level matches: if a deal is matched in `deal_matches`, we do not consider a potential match using names in `name_matches`.
-This is accomplished by putting all valid matches from `deal_matches` in `deal_matches_processed` and then using an anti-join when constructing `name_matches_processed`.
+We start by loading data from two sheets in our Google Sheets file.
 
 ```{r}
+#| message: false
 name_matches <- read_sheet(ss = gs_target, sheet = "name_matches")
 deal_matches <- read_sheet(ss = gs_target, sheet = "deal_matches")
+```
 
+
+
+```{r}
 deal_matches_processed <-
   deal_matches |>
   filter(valid) |>
   unnest(firm_id, keep_empty = TRUE) |>
   select(dealID, firm_id) |>
   mutate(match_type = "manual")
+```
 
+Note that we give priority to deal-level matches: if a deal is matched in `deal_matches`, we do not consider a potential match using names in `name_matches`.
+This is accomplished by putting all valid matches from `deal_matches` in `deal_matches_processed` and then using an anti-join when constructing `name_matches_processed`.
+
+```{r}
 name_matches_processed <-
   name_matches |>
   filter(valid) |>
@@ -535,19 +546,26 @@ all_matches <-
           overwrite = TRUE)
 ```
 
-### Identifying more problematic links
+### Name-based links without Form AP matches
+
+To facilitate data collection, I compile firm names and countries for audit firms on `form_aps`.
 
 ```{r}
 auditor_names <-
   form_aps |>
   group_by(firm_id) |>
-  window_order(audit_report_date) |>
+  window_order(desc(audit_report_date)) |>
   mutate(firm_name = first(firm_name),
          firm_country = first(firm_country)) |>
   distinct(firm_id, firm_name, firm_country) |>
   compute()
+```
 
+I then compile data on all auditors associated with each issuer CIK, including the names and countries.
+Unfortunately,  `dbplyr` does not provide the interface we need to directly invoke the `array_agg()` aggregate with an `ORDER BY` clause.
+Fortunately, we can use `sql()` to inject precisely the SQL we need.^[The reason for specifying `ORDER BY firm_id` is to ensure that the values in `firm_ids` correspend with the respective values in `firm_names`, etc.]
 
+```{r}
 all_auditors <-
   form_aps |>
   distinct(issuer_cik, firm_id) |>
@@ -559,27 +577,40 @@ all_auditors <-
     firm_countries = sql("array_agg(firm_country ORDER BY firm_id)")
     ) |>
   compute()
+```
 
-all_matches |>
+I collect data on all name-based matches with 
+
+```{r}
+no_form_ap_matches <-
+  all_matches |>
   filter(match_type == "name-based") |>
   inner_join(ipo_auditors, by = "dealID") |>
   select(dealID, cik, CompanyAddress, firm_id, expertName, pricedDate) |>
   rename(issuer_cik = cik) |>
   inner_join(all_auditors, by = "issuer_cik") |>
   filter(!firm_id %in% firm_ids) |>
+  distinct() 
+```
+
+Note that once IPOs have been added to the `deal_matches` tab, it probably makes sense to exclude them from `no_form_ap_matches` by adding a line such as `anti_join(deal_matches, copy = TRUE, by = "dealID")` after the `inner_join()` above.
+
+We can dump the data from `no_form_ap_matches` into a Google Sheets tab so that we can dig into them more deeply.
+
+```{r}
+#| message: false  
+no_form_ap_matches |>  
   mutate(across(c(firm_ids, firm_names, firm_countries), as.character)) |>
-  distinct() |>
   arrange(dealID) |>
   collect() |>
   write_sheet(ss = gs_target, sheet = "all_auditors")
 ```
 
-
-
 Finally, we look for any deals in `ipo_auditors` that are not matched in `all_matches` and add these to our Google Sheets file.
 One reason for these cases would be as new IPO deals get added to the data with `expertName` values not handled already.
 
 ```{r}
+#| message: false
 ipo_auditors |> 
   anti_join(all_matches, by = "dealID", copy = TRUE) |>
   mutate(firm_id = NA, firm_name = NA, firm_country = NA) |>
