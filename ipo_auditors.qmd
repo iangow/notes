@@ -89,10 +89,10 @@ While this point is closely related to the previous one, I believe that it warra
 Clearly one should not be opening Excel files and modifying data by deleting columns or reformatting values, as these steps are undocumented and not repeatable in an automated fashion.
 My advice here mirrors that of @Broman:2018aa [p. 7] in a slightly different context: "Your primary data file should be a pristine store of data. Write-protect it, back it up, and do not touch it."
 
-Even simply opening the source Excel files in Excel and clicking save can modify the underlying files in a way that affect later parts of the data science workflow.
+Even simply opening the source Excel files in Excel and clicking save can modify the underlying files in ways that affect later parts of the data science workflow.
 I had one project where the source data appeared to be `.xls` Excel files, but were in fact simply structured text in HTML format.
-Scripts written on this basis performed better than ones that read them as Excel data.^["Performed better" here means not only that the scripts were faster, but that the imported data were easier to work with.]
-However, when updated spreadsheets were received from the vendor they passed first through the data team at the institution I then worked at and my scripts no longer worked.
+Scripts written on this basis performed better than ones that read them as Excel data.^["Performed better" here means not only that the scripts worked faster, but that the imported data were easier to work with.]
+However, when updated spreadsheets were received from the vendor they first passed through the data team at the institution I then worked at and my scripts no longer worked.
 The data team had "helpfully" opended the files in Excel and saved them before sending them along to me.
 I had to insist that the data team pass along the data files *exactly* as they had received them without "helpful" steps in between.^[Additional examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in [my earlier note](https://github.com/iangow/notes/blob/main/import_sirca.pdf).]
 
@@ -125,7 +125,7 @@ In terms of @fig-whole-game, @Broman:2018aa is largely about "Collect" and @Wick
 I view this note as building on @Broman:2018aa by adding some additional recommendations, linking data collection with data importation *à la* @Wickham:2023aa, and providing a more comprehensive use case to highlight some issues and ideas not addressed by either @Broman:2018aa or @Wickham:2023aa.
 
 @Broman:2018aa emphasizes cases where the user of the data is entering the data directly.
-However, a very common use case I have encountered is on where I (along with collaborators) will be using the data, but someone else is entering the data.
+However, a very common use case I have encountered is on where I (along with collaborators) will be using the data, but the data are being entered by someone else (perhaps several others).
 This note focuses on this scenario.
 
 This note aims to expand on and refine the advice provided by @Broman:2018aa for situations where others---such as data entry specialists or research assistants---are entering data into spreadsheets.
