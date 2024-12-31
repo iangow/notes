@@ -601,9 +601,92 @@ More details on this data repository can be found in [an appendix](https://iango
 all_matches |>
   mutate(firm_id = as.integer(firm_id)) |>
   collect() |>
-  arrow::write_parquet(sink = file.path(Sys.getenv("DATA_DIR"), 
-                                        "nasdaq", "ipo_auditors.parquet"))
+  write_parquet(sink = file.path(Sys.getenv("DATA_DIR"), 
+                                 "nasdaq", "ipo_auditors.parquet"))
 ```
+
+# Tweaking the recommendations 
+
+## "No Empty Cells"
+
+I the case study above, there are inevitably empty cells before data are collected.
+In some cases, there are empty cells even after data are collected.
+For example, the `sec_filings` column is only populated on an as-needed basis.
+
+What @Broman:2018aa says about empty cells is valid in general, so I think the recommendation should be refined a little.
+For example, "NA" should be used to flag cases where there is the decision is to code a cell as missing, but this is very different from making a cell blank prior to the RA evaluating the case.
+It is probably better to view "NA" as reflecting some conscious output of the data collection process and to recognize that sometimes not every value will be relevant (so there is no value in having an RA code a column as "NA" if it wasn't even examined).
+
+Other recommendations about blank cells in @Broman:2018aa are completely valid.
+In general, blank cells should not be used to represent zeros and blank cells should not be implicitly "filled" in a way that is "obvious" if looking at the spreadsheet, but not at all obvious to the data analyst.
+
+## "No Calculations in the Raw Data Files"
+
+The prescription here [@Broman:2018aa, p. 7] is that "your primary data files should contain *just the data* and nothing else: no calculations, no graphs."
+I think I would relax this prescription a little in the context of sometimes-messy data collection like the ones I have used spreadsheets for.
+
+Sometimes the data are the results of calculations and I think it would be fine to use the spreadsheet functionality to support data collection efforts.
+Suppose I were hand-collecting data on executive compensation and the value in the `salary` column is almost always found as a single value that can be typed in by the RA.
+But then one firm reports salary as 12 monthly payments of $132,236.
+In such a case, I think it would be perfectly appropriate for the RA to type `= 12 * 132236` in the cell under `salary` rather than calculating by hand and typing the result in.
+
+Other situations might go the other way.
+For example, suppose that `director_names` contained a list of names of directors, such as `['Anne', 'Bob', 'Clara']`.
+It might still make sense to have the RA enter a value under `num_directors` (3 in this case) even though this could be easily calculated
+
+In other cases, calculations can facilitate the collection of data in the first place.
+For example, the URL behind the hyperlink for `sec_filings` used in the case study above is calculated.
+In other cases, calculations might provide guidelines that help the RA collect data in other fields.
+For example, `total_compensation` might be collected by the RA and it might be helpful to calculate this value from components for comparison to allow discrepancies to be flagged and resolved as part of the data collection process.
+
+## "Do Not Use Font Color or Highlighting as Data"
+
+I do not disagree with this one, but I would say that it can be fine to use font colour or highlighting to communicate with RAs: "Please focus on the cells I have coloured green before moving on to the other cases."
+The critical thing is that the colours are not being used as *data* per se.
+
+## "Make Backups"
+
+"Make regular backups of your data. In multiple locations."
+This recommendation [@Broman:2018aa, p. 8] perhaps has not aged well.
+For example, what counts as "multiple locations" in a world in which everything lives in some cloud service like Google Drive or Dropbox?
+Also, precisely what should be backed up if one is collecting data in Google Sheets?
+I would need to export data to a different format (e.g., Microsoft Excel) and back *that* up if my concern is that Google might disappear taking my data with it.
+
+One idea might be to export the underlying data to CSV and back *that* up, but this would mean losing a lot of the cell notes and such like that were an integral part of the data collection process.
+
+Also [@Broman:2018aa, p. 8] suggests "keep all versions of the data files" without indicating what counts as a version of a file.
+If an RA is between entering data in one column and entering data in another column, we probably don't want to keep that version.
+Nor is it clear that a back-up between each row.
+
+If you're a researcher working on papers, a more sensible view might be that some back-up be retained for each version of a paper that is posted or shared with others.
+In such a case, one could restore the spreadsheet data applicable to a particular version of your paper 
+But this can be unhelpful in practice if you are using data from other sources and isn't doing some kind of version control for those other sources.
+
+Additionally, my experience is that "regular backups ... in multiple locations" can be a recipe for complexity and confusion.
+If I need to go back to an earlier version, how do I decide whether to use the copy of `glucose_6_weeks` stored on a thumb drive in my drawer or the copy of `glucose_6_weeks` in Dropbox?
+Perhaps I would need to add the date on which I made the back-up (e.g.,  `glucose_6_weeks_2024-12-31`) to allow me to distinguish them.
+But maybe I don't always want the latest version of the data (if I did, why keep anything but the last copy?).
+If the reason for restoring the data is some issue that came up in the last week of 2024 and I'd prefer the `glucose_6_weeks_2024-12-21` version.
+Of course, I may not even be sure when the issue arose, so versions named just for dates may not be particularly helpful.
+
+My sense is that if you are collecting data in spreadsheets, you are probably not the lynchpin of some multi-billion dollar Stage III drug trial aimed at getting FDA approval.
+So accepting the "Google ceases to exist" risk does not seem unreasonable.
+Even "Google Sheets ceases to exist" seems tolerable (or at least not very different from "I can't open Microsoft Excel files from 2024" risk) for almost any use case where storing data in a spreadsheet makes sense.
+
+My recommendation is to rely on version control features embedded in Google Sheets.
+For example, "name current version" allows you to label a version as something like "qje_submission" and this is likely to suffice for the relatively low stakes of most data collection efforts conducted with spreadsheets.
+
+## "Save the Data in Plain Text Files"
+
+This one is a little difficult to evaluate, as its rationale is not entirely clear.
+One reason is perhaps given by the statement that "this sort of nonproprietary file format [CSV] does not and never will require any sort of special software" @Broman:2018aa, p. 8].
+But this claim arguably applies to the `ipo_auditors.parquet` file that I created above.^[Of course if you were transported back to 1995 with nothing but a single data file, you might prefer CSV to parquet, but it seems exceedingly unlikely that you will be in a situation where you cannot work with a parquet file in 2025.]
+
+The "CSV files are easier to handle in code" is arguably false because parquet files include information about data types and the like that are missing from CSV files.
+
+In short, I am not sure that I fundamentally disagree with this recommendation if it simply means that there should be a "persist" step along the lines of that depicted in @fig-whole-game.
+An implicit assumption in @fig-whole-game is that the data are being persisted as part of the *Curate* process rather than the *Curate* and *Understand* processes being tangled messes where it is unclear where one begins and the other ends.
+I would argue that the spreadsheet plus code should be viewed together as a unit that fosters reproducibility.
 
 # Additional case studies
 
@@ -611,6 +694,10 @@ Here are some cases where I have used spreadsheets to collect data.
 
 1. Data on director biographies. 
 These data were used to support the @Gow:2018aa.
-2. 
+2. Data on director ethnicities.
+3. Data on activist directors.
+4. Data on CIK.
+5. Matching conference calls on StreetEvents to PERMNOs (CRSP security identifier).
+6. Corrections to data on audit fees from SIRCA.
 
 # References {-}
