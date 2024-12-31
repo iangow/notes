@@ -138,38 +138,95 @@ References to things such as `Serum_batch1_2015-01-30.csv`, `Mouse153` and `gluc
 In contrast, a more common setting in my experience is that of collecting relatively large amounts of somewhat messy data from documents found on the internet.
 Typically, researchers need people to collect these data because either they are too messy to be collected in an automated fashion with sufficiently low cost and high quality or their collection requires some element of judgement.
 
-I feel you are too sanguine about Excel-created CSVs (e.g., [here](http://kbroman.org/dataorg/pages/csv_files.html)). While you do allude to one of the issues illustrated above [here](http://kbroman.org/dataorg/pages/avoid.html), I don't think you spell out _what_ to avoid in the first point. I think the thing to avoid is the "gone through Excel at some point" step. 
+That context helps to respond to the question that many users might have at this point: Why use spreadsheets at all?
+Given that spreadsheets have all these problems, it might seem better to use some other appraoch.
+For example, why not use a web form that is used to populate a database?
+I think the answer lies in a couple of points.
 
-I guess the advice might be "don't use Excel to handle CSV files."
+First, many researchers are collecting data but do not have access to the skills needed to stand up a web page that allows data to be collected and put into a database.
+For all the problems, using spreadsheets removes the need for such skills.
+
+Second, many data collection tasks are unclear.
+Precisely what data will be collected?
+What values are valid in certain columns?
+What strange cases need to be addressed and how?
+In such situations, often the best approach is to just start collecting data and adapt over time.
+Spreadsheets are often the best tool for such situations.
+Columns can be added later on.
+Data validation rules can be tightened and loosened as circumstances dictate.
+This can be much easier than bringing the web-and-database developer back into to add new fields to the forms and new columns to the database tables.
+
+Additionally, data collection often needs to be quite free-form.
+For example, maybe it make sense to drop a link to a document to explain a classification decision made in another column.
+Spreadsheets allow this easily.
 
 # Google Sheets
 
 My primary recommendation is to use Google Sheets rather than Excel spreadsheets.
-While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, at this time there is no equivalent to Google Sheets in terms of functionality.^[If there is an alternative---or if such a product becomes available at a later date---hopefully much of what I say here will apply to that product.]
+While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, I am not aware of an equivalent to Google Sheets in terms of functionality at this time.^[If there is an alternative---or if such a product becomes available at a later date---hopefully much of what I say here will apply to that product.]
 
 Google Sheets offers a number of benefits over Excel even for a single user.
 For example, Google Sheets has some functions (e.g., support for regular expressions) that can greatly facilitate data entry.
 Also I haven't had encoding issues with Google Sheets of the kind we saw above with the Korean name `철수` being mangled into `_Êö÷`.
+We saw above that Excel can mangle CSV files in ways that Google Sheets will not.
+I would go so far as to provide the blanket advice: "Don't use Excel to handle CSV files."
 
 But the benefits of Google Sheets become especially clear when there are several people working with the data, such as multiple researchers and possibly many research assistants.
 
-One issue I have encountered with Excel is version control.
+One issue I have encountered with Excel is version control and these issues are particularly acute when there are multiple people involved in data collection.
+In my experience, the standard approach to version control for users of products like Microsoft Word or Microsoft Excel involve two elements.
+First, there is some implicit shared mental note about who has "the document" at any given time.
+When Anne has "the document", Bob and Clara know that they should not be editing the document.
 
+This is imperfect for many reasons.
+For one, the implicit shared mental note system is not perfect.
+So problems arise when Bob starts editing the literature review section of document while Anne is busy reworking the introduction: "I didn't realize that Anne was working on that. I guess we will have to figure out how to combine my changes with hers."
+Second, Microsoft fans often share versions via email and problems can arise when Clara starts editing `ABC_12-24-24_anne_final_v_21.docx` rather than the copy Anne sent via email with a "please use this version" subject line (`ABC_12-24-25_anne_updated_v_23.docx`) the next day.
 
-From [issue](https://github.com/kbroman/dataorg/issues/5):
+All these issues are even worse with Microsoft Excel because there is no "track changes" or "compare documents" feature to assist with clean-up of messes from Bob-or-Anne-edited-the-wrong-version situations.
+These issues largely disappear with Google Sheets.^[That is, of course, you don't have dimwitted people coming from a Microsoft Office background replicating their approach to version control by creating copies of Google Sheets documents!]
 
-## Benefits of Google Sheets:
+Another benefit of Google Sheets is that access to the data is continuous.
+In a Google Docs setting, all co-authors can have access to the document and Bob can edit the literature review while Anne punches up the introduction.^[That said, while Google Docs is much better than Microsoft Word for collaborative editing, I would not use it for this purpose myself because there are better ways if you have co-authors not trapped in the late 20th century.]
 
-1. With distributed data entry, version control issues go away. These are _huge_ in my experience.
-2. One can monitor data entry in real-time. "Please don't put values like `2013-03-23 (need to check)` in the `date` column."
-3. Adding data validation on the fly is easy. (I think a reason why we often use spreadsheets is because we don't know what data we want to collect in advance. It's common to add columns, etc. So the idea of setting up a nice Excel spreadsheet with data validation, etc., before starting data entry is often not possible in practice.)
-4. Multiple people can enter data at once. (Alternative of different people having different Excel files is painful to even mention.)
-5. Data import is easy. For example, we can use the `googlesheets4` package from Jenny Bryan.
-6. Data access can be added and removed with ease.
-7. Access to data is continuous. No need for "please send me the updated spreadsheet before you go home today, as I'd like to run some numbers."
-9. Data access is ensured. Some Excel spreadsheets I "have" are somewhere on the now-erased computers of long-departed research assistants of colleagues (i.e., gone). Google Sheets documents can always be found (putting the key in code also makes it easier to find them than `C:/Desktop/Best Project Ever/data collection_final_v3_3-4-1997.xls` does with Excel files).
+Relatedly data access is ensured. 
+There is no risk that the Excel spreadsheet containing the data ends up on the computer of a former research assistant who is no longer available.
+Knowing that the final data file is `C:/Desktop/Best Project Ever/data collection_final_v3_3-4-1997.xls` does not help if that computer was wiped when the RA left for a better job.^[This is not a purely hypothetical scenario!]
 
+Having continuous data access can be particularly helpful if research assistants are doing much of the data collection.
+One does not need to email the research assistant saying "please send me the updated spreadsheet before you go home today, as I'd like to run some numbers."
+The spreadsheet is right there.
 
+Also, one can monitor data entry in real-time.
+Importing data using `googlesheets4` and generating plots using `ggplot2` can happen without bothering the RAs in any way.
+I have worked on projects where there were dozens of research assistant (RAs).
+While there were detailed instructions, one cannot be sure that RAs will read them.
+Nor can one anticipate all the ways that things can go wrong.
+With Google Sheets, once can try importing data as it is being collected and discover issues along the way.
+Then one can email the relevant RA (e.g., "Please don't put values like `2013-03-23 (need to check)` in the `date` column"), and perhaps update instructions according.
+
+Sometimes data collection tasks involve an initial learning curve for each RA, but the work can be so tedious that productivity declines over time.
+With Google Sheets, it is relatively straightforward to monitor productivity over time.
+In one case, we hired RAs on a week-by-week basis and found that RA productivity would decline after two weeks and we would not invite RAs back when that happened.^[Presumably these RAs found work, if they wanted it, on a new task for a different faculty member.]
+
+Both Excel and Google Sheets offer data validation functionality.
+But sometimes it is not possible to anticipate the range of valid values.
+With Google Sheets, it is easy to add data validation on the fly is easy.
+In the example above, we could add a validation rule requiring that `date` values be valid dates and added an addition column for notes to store the "need to check" comment.
+
+With Google Sheets, multiple people can enter data at once. 
+An alternative might be to have each person have their own Excel file, but this introduces complexity.
+One approach would work with a single sheet shared by multiple users and have RAs fill in an `RA` column with their names for any rows for which they collected data.
+
+With Google Sheets, data access can be added and removed with ease.
+Almost everyoine has a Google ID and this can be used to grant access.
+Removing access when it is no longer needed is very simple too.
+
+In short, Google Sheets is simply a superior product to Microsoft Excel for data collection.
+Still Excel has its fans.
+In the case of the stranded Excel file I mentioned above, the RA in question chose to download the provided Google Sheets file as an Excel file because he was "more comfortable" with the Excel interface.
+The RA in question worked for a co-author, not for me, so I wasn't as insistent as I should've been.
+Today I would configure the Google Sheets document so that downloading would not even be possible.
 
 # Case study: Linking IPOs with auditor IDs
 
