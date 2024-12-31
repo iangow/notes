@@ -226,7 +226,7 @@ ipo_auditors <-
   compute()
 ```
 
-# Form APs data
+## Form APs data
 
 ```{r}
 form_aps <- load_parquet(db, "form_aps", "pcaob")
@@ -247,6 +247,8 @@ first_auditors <-
   select(cik, firm_id, firm_name, firm_country, audit_report_date) |>
   compute()
 ```
+
+## Name-based links
 
 If a match between `expertName` (from IPOs) and `firm_id` and `firm_name` (from Form APs data) shows up many times, there's a good chance that it's valid match.
 In constructing `top_matches`, I require that a match be present at least five times.
@@ -317,6 +319,7 @@ write_sheet(top_matches, ss = gs_target, sheet = "top_matches")
 ✔ Writing to ipo-auditors.
 ✔ Writing to sheet top_matches.
 ```
+
 The next step is to open the spreadsheet in a browser:
 
 ```{r}
@@ -330,6 +333,8 @@ Note that Google Sheets has excellent version history that makes it possible to 
 I looked at the matches and classified ones that looked good as valid by putting the value `TRUE` in the row under the `valid` column.
 Most of the first 30 or so rows looked good.
 But a match with `expertName` of "Ernst & Young LLP" and `firm_name` of "KPMG LLP" is not a valid match and I put `FALSE` in the `valid` column for this case.^[Note that I later deleted the entire rows for such clearly bad matches.]
+
+### Problematic name-based links
 
 The next step I took was to look at cases where `expertName` was associated with more than one distinct `firm_id` value.
 
@@ -363,6 +368,7 @@ top_match_problems |>
            align = "rllr") |>
   theme_tt("spacing")
 ```
+
 Some additional digging (using data in `form_aps`) confirms that the main explanation is that the different `firm_id` values relate to different national partnerships of Big Four audit firms.
 For example, as seen in @tbl-top-match-countries, `firm_id` of 34 is the US arm of Deloitte, while 1147 and 1208 refer to the UK and Canadian operations, respectively.
 
@@ -383,7 +389,9 @@ form_aps |>
   theme_tt("spacing")
 ```
 
-One approach to handling these cases would be to get data on countries from the IPO data and use that to distinguish the `firm_id` values to be used for cases with multiple apparent matches.
+### Manual links by `dealID`
+
+One approach to handling these cases would be to get information on countries from the IPO data and use that to distinguish the `firm_id` values to be used for cases with multiple apparent matches.
 However, given the relatively small number of non-US matches to be handled, I instead chose to grab the `dealID` values for those cases and proceed to validate matches on a deal-by-deal basis.
 
 To start with, I identify the most common `firm_id` value for each `expertName`.
@@ -431,6 +439,8 @@ While this might appear to violate the "No Calculations in the Raw Data Files" d
 In effect, the Google Sheets file is a kind of notebook with supporting information for the data that will be used in analysis.
 
 Variants on the steps above are repeated until the tabs `name_matches` and `deal_matches` contain a fairly complete set of data on both name-based and deal-level matches of each IPO with the `firm_id` value for the auditor at the time of the IPO.
+
+## Combining data to produce link table
 
 The next step is to use the data in these sheets to create a link table between IPOs and `firm_id` values.
 Note that we give priority to deal-level matches: if a deal is matched in `deal_matches`, we do not consider a potential match using names in `name_matches`.
