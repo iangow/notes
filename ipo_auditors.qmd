@@ -230,25 +230,27 @@ Today I would configure the Google Sheets document so that downloading would not
 
 # Case study: Linking IPOs with auditor IDs
 
-```{r}
-db <- dbConnect(duckdb::duckdb())
-```
+The best way to illustrate some key points about using spreadsheets to collect data is to explore a specific example in greater depth.
+The example I study involves collecting data from various sources to facilitate the matching of IPOs with the firms that provided audits for the firms going public, where an audit firm is identified using the identification number provided by the Public Company Accounting Oversight Board (PCAOB) in the United States.
+
+The data on IPOs come from the Nasdaq website and the data on audit firms come from the Form AP in [an earlier note](https://raw.githubusercontent.com/iangow/notes/main/form_ap_names.pdf).
 
 ## IPO data
 
 Nasdaq provides information about IPOs on its website.
-For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581>.
-
-The Nasdaq page also includes information about the "experts" associated with each IPO.
-The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) that can be found in the `ipo_experts` data frame is shown in @tbl-glmd-experts.
-
+I have these data in parquet files that I load into a DuckDB database as follows:
 
 ```{r}
+db <- dbConnect(duckdb::duckdb())
+
 ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
 ipos <- load_parquet(db, "ipos", "nasdaq")
 ```
 
-
+For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581> and these data are found in the `ipo.parquet` file found at <https://go.unimelb.edu.au/2rq8>.
+The Nasdaq page also includes information about the "experts" associated with each IPO.
+The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) that can be found in the `ipo_experts` data frame is shown in @tbl-glmd-experts.
+The `ipo_experts.parquet` file can be found at <https://go.unimelb.edu.au/hrq8>.
 
 
 ```{r}
@@ -264,7 +266,7 @@ ipo_experts |>
 ```
 
 Just from the one case shown in  @tbl-glmd-experts, we see a number of things.
-First, we appear to have "two auditors", albeit with names athat appear to differ only in the point at which the names are truncated with `...`.
+First, we appear to have "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with `...`.
 Second, there are no identifiers for the experts other than their names.
 Names are problematic for many reasons.
 Firms can change names.
@@ -331,18 +333,18 @@ Here I chose to create a new Google Sheets file using the `gs4_create()` from `g
 ```{r}
 #| eval: false
 options(gargle_oauth_email = TRUE)
-gs_target <- gs4_create(name = "ipo-auditors")
+gs_ipo_auditors <- gs4_create(name = "ipo-auditors")
 ```
 
 ```{r}
 #| include: false
-gs_target <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
+gs_ipo_auditors <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
 ```
 
 ```{r}
 #| cache: true
 #| eval: false
-gs_target
+gs_ipo_auditors
 ```
 
 ```
@@ -363,14 +365,14 @@ After I've created the Google Sheets file, I will access it using the key seen i
 ```{r}
 #| include: true
 #| eval: false
-gs_target <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
+gs_ipo_auditors <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
 ```
 
 I can put the data from `top_matches` in the Google Sheets spreadsheet using `write_sheet()`.
 
 ```{r}
 #| eval: false
-write_sheet(top_matches, ss = gs_target, sheet = "top_matches")
+write_sheet(top_matches, ss = gs_ipo_auditors, sheet = "top_matches")
 ```
 
 ```
@@ -382,7 +384,7 @@ The next step is to open the spreadsheet in a browser:
 
 ```{r}
 #| eval: false
-gs4_browse(gs_target)
+gs4_browse(gs_ipo_auditors)
 ```
 
 I then inserted a new column `valid` to the right of the existing columns.
@@ -401,7 +403,7 @@ The next step I took was to look at cases where `expertName` was associated with
 #| include: true
 #| eval: true
 #| message: false
-top_matches_processed <- read_sheet(ss = gs_target, sheet = "top_matches")
+top_matches_processed <- read_sheet(ss = gs_ipo_auditors, sheet = "top_matches")
 
 top_match_problems <-
   top_matches_processed |>
@@ -488,7 +490,7 @@ top_match_problems_countries |>
   select(dealID, cik, CompanyAddress, firm_id, firm_name, 
          firm_country, audit_report_date) |>
   collect() |>
-  write_sheet(ss = gs_target, sheet = "deal_matches_add")
+  write_sheet(ss = gs_ipo_auditors, sheet = "deal_matches_add")
 ```
 
 In this case, I renamed the tab to `deal_matches`, added a `valid` column much as before, and also added additional columns such as `sec_filings` and `notes`.
@@ -507,8 +509,8 @@ We start by loading data from two sheets in our Google Sheets file.
 
 ```{r}
 #| message: false
-name_matches <- read_sheet(ss = gs_target, sheet = "name_matches")
-deal_matches <- read_sheet(ss = gs_target, sheet = "deal_matches")
+name_matches <- read_sheet(ss = gs_ipo_auditors, sheet = "name_matches")
+deal_matches <- read_sheet(ss = gs_ipo_auditors, sheet = "deal_matches")
 ```
 
 
@@ -603,7 +605,7 @@ no_form_ap_matches |>
   mutate(across(c(firm_ids, firm_names, firm_countries), as.character)) |>
   arrange(dealID) |>
   collect() |>
-  write_sheet(ss = gs_target, sheet = "all_auditors")
+  write_sheet(ss = gs_ipo_auditors, sheet = "all_auditors")
 ```
 
 Finally, we look for any deals in `ipo_auditors` that are not matched in `all_matches` and add these to our Google Sheets file.
@@ -617,7 +619,7 @@ ipo_auditors |>
   select(dealID, cik, CompanyAddress, firm_id, expertName,
          firm_name, firm_country, pricedDate) |>
   collect() |>
-  write_sheet(ss = gs_target, sheet = "extra_deals")
+  write_sheet(ss = gs_ipo_auditors, sheet = "extra_deals")
 ```
 
 The cases in `extra_deals` sheet could be handled by added additional name-based matches to `name_matches` or additional deal-level matches to `deal_matches` as seems most appropriate.
