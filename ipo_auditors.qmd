@@ -444,15 +444,17 @@ deal_matches_processed <-
   deal_matches |>
   filter(valid) |>
   unnest(firm_id, keep_empty = TRUE) |>
-  select(dealID, firm_id)
+  select(dealID, firm_id) |>
+  mutate(match_type = "manual")
 
 name_matches_processed <-
   name_matches |>
   filter(valid) |>
   select(firm_id, expertName) |>
   inner_join(ipo_auditors, by = "expertName", copy = TRUE) |>
+  mutate(match_type = "name-based") |>
   anti_join(deal_matches_processed, by = "dealID") |>
-  select(dealID, firm_id)
+  select(dealID, firm_id, match_type)
 ```
 
 Having constructed `deal_matches_processed` and `name_matches_processed`, we can combine them using `union_all()`.
@@ -460,8 +462,51 @@ Having constructed `deal_matches_processed` and `name_matches_processed`, we can
 ```{r}
 all_matches <-
   deal_matches_processed |>
-  union_all(name_matches_processed) 
+  union_all(name_matches_processed) |>
+  copy_to(dest = db, df = _, name = "all_matches",
+          overwrite = TRUE)
 ```
+
+### Identifying more problematic links
+
+```{r}
+auditor_names <-
+  form_aps |>
+  group_by(firm_id) |>
+  window_order(audit_report_date) |>
+  mutate(firm_name = first(firm_name),
+         firm_country = first(firm_country)) |>
+  distinct(firm_id, firm_name, firm_country) |>
+  compute()
+
+
+all_auditors <-
+  form_aps |>
+  distinct(issuer_cik, firm_id) |>
+  inner_join(auditor_names, by = "firm_id") |>
+  group_by(issuer_cik) |>
+  summarize(
+    firm_ids = sql("array_agg(firm_id ORDER BY firm_id)"),
+    firm_names = sql("array_agg(firm_name ORDER BY firm_id)"),
+    firm_countries = sql("array_agg(firm_country ORDER BY firm_id)")
+    ) |>
+  compute()
+
+all_matches |>
+  filter(match_type == "name-based") |>
+  inner_join(ipo_auditors, by = "dealID") |>
+  select(dealID, cik, CompanyAddress, firm_id, expertName, pricedDate) |>
+  rename(issuer_cik = cik) |>
+  inner_join(all_auditors, by = "issuer_cik") |>
+  filter(!firm_id %in% firm_ids) |>
+  mutate(across(c(firm_ids, firm_names, firm_countries), as.character)) |>
+  distinct() |>
+  arrange(dealID) |>
+  collect() |>
+  write_sheet(ss = gs_target, sheet = "all_auditors")
+```
+
+
 
 Finally, we look for any deals in `ipo_auditors` that are not matched in `all_matches` and add these to our Google Sheets file.
 One reason for these cases would be as new IPO deals get added to the data with `expertName` values not handled already.
