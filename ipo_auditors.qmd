@@ -32,7 +32,7 @@ Previous notes covered [hierarchical data](https://raw.githubusercontent.com/ian
 My aim with these notes is not to replace existing resources such as [*R for Data Science*](https://r4ds.hadley.nz), but to build on such resources with applied examples using richer data sets.^[Two excellent resources are [Chapter 20](https://r4ds.hadley.nz/spreadsheets) @Wickham:2023aa and @Broman:2018aa and I discuss these in more detail below.]
 The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [another earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
 
-In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4", "arrow")` within R to install all the packages you need to run the code in this note.]
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4", "arrow", "dbplyr")` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/ipo_auditors.pdf).
 
@@ -44,6 +44,7 @@ library(DBI)
 library(farr)
 library(googlesheets4)
 library(arrow)
+library(dbplyr)
 ```
 
 ```{r}
