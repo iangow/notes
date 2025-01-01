@@ -1,7 +1,7 @@
 ---
 title: "Spreadsheets for data collection"
 author: Ian D. Gow
-date: 2024-12-31
+date: 2025-01-01
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -29,7 +29,7 @@ As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iango
 In that post, I identified three gaps in our coverage relative to [*R for Data Science*](https://r4ds.hadley.nz).
 Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
 
-My aim with these notes is not to replace existing resources such as [*R for Data Science*](https://r4ds.hadley.nz), but to build on such resources with applied examples using richer data sets.^[Two excellent resources are [Chapter 20](https://r4ds.hadley.nz/spreadsheets) @Wickham:2023aa and @Broman:2018aa and I discuss these in more detail below.]
+My aim with these notes is not to replace existing resources such as [*R for Data Science*](https://r4ds.hadley.nz), but to build on such resources with applied examples using richer data sets.^[Two excellent resources are [Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa and @Broman:2018aa and I discuss these in more detail below.]
 The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [another earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4", "arrow", "dbplyr")` within R to install all the packages you need to run the code in this note.]
@@ -144,7 +144,7 @@ For example, why not use a web form that is used to populate a database?
 I think the answer lies in a couple of points.
 
 First, many researchers are collecting data but do not have access to the skills needed to stand up a web page that allows data to be collected and put into a database.
-For all the problems, using spreadsheets removes the need for such skills.
+For all their problems, using spreadsheets removes the need for such skills.
 
 Second, many data collection tasks are unclear.
 Precisely what data will be collected?
@@ -159,6 +159,12 @@ This can be much easier than bringing the web-and-database developer back into t
 Additionally, data collection often needs to be quite free-form.
 For example, maybe it make sense to drop a link to a document to explain a classification decision made in another column.
 Spreadsheets allow this easily.
+
+## Other use cases for spreadsheets
+
+### Spreadsheets for data analysis
+
+### Spreadsheets for organizing output
 
 # Google Sheets
 
@@ -183,7 +189,7 @@ For one, the implicit shared mental note system is not perfect.
 So problems arise when Bob starts editing the literature review section of document while Anne is busy reworking the introduction: "I didn't realize that Anne was working on that. I guess we will have to figure out how to combine my changes with hers."
 Second, Microsoft fans often share versions via email and problems can arise when Clara starts editing `ABC_12-24-24_anne_final_v_21.docx` rather than the copy Anne sent via email with a "please use this version" subject line (`ABC_12-24-25_anne_updated_v_23.docx`) the next day.
 
-All these issues are even worse with Microsoft Excel because there is no "track changes" or "compare documents" feature to assist with clean-up of messes from Bob-or-Anne-edited-the-wrong-version situations.
+All these issues are even worse with Microsoft Excel because there are no "track changes" or "compare documents" features to assist with clean-up of messes from Bob-or-Anne-edited-the-wrong-version situations.
 These issues largely disappear with Google Sheets.^[That is, of course, you don't have dimwitted people coming from a Microsoft Office background replicating their approach to version control by creating copies of Google Sheets documents!]
 
 Another benefit of Google Sheets is that access to the data is continuous.
@@ -211,7 +217,7 @@ In one case, we hired RAs on a week-by-week basis and found that RA productivity
 
 Both Excel and Google Sheets offer data validation functionality.
 But sometimes it is not possible to anticipate the range of valid values.
-With Google Sheets, it is easy to add data validation on the fly is easy.
+With Google Sheets, adding data validation on the fly is easy.
 In the example above, we could add a validation rule requiring that `date` values be valid dates and added an addition column for notes to store the "need to check" comment.
 
 With Google Sheets, multiple people can enter data at once. 
@@ -353,7 +359,7 @@ Spreadsheet name: ipo-auditors
               ID: 1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8
           Locale: en_US                                       
        Time zone: Etc/GMT                                     
-     # of sheets: 3                                           
+     # of sheets: 1                                           
 
 ── <sheets> ────────────────────────────────────────────────────────────────────────────────────────────
 (Sheet name): (Nominal extent in rows x columns)
@@ -502,7 +508,7 @@ In effect, the Google Sheets file is a kind of notebook with supporting informat
 
 Variants on the steps above are repeated until the tabs `name_matches` and `deal_matches` contain a fairly complete set of data on both name-based and deal-level matches of each IPO with the `firm_id` value for the auditor at the time of the IPO.
 
-## Combining data to produce link table
+## Combining data to produce the link table
 
 The next step is to use the data in these sheets to create a link table between IPOs and `firm_id` values.
 We start by loading data from two sheets in our Google Sheets file.
@@ -524,7 +530,7 @@ deal_matches_processed <-
   mutate(match_type = "manual")
 ```
 
-Note that we give priority to deal-level matches: if a deal is matched in `deal_matches`, we do not consider a potential match using names in `name_matches`.
+Note that we give priority to deal-level matches: if an IPO is matched in `deal_matches`, we do not consider a potential match using names in `name_matches`.
 This is accomplished by putting all valid matches from `deal_matches` in `deal_matches_processed` and then using an anti-join when constructing `name_matches_processed`.
 
 ```{r}
@@ -638,7 +644,7 @@ all_matches |>
                                  "nasdaq", "ipo_auditors.parquet"))
 ```
 
-# Tweaking the recommendations 
+# Tweaking the recommendations of @Broman:2018aa
 
 ## "No Empty Cells"
 
@@ -674,50 +680,49 @@ For example, `total_compensation` might be collected by the RA and it might be h
 
 ## "Do Not Use Font Color or Highlighting as Data"
 
-I do not disagree with this one, but I would say that it can be fine to use font colour or highlighting to communicate with RAs: "Please focus on the cells I have coloured green before moving on to the other cases."
+I do not disagree with this one, but I would say that it can be fine to use font colour or highlighting to communicate with humans: "Please focus on the cells I have coloured green before moving on to the other cases."
 The critical thing is that the colours are not being used as *data* per se.
 
 ## "Make Backups"
 
 "Make regular backups of your data. In multiple locations."
-This recommendation [@Broman:2018aa, p. 8] perhaps has not aged well.
+This recommendation [@Broman:2018aa, p. 8] has perhaps not aged well.
 For example, what counts as "multiple locations" in a world in which everything lives in some cloud service like Google Drive or Dropbox?
 Also, precisely what should be backed up if one is collecting data in Google Sheets?
-I would need to export data to a different format (e.g., Microsoft Excel) and back *that* up if my concern is that Google might disappear taking my data with it.
+I would need to export data to a different format (e.g., Microsoft Excel) and back *that* up if my concern is that Google might disappear and take my data with it.
 
 One idea might be to export the underlying data to CSV and back *that* up, but this would mean losing a lot of the cell notes and such like that were an integral part of the data collection process.
 
 Also [@Broman:2018aa, p. 8] suggests "keep all versions of the data files" without indicating what counts as a version of a file.
 If an RA is between entering data in one column and entering data in another column, we probably don't want to keep that version.
-Nor is it clear that a back-up between each row.
-
-If you're a researcher working on papers, a more sensible view might be that some back-up be retained for each version of a paper that is posted or shared with others.
-In such a case, one could restore the spreadsheet data applicable to a particular version of your paper 
+Nor is it clear that a back-up between each row is necessary.
+If you're a researcher working on papers, the sensible view might be that some back-up be retained for each version of a paper that is posted or shared with others.
+In such a case, one could restore the spreadsheet data applicable to a particular version of your paper.
 But this can be unhelpful in practice if you are using data from other sources and isn't doing some kind of version control for those other sources.
 
 Additionally, my experience is that "regular backups ... in multiple locations" can be a recipe for complexity and confusion.
 If I need to go back to an earlier version, how do I decide whether to use the copy of `glucose_6_weeks` stored on a thumb drive in my drawer or the copy of `glucose_6_weeks` in Dropbox?
 Perhaps I would need to add the date on which I made the back-up (e.g.,  `glucose_6_weeks_2024-12-31`) to allow me to distinguish them.
 But maybe I don't always want the latest version of the data (if I did, why keep anything but the last copy?).
-If the reason for restoring the data is some issue that came up in the last week of 2024 and I'd prefer the `glucose_6_weeks_2024-12-21` version.
+If the reason for restoring the data is some issue that came up in the last week of 2024 then I'd probably prefer the `glucose_6_weeks_2024-12-21` version.
 Of course, I may not even be sure when the issue arose, so versions named just for dates may not be particularly helpful.
 
 My sense is that if you are collecting data in spreadsheets, you are probably not the lynchpin of some multi-billion dollar Stage III drug trial aimed at getting FDA approval.
 So accepting the "Google ceases to exist" risk does not seem unreasonable.
 Even "Google Sheets ceases to exist" seems tolerable (or at least not very different from "I can't open Microsoft Excel files from 2024" risk) for almost any use case where storing data in a spreadsheet makes sense.
 
-My recommendation is to rely on version control features embedded in Google Sheets.
+My recommendation is to rely on version control features embedded in Google Sheets for organization of data somewhat less critical than the codes for the US nuclear arsenal.
 For example, "name current version" allows you to label a version as something like "qje_submission" and this is likely to suffice for the relatively low stakes of most data collection efforts conducted with spreadsheets.
 
 ## "Save the Data in Plain Text Files"
 
 This one is a little difficult to evaluate, as its rationale is not entirely clear.
-One reason is perhaps given by the statement that "this sort of nonproprietary file format [CSV] does not and never will require any sort of special software" @Broman:2018aa, p. 8].
+One reason is perhaps given by the statement that "this sort of nonproprietary file format [CSV] does not and never will require any sort of special software" [@Broman:2018aa, p. 8].
 But this claim arguably applies to the `ipo_auditors.parquet` file that I created above.^[Of course if you were transported back to 1995 with nothing but a single data file, you might prefer CSV to parquet, but it seems exceedingly unlikely that you will be in a situation where you cannot work with a parquet file in 2025.]
 
 The "CSV files are easier to handle in code" is arguably false because parquet files include information about data types and the like that are missing from CSV files.
 
-In short, I am not sure that I fundamentally disagree with this recommendation if it simply means that there should be a "persist" step along the lines of that depicted in @fig-whole-game.
+In short, I am not sure that I fundamentally disagree with this recommendation if it simply means that there should be a "persist" step along the lines of that depicted in @fig-whole-game and the persistent format is something "nonproprietary" like CSV or parquet.
 An implicit assumption in @fig-whole-game is that the data are being persisted as part of the *Curate* process rather than the *Curate* and *Understand* processes being tangled messes where it is unclear where one begins and the other ends.
 I would argue that the spreadsheet plus code should be viewed together as a unit that fosters reproducibility.
 
