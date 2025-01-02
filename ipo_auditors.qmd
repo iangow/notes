@@ -50,6 +50,7 @@ library(dbplyr)
 ```{r}
 #| include: false
 library(tinytable)
+library(kableExtra)
 ```
 
 # Spreadsheets and data science
@@ -229,7 +230,6 @@ Finally, the plotting functionality of Excel will generally pale in comparison t
 
 A lot of researchers seem unaware that it's even possible for modern statistical packages to produce production-quality output without manual intervention at every step.
 
-
 # Google Sheets
 
 My primary recommendation is to use Google Sheets rather than Excel spreadsheets.
@@ -366,33 +366,38 @@ expert_counts <-
 #| tbl-cap: Statistics for different kinds of experts
 expert_counts |>
   collect() |>
-  tt() |>
-  style_tt(align = "ldd") |>
-  format_tt(escape = TRUE, digits = 0)
+  kable(format.args = list(big.mark = ",")) |>
+  kable_styling(latex_options = c("hold_position"))
+```
+
+```{r}
+deals_wo_lead <-
+  ipo_experts |>
+  filter(role == "LeadUnderwriter") |>
+  distinct(dealID)
+
+expert_counts_wo_lead <-
+  ipo_experts |>
+  anti_join(deals_wo_lead, by = "dealID") |>
+  group_by(role) |> 
+  summarize(n_deals = n_distinct(dealID), 
+            n_rows = n(),
+            .groups = "drop") |> 
+  arrange(desc(n_deals))
 ```
 
 ```{r}
 #| echo: false
 #| label: tbl-no-uws
 #| tbl-cap: Statistics for IPOs without lead underwriters
-deals_wo_lead_uw <-
-  ipo_experts |>
-  filter(role == "LeadUnderwriter") |>
-  distinct(dealID)
-
-ipo_experts |>
-  anti_join(deals_wo_lead_uw, by = "dealID") |>
-  group_by(role) |> 
-  summarize(n_deals = n_distinct(dealID), 
-            n_rows = n(),
-            .groups = "drop") |> 
-  arrange(desc(n_deals)) |>
+expert_counts_wo_lead |>
   collect() |>
-  tt() |>
-  style_tt(align = "ldd") |>
-  format_tt(escape = TRUE, digits = 0)
+  kableExtra::kable(format.args = list(big.mark = ","),
+                    longtable = FALSE,
+                    position = "!H", booktabs = TRUE)
 ```
 
+Digging a little deeper into the GLMD IPO as an example in @tbl-glmd-experts, we see a number of things.
 
 ```{r}
 #| echo: false
@@ -402,11 +407,9 @@ ipo_experts |>
   filter(dealID == "926632-74581") |>
   select(-dealID) |>
   collect() |>
-  tt() |>
-  format_tt(escape = TRUE)
+  knitr::kable(format.args = list(big.mark = ","))
 ```
 
-Digging a little deeper into the GLMD IPO as an example in @tbl-glmd-experts, we see a number of things 
 First, there appear to be "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with "`...`".
 Second, there are no identifiers for the experts other than their names.
 Names are problematic for many reasons.
@@ -578,7 +581,7 @@ top_match_problems |>
   collect() |>
   tt() |>
   format_tt(escape = TRUE) |>
-  style_tt(fontsize = 0.8,
+  style_tt(fontsize = 0.9,
            align = "rllr") |>
   theme_tt("spacing")
 ```
@@ -599,7 +602,7 @@ form_aps |>
   collect() |> 
   tt() |>
   format_tt(escape = TRUE) |>
-  style_tt(fontsize = 0.8) |>
+  style_tt(fontsize = 0.9) |>
   theme_tt("spacing")
 ```
 
