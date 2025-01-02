@@ -25,7 +25,7 @@ bibliography: papers.bib
 csl: jfe.csl
 ---
 
-As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
+As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* was published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press in 2024 and remains free online.]
 In that post, I identified three gaps in our coverage relative to [*R for Data Science*](https://r4ds.hadley.nz).
 Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
 
@@ -96,6 +96,11 @@ However, when updated spreadsheets were received from the vendor they first pass
 The data team had "helpfully" opended the files in Excel and saved them before sending them along to me.
 I had to insist that the data team pass along the data files *exactly* as they had received them without "helpful" steps in between.^[Additional examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in [my earlier note](https://github.com/iangow/notes/blob/main/import_sirca.pdf).]
 
+The deleterious effects of "simply" opening a file in Excel and saving it can be seen by comparing @tbl-orig with @tbl-excel.
+@tbl-orig shows the original data, while @tbl-excel shows the file created by Excel.
+As can be seen, Excel changed the first column so that the data are no longer in a consistent (`d/m/yyyy`) format, mangled the first `cusip` value, and messed up the encoding (and I wasn't even using Windows!) so that the Korean name in the third row is no longer legible.
+
+
 test_date | cusip      | result | name  |
 ----------|------------|--------|-------|
 1/7/2006  | "945324E7" | 1.7    | Bob   |
@@ -112,15 +117,13 @@ test_date | cusip      | result | name  |
 
 : Excel-exported CSV data {#tbl-excel}
 
-Excel changed the first column so that the data are no longer in a consistent (`d/m/yyyy`) format, mangled the first `cusip` value, and messed up the encoding (and I wasn't even using Windows!) so that the Korean name in the third row is no longer legible.
-
 ## Scenario 2: Using spreadsheets for data collection
 
 While Chapter 20 of @Wickham:2023aa focuses on importing data from spreadsheets, @Broman:2018aa focuses on the use of spreadsheets for data collection.
 Interestingly, @Wickham:2023aa does not discuss primary data collection in any detail and @Broman:2018aa does not *explicitly* cover the process of importing data into statistical analysis software.
 However, it does seem implicit in @Broman:2018aa that importing data into such software will be part of the process.
 For example, @Broman:2018aa [p. 9] suggest that "data rearrangement is best accomplished via code (such as with an R, Python, or Ruby script) so you never lose the record of what you did to the data."
-In terms of @fig-whole-game, @Broman:2018aa is largely about "Collect" and @Wickham:2023aa picks up with "Import".
+In terms of @fig-whole-game, @Broman:2018aa is largely about "Collect" and @Wickham:2023aa picks up with "Import".^[The original "whole game" in @Wickham:2023aa does not even discuss "Collect", but I think @Broman:2018aa shows how it is an essential part of the data science process.]
 
 I view this note as building on @Broman:2018aa by adding some additional recommendations, linking data collection with data importation *à la* @Wickham:2023aa, and providing a more comprehensive use case to highlight some issues and ideas not addressed by either @Broman:2018aa or @Wickham:2023aa.
 
@@ -162,9 +165,70 @@ Spreadsheets allow this easily.
 
 ## Other use cases for spreadsheets
 
+### Spreadsheets for modelling
+
+Spreadsheet tools such as Microsoft Excel and Google Sheets are the mainstay of certain kinds of analysis, including financial modelling and valuation.
+Spreadsheets also allow people who use them for other reasons to easily run Monte Carlo simulations and the like.
+I view these uses as legitimate, but place them slightly outside the scope of data science in the sense implied by @fig-whole-game, hence beyond the scope of this note.
+
+The one word of caution I would offer is that one should not fall into the trap of thinking "I use Excel for modelling, so maybe I should also use Excel for statistical analysis."
+The shortcomings of Excel for statistical analysis are well-documented and need not be repeated here [see @Broman:2018aa for some leads].
+
+
+I will also note a couple of additional points.
+First, even if (say) Microsoft Excel is your preferred tool for producingfinancial or valuation models, there can be value in replicating analysis in something like Python or R.
+In 2005 or 2006, I was working with Morgan Stanley to produce a valuation model that could be used by institutional investor clients with data generated by Morgan Stanely research analysts.
+I would produce a version of the model in Excel and programmers would translate it into C++ code.
+In one call, one of the programmers mentioned that they had detected the change in formula after a certain number of years and implemented that in the code.
+Aargh!
+This change in formula was simply a spreadsheet error on my part that because all the more obvious when the logic was transcribed from Excel formulas to C++ code.
+The error was quickly rectified.
+
+Second, there is a world of best practices to be followed with the use of spreadsheets in financial and valuation modelling that are deserving of (at least) a note of their own.
+When I worked at corporate finance consulting firm Stern Stewart in the late 1990s, a big part of the training of new analysts and associates was inculculating some of these best practices, such as separating inputs from calculations and documentating data sources and rationales for approaches.
+A lot of ideas used there are analogues of ideas found in discussions of reproducibility in data science.
+
 ### Spreadsheets for data analysis
 
+While @Broman:2018aa does mandate "No Calculations in the Raw Data Files", this is coupled with a more lenient piece of advice [@Broman:2018aa, p. 7]: "If you want to do some analyses in Excel, make a copy of the file and do your calculations and graphs in the copy.
+I would argue that this is actually not a good idea at all.
+
+If the idea is that the analysis will be the data analytical form of brainstorming that will not form the basis of anything beyond that, I think that is fine.
+But if the calculations and graphs in the copy end up going in a document, then the data in the copy become the de facto canonical version of the data.
+If the original data are updated or correct, there will often be no easy way to incorporate the associated changes into the analysis.
+Also it will often be difficult to be sure that the raw data have been unchanged.
+Having the original data as a "pristine store of data" [@Broman:2018aa, p. 7] does not help much if the data actually used have been corrupted in some way (e.g., by accidentally typing a value into a cell).^[I beleive it is possible to lock seelcted cells in a spreadsheet, but I suspect that few users avail themselves of this functionality.]
+
 ### Spreadsheets for organizing output
+
+The final use case for spreadsheets that I will discuss is the use of spreadsheets for producing output, such as tables and graphs.
+Many researchers who use statistical packages such as SAS or Stata reach the limits of their skills with those packages when it comes to producing plots or tables of statistical analyses for inclusion in papers.
+Such users will often turn to packages such as Microsoft Excel to produce this kind of output.
+
+I would recommend that readers of this note consider working on their data science skills to obviate the use of Excel for this "last mile" of the data analysis journey for a number of reasons.
+
+First, using spreadsheets for this part of the process inevitably breaks the reproducibility of any analysis.
+The Excel workflow for making a plot is roughly:
+
+  1. Save data for analysis
+  2. Open data in Excel spreadsheet.
+  3. Using your mouse, highlight the data to be used in graph.
+  4. Click one of the graph icons.
+  5. Make a number of seclections in various dropdown menus and checkboxes to produce the desired plot.
+  6. Copy plot to Microsoft Word document.
+  
+Now, suppose the data change.
+The whole process needs to be repeated again and it is very unlikely that any step (save perhaps the first one) is associated with any documentation whatsoeever.
+
+One consequence of using a manual workflow is that analyses can quickly become inconsistent with each other, as it is often seems not worthwhile to update earlier analyses when data change.
+
+Second, using spreadsheets for this part of the process can lead to errors.
+Manual steps are easy to mess up and I've seen cases where column labels are switched or the signs of coefficients are wrong because they were updated manually.
+
+Finally, the plotting functionality of Excel will generally pale in comparison to what is available in Python or R (or even Stata).
+
+A lot of researchers seem unaware that it's even possible for modern statistical packages to produce production-quality output without manual intervention at every step.
+
 
 # Google Sheets
 
@@ -244,7 +308,9 @@ The data on IPOs come from the Nasdaq website and the data on audit firms come f
 ## IPO data
 
 Nasdaq provides information about IPOs on its website.
-I have these data in parquet files that I load into a DuckDB database as follows:
+I have organized these data in two parquet files: `ipos.parquet` and `ipo_experts.parquet`.
+A copy of the `ipos.parquet` file can be found at <https://go.unimelb.edu.au/2rq8> and a copy of the `ipos_experts.parquet` file can be found at <https://go.unimelb.edu.au/hrq8>.
+If you want to follow along with the code below, you could download these data files into the `nasdaq` schema of a data repository organized along the lines of that I discuss in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) and then load them into a DuckDB database using code like this:
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
@@ -253,10 +319,78 @@ ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
 ipos <- load_parquet(db, "ipos", "nasdaq")
 ```
 
+Alternatively, you could put these two files in, say `~/Downloads/ipo_auditors`, and then load them as follows:
+
+```{r}
+#| eval: false
+db <- dbConnect(duckdb::duckdb())
+
+ipo_experts <- load_parquet(db, "ipo_experts", data_dir = "~/Downloads/ipo_auditors")
+ipos <- load_parquet(db, "ipos", "nasdaq", data_dir = "~/Downloads/ipo_auditors")
+```
+
 For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581> and these data are found in the `ipo.parquet` file found at <https://go.unimelb.edu.au/2rq8>.
 The Nasdaq page also includes information about the "experts" associated with each IPO.
 The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) that can be found in the `ipo_experts` data frame is shown in @tbl-glmd-experts.
 The `ipo_experts.parquet` file can be found at <https://go.unimelb.edu.au/hrq8>.
+
+```{r}
+#| include: false
+num_ipos <-
+  ipos |>
+  count() |>
+  pull()
+```
+
+There are `r prettyNum(num_ipos, big.mark = ",")` rows in `ipos.parquet` and each row represents an IPO  identified by the primary key column `dealID`.
+I collect some statistics on these deals in `expert_counts` and show the results in @tbl-expert-stats.
+As can be seen from the `n_deals` column, every IPO has an auditor, a company counsel, and a transfer agent, with some deals having more than one of these.
+Not every deal has a lead underwriter, but from @tbl-no-uws, it can be seen that all deals without a lead underwriter have at least one underwriter.
+It can be inferred from @tbl-expert-stats that the typical IPO has multiple underwriters.
+
+```{r}
+expert_counts <-
+  ipo_experts |> 
+  group_by(role) |> 
+  summarize(n_deals = n_distinct(dealID), 
+            n_rows = n(),
+            .groups = "drop") |> 
+  arrange(desc(n_deals))
+```
+
+
+```{r}
+#| echo: false
+#| label: tbl-expert-stats
+#| tbl-cap: Statistics for different kinds of experts
+expert_counts |>
+  collect() |>
+  tt() |>
+  style_tt(align = "ldd") |>
+  format_tt(escape = TRUE, digits = 0) 
+```
+
+```{r}
+#| echo: false
+#| label: tbl-no-uws
+#| tbl-cap: Statistics for IPOs without lead underwriters
+deals_wo_lead_uw <-
+  ipo_experts |>
+  filter(role == "LeadUnderwriter") |>
+  distinct(dealID)
+
+ipo_experts |>
+  anti_join(deals_wo_lead_uw, by = "dealID") |>
+  group_by(role) |> 
+  summarize(n_deals = n_distinct(dealID), 
+            n_rows = n(),
+            .groups = "drop") |> 
+  arrange(desc(n_deals)) |>
+  collect() |>
+  tt() |>
+  style_tt(align = "ldd") |>
+  format_tt(escape = TRUE, digits = 0) 
+```
 
 
 ```{r}
@@ -271,15 +405,15 @@ ipo_experts |>
   format_tt(escape = TRUE) 
 ```
 
-Just from the one case shown in  @tbl-glmd-experts, we see a number of things.
-First, we appear to have "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with `...`.
+Digging a little deeper into one case---shown in  @tbl-glmd-experts---we see a number of things.
+First, we appear to have "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with "`...`".
 Second, there are no identifiers for the experts other than their names.
 Names are problematic for many reasons.
 Firms can change names.
 Names can be abbreviated or misspelt or change in subtle ways that are not obvious to a human reader, but that make them unusable as identifiers in code.
 Third, at least for some expert types, there can be more than one expert for a given IPO.
 
-I first get data on auditors and IPOs from the IPO data and store it in `ipo_auditors`.
+Before moving onto the data on auditors provided on Form APs, I compile data on auditors and IPOs from the IPO data and store it in `ipo_auditors`.
 
 ```{r}
 ipo_auditors <-
@@ -292,7 +426,10 @@ ipo_auditors <-
   compute()
 ```
 
-## Form APs data
+## Form AP data
+
+I get data on auditors from the database constructed by the PCAOB from Form AP filings.
+I have written about this database in a [previous note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).
 
 ```{r}
 form_aps <- load_parquet(db, "form_aps", "pcaob")
@@ -316,7 +453,7 @@ first_auditors <-
 
 ## Name-based links
 
-If a match between `expertName` (from IPOs) and `firm_id` and `firm_name` (from Form APs data) shows up many times, there's a good chance that it's valid match.
+If a match between `expertName` (from IPOs) and `firm_id` and `firm_name` (from Form AP data) shows up many times, there's a good chance that it's valid match.
 In constructing `top_matches`, I require that a match be present at least five times.
 This threshold is arbitrary, but it's just a starting point in two ways.
 First, I will apply some judgement to the matches before flagging them as valid.
@@ -477,7 +614,7 @@ top_match_problem_top_ids <-
 top_match_problem_top_ids
 ```
 
-I then collect data on all other cases where `expertName` is in `top_match_problems` and these is some match to Form APs data (i.e., `firm_name` is present).
+I then collect data on all other cases where `expertName` is in `top_match_problems` and these is some match to Form AP data (i.e., `firm_name` is present).
 
 ```{r}
 top_match_problems_countries <-
@@ -646,6 +783,11 @@ all_matches |>
 
 # Tweaking the recommendations of @Broman:2018aa
 
+@Broman:2018aa contains twelve numbered recommendations regarding best practices to follow when using spreadsheets to collect data.
+Fundamentally, I don't disagree with any of these recommendations.
+However, I feel that some of them need to be tweaked slightly to reflect the slightly different context I focus on here, or to update their recommendations to reflect changes in technology since 2018 (e.g., the increasing use of the cloud storage).
+I discuss these tweaks in this section.
+
 ## "No Empty Cells"
 
 I the case study above, there are inevitably empty cells before data are collected.
@@ -693,7 +835,7 @@ I would need to export data to a different format (e.g., Microsoft Excel) and ba
 
 One idea might be to export the underlying data to CSV and back *that* up, but this would mean losing a lot of the cell notes and such like that were an integral part of the data collection process.
 
-Also [@Broman:2018aa, p. 8] suggests "keep all versions of the data files" without indicating what counts as a version of a file.
+Also @Broman:2018aa [p. 8] suggests "keep all versions of the data files" without indicating what counts as a version of a file.
 If an RA is between entering data in one column and entering data in another column, we probably don't want to keep that version.
 Nor is it clear that a back-up between each row is necessary.
 If you're a researcher working on papers, the sensible view might be that some back-up be retained for each version of a paper that is posted or shared with others.
@@ -725,6 +867,20 @@ The "CSV files are easier to handle in code" is arguably false because parquet f
 In short, I am not sure that I fundamentally disagree with this recommendation if it simply means that there should be a "persist" step along the lines of that depicted in @fig-whole-game and the persistent format is something "nonproprietary" like CSV or parquet.
 An implicit assumption in @fig-whole-game is that the data are being persisted as part of the *Curate* process rather than the *Curate* and *Understand* processes being tangled messes where it is unclear where one begins and the other ends.
 I would argue that the spreadsheet plus code should be viewed together as a unit that fosters reproducibility.
+
+## "Create a Data Dictionary"
+
+At some level it is difficult to quibble much with this one.
+However, it has an air of "eat less; do more exercise" (as advice for losing weight) to it.
+I would guess that most spreadsheets used for data collection do not come with the kind of data dictionary envisaged by @Broman:2018aa [p. 8].
+For example, there is no data dictionary in the Google Sheets document I created for linking IPOs with auditor IDs.
+That said, it is probably a good idea to make one.
+In my case, the critical variables are `deal_ID` and `firm_id`, which are both defined by other entities (Nasdaq and PCAOB, respectively).
+Nonetheless, some discussion of the attributes of those variables likely makes sense, as does some discussion of the purpose of linking the tables so that a user of the data can understand the rationale for any decisions made when the links are not entirely clear.^[For example, the goal might be to identify the auditor at the time of the IPO, even in cases where a change in auditor is in process at that time.]
+
+More importantly, I think that the data dictionary is less important than other documentation that can be associated with a spreadsheet, such as discussion of the goals of data collection and scripts used to test features of the data and to create final data sets that are passed along to the *Understand* process as depicted in @fig-whole-game.
+
+It may be that the best documentation is something like the document you are reading right now, with discussion of data sources, issues to be addressed, and illustrative code.
 
 # Additional case studies
 
