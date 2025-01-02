@@ -323,14 +323,12 @@ ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
 ipos <- load_parquet(db, "ipos", "nasdaq")
 ```
 
-Alternatively, you could put these two files in, say `~/Downloads/ipo_auditors`, and then load them as follows:
+Alternatively, you could put these two files in, say `~/ipo_auditors`, and then load them as follows:
 
 ```{r}
 #| eval: false
-ipo_experts <- load_parquet(db, "ipo_experts",
-                            data_dir = "~/Downloads/ipo_auditors")
-ipos <- load_parquet(db, "ipos", "nasdaq", 
-                     data_dir = "~/Downloads/ipo_auditors")
+ipo_experts <- load_parquet(db, "ipo_experts", data_dir = "~/ipo_auditors")
+ipos <- load_parquet(db, "ipos", "nasdaq", data_dir = "~/ipo_auditors")
 ```
 
 For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581> and these data are found in the `ipo.parquet` file found at <https://go.unimelb.edu.au/2rq8>.
@@ -456,7 +454,8 @@ first_auditors <-
 
 ## Name-based links
 
-If a match between `expertName` (from IPOs) and `firm_id` and `firm_name` (from Form AP data) shows up many times, there's a good chance that it's valid match.
+I start by matching the data on IPOs with data on auditors using CIKs.
+I conjecture that, if a match between `expertName` (from the IPO data) and `firm_id` and `firm_name` (from the Form AP data) shows up many times, there's a good chance that it's valid match.
 In constructing `top_matches`, I require that a match be present at least five times.
 This threshold is arbitrary, but it's just a starting point in two ways.
 First, I will apply some judgement to the matches before flagging them as valid.
@@ -473,7 +472,7 @@ top_matches <-
 ```
 
 I will use a Google Sheets document to collect the data.
-In the past, I have often taken data such as that in `top_matches` and exported it to a CSV file that I open in Google Sheets.
+In the past, I have often taken data such as that in `top_matches` and exported it to a CSV file that I then open in Google Sheets.
 Here I chose to create a new Google Sheets file using the `gs4_create()` from `googlesheets4`: 
 
 ```{r}
@@ -486,6 +485,8 @@ gs_ipo_auditors <- gs4_create(name = "ipo-auditors")
 #| include: false
 gs_ipo_auditors <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
 ```
+
+Typing `gs_ipo_auditors` at the R console provides some information about the (initially empty) Google Sheets document:
 
 ```{r}
 #| cache: true
@@ -506,7 +507,7 @@ Spreadsheet name: ipo-auditors
       Sheet1: 1000 x 26
 ```
 
-After I've created the Google Sheets file, I will access it using the key seen in the output above.
+After I've created the Google Sheets file, I can access it using the key seen in the output above:
 
 ```{r}
 #| include: true
@@ -515,6 +516,7 @@ gs_ipo_auditors <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
 ```
 
 I can put the data from `top_matches` in the Google Sheets spreadsheet using `write_sheet()`.
+Note that this code will not work for you with my spreadsheet, as I have not given your write-access to that spreadsheet.
 
 ```{r}
 #| eval: false
@@ -526,7 +528,7 @@ write_sheet(top_matches, ss = gs_ipo_auditors, sheet = "top_matches")
 ✔ Writing to sheet top_matches.
 ```
 
-The next step is to open the spreadsheet in a browser:
+The next step I took was to open the spreadsheet in a browser:
 
 ```{r}
 #| eval: false
@@ -536,10 +538,14 @@ gs4_browse(gs_ipo_auditors)
 I then inserted a new column `valid` to the right of the existing columns.
 I also renamed the sheet from `top_matches` to `name_matches`.^[For one, the new name is more descriptive of how I will use the data it contains.
 Additionally, if I rerun the `write_sheet()` code above, it will not overwrite the sheet that I already have.
-Note that Google Sheets has excellent version history that makes it possible to restore an earlier version if you accidentally overwrite hand-collected data.]
-I looked at the matches and classified ones that looked good as valid by putting the value `TRUE` in the row under the `valid` column.
+Note that Google Sheets has excellent support for version history that makes it possible to restore an earlier version if you accidentally overwrite hand-collected data.]
+I inspected the matches and classified though that looked good as valid by putting the value `TRUE` in the row under the `valid` column.
 Most of the first 30 or so rows looked good.
-But a match with `expertName` of "Ernst & Young LLP" and `firm_name` of "KPMG LLP" is not a valid match and I put `FALSE` in the `valid` column for this case.^[Note that I later deleted the entire rows for such clearly bad matches.]
+But a match with `expertName` of "Ernst & Young LLP" with `firm_name` of "KPMG LLP" is clearly not valid, so I put `FALSE` in the `valid` column for this case.^[Note that I later deleted the entire rows for such clearly bad matches.]
+
+Later I added more candidate matches to the `name_matches` sheet and marked as valid all those that looked good.
+In some cases it made sense to use the [AuditorSearch](https://pcaobus.org/resources/auditorsearch) functionality provided by the PCAOB or to investigate data in SEC filings or the Form AP database.^[This data collection was joint work by me and Stephen Walker.]
+Note that I retained all variants of `expertName` in the IPO data so that name-based matches can be found for such variants.
 
 ### Problematic name-based links
 
@@ -599,11 +605,11 @@ form_aps |>
 
 ### Manual links by `dealID`
 
-One approach to handling these cases would be to get information on countries from the IPO data and use that to distinguish the `firm_id` values to be used for cases with multiple apparent matches.
+One approach to handling these cases would be to get information on countries from the IPO data and use that to distinguish the `firm_id` values to be used for cases with multiple apparent name-based matches.
 However, given the relatively small number of non-US matches to be handled, I instead chose to grab the `dealID` values for those cases and proceed to validate matches on a deal-by-deal basis.
 
-To start with, I identify the most common `firm_id` value for each `expertName`.
-In effect, I will set these as the default for the name-based matches.
+To start with, I identified the most common `firm_id` value for each `expertName`.
+In effect, I will set these as the default for the name-based matches.^[I can give effect to this by setting `valid` to `FALSE` for the other rows in `name_matches` (e.g., for matches to `firm_id` values of 1147 and 1208 for "Deloitte & Touche LLP") and to `TRUE` only for the main match (e.g., for `firm_id` of 34 for  "Deloitte & Touche LLP").]
 
 ```{r}
 top_match_problem_top_ids <-
@@ -617,7 +623,7 @@ top_match_problem_top_ids <-
 top_match_problem_top_ids
 ```
 
-I then collect data on all other cases where `expertName` is in `top_match_problems` and these is some match to Form AP data (i.e., `firm_name` is present).
+I then collect data on all other cases where `expertName` is in `top_match_problems` and there is some match to Form AP data (i.e., `firm_name` is present).
 
 ```{r}
 top_match_problems_countries <-
@@ -639,9 +645,10 @@ top_match_problems_countries |>
   write_sheet(ss = gs_ipo_auditors, sheet = "deal_matches_add")
 ```
 
-In this case, I renamed the tab to `deal_matches`, added a `valid` column much as before, and also added additional columns such as `sec_filings` and `notes`.
+In this case, I renamed this sheet to `deal_matches`, added a `valid` column much as before, and also added additional columns such as `sec_filings` and `notes`.
 I use `sec_filings` to create a formula-based hyperlink to the SEC filings around the time of the IPO that I can use to check cases where the information in the spreadsheet does not suffice to give me confidence in validating a match.
 Looking at the formula for cells with "SEC Filings" in the `sec_filings` column of the `deal_matches` sheet, you will see that the formula keys off values in `cik` and `pricedDate` to make it easy to get to the relevant filings.
+When I locate a filing with the necessary supporting information to make a call on whether a candidate match is value, I can include a link to that filing in the `notes` column of the spreadsheet.^[For example, the `expertName` for `dealID` of "749074-74508" is Deloitte & Touche LLP. But inspection of the associated [SEC filings](https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001404644&type=&dateb=20140307&owner=exclude&count=40). ]
 
 While this might appear to violate the "No Calculations in the Raw Data Files" dictum of @Broman:2018aa, it reflects the different way that I am using the spreadsheet format.
 In effect, the Google Sheets file is a kind of notebook with supporting information for the data that will be used in analysis.
