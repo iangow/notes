@@ -233,7 +233,7 @@ A lot of researchers seem unaware that it's even possible for modern statistical
 # Google Sheets
 
 My primary recommendation is to use Google Sheets rather than Excel spreadsheets.
-While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, I am not aware of an equivalent to Google Sheets in terms of functionality at this time.^[If there is an alternative---or if such a product becomes available at a later date---hopefully much of what I say here will apply to that product.]
+While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, I am not aware of an equivalent to Google Sheets in terms of functionality at this time.^[If there is an alternative available today---or if such a product becomes available at a later date---hopefully much of what I say here will apply to that product.]
 
 Google Sheets offers a number of benefits over Excel even for a single user.
 For example, Google Sheets has some functions (e.g., support for regular expressions) that can greatly facilitate data entry.
@@ -305,6 +305,12 @@ The example I study involves collecting data from various sources to facilitate 
 
 The data on IPOs come from the Nasdaq website and the data on audit firms come from the Form AP in [an earlier note](https://raw.githubusercontent.com/iangow/notes/main/form_ap_names.pdf).
 
+I will use DuckDB to work with data in this example, so I create a connection to an in-memory database here.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+```
+
 ## IPO data
 
 Nasdaq provides information about IPOs on its website.
@@ -313,8 +319,6 @@ A copy of the `ipos.parquet` file can be found at <https://go.unimelb.edu.au/2rq
 If you want to follow along with the code below, you could download these data files into the `nasdaq` schema of a data repository organized along the lines of that I discuss in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) and then load them into a DuckDB database using code like this:
 
 ```{r}
-db <- dbConnect(duckdb::duckdb())
-
 ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
 ipos <- load_parquet(db, "ipos", "nasdaq")
 ```
@@ -323,16 +327,15 @@ Alternatively, you could put these two files in, say `~/Downloads/ipo_auditors`,
 
 ```{r}
 #| eval: false
-db <- dbConnect(duckdb::duckdb())
-
-ipo_experts <- load_parquet(db, "ipo_experts", data_dir = "~/Downloads/ipo_auditors")
-ipos <- load_parquet(db, "ipos", "nasdaq", data_dir = "~/Downloads/ipo_auditors")
+ipo_experts <- load_parquet(db, "ipo_experts",
+                            data_dir = "~/Downloads/ipo_auditors")
+ipos <- load_parquet(db, "ipos", "nasdaq", 
+                     data_dir = "~/Downloads/ipo_auditors")
 ```
 
 For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581> and these data are found in the `ipo.parquet` file found at <https://go.unimelb.edu.au/2rq8>.
 The Nasdaq page also includes information about the "experts" associated with each IPO.
 The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) that can be found in the `ipo_experts` data frame is shown in @tbl-glmd-experts.
-The `ipo_experts.parquet` file can be found at <https://go.unimelb.edu.au/hrq8>.
 
 ```{r}
 #| include: false
@@ -402,15 +405,15 @@ ipo_experts |>
   select(-dealID) |>
   collect() |>
   tt() |>
-  format_tt(escape = TRUE) 
+  format_tt(escape = TRUE)
 ```
 
-Digging a little deeper into one case---shown in  @tbl-glmd-experts---we see a number of things.
-First, we appear to have "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with "`...`".
+Digging a little deeper into the GLMD IPO as an example in @tbl-glmd-experts, we see a number of things 
+First, there appear to be "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with "`...`".
 Second, there are no identifiers for the experts other than their names.
 Names are problematic for many reasons.
 Firms can change names.
-Names can be abbreviated or misspelt or change in subtle ways that are not obvious to a human reader, but that make them unusable as identifiers in code.
+Names can be abbreviated in different ways or misspelt or change in subtle ways that are not obvious to a human reader, but that make them unusable as identifiers in code.
 Third, at least for some expert types, there can be more than one expert for a given IPO.
 
 Before moving onto the data on auditors provided on Form APs, I compile data on auditors and IPOs from the IPO data and store it in `ipo_auditors`.
