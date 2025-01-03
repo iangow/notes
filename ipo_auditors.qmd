@@ -219,7 +219,7 @@ The Excel workflow for making a plot is roughly:
   6. Copy plot to Microsoft Word document.
   
 Now, suppose the data change.
-The whole process needs to be repeated again and it is very unlikely that any step (save perhaps the first one) is associated with any documentation whatsoeever.
+The whole process needs to be repeated again and it is very unlikely that any step (save perhaps the first one) is associated with any documentation whatsoever.
 
 One consequence of using a manual workflow is that analyses can quickly become inconsistent with each other, as it is often seems not worthwhile to update earlier analyses when data change.
 
@@ -346,10 +346,10 @@ num_ipos <-
 There are `r prettyNum(num_ipos, big.mark = ",")` rows in `ipos.parquet` and each row represents an IPO  identified by the primary key column `dealID`.
 I collect some statistics on these deals in `expert_counts` and show the results in @tbl-expert-stats.
 As can be seen from the `n_deals` column, every IPO has an auditor, a company counsel, and a transfer agent, with some deals having more than one of these.
-Not every deal has a lead underwriter, but from @tbl-no-uws, it can be seen that all deals without a lead underwriter have at least one underwriter.
 It can be inferred from @tbl-expert-stats that the typical IPO has multiple underwriters.
 
 ```{r}
+#| echo: true
 expert_counts <-
   ipo_experts |> 
   group_by(role) |> 
@@ -366,11 +366,13 @@ expert_counts <-
 #| tbl-cap: Statistics for different kinds of experts
 expert_counts |>
   collect() |>
-  kable(format.args = list(big.mark = ",")) |>
-  kable_styling(latex_options = c("hold_position"))
+  kableExtra::kbl(format.args = list(big.mark = ","),
+                  linesep = "",
+                  booktabs = TRUE)
 ```
 
 ```{r}
+#| echo: false
 deals_wo_lead <-
   ipo_experts |>
   filter(role == "LeadUnderwriter") |>
@@ -386,15 +388,18 @@ expert_counts_wo_lead <-
   arrange(desc(n_deals))
 ```
 
+Not every deal has a lead underwriter, but from @tbl-no-uws, it can be seen that all deals without a lead underwriter have at least one underwriter.
+
 ```{r}
 #| echo: false
 #| label: tbl-no-uws
 #| tbl-cap: Statistics for IPOs without lead underwriters
 expert_counts_wo_lead |>
   collect() |>
-  kableExtra::kable(format.args = list(big.mark = ","),
-                    longtable = FALSE,
-                    position = "!H", booktabs = TRUE)
+  kableExtra::kbl(format.args = list(big.mark = ","),
+               # longtable = FALSE,
+                   position = "h", 
+                    booktabs = TRUE)
 ```
 
 Digging a little deeper into the GLMD IPO as an example in @tbl-glmd-experts, we see a number of things.
@@ -407,7 +412,10 @@ ipo_experts |>
   filter(dealID == "926632-74581") |>
   select(-dealID) |>
   collect() |>
-  knitr::kable(format.args = list(big.mark = ","))
+  kableExtra::kbl(format.args = list(big.mark = ","),
+                  position = "!h", 
+                  linesep = "",
+                  booktabs = TRUE)
 ```
 
 First, there appear to be "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with "`...`".
@@ -455,7 +463,9 @@ first_auditors <-
   compute()
 ```
 
-## Name-based links
+## Creating the link table
+
+### Name-based links
 
 I start by matching the data on IPOs with data on auditors using CIKs.
 I conjecture that, if a match between `expertName` (from the IPO data) and `firm_id` and `firm_name` (from the Form AP data) shows up many times, there's a good chance that it's valid match.
@@ -650,18 +660,17 @@ top_match_problems_countries |>
 
 In this case, I renamed this sheet to `deal_matches`, added a `valid` column much as before, and also added additional columns such as `sec_filings` and `notes`.
 I use `sec_filings` to create a formula-based hyperlink to the SEC filings around the time of the IPO that I can use to check cases where the information in the spreadsheet does not suffice to give me confidence in validating a match.
-Looking at the formula for cells with "SEC Filings" in the `sec_filings` column of the `deal_matches` sheet, you will see that the formula keys off values in `cik` and `pricedDate` to make it easy to get to the relevant filings.
-When I locate a filing with the necessary supporting information to make a call on whether a candidate match is value, I can include a link to that filing in the `notes` column of the spreadsheet.^[For example, the `expertName` for `dealID` of "749074-74508" is Deloitte & Touche LLP. But inspection of the associated [SEC filings](https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001404644&type=&dateb=20140307&owner=exclude&count=40). ]
-
-While this might appear to violate the "No Calculations in the Raw Data Files" dictum of @Broman:2018aa, it reflects the different way that I am using the spreadsheet format.
-In effect, the Google Sheets file is a kind of notebook with supporting information for the data that will be used in analysis.
+Looking at the formula for cells with "SEC Filings" in the `sec_filings` column of the `deal_matches` sheet, you will see that the formula keys off values in `cik` and `pricedDate` to make it easy to get to the relevant filings.^[While this might appear to violate the "No Calculations in the Raw Data Files" dictum of @Broman:2018aa, it reflects the different way that I am using the spreadsheet format.
+In effect, the Google Sheets file is a kind of notebook with supporting information for the data that will be used in analysis.]
+When I locate a filing with the necessary supporting information to make a call on whether a candidate match is value, I can include a link to that filing in the `notes` column of the spreadsheet.^[For example, the `expertName` for `dealID` of "749074-74508" is Deloitte & Touche LLP. But inspection of the associated [SEC filings](https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001404644&type=&dateb=20140307&owner=exclude&count=40) reveals that the audit report in the [prospectus](https://www.sec.gov/Archives/edgar/data/1404644/000119312514088912/d619679d424b4.htm) was signed off by the Canadian firm.]
+It is relatively straightforward to inspect the IPO prospectus and look for the auditor's sign-off, which will mention the office (e.g., "London, United Kingdom") that applies and the associated value can be entered under `firm_id` and `valid` can be set to `TRUE`.
 
 Variants on the steps above are repeated until the tabs `name_matches` and `deal_matches` contain a fairly complete set of data on both name-based and deal-level matches of each IPO with the `firm_id` value for the auditor at the time of the IPO.
 
-## Combining data to produce the link table
+### Combining data to produce the link table
 
 The next step is to use the data in these sheets to create a link table between IPOs and `firm_id` values.
-We start by loading data from two sheets in our Google Sheets file.
+We start by loading data from the two key sheets in our Google Sheets file.
 
 ```{r}
 #| message: false
@@ -669,18 +678,19 @@ name_matches <- read_sheet(ss = gs_ipo_auditors, sheet = "name_matches")
 deal_matches <- read_sheet(ss = gs_ipo_auditors, sheet = "deal_matches")
 ```
 
-
+I start by loading the valid deal-level matches of IPOs to auditors.
+I label these as `"manual"` matches.
 
 ```{r}
 deal_matches_processed <-
   deal_matches |>
   filter(valid) |>
-  unnest(firm_id, keep_empty = TRUE) |>
   select(dealID, firm_id) |>
   mutate(match_type = "manual")
 ```
 
-Note that we give priority to deal-level matches: if an IPO is matched in `deal_matches`, we do not consider a potential match using names in `name_matches`.
+I then load name-based matches.
+Note that I give priority to deal-level matches: if an IPO has a valid match in `deal_matches`, I do not consider a potential match using names in `name_matches`.
 This is accomplished by putting all valid matches from `deal_matches` in `deal_matches_processed` and then using an anti-join when constructing `name_matches_processed`.
 
 ```{r}
@@ -704,9 +714,22 @@ all_matches <-
           overwrite = TRUE)
 ```
 
-### Name-based links without Form AP matches
+Based on the data in the spreadsheet, `all_matches` is effectively the final link table.
 
-To facilitate data collection, I compile firm names and countries for audit firms on `form_aps`.
+### Perfecting the matches
+
+So far we have gone through `expertName` values and linked them to `firm_id` values.
+The results of this work are found in the `name_matches` data frame, which is based on the `name_matches` sheet in our `ipo-auditors` Google Sheets file.
+We have also manually matched IPOs to `firm_id` values.
+Because we manually verified these matches, these should be beyond reproach.
+
+However, we might want to go back through the name-based matches to check that these are valid.
+One idea is to look at name-based links of IPO firms with their auditors that do not have corresponding entries in the Form APs database.
+It is certainly not the case that every IPO firm (i.e., `issuer_cik`) will have a Form AP filing made by the auditor (`firm_id`) it had at IPO.
+Many firms will change auditors after IPO before making filings such as 10-Ks that are expected to trigger a corresponding Form AP filing.
+Nonetheless, by looking more closely at these non-matches we should be able to identify cases where, for example, we have matched a Canadian firm with a US auditor rather than the Canadian audit firm that makes the relevant filings on Form AP.
+
+To facilitate data collection, I start by compiling firm names and countries for audit firms on `form_aps`.
 
 ```{r}
 auditor_names <-
@@ -719,9 +742,13 @@ auditor_names <-
   compute()
 ```
 
-I then compile data on all auditors associated with each issuer CIK, including the names and countries.
-Unfortunately,  `dbplyr` does not provide the interface we need to directly invoke the `array_agg()` aggregate with an `ORDER BY` clause.
-Fortunately, we can use `sql()` to inject precisely the SQL we need.^[The reason for specifying `ORDER BY firm_id` is to ensure that the values in `firm_ids` correspend with the respective values in `firm_names`, etc.]
+I then compile data on all auditors associated with each issuer CIK, including the names and countries, and store the result in `all_auditors`.
+I store the `firm_id`, `firm_name` and `firm_country` values for each auditor for each firm in list columns.
+
+List columns in DuckDB are very much like their counterparts in R.^[In PostgreSQL, lists are called **arrays** and we would use `array_agg()` to achieve the same result in PostgresSQL.
+Note that we could have used the alias `array_agg()` in place of `list()` in DuckDB.]
+Unfortunately,  `dbplyr` does not provide the interface we need to directly invoke the `list()` aggregate with an `ORDER BY` clause.
+Fortunately, we can use `sql()` to inject precisely the SQL we need.^[The reason for specifying `ORDER BY firm_id` is to ensure that the values in `firm_ids` correspond with the respective values in `firm_names`, etc.]
 
 ```{r}
 all_auditors <-
@@ -730,25 +757,26 @@ all_auditors <-
   inner_join(auditor_names, by = "firm_id") |>
   group_by(issuer_cik) |>
   summarize(
-    firm_ids = sql("array_agg(firm_id ORDER BY firm_id)"),
-    firm_names = sql("array_agg(firm_name ORDER BY firm_id)"),
-    firm_countries = sql("array_agg(firm_country ORDER BY firm_id)")
+    firm_ids = sql("list(firm_id ORDER BY firm_id)"),
+    firm_names = sql("list(firm_name ORDER BY firm_id)"),
+    firm_countries = sql("list(firm_country ORDER BY firm_id)")
     ) |>
   compute()
 ```
 
-I collect data on all name-based matches with 
+I collect data on all name-based matches where the matched auditor in `firm_id` is not among the corresponding `firm_ids` found in `all_auditors`.
 
 ```{r}
 no_form_ap_matches <-
   all_matches |>
   filter(match_type == "name-based") |>
-  inner_join(ipo_auditors, by = "dealID") |>
-  select(dealID, cik, CompanyAddress, firm_id, expertName, pricedDate) |>
-  rename(issuer_cik = cik) |>
+  inner_join(ipos, by = "dealID") |>
+  select(dealID, CIK, CompanyAddress, firm_id, pricedDate) |>
+  distinct() |>
+  rename(issuer_cik = CIK) |>
   inner_join(all_auditors, by = "issuer_cik") |>
   filter(!firm_id %in% firm_ids) |>
-  distinct() 
+  compute()
 ```
 
 Note that once IPOs have been added to the `deal_matches` tab, it probably makes sense to exclude them from `no_form_ap_matches` by adding a line such as `anti_join(deal_matches, copy = TRUE, by = "dealID")` after the `inner_join()` above.
@@ -764,8 +792,57 @@ no_form_ap_matches |>
   write_sheet(ss = gs_ipo_auditors, sheet = "all_auditors")
 ```
 
+To better understand how one can use the data that have been placed in the `all_auditors` tab, I describe how I used the data myself.
+The first thing I did was to copy the data from the `all_auditors` sheet over to the bottom of the `deal_matches` sheet.
+Initially I retained the column names in the data that I copied over so that I could check that the columns in the pasted data line up with those in the `deal_matches` tab.
+I then deleted the unnecessary extra row of column names once I had confirmed this.
+The next step was to code all these additional rows as invalid (i.e., by putting `FALSE` in the `valid` column) because these should not be used until they are confirmed.
+I now describe how I confirmed the data for two example IPOs.
+
+The first example IPO I consider is the NYSE IPO of Tamboran Resources Corp (`dealID` of `1295264-109998`).
+I first observe that the company has an Australian address.
+Given that the `expertName` value is "Ernst & Young", a name-based match will associate this IPO with the US operations of Ernst & Young.
+However, the Form AP filings have been made by the Australian affiliate of Ernst & Young (`firm_id` of `1435`).
+So I put `1435` under `firm_id` and set `valid` to `TRUE` after doing so.
+As a result, this IPO will be correctly associated with Ernst & Young Australia in the final link table.
+
+Another example is the 2015 IPO on Nasdaq of Collegium Pharmaceutical (`dealID` of `600781-78033`), where "Grant Thornton LLP" is listed as the auditor on `ipo_experts`.
+But all rows in `form_aps` with `issuer_cik == "0001267565"` have the auditor as Deloitte & Touche LLP.
+Looking at [the prospectus](https://www.sec.gov/Archives/edgar/data/1267565/000104746915004524/a2224679z424b4.htm), we can see that Grant Thornton LLP of Boston, Massachusetts was indeed the auditor at the time of IPO and only [later](https://www.sec.gov/Archives/edgar/data/1267565/000155837017001629/coll-20161231x10k.htm) did Deloitte & Touche LLP take over.
+At this point, I have two options.
+One option would be to leave the `valid` column as `FALSE` for this match, so that a name-based match of "Grant Thornton LLP" to `firm_id` of 248 occurs.
+The other option is to encode what I have learnt and set `firm_id` in `deal_matches` to 248 and set the `valid` column as `TRUE`, so that a manual match occurs.
+The benefits of the latter option are that I would never need to revisit this case in the future and that I would recognize my match as being in the higher-quality "manual" category.
+
+As I write this, most cases in the `deal_matches` tab are coded with `valid` set to `FALSE`.
+This means those rows are not used and matches for these deals are based on names.
+However, if we wanted to "perfect" our matches, we could investigate each row much as we did for the two examples above.
+
+Readers might feel that I am being inconsisent regarding the reproducibility of the steps I am taking.
+How is manually copying data from from the `all_auditors` sheet to the `deal_matches` sheet and then manually moving data around consistent with the "every step should be done using code" mantra I am pushing?
+The answer is that there are portions of manual data collection that are inherently manual.
+Clicking links, reading prospectus documents, and typing `firm_id` values into rows are all inherently manual steps.
+Nonetheless, these manual steps should be kept to a minimum: anything automatic that can be achieved using code probably should be done in code to make the process as reproducible, transparent, and error-free as possible.
+
+Because there are inevitably some manual steps, there is the inevitable possibility of bad data being introduced.
+For example, I could easily have entered "284" instead of "248" as the `firm_id` for the Collegium Pharmaceutical IPO above.
+I think there are are three primary safeguards to minimize the risk of this kind of bad data entering the process.
+
+First, be careful.
+After entering "284" I could easily search the `name_matches` tab for "284" to check that I have entered a valid number.
+I could also reduce the risk of errors by copying "248" from the `name_matches` tab rather than typing it from scratch.
+
+Second, make it easy to check the hand-collected data.
+By documenting my steps with links to supporting information and notes explaining judgments, I make it easier for someone else (perhaps "future me") to check my work.
+
+Third, look for ways to check the integrity of data and flag potential issues.
+For example, if I entered "284" instead of "248" as the `firm_id` for Grant Thornton LLP in `name_matches`, the process I described above would flag these cases in a version of `no_form_ap_matches` and I should quickly observe a lot of cases where "284" is the apparent `firm_id` while Form AP filings are made by Grant Thornton LLP with `firm_id` of 248.
+I might also compare values in `firm_id` in the matched table with valid values according to the PCAOB.
+
+### Checking for gaps
+
 Finally, we look for any deals in `ipo_auditors` that are not matched in `all_matches` and add these to our Google Sheets file.
-One reason for these cases would be as new IPO deals get added to the data with `expertName` values not handled already.
+One reason for these cases would be new IPO deals being added to the data with `expertName` values not handled already.
 
 ```{r}
 #| message: false
@@ -778,11 +855,13 @@ ipo_auditors |>
   write_sheet(ss = gs_ipo_auditors, sheet = "extra_deals")
 ```
 
-The cases in `extra_deals` sheet could be handled by added additional name-based matches to `name_matches` or additional deal-level matches to `deal_matches` as seems most appropriate.
+The cases in `extra_deals` sheet could be handled by adding additional name-based matches to `name_matches` or additional deal-level matches to `deal_matches` as seems most appropriate.
 For the most part I handled cases added to `extra_deals` by moving them to `deal_matches` as the first step and processing as I did for other cases above.
 One this has been done, we can run the "`extra_deals`" code again and, if all is well, there will be no additional deals in `extra_deals` after doing so.
 
-At that point, we could take the data in `all_matches` and "persist" it to disk.
+### Persisting the link table
+
+At that point, I can take the data in `all_matches` and---using the language of @fig-whole-game---*Persist* it to disk.
 In my case, I add `ipo_auditors.parquet` to the `nasdaq` "schema" of my parquet-based data repository.
 More details on this data repository can be found in [an appendix](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502).
 
@@ -897,14 +976,24 @@ It may be that the best documentation is something like the document you are rea
 
 # Additional case studies
 
-Here are some cases where I have used spreadsheets to collect data.
+In this section I discuss some cases where I have used spreadsheets to collect data.
 
-1. Data on director biographies. 
+## Director biographies. 
+
 These data were used to support the @Gow:2018aa.
-2. Data on director ethnicities.
-3. Data on activist directors.
-4. Data on CIK.
-5. Matching conference calls on StreetEvents to PERMNOs (CRSP security identifier).
-6. Corrections to data on audit fees from SIRCA.
+
+## Director ethnicities.
+
+## Activist directors.
+
+## Matching CIKs
+
+## Conference call identifiers
+
+Matching conference calls on StreetEvents to PERMNOs (CRSP security identifier).
+
+## Audit fee corrections 
+
+to data on audit fees from SIRCA.
 
 # References {-}
