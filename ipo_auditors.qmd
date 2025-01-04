@@ -1,7 +1,7 @@
 ---
 title: "Spreadsheets for data collection"
 author: Ian D. Gow
-date: 2025-01-01
+date: 2025-01-04
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -51,6 +51,7 @@ library(dbplyr)
 #| include: false
 library(tinytable)
 library(kableExtra)
+gs4_auth(email = "iandgow@gmail.com")
 ```
 
 # Spreadsheets and data science
@@ -978,22 +979,84 @@ It may be that the best documentation is something like the document you are rea
 
 In this section I discuss some cases where I have used spreadsheets to collect data.
 
+## Audit fee data
+
+In September 2020, Edmund Tadros of the *Australian Financial Review* published [an article](https://www.afr.com/companies/professional-services/the-big-four-auditors-are-really-just-the-big-three-20200907-p55t1x?gift=o8Y-RapBPyBm7EeP4nNxP_0LLvgv5I0PuqaS_9FE5lAFodifEl1nNYDFibPAOdO-G3Lhsp20Htrhfm9rWuM4eGVEQ3bRUdqOzUIzqJDardpmjpxhUNvC03M4ro9UeQQgZ_E) pointing out that the Big Four audit firms were really more a "Big Three" in Australia. 
+This article was based on research by me and [Tom Barry](https://www.linkedin.com/in/thomas-barry-12071211b/) where we found that Deloitte had a much smaller share of the top end of the corporate auditing market in Australia than its Big Four rivals.
+
+While the primary data source for audit fees for Australian companies is Securities Industry Research Centre of Asia-Pacific ([SIRCA](https://www.sirca.org.au)), which in turn appears to get the data from Morningstar, these data are riddled with errors.
+
+We flagged suspicious values using a number of criteria.
+For example, audit fees greater than 60 million Australian dollars or less than zero.
+Observations with changes in audit fees of between more than 50\%.
+Flagged cases were added to a [Google Sheets sheet](https://docs.google.com/spreadsheets/d/1l9HtIiR9GeN8wD8s74c86OuSZTasYiQtCGLxOVHCOuQ/edit?usp=sharing) (`corrections`) including the necessary identifiers and filings with the Australian Stock Exchange (ASX) were used to determine the correct values, which are then entered into the `corrections` sheet.
+Links to the filings from which the correct information were obtained are retained so that the data collection process is a transparent as possible.
+
+Note that the `corrections` data is combined with the original data much as the deal-level data are combined with the name-based matches for the IPO auditor data above.
+That is, the observations in the `corrections` sheet are given priority over the information in the SIRCA data (again an anti-join is used to combine the data).
+
+Because only values from the original SIRCA data that have been flagged and corrected are used, the majority of the rows of data are still coming from the SIRCA data.
+This means that the data process is robust to the continual updates that are made as more firms release annual reports with new data on audit fees.
+However any red flags raised by the new data should be checked much as the older values were.
+
+## Activist directors
+
+Google Sheets were used to collect data on  activist directors for @Gow:2024aa.^[Code related to this is made available on [GitHub](https://github.com/iangow/activist_director).]
+A challenge with that paper is that, because not all activist directors in our sample appear in the Equilar database we used as a main source of data on directors, we could not simply rely on an existing identifer to distinguish one director from another.
+
+We also hand-collected data on key events associated with activism events and data to match CUSIPs in our activism data with PERMNOs.
+
+Because data collection for this project began when were were fairly unfamiliar with best practices for such data collection, our Google Sheets are effectively organized in sheets that represent waves of data collection.
+We used scripts (such as the script to create the key `activist_directors` data frame) to combine the sheets into single tables for analysis.
+
+## Director ethnicities
+
+An extensive data set on ethnicities of directors was constructed for @Gow:2023ab.
+This was a complex endeavour involving multiple steps.
+
+### Database of director photos 
+
+We had photos of directors from SEC filings on EDGAR and (later) from Equilar.
+The first step with regard to EDGAR photos was to link these with the director identifier in the Equilar database (`executive_id`) and for each filing a page was a created to match photos to each `executive_id`, either by selecting a name from a dropdown list or by writing in a name when the name was not found in the dropdown list.
+The hand-collection was performed by RAs found through [Fiverr](https://www.fiverr.com) and generally only one RA was used at a time.
+
+Google Sheets were used in two ways for this activity.
+First, a sheet was created with the list of filings to be processed and the URLs for the RA to click to complete the task.
+Before clicking on a link, the RA would select her name from the dropdown list in the spreadsheet, then click the link to the data entry site.^[At the time of writing, you can see a page from this site at <https://go.unimelb.edu.au/hiq8>.]
+Once the director photos were mapped to names, the RA would return to the Google Sheets document to flag the status of the row as "DONE" before moving onto the next row.
+
+Second, the output of the RAs data collection activity was stored in the another sheet of the Google Sheets document.
+In effect, Google Sheets served as a simple alternative to posting the data in some kind of database.
+
+
+### Classifying director photos
+
+The next phase was to present each photo to qualified Mechanical Turkers who would classify each photo based on sex and ethnicity.
+The results from this task were returned by Mechanical Turk as CSV files.
+These CSV files were saved to a GitHub respository as is and were never modified in any way.
+
+Each photo was classified by two Mechanical Turkers.
+When there was disagreement between the Mechanical Turkers, someone from the research team (either me or someone working at Stanford) would make a final classification in a Google Sheets document (`hand_classification`), using information from various database to do so.
+Hyperlinks to the sources used as well as notes on the reasons for each classificaton were stored in the Google Sheets document.
+In addition to the resolving disagreements between Mechanical Turkers, the `hand_classification` sheet was used to address potential issues flagged by inconsistencies such as that between a classification of a director in our data and that in other databases.
+
+### Creating the final ethnicities data file
+
+The final step was to combine the data above into a final classification of all directors in our sample.
+As we have seen before, we needed to prioritize the confirmed matches in `hand_classification` over the matches in the Mechanical Turk data and this was achieved with code that used an anti-join.
+The final data set mapped each director (`executive_id`) to an ethniciy and sex.
+
+
 ## Director biographies. 
 
 These data were used to support the @Gow:2018aa.
 
-## Director ethnicities.
 
-## Activist directors.
 
 ## Matching CIKs
 
 ## Conference call identifiers
 
 Matching conference calls on StreetEvents to PERMNOs (CRSP security identifier).
-
-## Audit fee corrections 
-
-to data on audit fees from SIRCA.
 
 # References {-}
