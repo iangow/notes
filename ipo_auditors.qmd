@@ -1,8 +1,9 @@
 ---
-title: "Spreadsheets for data collection"
+title: "Data collection (with spreadsheets)"
 author: Ian D. Gow
 date: 2025-01-04
 date-format: "D MMMM YYYY"
+number-sections: true
 format:
   html:
     colorlinks: true
@@ -25,12 +26,35 @@ bibliography: papers.bib
 csl: jfe.csl
 ---
 
-As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* was published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press in 2024 and remains free online.]
-In that post, I identified three gaps in our coverage relative to [*R for Data Science*](https://r4ds.hadley.nz).
-Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
+In writing about data science there is a definite tendency to emphasize the "sexy" aspects, such as machine learning algorithms or fancy statistics.
+This is the case even though it seems to be widely understood that a lot of the critical work involves unsexy tasks related to the organization of data.
+One resource that bucks the trend is [*R for Data Science*](https://r4ds.hadley.nz) [@Wickham:2023aa], which eschews the sexy stuff in providing excellent materials for learning how to tidy and transform data to generate insights.
 
-My aim with these notes is not to replace existing resources such as [*R for Data Science*](https://r4ds.hadley.nz), but to build on such resources with applied examples using richer data sets.^[Two excellent resources are [Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa and @Broman:2018aa and I discuss these in more detail below.]
+But even @Wickham:2023aa draws the line at data collection.^[This is not intended to be a criticism of  @Wickham:2023aa. One needs to draw the line for a book somewhere. Also, based on my experience in writing this note, writing about data collection is surprisingly challenging.]
+Figure 1-1 of @Wickham:2023aa suggests that the "whole game" of data science kicks off with *Import*.^[I capitalize *Import* and put it in italics to indicate a reference to @fig-whole-game.]
+But where do these imported data come from?
+Who collected them?
+Often data analysts are blessed with ready-to-import data sources.
+But sometimes the only way to get data is to *Collect* them ourselves.^[In @fig-whole-game, I actually propose an extension of Figure 1-1 of @Wickham:2023aa that includes a *Collect* process.]
+
+At first impression, it might seem that data collection is too dull a topic for data scientists to think much about and there is not much to be said for writers of educational materials.
+But @Broman:2018aa seems to suggest otherwise.
+While its title is "Data organization in spreadsheets", @Broman:2018aa could equally well be entitled "Data collection (with spreadsheets)" (and I have used the latter as the title for this note).
+@Broman:2018aa is a concise, well-written paper that provides a number of best practices for data collection and I highly recommend it.
+
+However, when I first saw @Broman:2018aa in [web form](https://kbroman.org/dataorg/) in 2016, I had a number of thoughts.
+I dutifully filed these as (somewhat obnoxious) issues on Karl Broman's GitHub repository, but had no real expectation that Karl would address these.
+Instead I figured that I would write a short follow-up paper digging more deeply into issues that interested me.
+This document is that follow-up paper ... a mere nine years later!
+In this note, I provide a different perspective on data collection---albeit one that I hope is complementary to that in @Broman:2018aa---with a detailed extended case study to illustrate the ideas I discuss.
+
+This note also completes the three-part series of notes written to address gaps in the coverage of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@Gow_2024] relative to [*R for Data Science*](https://r4ds.hadley.nz).^[My aim with these notes is not to replace existing resources such as *R for Data Science*, but to build on them with applied examples using richer data sets.]
+Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
+As discussed in a [post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* was published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press in 2024 and remains free online at <https://iangow.github.io/far_book>.]
+
+
 The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [another earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
+I also provide brief sketches of the use of spreadsheets in data collection drawing on research projects I have participated in.
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4", "arrow", "dbplyr")` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -56,7 +80,7 @@ gs4_auth(email = "iandgow@gmail.com")
 
 # Spreadsheets and data science
 
-My sense is that the use of spreadsheets in data science falls into one of two scenarios.
+My sense is that a lot of the use of spreadsheets in data science falls into one of two scenarios.
 In the first scenario, the data are provided in a spreadsheet format that is outside the control of the reseacher.
 In the other scenario, spreadsheets are used by the researcher as part of the data collection process.
 
@@ -95,7 +119,7 @@ Even simply opening the source Excel files in Excel and clicking save can modify
 I had one project where the source data appeared to be `.xls` Excel files, but were in fact simply structured text in HTML format.
 Scripts written on this basis performed better than ones that read them as Excel data.^["Performed better" here means not only that the scripts worked faster, but that the imported data were easier to work with.]
 However, when updated spreadsheets were received from the vendor they first passed through the data team at the institution I then worked at and my scripts no longer worked.
-The data team had "helpfully" opended the files in Excel and saved them before sending them along to me.
+The data team had "helpfully" opened the files in Excel and saved them before sending them along to me.
 I had to insist that the data team pass along the data files *exactly* as they had received them without "helpful" steps in between.^[Additional examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in [my earlier note](https://github.com/iangow/notes/blob/main/import_sirca.pdf).]
 
 The deleterious effects of "simply" opening a file in Excel and saving it can be seen by comparing @tbl-orig with @tbl-excel.
@@ -125,26 +149,23 @@ While Chapter 20 of @Wickham:2023aa focuses on importing data from spreadsheets,
 Interestingly, @Wickham:2023aa does not discuss primary data collection in any detail and @Broman:2018aa does not *explicitly* cover the process of importing data into statistical analysis software.
 However, it does seem implicit in @Broman:2018aa that importing data into such software will be part of the process.
 For example, @Broman:2018aa [p. 9] suggest that "data rearrangement is best accomplished via code (such as with an R, Python, or Ruby script) so you never lose the record of what you did to the data."
-In terms of @fig-whole-game, @Broman:2018aa is largely about "Collect" and @Wickham:2023aa picks up with "Import".^[The original "whole game" in @Wickham:2023aa does not even discuss "Collect", but I think @Broman:2018aa shows how it is an essential part of the data science process.]
+In terms of @fig-whole-game, @Broman:2018aa is largely about *Collect* and @Wickham:2023aa picks up with *Import*.^[The original "whole game" in @Wickham:2023aa does not even discuss *Collect*, but I think @Broman:2018aa shows how it is an essential part of the data science process.]
 
 I view this note as building on @Broman:2018aa by adding some additional recommendations, linking data collection with data importation *à la* @Wickham:2023aa, and providing a more comprehensive use case to highlight some issues and ideas not addressed by either @Broman:2018aa or @Wickham:2023aa.
 
-@Broman:2018aa emphasizes cases where the user of the data is entering the data directly.
+@Broman:2018aa appears to emphasize cases where the user of the data is entering the data directly.
 However, a very common use case I have encountered is on where I (along with collaborators) will be using the data, but the data are being entered by someone else (perhaps several others).
-This note focuses on this scenario.
 
-This note aims to expand on and refine the advice provided by @Broman:2018aa for situations where others---such as data entry specialists or research assistants---are entering data into spreadsheets.
+Additionally, references in @Broman:2018aa to things such as `Serum_batch1_2015-01-30.csv`, `Mouse153` and `glucose_6_weeks` suggest a setting of collection of observations and measurements from scientific experiments.
+In contrast, a setting more familiar to me is that of collecting relatively large amounts of somewhat messy data from documents found on the internet.
+Typically, researchers need other people to collect these data because of time constraints and either the data are too messy to be collected in an automated fashion with sufficiently low cost and high quality or their collection requires some element of judgement.
+
+This note aims to expand on and refine the advice provided by @Broman:2018aa for situations where others---such as data entry specialists or research assistants---are entering data into spreadsheets and where the data are coming from messy sources rather than measurements from lab experiments.
 @Broman:2018aa provide a list of twelve recommendations.
-In this note, I will provide a set of recommendations specific to the approach I recommend here and then follow those with comments on the recommendations in @Broman:2018aa in light of the different context.
+In this note, I will provide guidance specific to the setting I examine here and then follow that with comments on the recommendations in @Broman:2018aa in light of the different context.
 
-As mentioned earlier, @Broman:2018aa is predicated on the user of the data also doing the data entry.
-References to things such as `Serum_batch1_2015-01-30.csv`, `Mouse153` and `glucose_6_weeks` suggest a setting of collection of observations and measurements from scientific experiments.
-
-In contrast, a more common setting in my experience is that of collecting relatively large amounts of somewhat messy data from documents found on the internet.
-Typically, researchers need people to collect these data because either they are too messy to be collected in an automated fashion with sufficiently low cost and high quality or their collection requires some element of judgement.
-
-That context helps to respond to the question that many users might have at this point: Why use spreadsheets at all?
-Given that spreadsheets have all these problems, it might seem better to use some other appraoch.
+Considering this context helps address the question that many users might have at this point: Why use spreadsheets at all?
+Given that spreadsheets have all these problems, it might seem better to use some other approach.
 For example, why not use a web form that is used to populate a database?
 I think the answer lies in a couple of points.
 
@@ -159,13 +180,15 @@ In such situations, often the best approach is to just start collecting data and
 Spreadsheets are often the best tool for such situations.
 Columns can be added later on.
 Data validation rules can be tightened and loosened as circumstances dictate.
-This can be much easier than bringing the web-and-database developer back into to add new fields to the forms and new columns to the database tables.
+This can be much easier than bringing the web-and-database developer back in to add new fields to the forms and new columns to the database tables.
 
 Additionally, data collection often needs to be quite free-form.
 For example, maybe it make sense to drop a link to a document to explain a classification decision made in another column.
 Spreadsheets allow this easily.
 
 ## Other use cases for spreadsheets
+
+Before moving on to consider data collection using spreadsheets in more detail, I briefly discuss other ways that spreadsheets are often used by data analysts.
 
 ### Spreadsheets for modelling
 
@@ -193,10 +216,10 @@ A lot of ideas used there are analogues of ideas found in discussions of reprodu
 ### Spreadsheets for data analysis
 
 While @Broman:2018aa does mandate "No Calculations in the Raw Data Files", this is coupled with a more lenient piece of advice [@Broman:2018aa, p. 7]: "If you want to do some analyses in Excel, make a copy of the file and do your calculations and graphs in the copy.
-I would argue that this is actually not a good idea at all.
+I argue that this is actually not a good idea at all.
 
 If the idea is that the analysis will be the data analytical form of brainstorming that will not form the basis of anything beyond that, I think that is fine.
-But if the calculations and graphs in the copy end up going in a document, then the data in the copy become the de facto canonical version of the data.
+But if the calculations and graphs in the copy end up going in output of some kind (e.g., a report or a paper), then the data in the copy become the de facto canonical version of the data.
 If the original data are updated or correct, there will often be no easy way to incorporate the associated changes into the analysis.
 Also it will often be difficult to be sure that the raw data have been unchanged.
 Having the original data as a "pristine store of data" [@Broman:2018aa, p. 7] does not help much if the data actually used have been corrupted in some way (e.g., by accidentally typing a value into a cell).^[I beleive it is possible to lock seelcted cells in a spreadsheet, but I suspect that few users avail themselves of this functionality.]
@@ -204,7 +227,7 @@ Having the original data as a "pristine store of data" [@Broman:2018aa, p. 7] do
 ### Spreadsheets for organizing output
 
 The final use case for spreadsheets that I will discuss is the use of spreadsheets for producing output, such as tables and graphs.
-Many researchers who use statistical packages such as SAS or Stata reach the limits of their skills with those packages when it comes to producing plots or tables of statistical analyses for inclusion in papers.
+Many researchers who use statistical packages such as SAS or Stata reach the limits of their skills with those packages when it comes to producing plots or tables of statistical analyses for inclusion in papers or reports.
 Such users will often turn to packages such as Microsoft Excel to produce this kind of output.
 
 I would recommend that readers of this note consider working on their data science skills to obviate the use of Excel for this "last mile" of the data analysis journey for a number of reasons.
@@ -233,7 +256,7 @@ A lot of researchers seem unaware that it's even possible for modern statistical
 
 # Google Sheets
 
-My primary recommendation is to use Google Sheets rather than Excel spreadsheets.
+One of my primary recommendations is to use Google Sheets rather than Excel spreadsheets and I explain that recommendation in this section.
 While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, I am not aware of an equivalent to Google Sheets in terms of functionality at this time.^[If there is an alternative available today---or if such a product becomes available at a later date---hopefully much of what I say here will apply to that product.]
 
 Google Sheets offers a number of benefits over Excel even for a single user.
@@ -247,12 +270,12 @@ But the benefits of Google Sheets become especially clear when there are several
 One issue I have encountered with Excel is version control and these issues are particularly acute when there are multiple people involved in data collection.
 In my experience, the standard approach to version control for users of products like Microsoft Word or Microsoft Excel involve two elements.
 First, there is some implicit shared mental note about who has "the document" at any given time.
-When Anne has "the document", Bob and Clara know that they should not be editing the document.
+When Anne has "the document", Bob and Clara know that they should not be editing it.
 
 This is imperfect for many reasons.
 For one, the implicit shared mental note system is not perfect.
 So problems arise when Bob starts editing the literature review section of document while Anne is busy reworking the introduction: "I didn't realize that Anne was working on that. I guess we will have to figure out how to combine my changes with hers."
-Second, Microsoft fans often share versions via email and problems can arise when Clara starts editing `ABC_12-24-24_anne_final_v_21.docx` rather than the copy Anne sent via email with a "please use this version" subject line (`ABC_12-24-25_anne_updated_v_23.docx`) the next day.
+Second, Microsoft Office fans often share versions via email and problems can arise when Clara starts editing `ABC_12-24-24_anne_final_v_21.docx` rather than the copy Anne sent via email with a "please use this version instead" subject line (`ABC_12-25-24_anne_updated_v_23.docx`) the next day.
 
 All these issues are even worse with Microsoft Excel because there are no "track changes" or "compare documents" features to assist with clean-up of messes from Bob-or-Anne-edited-the-wrong-version situations.
 These issues largely disappear with Google Sheets.^[That is, of course, you don't have dimwitted people coming from a Microsoft Office background replicating their approach to version control by creating copies of Google Sheets documents!]
@@ -273,17 +296,17 @@ Importing data using `googlesheets4` and generating plots using `ggplot2` can ha
 I have worked on projects where there were dozens of research assistant (RAs).
 While there were detailed instructions, one cannot be sure that RAs will read them.
 Nor can one anticipate all the ways that things can go wrong.
-With Google Sheets, once can try importing data as it is being collected and discover issues along the way.
-Then one can email the relevant RA (e.g., "Please don't put values like `2013-03-23 (need to check)` in the `date` column"), and perhaps update instructions according.
+With Google Sheets, one can import data as it is being collected and discover issues along the way.
+For example, one can email the relevant RA (e.g., 'Please don't put values like "2013-03-23 (need to check)' in the `date` column"), and perhaps update instructions according.
 
 Sometimes data collection tasks involve an initial learning curve for each RA, but the work can be so tedious that productivity declines over time.
 With Google Sheets, it is relatively straightforward to monitor productivity over time.
-In one case, we hired RAs on a week-by-week basis and found that RA productivity would decline after two weeks and we would not invite RAs back when that happened.^[Presumably these RAs found work, if they wanted it, on a new task for a different faculty member.]
+In one case, we hired RAs on a week-by-week basis and found that RA productivity would decline after two weeks and we would not invite RAs back when that happened.^[These RAs were members of a pool and presumably these RAs found work, if they wanted it, on a new task for a different faculty member.]
 
 Both Excel and Google Sheets offer data validation functionality.
 But sometimes it is not possible to anticipate the range of valid values.
 With Google Sheets, adding data validation on the fly is easy.
-In the example above, we could add a validation rule requiring that `date` values be valid dates and added an addition column for notes to store the "need to check" comment.
+In the example above, we could add a validation rule requiring that `date` values be valid dates and insert an additional column for notes to store comments like the "need to check" above
 
 With Google Sheets, multiple people can enter data at once. 
 An alternative might be to have each person have their own Excel file, but this introduces complexity.
@@ -299,12 +322,12 @@ In the case of the stranded Excel file I mentioned above, the RA in question cho
 The RA in question worked for a co-author, not for me, so I wasn't as insistent as I should've been.
 Today I would configure the Google Sheets document so that downloading would not even be possible.
 
-# Case study: Linking IPOs with auditor IDs
+# Case study: Linking IPOs with auditor IDs {#sec-main-case}
 
 The best way to illustrate some key points about using spreadsheets to collect data is to explore a specific example in greater depth.
-The example I study involves collecting data from various sources to facilitate the matching of IPOs with the firms that provided audits for the firms going public, where an audit firm is identified using the identification number provided by the Public Company Accounting Oversight Board (PCAOB) in the United States.
+The example I study involves collecting data from various sources to facilitate the matching of IPOs of companies on US exchanges with the firms that provided audits for those companies, where an audit firm is identified using the identification number provided by the Public Company Accounting Oversight Board (PCAOB) in the United States.
 
-The data on IPOs come from the Nasdaq website and the data on audit firms come from the Form AP in [an earlier note](https://raw.githubusercontent.com/iangow/notes/main/form_ap_names.pdf).
+The data on IPOs come from the Nasdaq website and the data on audit firms come from the Form AP data discussed in [an earlier note](https://raw.githubusercontent.com/iangow/notes/main/form_ap_names.pdf).
 
 I will use DuckDB to work with data in this example, so I create a connection to an in-memory database here.
 
@@ -324,6 +347,17 @@ ipo_experts <- load_parquet(db, "ipo_experts", "nasdaq")
 ipos <- load_parquet(db, "ipos", "nasdaq")
 ```
 
+```{r}
+#| include: false
+ipos |>
+  select(dealID, companyName, CIK, pricedDate, CompanyAddress) |>
+  collect() |>
+  write_parquet(sink = file.path(Sys.getenv("DATA_DIR"), 
+                                 "shared", "ipos.parquet"))
+  
+ipos <- load_parquet(db, "ipos", "shared")
+```
+
 Alternatively, you could put these two files in, say `~/ipo_auditors`, and then load them as follows:
 
 ```{r}
@@ -331,10 +365,6 @@ Alternatively, you could put these two files in, say `~/ipo_auditors`, and then 
 ipo_experts <- load_parquet(db, "ipo_experts", data_dir = "~/ipo_auditors")
 ipos <- load_parquet(db, "ipos", "nasdaq", data_dir = "~/ipo_auditors")
 ```
-
-For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581> and these data are found in the `ipo.parquet` file found at <https://go.unimelb.edu.au/2rq8>.
-The Nasdaq page also includes information about the "experts" associated with each IPO.
-The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) that can be found in the `ipo_experts` data frame is shown in @tbl-glmd-experts.
 
 ```{r}
 #| include: false
@@ -344,7 +374,10 @@ num_ipos <-
   pull()
 ```
 
+For example, details about the IPO of Galmed Pharmaceuticals Ltd. (GLMD) on 13 March 2014 can be found at <https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581> and these data are also found in the `ipo.parquet` file.
 There are `r prettyNum(num_ipos, big.mark = ",")` rows in `ipos.parquet` and each row represents an IPO  identified by the primary key column `dealID`.
+
+The Nasdaq page also includes information about the "experts" associated with each IPO and this information is contained in `ipo_experts.parquet`.
 I collect some statistics on these deals in `expert_counts` and show the results in @tbl-expert-stats.
 As can be seen from the `n_deals` column, every IPO has an auditor, a company counsel, and a transfer agent, with some deals having more than one of these.
 It can be inferred from @tbl-expert-stats that the typical IPO has multiple underwriters.
@@ -403,7 +436,7 @@ expert_counts_wo_lead |>
                     booktabs = TRUE)
 ```
 
-Digging a little deeper into the GLMD IPO as an example in @tbl-glmd-experts, we see a number of things.
+The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) in the `ipo_experts.parqueet` file is shown in @tbl-glmd-experts, where we see a number of things.
 
 ```{r}
 #| echo: false
@@ -441,16 +474,26 @@ ipo_auditors <-
 
 ## Form AP data
 
-I get data on auditors from the database constructed by the PCAOB from Form AP filings.
-I have written about this database in a [previous note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).
+According to the [PCAOB](https://pcaobus.org/oversight/standards/implementation-resources-PCAOB-standards-rules/form-ap-auditor-reporting-certain-audit-participants), "registered audit firms are required to submit Form AP, *Auditor Reporting of Certain Audit Participants*, to disclose the names of engagement partners and other accounting firms that participated in their audits of public companies."
+The PCAOB provides a database constructed from Form AP filings on its website and I have written about this in a [previous note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).
+The Form AP database is contained in the file `form_aps.parquet` available that I have made available at <https://go.unimelb.edu.au/4iq8>.
+
+Again you could download this data file into the `pcaob` schema of a data repository organized along the lines of that I discuss in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) and then load it into a DuckDB database using code like this:
 
 ```{r}
 form_aps <- load_parquet(db, "form_aps", "pcaob")
 ```
 
+Alternatively, you could put this file in (say) `~/ipo_auditors` and then load it as follows:
+
+```{r}
+#| eval: false
+form_aps <- load_parquet(db, "form_aps", data_dir = "~/ipo_auditors")
+```
+
 We can collect auditor IDs associated with each CIK from `form_aps`.
 Of course, firms change auditors over time, but if we are interested in the auditors at the time of IPO, it might make sense to pick the first auditor associated with each CIK.^[Some firms have SEC filings long before their IPOs, so this is not a perfect approach, but it is good enough for our purposes here.]
-The following code creates `first_auditors` with information on the first auditor for each issuer.
+I close this subsection by creating `first_auditors`, a data frame with information on the first auditor for each issuer:
 
 ```{r}
 first_auditors <-
@@ -466,6 +509,30 @@ first_auditors <-
 
 ## Creating the link table
 
+I now move onto the task of creating a **link table** between the IPO data and the Form AP data.
+Even if the ultimate goal is to produce a data set drawing on data on both IPOs and auditors, it is important to view the production of a link table as the final product of the linking task.
+In its simplest form, a link table contains primary-key values from each of the two data sources with the appropriate primary key being driven by the level at which observations are being linked.^[In some sense, I really talking about *foreign keys* here, but it probably more important to be precise in thinking than it is to be precise in terminology.]
+In the current context, we want to link each IPO---identified by `dealID`---with the auditor in the Form AP database.
+
+In the Form AP database, an auditor is identified by `firm_id`.
+It interesting to note that this is the case even though `firm_id` is in no way a primary key for the `form_aps` table.
+Instead, we might think of `firm_id` as the primary key of a *hypothetical* `auditors` table and we can create this table ourselves as follows:
+
+```{r}
+auditors <-
+  form_aps |>
+  group_by(firm_id) |>
+  window_order(desc(audit_report_date)) |>
+  mutate(firm_name = first(firm_name),
+         firm_country = first(firm_country)) |>
+  distinct(firm_id, firm_name, firm_country) |>
+  compute()
+```
+
+By construction, `firm_id` is the primary key for this `auditors` table.
+I include the names and countries for each audit firm to facilitate data collection later on.
+Because firms can change names over time, I use the latest name on `form_aps` for each `firm_id`.^[It is easy to confirm that there is only one `firm_country` value associated with each `firm_id`, but I leave this as an exercise for the reader.]
+
 ### Name-based links
 
 I start by matching the data on IPOs with data on auditors using CIKs.
@@ -473,7 +540,7 @@ I conjecture that, if a match between `expertName` (from the IPO data) and `firm
 In constructing `top_matches`, I require that a match be present at least five times.
 This threshold is arbitrary, but it's just a starting point in two ways.
 First, I will apply some judgement to the matches before flagging them as valid.
-Second, I will probably come back to additional candidate matches in subsequent analyses.
+Second, I will come back to additional candidate matches in subsequent analyses.
 
 ```{r}
 top_matches <-
@@ -486,8 +553,8 @@ top_matches <-
 ```
 
 I will use a Google Sheets document to collect the data.
-In the past, I have often taken data such as that in `top_matches` and exported it to a CSV file that I then open in Google Sheets.
-Here I chose to create a new Google Sheets file using the `gs4_create()` from `googlesheets4`: 
+In the past in similar situations, I have often taken data such as that in `top_matches` and exported it to a CSV file that I then open in Google Sheets.
+Here I instead chose to create a new Google Sheets file using the `gs4_create()` from `googlesheets4`: 
 
 ```{r}
 #| eval: false
@@ -530,7 +597,7 @@ gs_ipo_auditors <- as_sheets_id("1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8")
 ```
 
 I can put the data from `top_matches` in the Google Sheets spreadsheet using `write_sheet()`.
-Note that this code will not work for you with my spreadsheet, as I have not given your write-access to that spreadsheet.
+Note that this code will not work for you with my spreadsheet, as I have not given you writexaccess to that spreadsheet.
 
 ```{r}
 #| eval: false
@@ -553,9 +620,9 @@ I then inserted a new column `valid` to the right of the existing columns.
 I also renamed the sheet from `top_matches` to `name_matches`.^[For one, the new name is more descriptive of how I will use the data it contains.
 Additionally, if I rerun the `write_sheet()` code above, it will not overwrite the sheet that I already have.
 Note that Google Sheets has excellent support for version history that makes it possible to restore an earlier version if you accidentally overwrite hand-collected data.]
-I inspected the matches and classified though that looked good as valid by putting the value `TRUE` in the row under the `valid` column.
+I inspected the matches and classified those rows that looked good as valid by putting the value `TRUE` in the `valid` column.
 Most of the first 30 or so rows looked good.
-But a match with `expertName` of "Ernst & Young LLP" with `firm_name` of "KPMG LLP" is clearly not valid, so I put `FALSE` in the `valid` column for this case.^[Note that I later deleted the entire rows for such clearly bad matches.]
+But a match with `expertName` of "Ernst & Young LLP" with `firm_name` of "KPMG LLP" is clearly not valid, so I put `FALSE` in the `valid` column for this case.^[Note that I later deleted entire rows for such clearly bad matches. While a useful maxim for data in 2025 might be *never delete data* (especially when the incremental storage cost is essentially zero), I view the candidate rows in `top_matches` as merely tentative data suggestions rather than "real" data.]
 
 Later I added more candidate matches to the `name_matches` sheet and marked as valid all those that looked good.
 In some cases it made sense to use the [AuditorSearch](https://pcaobus.org/resources/auditorsearch) functionality provided by the PCAOB or to investigate data in SEC filings or the Form AP database.^[This data collection was joint work by me and Stephen Walker.]
@@ -666,12 +733,12 @@ In effect, the Google Sheets file is a kind of notebook with supporting informat
 When I locate a filing with the necessary supporting information to make a call on whether a candidate match is value, I can include a link to that filing in the `notes` column of the spreadsheet.^[For example, the `expertName` for `dealID` of "749074-74508" is Deloitte & Touche LLP. But inspection of the associated [SEC filings](https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001404644&type=&dateb=20140307&owner=exclude&count=40) reveals that the audit report in the [prospectus](https://www.sec.gov/Archives/edgar/data/1404644/000119312514088912/d619679d424b4.htm) was signed off by the Canadian firm.]
 It is relatively straightforward to inspect the IPO prospectus and look for the auditor's sign-off, which will mention the office (e.g., "London, United Kingdom") that applies and the associated value can be entered under `firm_id` and `valid` can be set to `TRUE`.
 
-Variants on the steps above are repeated until the tabs `name_matches` and `deal_matches` contain a fairly complete set of data on both name-based and deal-level matches of each IPO with the `firm_id` value for the auditor at the time of the IPO.
+I repeated variants on the steps above until the tabs `name_matches` and `deal_matches` contained a fairly complete set of data on both name-based and deal-level matches of each IPO with the `firm_id` value for the auditor at the time of the IPO.
 
 ### Combining data to produce the link table
 
-The next step is to use the data in these sheets to create a link table between IPOs and `firm_id` values.
-We start by loading data from the two key sheets in our Google Sheets file.
+Haivng populated `name_matches` and `deal_matches` with data on valid matches, the next step is to use the data in these sheets to create a link table between IPOs and `firm_id` values.
+We can start by loading data from the two key sheets in our Google Sheets file.
 
 ```{r}
 #| message: false
@@ -680,7 +747,7 @@ deal_matches <- read_sheet(ss = gs_ipo_auditors, sheet = "deal_matches")
 ```
 
 I start by loading the valid deal-level matches of IPOs to auditors.
-I label these as `"manual"` matches.
+I label these as `"manual"` matches and store them in `deal_matches_processed`.
 
 ```{r}
 deal_matches_processed <-
@@ -690,7 +757,7 @@ deal_matches_processed <-
   mutate(match_type = "manual")
 ```
 
-I then load name-based matches.
+I then process the name-based matches that I will use later on.
 Note that I give priority to deal-level matches: if an IPO has a valid match in `deal_matches`, I do not consider a potential match using names in `name_matches`.
 This is accomplished by putting all valid matches from `deal_matches` in `deal_matches_processed` and then using an anti-join when constructing `name_matches_processed`.
 
@@ -730,20 +797,7 @@ It is certainly not the case that every IPO firm (i.e., `issuer_cik`) will have 
 Many firms will change auditors after IPO before making filings such as 10-Ks that are expected to trigger a corresponding Form AP filing.
 Nonetheless, by looking more closely at these non-matches we should be able to identify cases where, for example, we have matched a Canadian firm with a US auditor rather than the Canadian audit firm that makes the relevant filings on Form AP.
 
-To facilitate data collection, I start by compiling firm names and countries for audit firms on `form_aps`.
-
-```{r}
-auditor_names <-
-  form_aps |>
-  group_by(firm_id) |>
-  window_order(desc(audit_report_date)) |>
-  mutate(firm_name = first(firm_name),
-         firm_country = first(firm_country)) |>
-  distinct(firm_id, firm_name, firm_country) |>
-  compute()
-```
-
-I then compile data on all auditors associated with each issuer CIK, including the names and countries, and store the result in `all_auditors`.
+I then compile data on all auditors associated with each issuer CIK, including the names and countries, and store the result in `all_ipo_auditors`.
 I store the `firm_id`, `firm_name` and `firm_country` values for each auditor for each firm in list columns.
 
 List columns in DuckDB are very much like their counterparts in R.^[In PostgreSQL, lists are called **arrays** and we would use `array_agg()` to achieve the same result in PostgresSQL.
@@ -752,10 +806,10 @@ Unfortunately,  `dbplyr` does not provide the interface we need to directly invo
 Fortunately, we can use `sql()` to inject precisely the SQL we need.^[The reason for specifying `ORDER BY firm_id` is to ensure that the values in `firm_ids` correspond with the respective values in `firm_names`, etc.]
 
 ```{r}
-all_auditors <-
+all_ipo_auditors <-
   form_aps |>
   distinct(issuer_cik, firm_id) |>
-  inner_join(auditor_names, by = "firm_id") |>
+  inner_join(auditors, by = "firm_id") |>
   group_by(issuer_cik) |>
   summarize(
     firm_ids = sql("list(firm_id ORDER BY firm_id)"),
@@ -765,7 +819,7 @@ all_auditors <-
   compute()
 ```
 
-I collect data on all name-based matches where the matched auditor in `firm_id` is not among the corresponding `firm_ids` found in `all_auditors`.
+I collect data on all name-based matches where the matched auditor in `firm_id` is not among the corresponding `firm_ids` found in `all_ipo_auditors` and store the result in `no_form_ap_matches`.
 
 ```{r}
 no_form_ap_matches <-
@@ -775,7 +829,7 @@ no_form_ap_matches <-
   select(dealID, CIK, CompanyAddress, firm_id, pricedDate) |>
   distinct() |>
   rename(issuer_cik = CIK) |>
-  inner_join(all_auditors, by = "issuer_cik") |>
+  inner_join(all_ipo_auditors, by = "issuer_cik") |>
   filter(!firm_id %in% firm_ids) |>
   compute()
 ```
@@ -790,18 +844,18 @@ no_form_ap_matches |>
   mutate(across(c(firm_ids, firm_names, firm_countries), as.character)) |>
   arrange(dealID) |>
   collect() |>
-  write_sheet(ss = gs_ipo_auditors, sheet = "all_auditors")
+  write_sheet(ss = gs_ipo_auditors, sheet = "all_ipo_auditors")
 ```
 
-To better understand how one can use the data that have been placed in the `all_auditors` tab, I describe how I used the data myself.
-The first thing I did was to copy the data from the `all_auditors` sheet over to the bottom of the `deal_matches` sheet.
+To better understand how one can use the data that have been placed in the `all_ipo_auditors` tab, I describe how I used the data myself.
+The first thing I did was to copy the data from the `all_ipo_auditors` sheet over to the bottom of the `deal_matches` sheet.
 Initially I retained the column names in the data that I copied over so that I could check that the columns in the pasted data line up with those in the `deal_matches` tab.
 I then deleted the unnecessary extra row of column names once I had confirmed this.
 The next step was to code all these additional rows as invalid (i.e., by putting `FALSE` in the `valid` column) because these should not be used until they are confirmed.
 I now describe how I confirmed the data for two example IPOs.
 
-The first example IPO I consider is the NYSE IPO of Tamboran Resources Corp (`dealID` of `1295264-109998`).
-I first observe that the company has an Australian address.
+The first example IPO I considered was the NYSE IPO of Tamboran Resources Corp (`dealID` of `1295264-109998`).
+I first observed that the company has an Australian address.^[It was to facilitate this kind of observation that I included `CompanyAddress` when constructing `no_form_ap_matches` in the first place.]
 Given that the `expertName` value is "Ernst & Young", a name-based match will associate this IPO with the US operations of Ernst & Young.
 However, the Form AP filings have been made by the Australian affiliate of Ernst & Young (`firm_id` of `1435`).
 So I put `1435` under `firm_id` and set `valid` to `TRUE` after doing so.
@@ -819,8 +873,8 @@ As I write this, most cases in the `deal_matches` tab are coded with `valid` set
 This means those rows are not used and matches for these deals are based on names.
 However, if we wanted to "perfect" our matches, we could investigate each row much as we did for the two examples above.
 
-Readers might feel that I am being inconsisent regarding the reproducibility of the steps I am taking.
-How is manually copying data from from the `all_auditors` sheet to the `deal_matches` sheet and then manually moving data around consistent with the "every step should be done using code" mantra I am pushing?
+At this point, some readers might feel that I am being inconsistent regarding the reproducibility of the steps I am taking.
+How is manually copying data from from the `all_ipo_auditors` sheet to the `deal_matches` sheet and then manually moving data around consistent with the "every step should be done using code" mantra I am pushing?
 The answer is that there are portions of manual data collection that are inherently manual.
 Clicking links, reading prospectus documents, and typing `firm_id` values into rows are all inherently manual steps.
 Nonetheless, these manual steps should be kept to a minimum: anything automatic that can be achieved using code probably should be done in code to make the process as reproducible, transparent, and error-free as possible.
@@ -883,11 +937,11 @@ I discuss these tweaks in this section.
 
 ## "No Empty Cells"
 
-I the case study above, there are inevitably empty cells before data are collected.
+In the case study above, there are inevitably empty cells before data are collected.
 In some cases, there are empty cells even after data are collected.
 For example, the `sec_filings` column is only populated on an as-needed basis.
 
-What @Broman:2018aa says about empty cells is valid in general, so I think the recommendation should be refined a little.
+What @Broman:2018aa says about empty cells is valid in general, so I think the recommendation should merely be refined a little.
 For example, "NA" should be used to flag cases where there is the decision is to code a cell as missing, but this is very different from making a cell blank prior to the RA evaluating the case.
 It is probably better to view "NA" as reflecting some conscious output of the data collection process and to recognize that sometimes not every value will be relevant (so there is no value in having an RA code a column as "NA" if it wasn't even examined).
 
@@ -906,7 +960,8 @@ In such a case, I think it would be perfectly appropriate for the RA to type `= 
 
 Other situations might go the other way.
 For example, suppose that `director_names` contained a list of names of directors, such as `['Anne', 'Bob', 'Clara']`.
-It might still make sense to have the RA enter a value under `num_directors` (3 in this case) even though this could be easily calculated
+It might still make sense to have the RA enter a value under `num_directors` (3 in this case) even though this could be easily calculated, as this would provide an additional check.
+For example, if `director_names` is just `['Anne', 'Bob']` and `num_directors` is `3` then it's probably worth double-checking the data.
 
 In other cases, calculations can facilitate the collection of data in the first place.
 For example, the URL behind the hyperlink for `sec_filings` used in the case study above is calculated.
@@ -947,7 +1002,7 @@ So accepting the "Google ceases to exist" risk does not seem unreasonable.
 Even "Google Sheets ceases to exist" seems tolerable (or at least not very different from "I can't open Microsoft Excel files from 2024" risk) for almost any use case where storing data in a spreadsheet makes sense.
 
 My recommendation is to rely on version control features embedded in Google Sheets for organization of data somewhat less critical than the codes for the US nuclear arsenal.
-For example, "name current version" allows you to label a version as something like "qje_submission" and this is likely to suffice for the relatively low stakes of most data collection efforts conducted with spreadsheets.
+For example, "name current version" allows you to label a version as something like "qje_submission" and this is likely to suffice for the relatively low stakes of most data collection efforts conducted with spreadsheets.^[o be fair, the topic of version control of data is a knotty one that probably warrants serious discussion, but this note is not the place for it.]
 
 ## "Save the Data in Plain Text Files"
 
@@ -973,11 +1028,11 @@ Nonetheless, some discussion of the attributes of those variables likely makes s
 
 More importantly, I think that the data dictionary is less important than other documentation that can be associated with a spreadsheet, such as discussion of the goals of data collection and scripts used to test features of the data and to create final data sets that are passed along to the *Understand* process as depicted in @fig-whole-game.
 
-It may be that the best documentation is something like the document you are reading right now, with discussion of data sources, issues to be addressed, and illustrative code.
+It may be that the best documentation is something like the document you are reading right now, with discussion of data sources, issues to be addressed, and illustrative code and all stored somewhere like GitHub.
 
 # Additional case studies
 
-In this section I discuss some cases where I have used spreadsheets to collect data.
+In this section I provide some vignettes describing other cases in which I have used spreadsheets to collect data.
 
 ## Audit fee data
 
@@ -1012,11 +1067,11 @@ We used scripts (such as the script to create the key `activist_directors` data 
 ## Director ethnicities
 
 An extensive data set on ethnicities of directors was constructed for @Gow:2023ab.
-This was a complex endeavour involving multiple steps.
+This was a complex endeavour involving multiple steps, so I describe each step in turn.
 
 ### Database of director photos 
 
-We had photos of directors from SEC filings on EDGAR and (later) from Equilar.
+We started with a repository of photos of directors from SEC filings on EDGAR; we later added photos from Equilar.
 The first step with regard to EDGAR photos was to link these with the director identifier in the Equilar database (`executive_id`) and for each filing a page was a created to match photos to each `executive_id`, either by selecting a name from a dropdown list or by writing in a name when the name was not found in the dropdown list.
 The hand-collection was performed by RAs found through [Fiverr](https://www.fiverr.com) and generally only one RA was used at a time.
 
@@ -1026,8 +1081,7 @@ Before clicking on a link, the RA would select her name from the dropdown list i
 Once the director photos were mapped to names, the RA would return to the Google Sheets document to flag the status of the row as "DONE" before moving onto the next row.
 
 Second, the output of the RAs data collection activity was stored in the another sheet of the Google Sheets document.
-In effect, Google Sheets served as a simple alternative to posting the data in some kind of database.
-
+In effect, Google Sheets served as a simple alternative to posting the data in some kind of database.^[This approach was set up by [Mason Jiang](https://www.linkedin.com/in/masonjiang/), a data scientist at Stanford.]
 
 ### Classifying director photos
 
@@ -1047,16 +1101,21 @@ As we have seen before, we needed to prioritize the confirmed matches in `hand_c
 The final data set mapped each director (`executive_id`) to an ethniciy and sex.
 
 
-## Director biographies. 
+## Director biographies
 
-These data were used to support the @Gow:2018aa.
+Google Sheets were used extensively to support data collection for @Gow:2018aa.
+Again the data collection process proceeded in steps.^[See Appendix 1 of @Gow:2018aa [pp. 466-467] for more details on the data collection process.]
+The first step was the collection of the relevant SEC filing for our sample.
+The second step involved **tagging** of the biographies for each director.^[The tagging tool was created by [Andrew Marder](https://www.linkedin.com/in/andrew-marder/), then a data scientist at Harvard Business School.]
+The third step required the tagging of directorships within biographies.
 
+Note that none of the tagged data was stored in Google Sheets, as the web-based tagging tool directly populated tables in a PostgreSQL database.
+Instead the Google Sheets provided a flexible system for assigning filings to RAs and to allow RAs to flag issues with the tagging tool that needed resolution by adjustments to the tagging tool.
+Often the Google Sheets used to this end were populated by data created using SQL queries against a database.
 
+## Matching identifiers
 
-## Matching CIKs
-
-## Conference call identifiers
-
-Matching conference calls on StreetEvents to PERMNOs (CRSP security identifier).
+While the idea of matching identifiers studied in @sec-main-case might seem fairly arcane, this is actually one of the most common use cases for data collection with Google Sheets.
+Whether it is matching CIKs with GVKEYs or matching StreetEvents conference call IDs with PERMNOs, Google Sheets implemented with the kinds of processes and best practices described above has been invaluable in my research efforts.^[To learn about GVKEYs and PERMNOs, see [Chapter 7](https://iangow.github.io/far_book/identifiers.html) of @Gow_2024.]
 
 # References {-}
