@@ -5,19 +5,29 @@ author:
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
 abstract: "Take a query with subqueries and turn it into one with CTEs."
-date: today
+date: 2025-01-06
 date-format: "D MMMM YYYY"
+number-sections: true
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+    CJKmainfont: AppleMyungjo
 bibliography: papers.bib
-title-block-style: plain
-format: 
-    pdf:
-        toc: false
-        number-sections: true
-        colorlinks: true
-        mainfont: TeX Gyre Pagella
-        sansfont: TeX Gyre Pagella
-    html:
-        theme: cosmo
+csl: jfe.csl
 ---
 
 In this brief note, I use a query from @tanimura2021sql to illustrate how one can re-write a query that makes use of subqueries as a query using common table expressions (CTEs).
@@ -81,10 +91,15 @@ knit_print.data.frame <- function(x, ...) {
 registerS3method("knit_print", "data.frame", knit_print.data.frame)
 ```
 
-With the data downloads, we we read the two data files into an in-memory DuckDB database.
+I start by creating an in-memory DuckDB database.
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
+```
+
+We can read the two downloaded data files into our database.
+
+```{r}
 legislators <-
   tbl(db, "read_csv_auto('data/legislators.csv')") |>
   compute(name = "legislators")
@@ -95,49 +110,69 @@ legislators_terms <-
 
 ## The query
 
-Chapter 4 of @tanimura2021sql contains the following query.
+Chapter 4 of @tanimura2021sql contains the query shown in @lst-original.
 
 ```{sql}
+#| label: sql_original
 #| connection: db
-SELECT aa.cohort_century::int as cohort_century
-,round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps,4) as pct_5_yrs
-,round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps,4) as pct_10_yrs
-,round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps,4) as pct_15_yrs
+#| include: false
+#| output.var: out_original
+SELECT aa.cohort_century::int AS cohort_century,
+  round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps, 4) AS pct_5_yrs,
+  round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps, 4) AS pct_10_yrs,
+  round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps, 4) AS pct_15_yrs
 FROM
 (
-        SELECT date_part('century',a.first_term) as cohort_century
-        ,count(id_bioguide) as reps
-        FROM
-        (
-                SELECT id_bioguide, min(term_start) as first_term
-                FROM legislators_terms
-                WHERE term_type = 'rep'
-                GROUP BY 1
-        ) a
-        WHERE first_term <= '2009-12-31'
-        GROUP BY 1
+  SELECT date_part('century', a.first_term) AS cohort_century,
+    count(id_bioguide) as reps
+  FROM
+  (
+    SELECT id_bioguide, min(term_start) AS first_term
+    FROM legislators_terms
+    WHERE term_type = 'rep'
+    GROUP BY 1
+  ) a
+  WHERE first_term <= '2009-12-31'
+  GROUP BY 1
 ) aa
 LEFT JOIN
 (
-        SELECT date_part('century',b.first_term) as cohort_century
-        ,count(distinct case when age(c.term_start, b.first_term) <= interval '5 years' 
-            then b.id_bioguide end) as rep_and_sen_5_yrs
-        ,count(distinct case when age(c.term_start, b.first_term) <= interval '10 years' 
-            then b.id_bioguide end) as rep_and_sen_10_yrs
-        ,count(distinct case when age(c.term_start, b.first_term) <= interval '15 years' 
-            then b.id_bioguide end) as rep_and_sen_15_yrs
-        FROM
-        (
-                SELECT id_bioguide, min(term_start) as first_term
-                FROM legislators_terms
-                WHERE term_type = 'rep'
-                GROUP BY 1
-        ) b
-        JOIN legislators_terms c on b.id_bioguide = c.id_bioguide
-        and c.term_type = 'sen' and c.term_start > b.first_term
-        GROUP BY 1
-) bb on aa.cohort_century = bb.cohort_century
+  SELECT date_part('century', b.first_term) AS cohort_century,
+    count(dISTINCT CASE WHEN age(c.term_start, b.first_term) <=
+      INTERVAL '5 years' 
+      THEN b.id_bioguide END) AS rep_and_sen_5_yrs,
+    count(DISTINCT CASE WHEn age(c.term_start, b.first_term) <= 
+      INTERVAL '10 years' 
+      THEN b.id_bioguide END) AS rep_and_sen_10_yrs,
+    count(DISTINCT CASE WHEN age(c.term_start, b.first_term) <= 
+      INTERVAL '15 years' 
+      THEN b.id_bioguide END) AS rep_and_sen_15_yrs
+  FROM
+  (
+    SELECT id_bioguide, min(term_start) AS first_term
+    FROM legislators_terms
+    WHERE term_type = 'rep'
+    GROUP BY 1
+  ) b
+  JOIN legislators_terms c ON b.id_bioguide = c.id_bioguide
+    AND c.term_type = 'sen' AND c.term_start > b.first_term
+  GROUP BY 1
+) bb ON aa.cohort_century = bb.cohort_century
 ORDER BY 1;
+```
+
+```{r}
+#| lst-label: lst-original
+#| lst-cap: Original SQL code
+#| ref.label: sql_original
+#| eval: false
+```
+
+```{r}
+#| label: tbl-original
+#| tbl-cap: Output from original SQL query in @lst-original
+#| echo: false
+out_original
 ```
 
 This query is quite complex.
@@ -145,45 +180,66 @@ Can we simplify it using CTEs?
 
 First, notice that the subqueries labelled `a` and `b` are identical.
 Let's clean that up.
-We'll put `a` as a CTE at the beginning of the query (after `WITH`) and refer to that both where we currently have it, and also in place of `b`.
+We'll put `a` as a CTE at the beginning of the query (after `WITH`) and refer to that in both in the place where we currently have it, and also in place of `b`.
 All references to `b` are changed to references to `a`.
-We can then run the query to check that we are still getting the same results.
+We can then run the query---shown in @lst-mod1---to check that we are still getting the same results.
 
 ```{sql}
+#| label: sql_mod1
 #| connection: db
+#| include: false
+#| output.var: out_mod1
 WITH a AS (
-    SELECT id_bioguide, min(term_start) as first_term
-    FROM legislators_terms
-    WHERE term_type = 'rep'
-    GROUP BY 1) 
+  SELECT id_bioguide, min(term_start) AS first_term
+  FROM legislators_terms
+  WHERE term_type = 'rep'
+  GROUP BY 1) 
 
-SELECT aa.cohort_century::int as cohort_century
-,round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps,4) as pct_5_yrs
-,round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps,4) as pct_10_yrs
-,round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps,4) as pct_15_yrs
+SELECT aa.cohort_century::int AS cohort_century,
+  round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps, 4) AS pct_5_yrs,
+  round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps, 4) AS pct_10_yrs,
+  round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps, 4) AS pct_15_yrs
 FROM
 (
-        SELECT date_part('century',a.first_term) as cohort_century
-        ,count(id_bioguide) as reps
-        FROM a
-        WHERE first_term <= '2009-12-31'
-        GROUP BY 1
+  SELECT date_part('century', a.first_term) AS cohort_century,
+    count(id_bioguide) AS reps
+  FROM a
+  WHERE first_term <= '2009-12-31'
+  GROUP BY 1
 ) aa
 LEFT JOIN
 (
-        SELECT date_part('century', a.first_term) as cohort_century
-        ,count(distinct case when age(c.term_start, a.first_term) <= interval '5 years' 
-            then a.id_bioguide end) as rep_and_sen_5_yrs
-        ,count(distinct case when age(c.term_start, a.first_term) <= interval '10 years' 
-            then a.id_bioguide end) as rep_and_sen_10_yrs
-        ,count(distinct case when age(c.term_start, a.first_term) <= interval '15 years' 
-            then a.id_bioguide end) as rep_and_sen_15_yrs
-        FROM a
-        JOIN legislators_terms c on a.id_bioguide = c.id_bioguide
-        and c.term_type = 'sen' and c.term_start > a.first_term
-        GROUP BY 1
-) bb on aa.cohort_century = bb.cohort_century
+  SELECT date_part('century', a.first_term) AS cohort_century,
+    count(DISTINCT CASE WHEN age(c.term_start, a.first_term) <= 
+      INTERVAL '5 years' 
+      THEN a.id_bioguide END) AS rep_and_sen_5_yrs,
+    count(DISTINCT CASE WHEN age(c.term_start, a.first_term) <= 
+      INTERVAL '10 years' 
+      THEN a.id_bioguide END) AS rep_and_sen_10_yrs,
+    count(DISTINCT CASE WHEN age(c.term_start, a.first_term) <= 
+      INTERVAL '15 years' 
+      THEN a.id_bioguide END) AS rep_and_sen_15_yrs
+  FROM a
+  JOIN legislators_terms c ON a.id_bioguide = c.id_bioguide
+  AND c.term_type = 'sen' AND c.term_start > a.first_term
+  GROUP BY 1
+) bb ON aa.cohort_century = bb.cohort_century
 ORDER BY 1;
+```
+
+```{r}
+#| lst-label: lst-mod1
+#| lst-cap: SQL with first CTE
+#| ref.label: sql_mod1
+#| eval: false
+```
+
+```{r}
+#| label: tbl-mod1
+#| tbl-cap: Output from query in @lst-mod1
+#| echo: false
+#| include: false
+out_mod1
 ```
 
 Next, let's do the same for `aa` and `bb`.
@@ -191,71 +247,95 @@ Note that there are commas after the CTEs defining `a` and `aa`, but not after `
 Again we run the query to check that we still have the same results.
 
 ```{sql}
+#| label: sql_mod2
 #| connection: db
+#| include: false
+#| output.var: out_mod2
 WITH 
 
 a AS (
-    SELECT id_bioguide, min(term_start) as first_term
-    FROM legislators_terms
-    WHERE term_type = 'rep'
-    GROUP BY 1),
+  SELECT id_bioguide, min(term_start) as first_term
+  FROM legislators_terms
+  WHERE term_type = 'rep'
+  GROUP BY 1),
     
 aa AS (
-    SELECT date_part('century',a.first_term) as cohort_century,
-        count(id_bioguide) as reps
-    FROM a
-    WHERE first_term <= '2009-12-31'
+  SELECT date_part('century',a.first_term) AS cohort_century,
+      count(id_bioguide) AS reps
+  FROM a
+  WHERE first_term <= '2009-12-31'
     GROUP BY 1),
 
 bb AS (
-    SELECT date_part('century', a.first_term) as cohort_century,
-        count(distinct case when age(c.term_start, a.first_term) <= interval '5 years' 
-            then a.id_bioguide end) as rep_and_sen_5_yrs,
-        count(distinct case when age(c.term_start, a.first_term) <= interval '10 years' 
-            then a.id_bioguide end) as rep_and_sen_10_yrs,
-        count(distinct case when age(c.term_start, a.first_term) <= interval '15 years' 
-            then a.id_bioguide end) as rep_and_sen_15_yrs
-    FROM a
-    JOIN legislators_terms c on a.id_bioguide = c.id_bioguide
-    and c.term_type = 'sen' and c.term_start > a.first_term
-    GROUP BY 1) 
+  SELECT date_part('century', a.first_term) AS cohort_century,
+    count(DISTINCT CASE WHEN age(c.term_start, a.first_term) <= 
+      INTERVAL '5 years' 
+      THEN a.id_bioguide END) AS rep_and_sen_5_yrs,
+    count(DISTINCT CASE WHEN age(c.term_start, a.first_term) <= 
+      INTERVAL '10 years' 
+      THEN a.id_bioguide END) AS rep_and_sen_10_yrs,
+    count(DISTINCT CASE WHEN age(c.term_start, a.first_term) <= 
+      INTERVAL '15 years' 
+      THEN a.id_bioguide END) AS rep_and_sen_15_yrs
+  FROM a
+  JOIN legislators_terms c ON a.id_bioguide = c.id_bioguide
+    AND c.term_type = 'sen' AND c.term_start > a.first_term
+  GROUP BY 1) 
 
-SELECT aa.cohort_century::int as cohort_century
-,round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps,4) as pct_5_yrs
-,round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps,4) as pct_10_yrs
-,round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps,4) as pct_15_yrs
+SELECT aa.cohort_century::int AS cohort_century,
+  round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps, 4) AS pct_5_yrs,
+  round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps, 4) AS pct_10_yrs,
+  round(bb.rep_and_sen_15_yrs * 1.0 / aa.reps, 4) as pct_15_yrs
 FROM aa
-LEFT JOIN bb on aa.cohort_century = bb.cohort_century
+LEFT JOIN bb ON aa.cohort_century = bb.cohort_century
 ORDER BY 1;
+```
+
+```{r}
+#| lst-label: lst-mod2
+#| lst-cap: SQL with CTEs for `aa` and `bb`
+#| ref.label: sql_mod2
+#| eval: false
+```
+
+```{r}
+#| label: tbl-mod2
+#| tbl-cap: Output from query in @lst-mod2
+#| echo: false
+#| include: false
+out_mod2
 ```
 
 Now we can delete the `aa` and `bb` labels and references to them.
 We can also tidy up the main query a little, including using the more elegant (in my view) `USING` syntax.
 
 Also notice that we have `age(c.term_start, a.first_term)` three times in the query above.
-We can split `bb` into two, as we do below (now `bbb` followed by `bb`).
+We can split `bb` into two, as we do in @lst-mod3 (now `bbb` is followed by `bb`).
 
 ```{sql}
+#| label: sql_mod3
 #| connection: db
+#| include: false
+#| output.var: out_mod3
 WITH 
 
 a AS (
-    SELECT id_bioguide, min(term_start) as first_term
+    SELECT id_bioguide, min(term_start) AS first_term
     FROM legislators_terms
     WHERE term_type = 'rep'
     GROUP BY 1),
     
 aa AS (
-    SELECT date_part('century', first_term) as cohort_century,
-        count(id_bioguide) as reps
+    SELECT date_part('century', first_term) AS cohort_century,
+      count(id_bioguide) AS reps
     FROM a
     WHERE first_term <= '2009-12-31'
     GROUP BY 1),
     
 bbb AS (
-    SELECT date_part('century', a.first_term) as cohort_century,
-        a.id_bioguide,
-        age(c.term_start, a.first_term) AS age
+    SELECT date_part('century', a.first_term) AS cohort_century,
+      a.id_bioguide,
+      age(c.term_start, a.first_term) AS age
     FROM a
     JOIN legislators_terms c 
     ON a.id_bioguide = c.id_bioguide
@@ -263,12 +343,12 @@ bbb AS (
 
 bb AS (
     SELECT cohort_century,
-        count(distinct case when age <= interval '5 years' 
-            then id_bioguide end) as rep_and_sen_5_yrs,
-        count(distinct case when age <= interval '10 years'
-            then id_bioguide end) as rep_and_sen_10_yrs,
-        count(distinct case when age <= interval '15 years' 
-            then id_bioguide end) as rep_and_sen_15_yrs
+      count(DISTINCT CASE WHEN age <= INTERVAL '5 years' 
+        THEN id_bioguide END) AS rep_and_sen_5_yrs,
+      count(DISTINCT CASE WHEN age <= INTERVAL '10 years'
+        THEN id_bioguide END) AS rep_and_sen_10_yrs,
+      count(DISTINCT CASE WHEn age <= INTERVAL '15 years' 
+        THEN id_bioguide END) AS rep_and_sen_15_yrs
     FROM bbb
     GROUP BY 1) 
 
@@ -282,111 +362,157 @@ USING (cohort_century)
 ORDER BY 1;
 ```
 
-We are still left with the meaningless labels (e.g., `a`, `bb`).
+```{r}
+#| lst-label: lst-mod3
+#| lst-cap: SQL with `bbb`
+#| ref.label: sql_mod2
+#| eval: false
+```
+
+```{r}
+#| label: tbl-mod3
+#| tbl-cap: Output from query in @lst-mod3
+#| echo: false
+#| include: false
+out_mod3
+```
+
+We are still left with the meaningless labels (e.g., `a` and `bb`).
 We can give the CTEs more meaningful labels.
 We also clean up `ages` a little (e.g., `USING`) and move `cohort_century` to `first_rep_terms`.
+The resulting query is shown in @lst-mod4.
 Again we check that results are the same.
 
 ```{sql}
+#| label: sql_mod4
 #| connection: db
+#| include: false
+#| output.var: out_mod4
 WITH 
 
-first_rep_terms AS (
-    SELECT id_bioguide,
-        min(term_start) AS first_term,
-        date_part('century', min(term_start)) AS cohort_century,
-    FROM legislators_terms
-    WHERE term_type = 'rep'
-    GROUP BY 1),
+cohorts AS (
+  SELECT id_bioguide, min(term_start) AS first_term,
+    date_part('century', min(term_start)) AS cohort,
+  FROM legislators_terms
+  WHERE term_type = 'rep'
+  GROUP BY 1),
 
 cohort_sizes AS (
-    SELECT cohort_century, count(id_bioguide) AS reps
-    FROM first_rep_terms
-    WHERE first_term <= '2009-12-31'
-    GROUP BY 1),
+  SELECT cohort, count(id_bioguide) AS reps
+  FROM cohorts
+  WHERE first_term <= '2009-12-31'
+  GROUP BY 1),
     
 ages AS (
-    SELECT cohort_century,
-        id_bioguide,
-        age(term_start, first_term) AS age
-    FROM first_rep_terms
-    JOIN legislators_terms
-    USING (id_bioguide)
-    WHERE term_type = 'sen' AND term_start > first_term), 
+  SELECT cohort, id_bioguide, 
+    age(term_start, first_term) AS age
+  FROM cohorts
+  JOIN legislators_terms
+  USING (id_bioguide)
+  WHERE term_type = 'sen' AND term_start > first_term), 
 
 age_cuts AS (
-    SELECT cohort_century,
-        count(distinct case when age <= interval '5 years' 
-            then id_bioguide end) as rep_and_sen_5_yrs,
-        count(distinct case when age <= interval '10 years'
-            then id_bioguide end) as rep_and_sen_10_yrs,
-        count(distinct case when age <= interval '15 years' 
-            then id_bioguide end) as rep_and_sen_15_yrs
-    FROM ages
-    GROUP BY 1) 
+  SELECT cohort,
+    count(DISTINCT CASE WHEN age <= INTERVAL '5 years' 
+      THEN id_bioguide END) AS rep_and_sen_5_yrs,
+    count(DISTINCT CASE WHEN age <= INTERVAL '10 years'
+      THEN id_bioguide END) AS rep_and_sen_10_yrs,
+    count(DISTINCT CASE WHEN age <= INTERVAL '15 years' 
+      THEN id_bioguide END) AS rep_and_sen_15_yrs
+  FROM ages
+  GROUP BY 1) 
 
-SELECT cohort_century AS cohort_century,
+SELECT cohort,
     round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
     round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
     round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
 FROM cohort_sizes
 LEFT JOIN age_cuts 
-USING (cohort_century)
+USING (cohort)
 ORDER BY 1;
 ```
 
-Finally, let's put the "main" query in a CTE too.
+```{r}
+#| lst-label: lst-mod4
+#| lst-cap: SQL with meaningful labels
+#| ref.label: sql_mod4
+#| eval: false
+```
+
+```{r}
+#| label: tbl-mod4
+#| tbl-cap: Output from query in @lst-mod4
+#| echo: false
+#| include: false
+out_mod4
+```
+
+Finally, let's put the "main" query in a CTE too resulting in @lst-mod5.
 
 ```{sql}
+#| label: sql_mod5
 #| connection: db
+#| include: false
+#| output.var: out_mod5
 WITH 
 
-first_rep_terms AS (
-    SELECT id_bioguide,
-        min(term_start) AS first_term,
-        date_part('century', min(term_start)) AS cohort_century,
-    FROM legislators_terms
-    WHERE term_type = 'rep'
-    GROUP BY 1),
+cohorts AS (
+  SELECT id_bioguide, min(term_start) AS first_term,
+    date_part('century', min(term_start)) AS cohort,
+  FROM legislators_terms
+  WHERE term_type = 'rep'
+  GROUP BY 1),
 
 cohort_sizes AS (
-    SELECT cohort_century, count(id_bioguide) AS reps
-    FROM first_rep_terms
-    WHERE first_term <= '2009-12-31'
-    GROUP BY 1),
+  SELECT cohort, count(id_bioguide) AS reps
+  FROM cohorts
+  WHERE first_term <= '2009-12-31'
+  GROUP BY 1),
     
 ages AS (
-    SELECT cohort_century,
-        id_bioguide,
-        age(term_start, first_term) AS age
-    FROM first_rep_terms
-    JOIN legislators_terms
-    USING (id_bioguide)
-    WHERE term_type = 'sen' AND term_start > first_term), 
+  SELECT cohort, id_bioguide, age(term_start, first_term) AS age
+  FROM cohorts
+  JOIN legislators_terms
+  USING (id_bioguide)
+  WHERE term_type = 'sen' AND term_start > first_term), 
 
 age_cuts AS (
-    SELECT cohort_century,
-        count(distinct case when age <= interval '5 years' 
-            then id_bioguide end) as rep_and_sen_5_yrs,
-        count(distinct case when age <= interval '10 years'
-            then id_bioguide end) as rep_and_sen_10_yrs,
-        count(distinct case when age <= interval '15 years' 
-            then id_bioguide end) as rep_and_sen_15_yrs
-    FROM ages
-    GROUP BY 1),
+  SELECT cohort,
+    count(DISTINCT CASE WHEN age <= INTERVAL '5 years' 
+      THEN id_bioguide END) AS rep_and_sen_5_yrs,
+    count(DISTINCT CASE WHEN age <= INTERVAL '10 years'
+      THEN id_bioguide END) AS rep_and_sen_10_yrs,
+    count(DISTINCT CASE WHEN age <= INTERVAL '15 years' 
+      THEN id_bioguide end) AS rep_and_sen_15_yrs
+  FROM ages
+  GROUP BY 1),
 
 cohort_retention AS (
-  SELECT cohort_century::int as cohort_century,
+  SELECT cohort,
     round(rep_and_sen_5_yrs * 1.0 / reps, 4) AS pct_5_yrs,
     round(rep_and_sen_10_yrs * 1.0 / reps, 4) AS pct_10_yrs,
     round(rep_and_sen_15_yrs * 1.0 / reps, 4) AS pct_15_yrs
   FROM cohort_sizes
   LEFT JOIN age_cuts 
-  USING (cohort_century))
+  USING (cohort))
   
 SELECT *
 FROM cohort_retention
-ORDER BY cohort_century;
+ORDER BY cohort;
+```
+
+```{r}
+#| lst-label: lst-mod5
+#| lst-cap: SQL with main query in CTE
+#| ref.label: sql_mod5
+#| eval: false
+```
+
+```{r}
+#| label: tbl-mod5
+#| tbl-cap: Output from final SQL query in @lst-mod5
+#| echo: false
+out_mod5
 ```
 
 What's the value of this last step?
@@ -405,54 +531,54 @@ FROM first_rep_terms;
 Now that we have a query based on CTEs, it is *much* easier to translate to `dbplyr`.
 
 ```{r}
-first_rep_terms <-
-    legislators_terms %>%
-    filter(term_type == 'rep') %>%
-    group_by(id_bioguide) %>%
-    summarize(first_term = min(term_start, na.rm = TRUE),
-              .groups = "drop") %>%
-    mutate(cohort_century = century(first_term))
+cohorts <-
+  legislators_terms |>
+  filter(term_type == 'rep') |>
+  group_by(id_bioguide) |>
+  summarize(first_term = min(term_start, na.rm = TRUE),
+            .groups = "drop") |>
+  mutate(cohort = century(first_term))
 ```
 
 ```{r}
 cohort_sizes <-
-    first_rep_terms %>%
-    filter(first_term <= '2009-12-31') %>%
-    group_by(cohort_century) %>%
-    summarize(reps = n())
+  cohorts |>
+  filter(first_term <= '2009-12-31') |>
+  group_by(cohort) |>
+  summarize(reps = n())
 ```
 
 ```{r} 
 ages <-
-    first_rep_terms %>%
-    inner_join(legislators_terms, by = "id_bioguide") %>%
-    filter(term_type == 'sen', term_start > first_term) %>%
-    mutate(age = age(term_start, first_term)) %>%
-    select(cohort_century, id_bioguide, age)
+  cohorts |>
+  inner_join(legislators_terms, by = "id_bioguide") |>
+  filter(term_type == 'sen', term_start > first_term) |>
+  mutate(age = age(term_start, first_term)) |>
+  select(cohort, id_bioguide, age)
 ```
 
 ```{r}
 age_cuts <-
-    ages %>%
-    mutate(id_05 = if_else(age <= years(5), id_bioguide, NA),
-           id_10 = if_else(age <= years(10), id_bioguide, NA),
-           id_15 = if_else(age <= years(15), id_bioguide, NA)) %>%
-    group_by(cohort_century) %>%
-    summarize(rep_and_sen_5_yrs = n_distinct(id_05),
-              rep_and_sen_10_yrs = n_distinct(id_10),
-              rep_and_sen_15_yrs = n_distinct(id_15))
+  ages |>
+  mutate(id_05 = if_else(age <= years(5), id_bioguide, NA),
+         id_10 = if_else(age <= years(10), id_bioguide, NA),
+         id_15 = if_else(age <= years(15), id_bioguide, NA)) |>
+  group_by(cohort) |>
+  summarize(rep_and_sen_5_yrs = n_distinct(id_05),
+            rep_and_sen_10_yrs = n_distinct(id_10),
+            rep_and_sen_15_yrs = n_distinct(id_15))
 ```
 
 ```{r}
-cohort_sizes %>%
-    left_join(age_cuts, by = "cohort_century") %>%
-    mutate(pct_5_yrs = rep_and_sen_5_yrs * 1.0 / reps,
-           pct_10_yrs = rep_and_sen_10_yrs * 1.0 / reps,
-           pct_15_yrs = rep_and_sen_15_yrs * 1.0 / reps) %>%
-    mutate(across(starts_with("pct_"), ~ round(., 4))) %>%
-    select(cohort_century, starts_with("pct_")) %>%
-    arrange(cohort_century) %>%
-    collect() 
+cohort_sizes |>
+  left_join(age_cuts, by = "cohort") |>
+  mutate(pct_5_yrs = rep_and_sen_5_yrs * 1.0 / reps,
+         pct_10_yrs = rep_and_sen_10_yrs * 1.0 / reps,
+         pct_15_yrs = rep_and_sen_15_yrs * 1.0 / reps) |>
+  mutate(across(starts_with("pct_"), \(x) round(x, 4))) |>
+  select(cohort, starts_with("pct_")) |>
+  arrange(cohort) |>
+  collect() 
 ```
 
 ## Doing it again in dplyr
@@ -464,9 +590,9 @@ For convenience, I reproduce the code we used to create `first_rep_terms` above.
 
 ```{r}
 first_rep_terms <-
-    legislators_terms %>%
-    filter(term_type == 'rep') %>%
-    group_by(id_bioguide) %>%
+    legislators_terms |>
+    filter(term_type == 'rep') |>
+    group_by(id_bioguide) |>
     summarize(first_rep_term = min(term_start, na.rm = TRUE),
               .groups = "drop")
 ```
@@ -475,9 +601,9 @@ Next, I produce an equivalent table for senate terms.
 
 ```{r}
 first_sen_terms <-
-    legislators_terms %>%
-    filter(term_type == 'sen') %>%
-    group_by(id_bioguide) %>%
+    legislators_terms |>
+    filter(term_type == 'sen') |>
+    group_by(id_bioguide) |>
     summarize(first_sen_term = min(term_start, na.rm = TRUE),
               .groups = "drop") 
 ```
@@ -487,11 +613,11 @@ We want to exclude those who start as senators and (to match the query in the bo
 
 ```{r}
 cohort_members <-
-  first_rep_terms %>%
-  left_join(first_sen_terms, by = "id_bioguide") %>%
-  filter(first_rep_term < first_sen_term | is.na(first_sen_term)) %>%
-  select(id_bioguide, first_rep_term) %>%
-  mutate(cohort_century = century(first_rep_term)) %>%
+  first_rep_terms |>
+  left_join(first_sen_terms, by = "id_bioguide") |>
+  filter(first_rep_term < first_sen_term | is.na(first_sen_term)) |>
+  select(id_bioguide, first_rep_term) |>
+  mutate(cohort_century = century(first_rep_term)) |>
   filter(first_rep_term <= '2009-12-31')
 ```
 
@@ -499,8 +625,8 @@ We can now calculate the sizes of the cohorts that we have formed.^[Here I am us
 
 ```{r}
 cohort_sizes <-
-  cohort_members %>%
-  group_by(cohort_century) %>%
+  cohort_members |>
+  group_by(cohort_century) |>
   summarize(reps = n(), .groups = "drop")
 ```
 
@@ -510,10 +636,10 @@ We can calculate the `gap` using the SQL function `age()`.
 
 ```{r}
 rep_then_sen <-
-  cohort_members %>%
+  cohort_members |>
   inner_join(first_sen_terms, 
             join_by(id_bioguide, 
-                    first_rep_term < first_sen_term)) %>%
+                    first_rep_term < first_sen_term)) |>
   mutate(gap = age(first_sen_term, first_rep_term))
 ```
 
@@ -527,12 +653,12 @@ That is if we had 432 representatives with `gap` of less than 5 years and 6 with
 
 ```{r}
 rep_then_sen_gaps <-
-  rep_then_sen %>%
-  group_by(cohort_century) %>%
-  window_order(gap) %>%
-  mutate(cum_ids = cumsum(1)) %>%
-  group_by(cohort_century, gap) %>%
-  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) %>%
+  rep_then_sen |>
+  group_by(cohort_century) |>
+  window_order(gap) |>
+  mutate(cum_ids = cumsum(1)) |>
+  group_by(cohort_century, gap) |>
+  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
   ungroup()
 ```
 
@@ -540,8 +666,8 @@ I can now combine the "start as representatives" table (`cohort_sizes`) with the
 
 ```{r}
 pct_rep_then_sen <-
-  rep_then_sen_gaps %>%
-  inner_join(cohort_sizes, by = "cohort_century") %>%
+  rep_then_sen_gaps |>
+  inner_join(cohort_sizes, by = "cohort_century") |>
   mutate(pct = cum_ids/reps) 
 ```
 
@@ -549,26 +675,26 @@ Rather than writing complicated `CASE` statements, I can make a little table in 
 
 ```{r}
 gap_cutoffs <-
-  tibble(cutoff = c(5, 10, 15)) %>%
-  copy_to(db, ., name = "gap_cutoffs",
-          overwrite = TRUE) %>%
+  tibble(cutoff = c(5, 10, 15)) |>
+  copy_to(db, df = _, name = "gap_cutoffs",
+          overwrite = TRUE) |>
   mutate(cutoff = years(cutoff))
 ```
 
 Now I `CROSS JOIN` `pct_rep_then_sen` and `gap_cutoffs` and calculate the `pct` values for each before using `pivot_wider` to rearrange the table to match what is shown in @tanimura2021sql.
 
 ```{r}
-pct_rep_then_sen %>%
-  cross_join(gap_cutoffs) %>%
-  filter(gap <= cutoff) %>%
-  group_by(cohort_century, cutoff) %>%
+pct_rep_then_sen |>
+  cross_join(gap_cutoffs) |>
+  filter(gap <= cutoff) |>
+  group_by(cohort_century, cutoff) |>
   summarize(pct = max(pct, na.rm = TRUE),
-            .groups = "drop") %>%
-  mutate(cutoff = year(cutoff)) %>%
+            .groups = "drop") |>
+  mutate(cutoff = year(cutoff)) |>
   pivot_wider(names_from = "cutoff",
               names_prefix = "pct_",
-              values_from = "pct") %>%
-  arrange(cohort_century) %>%
+              values_from = "pct") |>
+  arrange(cohort_century) |>
   collect()
 ```
 
@@ -590,34 +716,34 @@ Because we have access to the underlying tables as lazy data frames in R (effect
 
 ```{r}
 last_sen_terms <-
-    legislators_terms %>%
-    filter(term_type == 'sen') %>%
-    group_by(id_bioguide) %>%
+    legislators_terms |>
+    filter(term_type == 'sen') |>
+    group_by(id_bioguide) |>
     summarize(last_sen_term = max(term_start, na.rm = TRUE),
               .groups = "drop") 
 
-first_rep_terms %>%
-  anti_join(cohort_members, by = "id_bioguide") %>%
-  inner_join(first_sen_terms, by = "id_bioguide") %>%
-  inner_join(last_sen_terms, by = "id_bioguide") %>%
+first_rep_terms |>
+  anti_join(cohort_members, by = "id_bioguide") |>
+  inner_join(first_sen_terms, by = "id_bioguide") |>
+  inner_join(last_sen_terms, by = "id_bioguide") |>
   mutate(rep_to_sen = last_sen_term > first_rep_term,
          sen_to_rep = first_sen_term < first_rep_term,
-         too_late = first_rep_term > '2009-12-31') %>%
-  arrange(desc(rep_to_sen), first_sen_term) %>%
+         too_late = first_rep_term > '2009-12-31') |>
+  arrange(desc(rep_to_sen), first_sen_term) |>
   collect()
 ```
 Because of the form of our second analysis, it is easy to make a plot.
 
 ```{r}
 #| warning: false
-pct_rep_then_sen %>%
-  mutate(gap = (year(gap) * 12 + month(gap))/12) %>%
-  filter(gap <= 15) %>%
-  group_by(cohort_century, gap) %>%
+pct_rep_then_sen |>
+  mutate(gap = (year(gap) * 12 + month(gap))/12) |>
+  filter(gap <= 15) |>
+  group_by(cohort_century, gap) |>
   summarize(pct = max(pct),
-            .groups = "drop") %>%
-  collect() %>%
-  mutate(cohort_century = factor(cohort_century)) %>%
+            .groups = "drop") |>
+  collect() |>
+  mutate(cohort_century = factor(cohort_century)) |>
   ggplot(aes(x = gap, y = pct, group = cohort_century,
              colour = cohort_century)) +
   geom_line()
