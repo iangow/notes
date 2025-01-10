@@ -1,16 +1,10 @@
 ---
-title: "Writing better SQL with `dbplyr`"
+title: "Writing better SQL without writing SQL"
 author: 
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-abstract: 
-    In this brief note, I use a query from @tanimura2021sql to illustrate how one can re-write a query that makes use of subqueries as a query using common table expressions (CTEs).
-    I then show how a query written with CTEs is easily translated into a query using `dbplyr`.
-    Finally, I do the analysis again from scratch, but using `dbplyr` expressions.
-    In this analysis I find that the SQL query @tanimura2021sql does not quite meet the verbal specification it was intended to meet, while the `dbplyr` query does.
-    I conjecture that the "building blocks" approach to SQL facilitated by `dbplyr` may enhance the accuracy of queries for many users.
-date: 2025-01-06
+date: 2025-01-10
 date-format: "D MMMM YYYY"
 number-sections: true
 format:
@@ -34,16 +28,14 @@ bibliography: papers.bib
 csl: jfe.csl
 ---
 
-In this brief note, I use a query from @tanimura2021sql to illustrate how one can re-write a query that makes use of subqueries as a query using common table expressions (CTEs).
-I then show how a query written with CTEs is easily translated into a query using `dbplyr`.
-Finally, I do the analysis again from scratch, but using `dbplyr` expressions.
-In this analysis I find that the SQL query @tanimura2021sql does not quite meet the verbal specification it was intended to meet, while the `dbplyr` query does.
-I conjecture that the "building blocks" approach to SQL facilitated by `dbplyr` may enhance the accuracy of queries for many users.
+In this note, I use a query from @tanimura2021sql to illustrate first how one can re-write an SQL query using common table expressions (CTEs) and then how one can re-write that query again using `dbplyr`.
+I then do the analysis again from scratch, but using `dbplyr` expressions.
+I find that the SQL query contains inaccuracies, while the written-from-scratch `dbplyr` query does now.
+I conjecture that the "building blocks" approach to SQL facilitated by `dbplyr` may lead to more accurate of queries for many users.
 
-## The data
-
-The example query I study below comes from Chapter 4 of @tanimura2021sql.
-The following packages will be used and should be installed.
+In writing this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "dbplyr")` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/ctes.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/ctes.pdf).
 
 ```{r}
 #| warning: false
@@ -51,6 +43,22 @@ library(DBI)
 library(tidyverse)
 library(dbplyr)
 ```
+
+# The original query
+
+Chapter 4 of @tanimura2021sql is entitled "cohort analysis" and uses data on US legislators to illustrate ideas related to survival analysis, including customer retention and survival analysis.
+
+The query I focus on in this note is provided in a section on "returnship" (or repeat purchase behaviour) [ @tanimura2021sql, pp. 158-163].
+@tanimura2021sql [p. 158] provides a verbal specification of the query:
+"What share of [legislators] start as representatives and go on to become senators? 
+(Some senators later become representatives, but that is much less common.)
+Since relatively few make this transition, we'll cohort legislators by the century in which they first became a representative."^[I made minor punctuation edits here.]
+
+@tanimura2021sql also discusses a filter that "excludes those [legislators] who were less than 10 years into their careers when the data was assembled" [@tanimura2021sql, p. 160].
+While the rationale for this filter is not made entirely clear, it is presumably to address the issue of **censoring**.
+Specifically, if a legislator is only five years into a career at the time of data collection, we simply do not know whether or not this legislator will become a senator in year 6 or 7 or beyond.
+While standard texts on **survival analysis** focus a lot of effort on dealing with statistical issues related to censoring, @tanimura2021sql does not discuss these approaches at all, presumably because addressing these would require going much more into statistics than makes sense for a book on SQL.
+As I discuss below (see @sec-rec), if my understanding of the rationale for the filter is correct, then the original query in @tanimura2021sql does not implement it correctly.
 
 ```{r}
 #| label: utility
@@ -112,15 +120,16 @@ I start by creating an in-memory DuckDB database.
 db <- dbConnect(duckdb::duckdb())
 ```
 
-We can read the two downloaded data files into our database.
-
+I then read the two downloaded data files into this database.^[I put the ugly details of the `db_get_csv()` function that I use here in @lst-utility.]
 
 ```{r}
 legislators <- db_get_csv(db, "legislators")
 legislators_terms <- db_get_csv(db, "legislators_terms")
 ```
 
-## Converting the SQL to a CTE-based query
+@lst-original shows the original SQL query from @tanimura2021sql [pp. 161-162].^[I edited the query slightly to reflect code style guidelines I use in later queries.
+I also rename the column `cohort_century` to `cohort` throughout. The value of using a more generic name will be seen in @sec-fun.]
+Note that the output shown in @tbl-original matches the output shown in @tanimura2021sql [p. 162].
 
 ```{sql}
 #| label: sql_original
@@ -179,9 +188,7 @@ ORDER BY 1;
 out_original
 ```
 
-@lst-original shows the SQL query taken from Chapter 4 of @tanimura2021sql [pp. 161-162].^[I edited the query slightly to reflect code style guidelines I use in later queries.
-I also rename the column `cohort_century` to `cohort` throughout.]
-Note that the output shown in @tbl-original matches the output shown in @tanimura2021sql [p. 162].
+# Converting the SQL to a CTE-based query
 
 The query shown in @lst-original is quite complex and I will show how it can be simplified using **common-table expressions** (**CTEs**).
 According to the [documentation for PostgreSQL](https://www.postgresql.org/docs/current/queries-with.html): CTEs "can be thought of as defining temporary tables that exist just for one query."
@@ -300,9 +307,9 @@ out_mod2
 ```
 
 In @lst-mod3, I switch to `USING` syntax for the join of `aa` and `bb`.
-My view is that `USING` produces more elegant SQL when it can be used and also facilitates the omission of the `aa` and `bb` prefixes for the variables in the final query.
-I also notice that `age(c.term_start, a.first_term)` appears three times in the query in @lst-mod2.
-By splitting `bb` into two, as in @lst-mod3 (now `bbb` is followed by `bb`), I can write a query in which `age(c.term_start, a.first_term)` appears just once.
+My view is that `USING` produces more elegant SQL when it can be used and its use also facilitates the omission of the `aa` and `bb` prefixes for the variables in the final query.
+Noting that `age(c.term_start, a.first_term)` appears three times in the query in @lst-mod2.
+I split `bb` into two (part is now `bbb` followed by a simplified `bb`) so that I have a query in which `age(c.term_start, a.first_term)` appears just once.
 
 ```{sql}
 #| label: sql_mod3
@@ -420,7 +427,7 @@ out_mod4
 ```
 
 In @lst-mod5, I also put the "main" query in a CTE.
-Te value of doing so it that it means we can easily edit the query to debug the CTEs that are used.
+The value of doing so it that it means we can easily edit the query to debug the CTEs that are used.
 For example, we could put `SELECT * FROM cohorts` at the end of the query in @lst-mod5 to look into `cohorts` if we are concerned about the output we are seeing from `cohort_retention`.
 
 ```{sql}
@@ -480,13 +487,11 @@ ORDER BY cohort;
 out_mod5
 ```
 
-
-## Translating from SQL to dbplyr
+# Translating from SQL to dbplyr
 
 Now that I have an SQL query based on CTEs, it is *much* easier to translate from SQL to `dbplyr`.
 In effect, I can translate each CTE in turn.
-I start with `cohort`.
-Note that I could have created `cohort` as part of the `summarize()` step using `century(min(term_start, na.rm = TRUE))`, but my view is that the code is easier to read if `min(term_start, na.rm = TRUE)` appears just once and `cohort` is created as a function of `first_term` in a separate `mutate()` step.
+I start with `cohorts`:
 
 ```{r}
 cohorts <-
@@ -498,9 +503,9 @@ cohorts <-
   mutate(cohort = century(first_rep_term))
 ```
 
-Translating `cohort_sizes` is straightforward.
-Note that `.groups = "drop"` is strictly optional in this case.
-Nonetheless I generally include `.groups = "drop"` in all my queries to prevent issues that can arise due to unintended grouping.^[My view is that the choice made early in the development `dplyr` of a de facto default of `.groups = "drop_last"` is a rather unfortunate one.]
+Note that I could have created `cohort` as part of the `summarize()` step using `century(min(term_start, na.rm = TRUE))`, but my view is that the code is easier to read if `min(term_start, na.rm = TRUE)` appears just once and `cohort` is created as a function of `first_term` in a separate `mutate()` step.
+
+Translating `cohort_sizes` is also straightforward:
 
 ```{r}
 cohort_sizes <-
@@ -510,10 +515,10 @@ cohort_sizes <-
   summarize(reps = n(), .groups = "drop")
 ```
 
-Translating `ages` is also straightforward.
-The main difference here is that `filter()` seems to go more naturally earlier in the query rather than at the end.
-It would make no difference if the order of the `mutate()` and `filter()` steps in the query below we flipped.
-However, we cannot put `filter()` at the end of the query (i.e., after `select()`) because the fields would no longer be available at that point.
+Note that `.groups = "drop"` is strictly optional in this case.
+Nonetheless I generally include `.groups = "drop"` in all my queries to prevent issues that can arise due to unintended grouping.^[My view is that the choice made early in the development `dplyr` of a de facto default of `.groups = "drop_last"` is a rather unfortunate one.]
+
+Translating `ages` is not complicated:
 
 ```{r} 
 ages <-
@@ -524,7 +529,14 @@ ages <-
   select(cohort, id_bioguide, age)
 ```
 
-Blah.^[Note that ` if_else(age <= years(5), id_bioguide, NA)` is an alternative way to get the same result as `case_when(age <= years(5) ~ id_bioguide)` gives.]
+The main difference here is that `filter()` seems to go more naturally earlier in the query rather than at the end.
+It would make no difference if the order of the `mutate()` and `filter()` steps in the query below we flipped.
+However, we cannot put `filter()` at the end of the query (i.e., after `select()`) because the fields would no longer be available at that point.
+
+In translating `age_cuts`, it is useful to note that the original SQL included both a per-row calculation (the `CASE WHEN` calculation) and an aggregation by `cohort` (the `count(DISTINCT )` part).^[Note that ` if_else(age <= years(5), id_bioguide, NA)` would be an alternative way to get the same result as `case_when(age <= years(5) ~ id_bioguide)` gives.]
+To do things in a more step-by-step fashion, I put the per-row calculations in a `mutate()` call and then the aggregation in a `summarize()` call.
+Note that I trimmed the variable names in the `mutate()` step by using `num_` in place of `rep_and_sen_`.
+I also used `across()` in the `summarize()` step so that I only need to write `n_distinct()` once.
 
 ```{r}
 age_cuts <-
@@ -537,6 +549,8 @@ age_cuts <-
             \(x) n_distinct(x, na.rm = TRUE)))
 ```
 
+The final step of the translation is straightforward enough.
+I use `across()` again so that I only need to write `round(x * 1.0 / reps, 4)` once and I use `rename_with` to make it so the variables have the `pct_` prefix seen in the original query.^[An alternative would've been to use `pct_` in place of `num_` in the `age_cuts` query.]
 
 ```{r}
 #| label: tbl-translated
@@ -550,29 +564,48 @@ cohort_sizes |>
   collect() 
 ```
 
-## Building the query from scratch using `dbplyr`
+Comparison of @tbl-original and @tbl-translated confirms that the `dbplyr` query yields the same result as the original SQL query.
+
+# Building the query from scratch using `dbplyr`
 
 Now let's do it again more or less from scratch using `dbplyr`.
 In this version, I will build up block by block in a way that is easier (at least for me) to reason about.
 
-We are interested in [legislators] "start as representatives" as our cohort.
-We want to exclude those who start as senators and (to match the query in the book), we also want to exclude those who first term is after `'2009-12-31'`.
+Before launching into the code, it is perhaps useful to step back and identify some key elements of the analysis.
+
+ - **population**: Legislators who started as representatives before 31 December 2009.^[Strictly speaking, it should be "on or before 31 December 2009", but legislators never start terms on 31 December.]
+ - **cohorts**: Century of the start date of the first term.
+ - **exposure date**: Date of the first term. Another term might be **entry date**.
+ - **event date**: The **event** of interst is "becoming a senator" and the date is the first date of the first term as a senator (if any). Another term might be **exit date**.
+ 
+Note that cohorts here are defined based on dates, but this need not be the case in general.
+For example, A/B testing with websites involves cohorts based on which version of website the user is exposed to (either "A" or "B").
+
+Also, "exposure date" is a term that I concocted that may seem more or less natural in other contexts.
+For example, in a vaccine trial, the exposure date might be the date on which a series of jabs is completed.
+In analysis of data on life expectancies, the exposure date might be the date of birth.
+
+
+I start by creating `first_terms`, a table with information about first terms for each legislator:
 
 ```{r}
+#| warning: false
 first_terms <-
   legislators_terms |>
   group_by(id_bioguide) |>
-  summarize(first_rep_term = min(case_when(term_type == 'rep' ~ term_start),
-                                 na.rm = TRUE),
-            first_sen_term = min(case_when(term_type == 'sen' ~ term_start),
-                                 na.rm = TRUE),
-            last_sen_term = max(case_when(term_type == 'sen' ~ term_start),
-                                na.rm = TRUE),
-            first_term = min(term_start, na.rm = TRUE))
+  summarize(first_rep_term = min(case_when(term_type == 'rep' ~ term_start)),
+            first_sen_term = min(case_when(term_type == 'sen' ~ term_start)),
+            last_sen_term = max(case_when(term_type == 'sen' ~ term_start)),
+            first_term = min(term_start)) |>
+  compute()
 ```
 
+
+
+We are interested in legislators who "start as representatives" (`first_term == first_rep_term`) and we want to exclude those who first term is after 31 December 2009 (`first_term <= "2009-12-31"`), our population is created by applying filters to `first_terms`:
+
 ```{r}
-population <-
+cohorts_revised <-
   first_terms |>
   filter(!is.na(first_rep_term), 
          first_term == first_rep_term,
@@ -581,66 +614,69 @@ population <-
   mutate(cohort = century(first_rep_term))
 ```
 
-We can now calculate the sizes of the cohorts that we have formed.^[Here I am using the term "cohort" in a way that I object to below. Seems like another term is needed for precision here.]
+Here `first_rep_term` is the exposure date and `first_sen_term` is the event date.
+Note that `cohorts_revised` includes both survival data (i.e., values for exposure date and event date) and cohort data and is focused exclusively on the population of interest.
+In other contexts it might make sense to calculate cohorts and survival data in separate queries before merging them.^[See <https://iangow.github.io/cohorts/intermezzo.html> for some discussion on this point.]
+
+We can now calculate the sizes of the cohorts that we have formed.
 
 ```{r}
 cohort_sizes <-
-  population |>
+  cohorts_revised |>
   group_by(cohort) |>
   summarize(reps = n(), .groups = "drop")
 ```
 
-Now let's turn to the "go on to become senators" part of our remit.
-This is a simple `INNER JOIN` with an inequality `first_rep_term < first_sen_term` condition.
-We can calculate the `gap` using the SQL function `age()`.
-
-It is easy to check that `id_bioguide` is a valid key for `population`.
-This fact makes it easy to building up the curve of subsequent senate terms using a window function.
-Within each `cohort` we sum up the number of rows leading up to each value of `age`.
-This is equivalent to `count(DISTINCT id_bioguide) OVER (PARTITION BY cohort ORDER BY gap)`, but we do not need the `DISTINCT` here because each value of `id_bioguide` is unique in this query.
-
-Note that there will be ties in terms of `age` here, and we deal wtih these using `max()`.
-That is if we had 432 representatives with `gap` of less than 5 years and 6 with `gap` of exactly 5 years, we want to step from 432 to 438 immediately.
+Now we have our data together, we can calculate the "time to event (if any)" (`event_time`) using the SQL function `age()`.
+If there is no senate term for a given legislator, then `event_time` will be `NA`.
+While one approach to censoring would replaced the missing values of `first_sen_term` with the date of data collection and add an indicator variable for censoring, I follow @tanimura2021sql in just using the 2009 cutoff and ignoring any issues related to censoring.
 
 ```{r}
-rep_then_sen_gaps <-
-  population |>
-  mutate(gap = age(first_sen_term, first_rep_term)) |>
-  group_by(cohort) |>
-  window_order(gap) |>
-  mutate(cum_ids = cumsum(1)) |>
-  group_by(cohort, gap) |>
-  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
-  ungroup()
+cohorts_revised |>
+  mutate(event_time = age(first_sen_term, first_rep_term))
 ```
 
-I can now combine the "start as representatives" table (`cohort_sizes`) with the "go on to become senators" table (`rep_then_sen_gaps`) to calculate the percentages by `century`.
+It is easy to check that `id_bioguide` is a valid key for `cohorts_revised`, which makes it easy to build up the curve of subsequent senate terms using a window function.
+Within each `cohort` we order by `event_time` and sum up the number of rows leading up to each value of `event_time`.^[This is equivalent to `count(DISTINCT id_bioguide) OVER (PARTITION BY cohort ORDER BY event_time)`, but we do not need the `DISTINCT` here because each value of `id_bioguide` is unique in this query.]
+
+Note that in our date set there will be ties in terms of `event_time`.
+For example, we might have exactly 6 observations with with `event_time` of exactly 5 years.
+If we had 432 representatives with `event_time` of less than 5 years and 6 with `event_time` of exactly 5 years, we would want to step from 432 to 438 immediately upon hitting the 5-year mark.
+Below I accomplish using the `max()` aggregate grouped by `cohort` and `event_time`.
 
 ```{r}
 pct_rep_then_sen <-
-  rep_then_sen_gaps |>
+  cohorts_revised |>
+  mutate(event_time = age(first_sen_term, first_rep_term)) |>
+  group_by(cohort) |>
+  window_order(event_time) |>
+  mutate(cum_ids = cumsum(1)) |>
+  group_by(cohort, event_time) |>
+  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
+  ungroup() |>
   inner_join(cohort_sizes, by = "cohort") |>
   mutate(pct = cum_ids / reps) 
 ```
 
-Rather than writing complicated `CASE` statements, I can make a little table in R with the three cutoff values and send that to DuckDB and turn the rows into intervals using `years()`.
+To produce the query analagous to that underlying @tbl-original, I can actually avoid the complicated `CASE` statements used in the original SQL.
+Instead, I first make a little table in R with the three cutoff values and send that to DuckDB and turn the rows into intervals using `years()`.
 
 ```{r}
-gap_cutoffs <-
+event_time_cutoffs <-
   tibble(cutoff = c(5, 10, 15)) |>
-  copy_to(db, df = _, name = "gap_cutoffs",
+  copy_to(db, df = _, name = "event_time_cutoffs",
           overwrite = TRUE) |>
   mutate(cutoff = years(cutoff))
 ```
 
-Now I `CROSS JOIN` `pct_rep_then_sen` and `gap_cutoffs` and calculate the `pct` values for each before using `pivot_wider` to rearrange the table to match what is shown in @tanimura2021sql.
+I then use `cross_join()` to combine `pct_rep_then_sen` and `event_time_cutoffs` and calculate the `pct` values for each cutoff before using `pivot_wider()` to rearrange the table to match what is shown in @tanimura2021sql.
 
 ```{r}
 #| label: tbl-from-scratch
 #| tbl-cap: Output of from-scratch `dbplyr` query
 pct_rep_then_sen |>
-  cross_join(gap_cutoffs) |>
-  filter(gap <= cutoff) |>
+  cross_join(event_time_cutoffs) |>
+  filter(event_time <= cutoff) |>
   group_by(cohort, cutoff) |>
   summarize(pct = max(pct, na.rm = TRUE),
             .groups = "drop") |>
@@ -653,44 +689,186 @@ pct_rep_then_sen |>
   collect()
 ```
 
-Because of the form of our second analysis, it is easy to make the plot seen in @fig-surv.
+Because of the more general form of our data with this modified query, it is easy to make the plot seen in @fig-surv.
 
 ```{r}
 #| warning: false
 #| label: fig-surv
 #| fig-cap: Representatives becoming senators over time by century
 pct_rep_then_sen |>
-  mutate(gap = (year(gap) * 12 + month(gap)) / 12) |>
-  filter(gap <= 15) |>
-  group_by(cohort, gap) |>
+  mutate(event_time = (year(event_time) * 12 + month(event_time)) / 12) |>
+  filter(event_time <= 15) |>
+  group_by(cohort, event_time) |>
   summarize(pct = max(pct, na.rm = TRUE),
             .groups = "drop") |>
   # collect() |>
   mutate(cohort = as.character(cohort)) |>
-  ggplot(aes(x = gap, y = pct, group = cohort,
+  ggplot(aes(x = event_time, y = pct, group = cohort,
              colour = cohort)) +
   geom_line()
 ```
 
-Note that it would be easy to translate our `dbplyr` code---arguably a more precise solution than the original SQL query---back into SQL (probably using CTEs) if that were desired.
+Note that it would be easy to translate our `dbplyr` code---arguably a more precise solution than the original SQL query---back into SQL (probably using CTEs) if that were desired.^[I explain why I think it is a more precise solution in @sec-rec.]
 
-## Reconciling differences between queries
+## Reproducing Figure 4-12 of @tanimura2021sql
 
-A careful reader might have noticed differences in the numbers in @tbl-translated-fixed and @tbl-from-scratch and wonder why these differences exist.
+Finally, I reproduce Figure 4-12 of @tanimura2021sql [p. 163].
+This plot requires changes to the cohorts, to the cutoffs (now 10 and 20 years), and (it seems) to the population.
+From visual inspection of Figure 4-12 of @tanimura2021sql, it seems that we now require a representative's first term to have begun before 2000.
 
-I would argue that the answer I produced better matches the original question from @tanimura2021sql [p. 158]: 
+Note that the query underlying Figure 4-12 of @tanimura2021sql is not provided in the book.
+Nor is the code for generating the plot itself.
+Because @tanimura2021sql only include SQL code, readers are on their own when it comes to code for generating the plots; this is an additional weakness of focusing on SQL code.
+
+The first step I take is to make a new version of `pct_rep_then_sen` with `cohort` now based on decades and with the stricter filter on `first_rep_term`.
+Note that I simply overwrite whatever value for `cohort` was already in `cohorts_revised`.
+I also embed the calculation of `reps` (the number of members of each cohort) in the same pipeline as the other calculations.
+
+```{r}
+pct_rep_then_sen <-
+  cohorts_revised |>
+  filter(first_rep_term <= "1999-12-31") |>
+  mutate(cohort = decade(first_rep_term),
+         event_time = age(first_sen_term, first_rep_term)) |>
+  group_by(cohort) |>
+  mutate(reps = n()) |>
+  window_order(event_time) |>
+  mutate(cum_ids = cumsum(1)) |>
+  group_by(cohort, event_time) |>
+  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
+  ungroup() |>
+  mutate(pct = cum_ids / reps) 
+```
+
+I replace `event_time_cutoffs` with the new values (10 and 20 years):
+
+```{r}
+event_time_cutoffs <-
+  tibble(cutoff = c(10, 20)) |>
+  copy_to(db, df = _, name = "event_time_cutoffs",
+          overwrite = TRUE) |>
+  mutate(cutoff = years(cutoff))
+```
+
+Making the plot is now quite straightforward and the results of the following code can be seen in @fig-surv-dec:
+
+```{r}
+#| warning: false
+#| label: fig-surv-dec
+#| fig-cap: Share of representatives who become senators by decade
+pct_rep_then_sen |>
+  cross_join(event_time_cutoffs) |>
+  filter(event_time <= cutoff) |>
+  group_by(cohort, cutoff) |>
+  summarize(pct = max(pct, na.rm = TRUE),
+            .groups = "drop") |>
+  mutate(cutoff = as.character(year(cutoff))) |>
+  ggplot(aes(x = cohort, y = pct, color = cutoff, group = cutoff)) +
+  geom_line()
+```
+
+## Making a function {#sec-fun}
+
+Creating the code underlying Figure 4-12 of @tanimura2021sql likely involved a lot of copy-pasting and editing (e.g., to create new `CASE` statements for the new cutoffs and new `WHERE` clauses) even before moving the code (or data) to Python or Tableau to make the plot.
+The code above suggests that we might accomplish variants on the plot more programmatically and I pursue this idea in this section.
+
+One benefit of doing this is that I can show how putting the survival data into a canonical structure can make it easier to run variants based on different populations and cohort definitions.
+
+First, I put the essence of the code in the following function with the only real edits being that I use more generic names for the tables and fields and put the cutoffs to be used in a variable `cutoffs`.
+
+```{r}
+make_plot <- function(cohorts, survival_data, cutoffs = c(10, 20)) {
+  plot_data <-
+    survival_data |>
+    mutate(event_time = age(event_date, entry_date)) |>
+    inner_join(cohorts, by = "id") |>
+    group_by(cohort) |>
+    mutate(reps = n()) |>
+    window_order(event_time) |>
+    mutate(cum_ids = cumsum(1)) |>
+    group_by(cohort, event_time) |>
+    mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
+    ungroup() |>
+    mutate(pct = cum_ids / reps) 
+  
+  event_time_cutoffs <-
+    tibble(cutoff = cutoffs) |>
+    copy_to(db, df = _, name = "event_time_cutoffs",
+            overwrite = TRUE) |>
+    mutate(cutoff = years(cutoff))
+  
+  plot_data |>
+    cross_join(event_time_cutoffs) |>
+    filter(event_time <= cutoff) |>
+    group_by(cohort, cutoff) |>
+    summarize(pct = max(pct, na.rm = TRUE),
+              .groups = "drop") |>
+    mutate(cutoff = as.character(year(cutoff))) |>
+    ggplot(aes(x = cohort, y = pct, color = cutoff, group = cutoff)) +
+    geom_line()
+}
+```
+
+I next construct `survival_data` in a canonical form with `id`, `entry_date`, and `event_date` as the fields.
+
+```{r}
+survival_data <-
+  first_terms |>
+  filter(!is.na(first_rep_term), 
+         first_term == first_rep_term) |>
+  rename(id = id_bioguide,
+         entry_date = first_rep_term,
+         event_date = first_sen_term) |>
+  select(id, entry_date, event_date)
+```
+
+Now I can easily reproduce @fig-surv-dec using the following code with the results being seen in @fig-surv-cent-alt:
+
+```{r}
+#| warning: false
+#| label: fig-surv-cent-alt
+#| fig-cap: Share of representatives who become senators by decade (encore)
+survival_data |>
+  filter(entry_date <= "1999-12-31") |>
+  mutate(cohort = decade(entry_date)) |>
+  select(id, cohort) |>
+  make_plot(survival_data = survival_data,
+            cutoffs = c(10, 20))
+```
+
+And with a few lines of code, I can make a plot version of @tbl-from-scratch, which can be seen in @fig-surv-cent:
+
+```{r}
+#| warning: false
+#| label: fig-surv-cent
+#| fig-cap: Share of representatives who become senators by century
+survival_data |>
+  filter(entry_date <= "2009-12-31") |>
+  mutate(cohort = century(entry_date)) |>
+  select(id, cohort) |>
+  make_plot(survival_data = survival_data,
+            cutoffs = c(5, 10, 15))
+```
+
+# Reconciling differences in output {#sec-rec}
+
+A careful reader might have noticed differences between the numbers in @tbl-translated and those in @tbl-from-scratch and wonder why these differences exist.
+These differences seem particularly pronounced for the representatives from the 21st century cohort, which seems consistent with the explanations I provide below.
+
+I would argue that the numbers in @tbl-from-scratch better address the original question from @tanimura2021sql [p. 158]: 
 "What share of [legislators] start as representatives and go on to become senators? 
 (Some senators later become representatives, but that is much less common.)
 Since relatively few make this transition, we'll cohort legislators by the century in which they first became a representative."^[I made minor punctuation edits here.]
+My query is also more consistent in applying "`WHERE first_term <= '2009-12-31'` [which] excludes those [legislators] who were less than 10 years into their careers when the data was assembled" [@tanimura2021sql, p. 160].
 
-It turns out that some representatives were incorrectly included in the original analysis, but correctly excluded in producing @tbl-from-scratch.
-I compile the "problem cases" in a single data frame `problem_cases`.
+It turns out that some representatives that were correctly excluded in producing @tbl-from-scratch were incorrectly included in the original analysis underlying @tbl-translated.
+I compile the "problem cases" in a single data frame `problem_cases`:
 
 ```{r}
 problem_cases <-
   first_terms |>
   semi_join(cohorts, by = "id_bioguide") |>
-  anti_join(population, by = "id_bioguide") |>
+  anti_join(cohorts_revised, by = "id_bioguide") |>
   filter(!is.na(first_sen_term) & !is.na(first_rep_term)) |>
   mutate(rep_to_sen =  last_sen_term > first_rep_term,
          sen_to_rep =  first_sen_term < first_rep_term ,
@@ -699,10 +877,19 @@ problem_cases <-
 
 
 The first set of problem cases comprises those legislators who were senators *before* they were representatives.
-These legislators should have been excluded on the based that they do not meet the "start as representatives" criterion.
+These legislators should have been excluded on the basis that they do not meet the "start as representatives" criterion.
 Note that this set can be view as comprising two subsets.
 The first subset are those legislators who started as senators, then became representatives, then became senators again.
-Cases from the first subset are shown in @tbl-problems-sen-first.
+These observations will affect both the numerators and the denominators of the proportions shown in @tbl-translated.
+Cases from this first subset---shown in @tbl-problems-sen-first---are identified using the following code:
+
+```{r}
+#| eval: false
+problem_cases |>
+  filter(sen_to_rep, rep_to_sen) |>
+  arrange(first_rep_term) |>
+  select(id_bioguide, first_sen_term, first_rep_term, last_sen_term) 
+```
 
 ```{r}
 #| label: tbl-problems-sen-first
@@ -712,7 +899,6 @@ problem_cases |>
   filter(sen_to_rep, rep_to_sen) |>
   arrange(first_rep_term) |>
   select(id_bioguide, first_sen_term, first_rep_term, last_sen_term) |>
-  head(n = 20) |>
   collect() |>
   tt() |>
   format_tt(escape = TRUE) |>
@@ -720,28 +906,44 @@ problem_cases |>
 ```
 
 The second subset are those legislators who started as senators, then became representatives, but did *not* became senators again after serving as a representative.
-Cases from the second subset are shown in @tbl-problems-not-later-sen.
+These observations will not affect the numerators of the proportions shown in @tbl-translated, but will affect the denominators.
+Some cases from this second subset---shown in @tbl-problems-not-later-sen---are identified using the following code:
+
+```{r}
+#| eval: false
+problem_cases |>
+  filter(sen_to_rep, !rep_to_sen) |>
+  select(id_bioguide, first_sen_term, last_sen_term, first_rep_term) |>
+  collect(n = 10)
+```
 
 ```{r}
 #| label: tbl-problems-not-later-sen
-#| tbl-cap: "Problematic cases: Senators first, not later senators again"
+#| tbl-cap: "Problematic cases: Senators first, not later senators again (10 cases)"
 #| echo: false
 problem_cases |>
   filter(sen_to_rep, !rep_to_sen) |>
   select(id_bioguide, first_sen_term, last_sen_term, first_rep_term) |>
-  collect() |>
+  collect(n = 10) |>
   tt() |>
   format_tt(escape = TRUE) |>
-  style_tt(fontsize = 0.8) |>
   theme_tt("spacing")
 ```
 
-The second set of problem cases are representatives whose terms began after `'2009-12-31``.
+The second set of problem cases are representatives whose terms began after `'2009-12-31'`.
 The original SQL query imposed this requirement in calculating `cohort_sizes`, but not in constructing the cohorts themselves.
 Thus, while the SQL in @lst-original does exclude these cases from the denominator, these legislators are included in the numerator if they go on to serve as senators.
 These cases are shown in @tbl-problems-too-late.
 In contrast I was consistent in application of the `first_rep_term <= '2009-12-31'` criterion throughout.
-The members of this set of problem cases are shown in @tbl-problems-too-late.
+These observations will not affect the denominators of the proportions shown in @tbl-translated, but will affect the numerators.
+The members of this set of problem cases---shown in @tbl-problems-too-late---are identified using the following code:
+
+```{r}
+#| eval: false
+problem_cases |>
+  filter(too_late) |>
+  select(id_bioguide, first_rep_term, first_sen_term, last_sen_term)
+```
 
 ```{r}
 #| label: tbl-problems-too-late
@@ -757,8 +959,8 @@ problem_cases |>
 ```
 
 
-It is easy to show that these issues explain the differences between @tbl-translated-fixed and @tbl-from-scratch.
-To do need to recapitulate some steps our analysis above, starting with a revised version of `ages` in which we `anti_join()` the `problem_cases` data frame.
+It is easy to show that these issues explain the differences between @tbl-translated and @tbl-from-scratch.
+To do so, I need to recapitulate some steps from the analysis above, starting with a revised version of `ages` in which I `anti_join()` the `problem_cases` data frame.
 
 ```{r}
 ages <-
@@ -783,7 +985,7 @@ age_cuts <-
             \(x) n_distinct(x, na.rm = TRUE)))
 ```
 
-Finally we `left_join()` this revised `age_cuts` to produce @tbl-translated-fixed.
+Finally, I `left_join()` this revised `age_cuts` to produce @tbl-translated-fixed.
 We now see that the output lines up with that in @tbl-from-scratch, confirming that the observations in `problem_cases` are the source of the differences between @tbl-from-scratch and @tbl-translated.
 
 ```{r}
@@ -798,12 +1000,7 @@ cohort_sizes |>
   collect() 
 ```
 
-
-
-
-
-
-
+\newpage
 
 ```{r}
 #| lst-label: lst-utility
@@ -814,14 +1011,14 @@ cohort_sizes |>
 
 ```{r}
 #| lst-label: lst-original
-#| lst-cap: Original SQL code
+#| lst-cap: Original SQL from @tanimura2021sql
 #| ref.label: sql_original
 #| eval: false
 ```
 
 ```{r}
 #| lst-label: lst-mod1
-#| lst-cap: SQL with first CTE
+#| lst-cap: SQL with our first CTE
 #| ref.label: sql_mod1
 #| eval: false
 ```
@@ -854,4 +1051,4 @@ cohort_sizes |>
 #| eval: false
 ```
 
-## References {-}
+# References {-}
