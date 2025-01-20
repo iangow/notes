@@ -182,6 +182,51 @@ crsp_daily <-
   system_time()
 ```
 
+## Getting daily returns from WRDS using Postgres extension
+
+
+```{r}
+#| eval: true
+db <- dbConnect(duckdb::duckdb(), "data/tidy_finance.duckdb",
+                read_only = FALSE)
+
+rs <- dbExecute(db, "LOAD postgres")
+
+rs <- dbExecute(db, "ATTACH '' AS wrds (TYPE POSTGRES)")
+
+dsf_db <- tbl(db, Id(database = "wrds", schema = "crsp", table = "dsf"))
+factors_ff_daily <- tbl(db, "factors_ff_daily")
+```
+
+As we can see, we have access to data in `crsp.dsf`.
+
+```{r}
+dsf_db
+```
+
+```{r}
+#| freeze: auto
+rs <- dbExecute(tidy_finance, "DROP TABLE IF EXISTS crsp_daily")
+
+crsp_daily <- 
+  dsf_db |>
+  filter(between(date, start_date, end_date),
+         !is.na(ret)) |>
+  select(permno, date, ret) |>
+  mutate(month = as.Date(floor_date(date, "month"))) |>
+  left_join(factors_ff_daily |>
+              select(date, rf), by = "date") |>
+  mutate(
+    ret_excess = ret - rf,
+    ret_excess = pmax(ret_excess, -1, na.rm = TRUE)
+  ) |>
+  select(permno, date, month, ret_excess) |>
+  compute(name = "crsp_daily", temporary = FALSE, overwrite = TRUE) |>
+  system_time()
+
+dbDisconnect(db)
+```
+
 ## Saving data to SQLite
 
 If you have been working through "Tidy Finance", you may already have an SQLite database containing `crsp_daily`.
