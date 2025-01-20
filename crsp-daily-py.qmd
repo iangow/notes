@@ -1,0 +1,279 @@
+---
+title: "tidy-finance"
+format: pdf
+jupyter: python3
+---
+
+## Quarto
+
+You can add options to executable code like this 
+
+```{python}
+import pandas as pd
+import numpy as np
+import duckdb
+import pandas_datareader as pdr
+
+from datetime import datetime
+```
+
+
+```{python}
+start_date = "1960-01-01"
+end_date = "2023-12-31"
+```
+
+```{python}
+from sqlalchemy import create_engine
+```
+
+```{python}
+#| include: false
+import os
+os.environ["WRDS_USER"] = "iangow"
+``` 
+
+```{python}
+connection_string = (
+  "postgresql+psycopg2://"
+ f"{os.getenv('WRDS_USER')}"
+  "@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+)
+
+wrds = create_engine(connection_string, pool_pre_ping=True)
+```
+
+
+```{python}
+import sqlite3
+tidy_finance = sqlite3.connect(database="data/tidy_finance.sqlite")
+```
+
+```{python}
+factors_ff3_daily_raw = pdr.DataReader(
+  name="F-F_Research_Data_Factors_daily",
+  data_source="famafrench", 
+  start=start_date, 
+  end=end_date)[0]
+
+factors_ff3_daily = (factors_ff3_daily_raw
+  .divide(100)
+  .reset_index(names="date")
+  .rename(str.lower, axis="columns")
+  .rename(columns={"mkt-rf": "mkt_excess"})
+)
+```
+
+```{python}
+import os
+
+if not os.path.exists("data"):
+  os.makedirs("data")
+    
+tidy_finance = sqlite3.connect(database="data/tidy_finance_python.sqlite")
+```
+
+```{python}
+data_dict = {
+  "factors_ff3_daily": factors_ff3_daily,
+}
+
+for key, value in data_dict.items():
+    value.to_sql(name=key,
+                 con=tidy_finance, 
+                 if_exists="replace",
+                 index=False)
+```
+
+```{python}
+factors_ff3_daily = pd.read_sql(
+  sql="SELECT * FROM factors_ff3_daily", 
+  con=tidy_finance,
+  parse_dates={"date"}
+)
+```
+
+```{python}
+import timeit
+```
+
+```{python}
+#| cache: true
+tic = timeit.default_timer()
+
+permnos = pd.read_sql(
+  sql="SELECT DISTINCT permno FROM crsp.stksecurityinfohist", 
+  con=wrds,
+  dtype={"permno": int}
+)
+
+permnos = list(permnos["permno"].astype(str))
+  
+batch_size = 500
+batches = np.ceil(len(permnos)/batch_size).astype(int)
+  
+for j in range(1, batches+1):  
+    
+  permno_batch = permnos[
+    ((j-1)*batch_size):(min(j*batch_size, len(permnos)))
+  ]
+  
+  permno_batch_formatted = (
+    ", ".join(f"'{permno}'" for permno in permno_batch)
+  )
+  permno_string = f"({permno_batch_formatted})"
+  
+  crsp_daily_sub_query = (
+    "SELECT dsf.permno, dlycaldt AS date, dlyret AS ret "
+      "FROM crsp.dsf_v2 AS dsf "
+      "INNER JOIN crsp.stksecurityinfohist AS ssih "
+      "ON dsf.permno = ssih.permno AND "
+         "ssih.secinfostartdt <= dsf.dlycaldt AND "
+         "dsf.dlycaldt <= ssih.secinfoenddt "
+      f"WHERE dsf.permno IN {permno_string} "
+           f"AND dlycaldt BETWEEN '{start_date}' AND '{end_date}' "
+            "AND ssih.sharetype = 'NS' "
+            "AND ssih.securitytype = 'EQTY' "  
+            "AND ssih.securitysubtype = 'COM' " 
+            "AND ssih.usincflg = 'Y' " 
+            "AND ssih.issuertype in ('ACOR', 'CORP') " 
+            "AND ssih.primaryexch in ('N', 'A', 'Q') "
+            "AND ssih.conditionaltype in ('RW', 'NW') "
+            "AND ssih.tradingstatusflg = 'A'"
+  )
+    
+  crsp_daily_sub = (pd.read_sql_query(
+      sql=crsp_daily_sub_query,
+      con=wrds,
+      dtype={"permno": int}
+    )
+    .dropna()
+   )
+
+  crsp_daily_sub['date'] = pd.to_datetime(crsp_daily_sub.date, format='%Y%m%d%H%M%S')
+
+  if not crsp_daily_sub.empty:
+    
+      crsp_daily_sub = (crsp_daily_sub
+        .merge(factors_ff3_daily[["date", "rf"]], 
+               on="date", how="left")
+        .assign(
+          ret_excess = lambda x: 
+            ((x["ret"] - x["rf"]).clip(lower=-1))
+        )
+        .get(["permno", "date", "ret_excess"])
+      )
+        
+      if j == 1:
+        if_exists_string = "replace"
+      else:
+        if_exists_string = "append"
+
+      crsp_daily_sub.to_sql(
+        name="crsp_daily", 
+        con=tidy_finance, 
+        if_exists=if_exists_string, 
+        index=False
+      )
+            
+  print(f"Batch {j} out of {batches} done ({(j/batches)*100:.2f}%)")
+
+toc = timeit.default_timer()
+toc - tic #elapsed time in seconds
+```
+
+
+```{python}
+import ibis
+from ibis import _
+ibis.options.interactive = True
+```
+
+```{python}
+#| include: false
+import os
+os.environ["WRDS_USER"] = "iangow"
+``` 
+
+
+On my computers, I store the location of my parquet files in an environment variable `DATA_DIR`. 
+ 
+```{python}
+import os
+data_dir = "/Users/igow/Dropbox/pq_data"
+```
+
+Now I connect to the the local parquet data via DuckDB and establish variables representing `crsp.dsf` and `crsp.stocknames`.
+Note that these are effectively **remote** data frames, as no data is brought into memory.
+As such these lines take almost no time to run.
+
+```{python}
+con = ibis.duckdb.connect()
+```
+
+```{python}
+wrds_uri = (
+  "postgres://"
+ f"{os.getenv('WRDS_USER')}"
+  "@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+)
+```
+
+```{python}
+dsf = con.read_postgres(wrds_uri,
+                        table_name="dsf_v2", database='crsp')
+                        
+ssih = con.read_postgres(wrds_uri,
+                         table_name="stksecurityinfohist", database='crsp')                        
+```
+
+```{python}
+permnos = (ssih.
+    select("permno").
+    distinct().
+    to_pandas()
+    )
+
+permnos = list(permnos["permno"].astype(str))    
+```
+
+```{python}
+factors_ff3_daily = con.read_sqlite(
+    path="data/tidy_finance_python.sqlite",
+    table_name="factors_ff3_daily")
+```
+
+```{python}
+import timeit
+```
+
+```{python}
+tic = timeit.default_timer()
+crsp_daily = (
+  dsf
+  .inner_join(ssih, "permno")
+  .filter(ssih.secinfostartdt <= dsf.dlycaldt,
+          dsf.dlycaldt <= ssih.secinfoenddt,
+          ssih.sharetype == 'NS',
+          ssih.securitytype == 'EQTY',
+          ssih.securitysubtype == 'COM',
+          ssih.usincflg == 'Y',
+          ssih.issuertype.isin(['ACOR', 'CORP']),
+          ssih.primaryexch.isin(['N', 'A', 'Q']),
+          ssih.conditionaltype.isin(['RW', 'NW']),
+          ssih.tradingstatusflg == 'A')
+  .rename(date="dlycaldt", ret="dlyret")
+  .left_join(factors_ff3_daily, "date")
+  .mutate(ret_excess = _.ret - _.rf)
+  .mutate(ret_excess = (_.ret_excess < -1).ifelse(-1, _.ret_excess))
+  .select("permno", "date", "ret_excess"))
+```          
+          
+```{python}
+crsp_daily.to_parquet(path = "data/crsp_daily.parquet")
+```
+
+```{python}
+toc = timeit.default_timer()
+toc - tic #elapsed time in seconds
+```
