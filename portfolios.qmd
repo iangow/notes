@@ -51,24 +51,21 @@ We next connect to an in-memory DuckDB database.
 db <- dbConnect(duckdb::duckdb())
 ```
 
-Assuming you have run `dbExecute(db, "INSTALL postgres_scanner")` on you machine in the past, you can load `postgres_scanner` using the following command (uncomment the first line to run the `INSTALL` command if necessary).
+Assuming you have run `dbExecute(db, "INSTALL postgres")` on you machine in the past, you can load `postgres` using the following command (uncomment the first line to run the `INSTALL` command if necessary).
 I set `threads` to 3 because DuckDB can easily seek to use more threads to improve performance, but WRDS will not allow this.
 
 ```{r}
 #| output: false
-# dbExecute(db, "INSTALL postgres_scanner")
-dbExecute(db, "LOAD postgres_scanner")
-dbExecute(db, "SET threads TO 3")
+# dbExecute(db, "INSTALL postgres")
+dbExecute(db, "LOAD postgres")
+# dbExecute(db, "SET threads TO 3")
+rs <- dbExecute(db, "ATTACH '' AS pg (TYPE POSTGRES)")
 ```
 
 In the WRDS PostgreSQL database, `crsp.msf` is simply a view on the table `crsp_a_stock.msf`.^[Actually the underlying schema may vary based on the CRSP product to which your instituion subscribes, but `crsp_a_stock` should work for everyone.]
 
 ```{r}
-schema <- 'crsp_a_stock'
-schema <- 'crsp'
-msf <- tbl(db, 
-           sql(paste0("(SELECT * FROM postgres_scan_pushdown('', '",
-                      schema,"', 'msf'))")))
+msf <- tbl(db, Id(database = "pg", schema = "crsp", table = "msf"))
 ```
 
 We will use three tables.
@@ -168,7 +165,7 @@ breakpoints_df <-
   mutate(port_min = lag(breakpoint),
          port_max = breakpoint) |>
   select(-breakpoint) |>
-  mutate(port_max = if_else(portfolio == n_portfolios, Inf, port_max))
+  mutate(port_max = if_else(portfolio == n_portfolios, 10e100, port_max))
 ```
 
 ```{r}
@@ -198,8 +195,8 @@ breakpoints_df <-
             port_min = min(mktcap),
             .groups = "drop") |>
   arrange(portfolio) |>
-  mutate(port_min = if_else(portfolio == 1, -Inf, port_min),
-         port_max = if_else(portfolio == n_portfolios, Inf, port_max))
+  mutate(port_min = if_else(portfolio == 1, -10e100, port_min),
+         port_max = if_else(portfolio == n_portfolios, 10e100, port_max))
 ```
 
 
@@ -236,8 +233,8 @@ breakpoints_df <-
             port_min = min(mktcap),
             .groups = "drop") |>
   arrange(portfolio) |>
-  mutate(port_min = if_else(portfolio == 1, -Inf, port_min),
-         port_max = if_else(portfolio == n_portfolios, Inf, port_max))
+  mutate(port_min = if_else(portfolio == 1, -10e100, port_min),
+         port_max = if_else(portfolio == n_portfolios, 10e100, port_max))
 ```
 
 
@@ -269,15 +266,12 @@ get_breaks <- function(data, var, n_portfolios, exchanges) {
     mutate(portfolio = unnest(portfolio),
            breaks = unnest(breaks)) |>
     dbplyr::window_order(portfolio) |>
-    mutate(port_max = if_else(portfolio == n_portfolios, Inf, breaks),
-           port_min = if_else(portfolio == 1, -Inf, lag(breaks))) |>
+    mutate(port_max = if_else(portfolio == n_portfolios, 10e100, breaks),
+           port_min = if_else(portfolio == 1, -10e100, lag(breaks))) |>
     filter(portfolio > 0) |>
     select(group_cols(), portfolio, port_min, port_max)
 }
 ```
-
-```{r}
-
 
 ```{r}
 breakpoints_df <- get_breaks(mktcap_2022, mktcap, n_portfolios)
@@ -298,9 +292,6 @@ mktcap_ports_alt |> anti_join(mktcap_ports,
                               by = join_by(permno, date, portfolio))
 ```
 
-```
-
-
 ```{r}
 ports <- 0:n_portfolios
 ports_sql <- sql(paste0("[", paste(ports, collapse = ", "), "]"))
@@ -315,8 +306,8 @@ breakpoints_df <-
   mutate(portfolio = unnest(portfolio),
            breaks = unnest(breaks)) |>
   dbplyr::window_order(portfolio) |>
-  mutate(port_max = if_else(portfolio == n_portfolios, Inf, breaks),
-           port_min = if_else(portfolio == 1, -Inf, lag(breaks))) |>
+  mutate(port_max = if_else(portfolio == n_portfolios, 10e100, breaks),
+           port_min = if_else(portfolio == 1, -10e100, lag(breaks))) |>
   filter(portfolio > 0) |>
   select(portfolio, port_max, port_min) |>
   ungroup()
