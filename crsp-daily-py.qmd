@@ -281,7 +281,6 @@ wrds_uri = (
 
 ```{python}
 #| cache: true
-pq_dir = os.environ["DATA_DIR"]
 tic = timeit.default_timer()
 from db2pq import wrds_update_pq
 
@@ -292,7 +291,6 @@ toc - tic
 
 ```{python}
 #| cache: true
-pq_dir = os.environ["DATA_DIR"]
 tic = timeit.default_timer()
 from db2pq import wrds_update_pq
 
@@ -304,7 +302,13 @@ toc - tic
 ```{python}
 tic = timeit.default_timer()
 
-data_dir = os.environ["DATA_DIR"]
+con = ibis.duckdb.connect()
+
+factors_ff3_daily = con.read_sqlite(
+    path="data/tidy_finance_python.sqlite",
+    table_name="factors_ff3_daily")
+
+data_dir = os.path.expanduser("~/Dropbox/pq_data") 
 
 dsf = con.read_parquet(join(data_dir, "crsp", "dsf_v2.parquet"))
 ssih = con.read_parquet(join(data_dir, "crsp", "stksecurityinfohist.parquet"))
@@ -328,8 +332,8 @@ crsp_daily = (
   .mutate(ret_excess = _.ret - _.rf)
   .mutate(ret_excess = (_.ret_excess < -1).ifelse(-1, _.ret_excess))
   .select("permno", "date", "ret_excess"))
-
-crsp_daily.to_parquet(path = "data/crsp_daily.parquet")
+  
+crsp_daily.to_parquet(path = "data/crsp_daily_alt.parquet")
 ```
 
 ```{python}
