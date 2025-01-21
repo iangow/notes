@@ -6,13 +6,12 @@ execute:
 jupyter: python3
 ---
 
-## Quarto
+## General set-up
 
 You can add options to executable code like this 
 
 ```{python}
 import pandas as pd
-import numpy as np
 import duckdb
 import pandas_datareader as pdr
 import timeit
@@ -21,37 +20,17 @@ import sqlite3
 import ibis
 from ibis import _
 from os.path import join
+from sqlalchemy import create_engine
 ```
-
 
 ```{python}
 start_date = "1960-01-01"
 end_date = "2023-12-31"
 ```
 
-```{python}
-from sqlalchemy import create_engine
-```
+# Getting data
 
-```{python}
-#| include: false
-os.environ["WRDS_USER"] = "iangow"
-``` 
-
-```{python}
-connection_string = (
-  "postgresql+psycopg2://"
- f"{os.getenv('WRDS_USER')}"
-  "@wrds-pgdata.wharton.upenn.edu:9737/wrds"
-)
-
-wrds = create_engine(connection_string, pool_pre_ping=True)
-```
-
-
-```{python}
-tidy_finance = sqlite3.connect(database="data/tidy_finance.sqlite")
-```
+## Fama-French data
 
 ```{python}
 #| cache: true
@@ -70,24 +49,33 @@ factors_ff3_daily = (factors_ff3_daily_raw
 ```
 
 ```{python}
-import os
-
 if not os.path.exists("data"):
   os.makedirs("data")
     
 tidy_finance = sqlite3.connect(database="data/tidy_finance_python.sqlite")
+factors_ff3_daily.to_sql(name="factors_ff3_daily",
+                         con=tidy_finance, 
+                         if_exists="replace",
+                         index=False)
+```
+
+## Daily CRSP data -- original version
+
+The original version of the code.
+
+```{python}
+#| include: false
+os.environ["WRDS_USER"] = "iangow"
 ```
 
 ```{python}
-data_dict = {
-  "factors_ff3_daily": factors_ff3_daily,
-}
+connection_string = (
+  "postgresql+psycopg2://"
+ f"{os.getenv('WRDS_USER')}"
+  "@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+)
 
-for key, value in data_dict.items():
-    value.to_sql(name=key,
-                 con=tidy_finance, 
-                 if_exists="replace",
-                 index=False)
+wrds = create_engine(connection_string, pool_pre_ping=True)
 ```
 
 ```{python}
@@ -150,7 +138,8 @@ for j in range(1, batches+1):
     .dropna()
    )
 
-  crsp_daily_sub['date'] = pd.to_datetime(crsp_daily_sub.date, format='%Y%m%d%H%M%S')
+  crsp_daily_sub['date'] = pd.to_datetime(crsp_daily_sub.date, 
+                                          format='%Y%m%d%H%M%S')
 
   if not crsp_daily_sub.empty:
     
@@ -182,22 +171,17 @@ toc = timeit.default_timer()
 toc - tic
 ```
 
-```{python}
-ibis.options.interactive = True
-```
-
-```{python}
-#| include: false
-import os
-os.environ["WRDS_USER"] = "iangow"
-``` 
-
+## Daily CRSP data -- Ibis/DuckDB version
 
 On my computers, I store the location of my parquet files in an environment variable `DATA_DIR`. 
  
 Now I connect to the the local parquet data via DuckDB and establish variables representing `crsp.dsf` and `crsp.stocknames`.
 Note that these are effectively **remote** data frames, as no data is brought into memory.
 As such these lines take almost no time to run.
+
+```{python}
+ibis.options.interactive = True
+```
 
 ```{python}
 tic = timeit.default_timer()
