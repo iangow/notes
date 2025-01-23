@@ -1,5 +1,5 @@
 ---
-title: "tidy-finance"
+title: "Using DuckDB with WRDS: Python version"
 author: 
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
@@ -238,7 +238,7 @@ toc - tic
 
 So the code takes about 5 minutes and the result is a table `crsp_daily` inside an SQLite database.
 
-## Daily CRSP data -- Ibis/DuckDB version
+## Daily CRSP data -- Ibis/DuckDB version {#sec-ibis}
 
 I now generate the same data table, but using Ibis to connect to PostgreSQL instead of using the Python package `sqlachemy`, which in turn uses the `psycopg2` package.
 Note I could use Ibis with a PostgreSQL backend directly, but I instead use a DuckDB backend and (implicitly) use [the `postgres` extension](https://duckdb.org/docs/extensions/postgres) for DuckDB to access PostgreSQL data within DuckDB.
@@ -365,9 +365,28 @@ permnos = list(permnos["permno"].astype(str))
 
 ## Getting original data tables
 
+Rather than creating a special local "daily CRSP" file, we could instead get and retain the original data files.
+An advantage of this approach is that it means we can write code that creates data tables directly off WRDS data files without requiring minutes to compute.
+
+I have used two main approaches to maintaining a local data repository:
+
+ 1. PostgreSQL database. 
+ In 2011, long before WRDS had its own PostgreSQL database, I wrote Perl scripts to export data from SAS files on the WRDS server to tables in a local PostgreSQL database.
+ These Perl scripts eventually became the `wrds2pg` Python package.^[Run `pip install wrds2pg` to install this package.]
+ I wrote more about creating such a database in [Appendix D](https://iangow.github.io/far_book/postgresql.html) of *Empirical Research in Accounting: Tools and Methods*.]
+ 
+ 2. Folders of parquet files.
+ More recently I have used a local repository of parquet files as an alternative to the WRDS PostgreSQL database.
+ While I have more about creating such a repository in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of *Empirical Research in Accounting: Tools and Methods*, here I discuss how we can get just the two files we need from WRDS for our current exercise.
+This requires just the function `wrds_update_pq()` from my Python package `db2pq`.^[Run `pip install db2pq` to install this package.]
+
 ```{python}
 from db2pq import wrds_update_pq
 ```
+
+The `wrds_update_pq()` function keys of the environment variable `DATA_DIR` and stores WRDS tables as files organized into directories that match the schemas in the WRDS PostgreSQL database.
+I start by getting `crsp.dsf_v2`, which is about 29 GB in SAS form and 24 GB in PostgreSQL form on the WRDS servers.
+As can be seen, getting `crsp.dsf_v2` requires a single line of code.^[The lines around this line are there just to record the time needed to do this.]
 
 ```{python}
 #| cache: true
@@ -377,21 +396,28 @@ toc = timeit.default_timer()
 print(f"Elapsed time: {(toc - tic):.2f} seconds.")
 ```
 
+It takes me about 22 minutes to get the data.^[This is on a MacBook Pro with M1 Pro chip and a 1 Gbps internet connection.]
+The resulting parquet file is 4.35 GB due to the compression and efficient storage offered by the parquet format.
+This compares not too favourably with the 2.7 GB for an SQLite database containing just these two tables, which is a cut-down version of the data created by Tidy Finance to save on space.
+
+Note that the `wrds_update_pq()` checks the "last updated" value for the SAS data file on WRDS and compares that with the corresponding metadata in any parquet file in the existing location and only gets data from the PostgreSQL server if the last updated value has changed.
+The WRDS subscription at my institution only offers annual updates, to the 20-minute download of ` `crsp.dsf_v2` only needs to happen once a year.
+Another feature of `wrds_update_pq()` from the `db2pq` package is that I wrote it to use very little RAM in creating the parquet file.
+
+Getting `crsp.stksecurityinfohist` takes only a few seconds because the underlying data table is much smaller.
+
 ```{python}
 #| cache: true
 tic = timeit.default_timer()
-wrds_update_pq("stksecurityinfohist", schema='crsp')
+wrds_update_pq("stksecurityinfohist", schema="crsp")
 toc = timeit.default_timer()
 print(f"Elapsed time: {(toc - tic):.2f} seconds.")
 ```
 
 ## Using local data files
 
-On my computers, I store the location of my parquet files in an environment variable `DATA_DIR`. 
- 
-Now I connect to the the local parquet data via DuckDB and establish variables representing `crsp.dsf` and `crsp.stocknames`.
-Note that these are effectively **remote** data frames, as no data is brought into memory.
-As such these lines take almost no time to run.
+So now that I have local copies of `crsp.dsf_v2` and `crsp.stksecurityinfohist`, I can use those rather than going back to the WRDS PostgreSQL server to get data every time.
+Much of the code is unchanged from that in @sec-ibis.
 
 ```{python}
 #| label: connect-duckdb-again
@@ -403,6 +429,7 @@ con = ibis.duckdb.connect()
 #| label: no-progress-bar-again
 #| include: false
 con.raw_sql('SET enable_progress_bar = false')
+os.environ["DATA_DIR"] = os.path.expanduser(os.environ["DATA_DIR"])
 ```
 
 ```{python}
@@ -412,6 +439,10 @@ factors_ff3_daily = con.read_sqlite(
     table_name="factors_ff3_daily")
 ```
 
+The only real difference in the code is in the lines creating `dsf` and `ssih`.
+Before I used `con.read_postgres()` to connect to the WRDS PostgreSQL server.
+Now I use `con.read_parquet()` to connect to local copies in parquet form.
+
 ```{python}
 #| label: data-load-local
 data_dir = os.environ["DATA_DIR"]
@@ -419,6 +450,9 @@ data_dir = os.environ["DATA_DIR"]
 dsf = con.read_parquet(join(data_dir, "crsp", "dsf_v2.parquet"))
 ssih = con.read_parquet(join(data_dir, "crsp", "stksecurityinfohist.parquet"))
 ```
+
+The following code is identical to the code in @sec-ibis.
+But now it takes 3 or 4 seconds to run rather than the 120 or so seconds needed earlier.
 
 ```{python}
 #| label: crsp-daily-local
@@ -441,12 +475,19 @@ crsp_daily = (
   .mutate(ret_excess = _.ret - _.rf)
   .mutate(ret_excess = (_.ret_excess < -1).ifelse(-1, _.ret_excess))
   .select("permno", "date", "ret_excess"))
+```
 
+```{python}
+#| label: crsp-daily-pq-again
+#| eval: true
 crsp_daily.to_parquet(path = "data/crsp_daily_alt.parquet")
 
 toc = timeit.default_timer()
 print(f"Elapsed time: {(toc - tic):.2f} seconds.")
 ```
+
+While the field I know best---empirical accounting research---seems to be somewhere between uninterested and hostile to ideas of reproducibility (perhaps because of the implications for the p-hacking that dominates the field), readers of Tidy Finance are more likely to be in finance, which seems to be embracing reproducibility more enthusiastically.
+Being able to run code quite quickly (e.g., against local parquet files) that can be then passed along to a data editor who can run the same code against a standard data set (e.g., against the WRDS PostgreSQL server) has a lot to recommend it.
 
 ## Some observations on using Python versus R
 
@@ -485,21 +526,21 @@ In a lot of ways doing data analysis with the Tidyverse is more facile than doin
  That's exactly the progression I use in *Empirical Research in Accounting: Tools and Methods*: from the introduction in [Chapter 2](https://iangow.github.io/far_book/r-intro.html) through to the introduction to remote data frames in [Chapter 6](https://iangow.github.io/far_book/fin-state.html), there is barely a shift in gears.^[In this regard, I strongly disagree with the recommendation of Philipp Hauber, a data scientist at *The  Economist*, to start with the "no-frills tutorial by Norm Matloff" given the orientation of that resource to "base R". I think *Empirical Research in Accounting: Tools and Methods* demonstrates that you can go quite far with very little base R--specific knowledge.]
 
     In terms of languages, learning Pandas might be like learning Italian and then moving onto French when learning Ibis (SQL is German?).
-    In contrast, knowing `dplyr` is like being a native speaker of American English when it comes to moving to `dbplyr` (standard British English). A few words are different, but you can understand pretty much everything and quickly start calling the current "pounds" not "dollars".
+    In contrast, knowing `dplyr` is like being a native speaker of American English when it comes to moving to `dbplyr` (standard British English). A few words are different, but you can understand pretty much everything and quickly start calling the local currency "pounds" not "dollars".
     
   - R is more purpose-built for data analysis.
-  In both R and Python, there are the age-old issues of dependencies and code that works with one version, but not another.
+  In both R and Python, there are the age-old issues of dependencies and code that works with one version of a package, but not another.
   But these issues seem heightened with Python.
   In writing *Empirical Research in Accounting: Tools and Methods* over several years, I would occasionally come across code that needed updating to work with the latest version or inconsistencies between packages (e.g., for a time, one package required an older version of another).
   But these issues seem to have diminished over time as (for example) the Tidyverse has matured and become quite stable.
   And my impression is that these issues are more acute with Python.
   
     Almost any resource on Python will talk about setting up virtual environments and how to deal with multiple versions of Python on your computer.
-    I feel that R is easier to navigate for the more casual user who wants to run an analysis and isn't looking to put code into a production system or into a time capsule
+    I feel that R is easier to navigate for the more casual user who wants to run an analysis and isn't looking to put code into a production system or into a time capsule.
     One *can* worry about these things, but I think that one has much less need to do so with R.
     Roughly 99% of the time one can have just use system-level versions of packages that are whatever is the latest on CRAN.
     For one there's no worry about messing up the "system version" of R as there is with Python.^[Though MacOS, for one, makes this kind of problem much harder to cause than it used to be.]
   
-Note that the above is by no means a claim that R is superior to Python, but simply that R has advantages and that these advantages are greater in certain situations.
+Note that the above is by no means meant to claim that R is uniformly superior to Python, but simply that R has advantages and that these advantages are greater in certain situations.
 While I have never taken a course in computer science or data analysis, I have experience with both R and Python and find myself reaching for R in many cases and for Python in other cases.
 Sometimes I might use Python for one part of a problem and R for another part.
