@@ -35,7 +35,7 @@ As the working example, I focus on the creation of "daily CRSP data" as found in
 I show that using Ibis has a number of advantages over the approach used in Tidy Finance.
 
  - Data retrieval is faster
- - The code used is simpler more "Pythonic"
+ - The code used is simpler and more "Pythonic"
  - The code created with Ibis facilitates shifting from remote PostgreSQL data to a local data source (e.g., parquet files)
  - Working with the final data is a lot easier and more performant
  
@@ -46,7 +46,7 @@ The source code for this note is available [here](https://raw.githubusercontent.
 
 [Chapter 3](https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html#daily-crsp-data) of *Tidy Finance for Python* describes the process for collecting daily stock data from CRSP and combining it with security-level data from CRSP and data on market performance from Fama-French.
 
-The daily CRSP data set is one of two data sets used in *Tidy Finance for Python* that are large enough to create any concerns in terms of resources for working with those data (e.g., network bandwidth, storage, and RAM)
+The daily CRSP data set is one of two data sets used in *Tidy Finance for Python* that are large enough to create any concerns in terms of resources for working with those data (e.g., network bandwidth, storage, and RAM).
 This makes daily CRSP an excellent candidate for further analysis here.
 
 ## General set-up
@@ -306,7 +306,7 @@ For example, `ssih.issuertype IN ('ACOR', 'CORP')` becomes the more Pythonic `ss
 But if you can read the SQL, you should be able to understand this code quite easily.
 
 Note that the code above used Pandas to do some calculations that could have been performed using SQL.
-Specifically, the `.clip(lower=-1)` could be `CASE WHEN ret_excess < -1 THEN -1 ELSE ret_excess` and the `(_.ret_excess < -1).ifelse(-1, _.ret_excess))` is actually implemented by Ibis in this way.^[Note that "clipping" the excess returns in this way has no justification in financial economics. *Excess* returns are not bounded by -1 in the way that returns on unleverage long positions in limited-liability securities are. I implement this here to be consistent with Tidy Finance and also to illustrate how this can be done using Ibis.]
+Specifically, the `.clip(lower=-1)` could be `CASE WHEN ret_excess < -1 THEN -1 ELSE ret_excess` and the `(_.ret_excess < -1).ifelse(-1, _.ret_excess))` is actually implemented by Ibis in this way.^[Note that "clipping" the excess returns in this way has no justification in financial economics. *Excess* returns are not bounded by -1 in the way that returns on unleveraged long positions in limited-liability securities are. I implement this here to be consistent with Tidy Finance and also to illustrate how this can be done using Ibis.]
 
 ```{python}
 #| label: crsp-daily-duckdb
@@ -401,8 +401,8 @@ The resulting parquet file is 4.35 GB due to the compression and efficient stora
 This compares not too favourably with the 2.7 GB for an SQLite database containing just these two tables, which is a cut-down version of the data created by Tidy Finance to save on space.
 
 Note that the `wrds_update_pq()` checks the "last updated" value for the SAS data file on WRDS and compares that with the corresponding metadata in any parquet file in the existing location and only gets data from the PostgreSQL server if the last updated value has changed.
-The WRDS subscription at my institution only offers annual updates, to the 20-minute download of ` `crsp.dsf_v2` only needs to happen once a year.
-Another feature of `wrds_update_pq()` from the `db2pq` package is that I wrote it to use very little RAM in creating the parquet file.
+The WRDS subscription at my institution only offers annual updates, to the 20-minute download of `crsp.dsf_v2` only needs to happen once a year.
+Another feature of `wrds_update_pq()` from the `db2pq` package is that I wrote it to be very sparing in its use of RAM in creating the parquet file.
 
 Getting `crsp.stksecurityinfohist` takes only a few seconds because the underlying data table is much smaller.
 
@@ -506,7 +506,7 @@ In a lot of ways doing data analysis with the Tidyverse is more facile than doin
  
  - Better workflow for creating documents.
  Python seems to work best with notebooks.
- Others have spoken about problems with notebooks (e.g., [Joel Grus](https://www.youtube.com/watch?v=7jiPeIFXb6U)).
+ Others have spoken about problems with notebooks (e.g., [a YouTube presentation by Joel Grus](https://www.youtube.com/watch?v=7jiPeIFXb6U)).
  I think my issues are related, but are due more to my coming from a different workflow based on Quarto.
  In the "Quarto workflow" (as I use it), there is a clear distinction between source code and output.
  This is particularly clear when committing edits using Git.
@@ -520,8 +520,8 @@ In a lot of ways doing data analysis with the Tidyverse is more facile than doin
    This means I can tweak small portions of the R code without triggering costly recalculations.
    One solution to this problem in Python would be to switch to more of an interactive notebook-based approach, but this introduces all the issues raised by Joel Grus (e.g., I need to be thinking about what code I've run previously in a sesssion).
   
- - Better learning curve. A data analyst using Python probaly starts out with Pandas.
- Moving up to larger data sets in SQL databases probably means learning a new language or at least a new package (e.g., Ibis).
+ - Better learning curve. A data analyst learning Python probaly starts out with Pandas.
+ Moving up to larger data sets probably means learning a new language (e.g., SQL) or at least a new package (e.g., Ibis).
  In contrast, I think that a data analyst starting with R would learn Tidyverse approaches using local data frames and then "move up" to using `dbplyr` using remote data frames.
  That's exactly the progression I use in *Empirical Research in Accounting: Tools and Methods*: from the introduction in [Chapter 2](https://iangow.github.io/far_book/r-intro.html) through to the introduction to remote data frames in [Chapter 6](https://iangow.github.io/far_book/fin-state.html), there is barely a shift in gears.^[In this regard, I strongly disagree with the recommendation of Philipp Hauber, a data scientist at *The  Economist*, to start with the "no-frills tutorial by Norm Matloff" given the orientation of that resource to "base R". I think *Empirical Research in Accounting: Tools and Methods* demonstrates that you can go quite far with very little base R--specific knowledge.]
 
