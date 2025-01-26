@@ -7,6 +7,8 @@ author:
 date: 2025-01-23
 number-sections: true
 format:
+  html:
+    default
   pdf: 
     include-in-header:
       text: |
@@ -117,30 +119,50 @@ In this chapter, we will revisit the question of whether "earnings announcements
 We begin by connecting to the several tables we will use in our analysis.
 
 ```{python}
-db = ibis.duckdb.connect()
-```
-
-```{python}
 #| label: env-vars
 #| include: false
 os.environ["WRDS_ID"] = "iangow"
 ```
 
 ```{python}
-#| label: connect-pg
-#| eval: false
+#| label: load_wrds
+#| eval: true
 def load_wrds(db, table, schema, wrds_id=None):
     if not wrds_id:
         wrds_id = os.getenv('WRDS_ID')
     uri = f"postgres://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
-  
+    # uri = f"postgres://localhost:5432/iangow"
+    
     return db.read_postgres(uri, table_name=table, database=schema)
+```
+
+```{python}
+#| label: connect-pg-db
+#| eval: true
+db = ibis.duckdb.connect()
 
 fundq = load_wrds(db, "fundq", "comp")
 ccmxpf_lnkhist = load_wrds(db, "ccmxpf_lnkhist", "crsp")
 dsi = load_wrds(db, "dsi", "crsp")
 dsf = load_wrds(db, "dsf", "crsp")
 stocknames = load_wrds(db, "stocknames", "crsp")
+```
+
+```{python}
+#| label: connect-pg
+#| eval: false
+wrds_id = os.environ['WRDS_ID']
+db = ibis.postgres.connect(user=wrds_id,
+                            host="wrds-pgdata.wharton.upenn.edu",
+                            port=9737,
+                            database="wrds")
+db = ibis.postgres.connect()                            
+                            
+fundq = db.table("fundq", "comp")
+ccmxpf_lnkhist = db.table("ccmxpf_lnkhist", "crsp")
+dsi = db.table("dsi", "crsp")
+dsf = db.table("dsf", "crsp")
+stocknames = db.table("stocknames", "crsp")
 ```
 
 ```{python}
@@ -152,8 +174,10 @@ def load_parquet(con, table, schema, data_dir=None):
     return con.read_parquet(pq_file)
 ```
 
-
 ```{python}
+#| eval: false
+db = ibis.duckdb.connect()
+
 fundq = load_parquet(db, "fundq", "comp")
 ccmxpf_lnkhist = load_parquet(db, "ccmxpf_lnkhist", "crsp")
 dsi = load_parquet(db, "dsi", "crsp")
@@ -287,15 +311,14 @@ max_date = (
     .to_pandas()
     .date[0])
 
-annc_dates_pd = (
-    pd.DataFrame(np.arange(min_date, max_date),
-                 columns = ["annc_date"]))
+annc_dates_pd = db.sql("SELECT generate_series::date AS annc_date" 
+       f" FROM generate_series(DATE '{min_date}',"
+       f" DATE '{max_date}', INTERVAL '1' DAY)")
                  
 win = ibis.window(order_by=ibis.desc(_.annc_date), following=0)
 
 annc_dates = (
-    ibis.memtable(annc_dates_pd)
-    .mutate(annc_date = _.annc_date.date())
+    annc_dates_pd
     .left_join(trading_dates, _.annc_date == trading_dates.date)
     .mutate(td = _.td.min().over(win),
             date = _.date.min().over(win))
@@ -468,7 +491,7 @@ The next step is to calculate relative trading dates, which are trading dates ex
 
 ```{python}
 @ibis.udf.scalar.builtin
-def year(a) -> int:
+def date_part(a, b) -> int:
     ...
 
 @ibis.udf.agg.builtin
@@ -496,7 +519,7 @@ earn_annc_vols = (
     .group_by("gvkey", "datadate")
     .mutate(avg_vol = _.vol.mean())
     .mutate(rel_vol = _.vol / _.avg_vol,
-            year = year(_.datadate)))
+            year = date_part('year', _.datadate)))
 ```
 
 Finally, we calculate summary statistics for each year by trading date relative to the earnings announcement date (`relative_td`).
