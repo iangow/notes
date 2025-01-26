@@ -118,6 +118,8 @@ In this chapter, we will revisit the question of whether "earnings announcements
 
 We begin by connecting to the several tables we will use in our analysis.
 
+#### Option 1: Use DuckDB with WRDS PostgreSQL
+
 ```{python}
 #| label: env-vars
 #| include: false
@@ -130,15 +132,15 @@ os.environ["WRDS_ID"] = "iangow"
 def load_wrds(db, table, schema, wrds_id=None):
     if not wrds_id:
         wrds_id = os.getenv('WRDS_ID')
-    uri = f"postgres://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
-    # uri = f"postgres://localhost:5432/iangow"
+    # uri = f"postgres://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+    uri = f"postgres://localhost:5432/iangow"
     
     return db.read_postgres(uri, table_name=table, database=schema)
 ```
 
 ```{python}
 #| label: connect-pg-db
-#| eval: true
+#| eval: false
 db = ibis.duckdb.connect()
 
 fundq = load_wrds(db, "fundq", "comp")
@@ -148,14 +150,16 @@ dsf = load_wrds(db, "dsf", "crsp")
 stocknames = load_wrds(db, "stocknames", "crsp")
 ```
 
+#### Option 2: Connect directly with PostgreSQL
+
 ```{python}
 #| label: connect-pg
-#| eval: false
+#| eval: false 
 wrds_id = os.environ['WRDS_ID']
-db = ibis.postgres.connect(user=wrds_id,
-                            host="wrds-pgdata.wharton.upenn.edu",
-                            port=9737,
-                            database="wrds")
+#db = ibis.postgres.connect(user=wrds_id,
+#                            host="wrds-pgdata.wharton.upenn.edu",
+#                            port=9737,
+#                            database="wrds")
 db = ibis.postgres.connect()                            
                             
 fundq = db.table("fundq", "comp")
@@ -164,6 +168,8 @@ dsi = db.table("dsi", "crsp")
 dsf = db.table("dsf", "crsp")
 stocknames = db.table("stocknames", "crsp")
 ```
+
+#### Option 3: Use DuckDB with local parquet repository
 
 ```{python}
 def load_parquet(con, table, schema, data_dir=None):
@@ -175,7 +181,7 @@ def load_parquet(con, table, schema, data_dir=None):
 ```
 
 ```{python}
-#| eval: false
+#| eval: true
 db = ibis.duckdb.connect()
 
 fundq = load_parquet(db, "fundq", "comp")
