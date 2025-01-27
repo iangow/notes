@@ -36,7 +36,11 @@ In this chapter, we start with a close study of @Beaver:1968vf itself before int
 We then conduct a "replication" of @Beaver:1968vf using a more recent sample period and use that replication to think about @Beaver:1968vf and the issues raised by @Bamber:2000wv.
 
 :::{.callout-tip text-align="left"}
-The code in this chapter uses the packages listed below.
+This note is a Python version of [Chapter 12](https://iangow.github.io/far_book/beaver68.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
+This note uses the packages listed below and relies on the existence of a local data repository of parquet files for WRDS data.
+Such a repository can be created using the script found in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq-pg) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R and, to some extent, Python.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/beaver68.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/beaver68.pdf).
 :::
 
 ```{python}
@@ -117,59 +121,7 @@ In this chapter, we will revisit the question of whether "earnings announcements
 ### Core set of events from Compustat
 
 We begin by connecting to the several tables we will use in our analysis.
-
-#### Option 1: Use DuckDB with WRDS PostgreSQL
-
-```{python}
-#| label: env-vars
-#| include: false
-os.environ["WRDS_ID"] = "iangow"
-```
-
-```{python}
-#| label: load_wrds
-#| eval: true
-def load_wrds(db, table, schema, wrds_id=None):
-    if not wrds_id:
-        wrds_id = os.getenv('WRDS_ID')
-    # uri = f"postgres://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
-    uri = f"postgres://localhost:5432/iangow"
-    
-    return db.read_postgres(uri, table_name=table, database=schema)
-```
-
-```{python}
-#| label: connect-pg-db
-#| eval: false
-db = ibis.duckdb.connect()
-
-fundq = load_wrds(db, "fundq", "comp")
-ccmxpf_lnkhist = load_wrds(db, "ccmxpf_lnkhist", "crsp")
-dsi = load_wrds(db, "dsi", "crsp")
-dsf = load_wrds(db, "dsf", "crsp")
-stocknames = load_wrds(db, "stocknames", "crsp")
-```
-
-#### Option 2: Connect directly with PostgreSQL
-
-```{python}
-#| label: connect-pg
-#| eval: false 
-wrds_id = os.environ['WRDS_ID']
-#db = ibis.postgres.connect(user=wrds_id,
-#                            host="wrds-pgdata.wharton.upenn.edu",
-#                            port=9737,
-#                            database="wrds")
-db = ibis.postgres.connect()                            
-                            
-fundq = db.table("fundq", "comp")
-ccmxpf_lnkhist = db.table("ccmxpf_lnkhist", "crsp")
-dsi = db.table("dsi", "crsp")
-dsf = db.table("dsf", "crsp")
-stocknames = db.table("stocknames", "crsp")
-```
-
-#### Option 3: Use DuckDB with local parquet repository
+To this end I create a small function---`load_parquet()`---to mimic the equivalent function in the R version.
 
 ```{python}
 def load_parquet(con, table, schema, data_dir=None):
@@ -298,37 +250,40 @@ This solves the final issue, but what about the second issue of announcements on
 To address this, we make a table `annc_dates` as follows:
 
 1. Create a table with all possible announcement dates. 
-(In this case, we use the `seq` function to create a list of *all* dates over the period represented on `crsp.dsi`.)
+(In this case, we use the `generate_series()` function in SQL to create a list of *all* dates over the period represented on `crsp.dsi`.)
 2. Where possible, line these dates up with dates (and their associated `td` values) on `trading_dates`.
 (The "where possible" translates into using a `left_join()` in this case.) 
-3. Fill in the missing `td` entries by grabbing the next available `td`. (For this, we use the `fill()` function from the `tidyr` package.)
+3. Fill in the missing `td` entries by grabbing the next available `td`. (For this, we use SQL that behaves like the `bfill()` function from the pandas package.)
+
+```{python}
+#| label: date_range
+date_range = (
+    trading_dates
+    .aggregate(min_date = _.date.min(),
+               max_date = _.date.max() + ibis.interval(days=1))
+    .execute())
+```
 
 ```{python}
 #| label: annc_dates
-min_date = (
-    trading_dates
-    .aggregate(date = _.date.min())
-    .to_pandas()
-    .date[0])
-
-max_date = (
-    trading_dates
-    .aggregate(date = _.date.max() + ibis.interval(days=1))
-    .to_pandas()
-    .date[0])
-
-annc_dates_pd = db.sql("SELECT generate_series::date AS annc_date" 
-       f" FROM generate_series(DATE '{min_date}',"
-       f" DATE '{max_date}', INTERVAL '1' DAY)")
+annc_dates_all = db.sql(f"""
+  SELECT generate_series::date AS annc_date
+  FROM generate_series(DATE '{date_range.min_date[0]}',
+                       DATE '{date_range.max_date[0]}', 
+                       INTERVAL '1' DAY)""")
                  
 win = ibis.window(order_by=ibis.desc(_.annc_date), following=0)
 
 annc_dates = (
-    annc_dates_pd
+    annc_dates_all
     .left_join(trading_dates, _.annc_date == trading_dates.date)
     .mutate(td = _.td.min().over(win),
             date = _.date.min().over(win))
     .order_by(_.annc_date))
+```
+
+```{python}
+
 ```
 
 To illustrate how we can use this table, let's return to our earnings announcement on `2018-03-04` where we're interested in returns running over the window from $t-20$ to $t+20$.
@@ -497,7 +452,7 @@ The next step is to calculate relative trading dates, which are trading dates ex
 
 ```{python}
 @ibis.udf.scalar.builtin
-def date_part(a, b) -> int:
+def year(a) -> int:
     ...
 
 @ibis.udf.agg.builtin
@@ -525,7 +480,7 @@ earn_annc_vols = (
     .group_by("gvkey", "datadate")
     .mutate(avg_vol = _.vol.mean())
     .mutate(rel_vol = _.vol / _.avg_vol,
-            year = date_part('year', _.datadate)))
+            year = year(_.datadate)))
 ```
 
 Finally, we calculate summary statistics for each year by trading date relative to the earnings announcement date (`relative_td`).
@@ -620,5 +575,30 @@ If not, can you suggest (and apply) an alternative measure?
 Does it make sense to remove one or the other of these filters?
 What do you observe if you remove one or both of these?
 Can you explain these observations?
+
+8. How does the code below differ from that used to create `annc_dates` above?
+Why is the line ending `dt.date` necessary here?
+Can you confirm that the code creating `annc_dates` mimics what `bfill()` does here?
+
+```{python}
+#| eval: false
+annc_dates_pd = pd.DataFrame(pd.date_range(date_range.min_date[0], 
+                                          date_range.max_date[0]), 
+                             columns = ["annc_date"])
+                             
+annc_dates_pd.annc_date = annc_dates_pd.annc_date.dt.date
+
+trading_dates_pd = (
+    dsi
+    .select("date")
+    .mutate(td = 1 + ibis.row_number().over(order_by="date"))
+    .execute())                      
+                          
+annc_dates = (
+  annc_dates_pd
+  .merge(trading_dates_pd, how='left', 
+         left_on='annc_date', right_on='date')
+  .bfill())
+```
 
 ## References {-}
