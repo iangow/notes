@@ -64,7 +64,7 @@ Results for the volume analysis are provided in Figures 1 and 3 of @Beaver:1968v
 Figure 1 provides analysis of unadjusted volume and Figure 3 provides analysis of residual volume, which is calculated as the residual from a kind of "volume market model" [see p. 76 of @Beaver:1968vf].
 Figure 6 contains the results of the analysis of return residuals.
 
-Some aspects of the @Beaver:1968vf are confusing unless read closely, so we provide some explanation here.
+Some aspects of @Beaver:1968vf are confusing unless read closely, so we provide some explanation here.
 The sample in @Beaver:1968vf comprises 506 earnings announcements for 143 firms.
 Each earnings announcement is associated with a 17-week announcement window ($t = -8, \dots, +8$), which @Beaver:1968vf calls the "report period".
 Observations on returns and volumes within the sample period for a given firm, but outside report periods for that firm, make up the non-report period for that firm.
@@ -232,11 +232,10 @@ If we take the dates on `crsp.dsi` and order the data by `date`, then we can cre
 
 ```{python}
 #| label: trading_dates
-trading_dates = ibis.memtable(
+trading_dates = (
     dsi
     .select("date")
-    .mutate(td = 1 + ibis.row_number().over(order_by="date"))
-    .to_pandas())
+    .mutate(td = 1 + ibis.row_number().over(order_by="date")))
 ```
 
 In our example, `2018-03-05` has `td` equal to `24333` and subtracting 1 from that `td` gives `24332`, which is associated with `2018-03-02`.
@@ -452,7 +451,7 @@ The next step is to calculate relative trading dates, which are trading dates ex
 
 ```{python}
 @ibis.udf.scalar.builtin
-def year(a) -> int:
+def date_part(a, b) -> int:
     ...
 
 @ibis.udf.agg.builtin
@@ -480,7 +479,7 @@ earn_annc_vols = (
     .group_by("gvkey", "datadate")
     .mutate(avg_vol = _.vol.mean())
     .mutate(rel_vol = _.vol / _.avg_vol,
-            year = year(_.datadate)))
+            year = date_part('year', _.datadate)))
 ```
 
 Finally, we calculate summary statistics for each year by trading date relative to the earnings announcement date (`relative_td`).
@@ -599,6 +598,10 @@ annc_dates = (
   .merge(trading_dates_pd, how='left', 
          left_on='annc_date', right_on='date')
   .bfill())
+```
+
+```{python}
+db.disconnect()
 ```
 
 ## References {-}
