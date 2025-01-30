@@ -1,0 +1,408 @@
+---
+title: "Retail sales"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-01-27
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+        \sisetup{output-decimal-marker = {,}}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+
+:::{.callout-tip text-align="left"}
+The code in this chapter uses the packages listed below.
+For instructions on how to set up your computer to use the code found in this book, see @sec-install.
+Quarto templates for the exercises below are available on [GitHub](https://github.com/iangow/far_templates/blob/main/README.md).
+:::
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(modelsummary)
+```
+
+```{r}
+#| eval: false
+#| include: false
+library(readabs)
+
+Sys.setenv(R_READABS_PATH = "~/Downloads/")
+
+retail_industries <- tribble(
+  ~industry, ~ind_level,
+  "Supermarket and grocery stores", 2,
+  "Liquor retailing", 2,
+  "Other specialised food retailing", 2,
+  "Food retailing", 1,
+  "Furniture, floor coverings, houseware and textile goods retailing", 2,
+  "Electrical and electronic goods retailing", 2,
+  "Hardware, building and garden supplies retailing", 2,
+  "Household goods retailing", 1,
+  "Clothing retailing", 2,
+  "Footwear and other personal accessory retailing", 2,
+  "Clothing, footwear and personal accessory retailing", 1,
+  "Department stores", 1,
+  "Newspaper and book retailing", 2,
+  "Other recreational goods retailing", 2,
+  "Pharmaceutical, cosmetic and toiletry goods retailing", 2,
+  "Other retailing n.e.c.", 2,
+  "Other retailing", 1,
+  "Cafes, restaurants and catering services", 2,
+  "Takeaway food services", 2,
+  "Cafes, restaurants and takeaway food services", 1,
+  "Total (Industry)", 0) |>
+  mutate(parent_industry = if_else(ind_level == 1, industry, NA)) |>
+  fill(parent_industry, .direction = "up") |>
+  mutate(parent_industry = if_else(ind_level == 1, "Total (Industry)", 
+                                   parent_industry)) 
+
+retail_sales <-
+  read_abs("8501.0", tables = 11) |>
+  separate_wider_regex(series,
+                       c("^.*;\\s+", 
+                         state = ".*?", "\\s+;\\s+",
+                         industry = ".*?", "\\s+;$")) |>
+  select(industry, state, date, value) |>
+  rename(sales = value) |>
+  arrange(date, industry, state) |>
+  left_join(retail_industries, join_by(industry)) |>
+  write_csv("data/retail_sales.csv") 
+```
+
+The data we focus on in this chapter come from the [Australian Bureau of Statistics](https://www.abs.gov.au) (ABS).
+The ABS describes itself as "Australia's national statistical agency and an official source of independent, reliable information."
+We discuss the source of the data in more detail in @tip-abs.
+
+The data are stored as a **comma-separated value** (CSV) file format in `data/retail_sales.csv` in the repository you downloaded for this course.
+There is a good chance that, if you have Microsoft Excel is installed on your computer, double-clicking on this file on your computer will open it in Excel.
+To understand the contents of the file, it's actually better to open it in a text editor, such as Notepad (Windows) or TextEdit (MacOS).
+CSV files are a common format for sharing data, as it is a simple format that many software packages can handle.
+[Chapter 7](https://r4ds.hadley.nz/data-import.html) of *R for Data Science* discusses CSVs in more detail.
+
+Here we use `read_csv()` from the Tidyverse to load the data into R.
+
+```{r}
+retail_sales <- read_csv("data/retail_sales.csv")
+```
+
+The data in `retail_sales` are monthly estimates of turnover and volumes for retail businesses, including store and online sales, by industry group and industry subgroup.
+
+# Understanding the industries
+
+According to [the ABS,](https://www.abs.gov.au/methodologies/retail-trade-australia-methodology/jul-2024#defining-retail-trade) the statistics from which `retail_sales` are derived are presented at two levels of detail: *industry group*, "the broadest industry level comprising 6 industry groups", and *industry subgroup*, which is "the most detailed industry level comprising 15 industry subgroups."
+In `retail_sales`, industry groups are associated with `ind_level` equal to 1 and industry subgroups are associated with `ind_level` equal to 2.
+For each, industry subgroup, the industry group to which it belongs is identified in `parent_industry`.
+
+We can take a peek at the first few rows of data by typing `retail_sales` in the R console:
+
+```{r}
+retail_sales
+```
+
+From the output above, we can see that `industry`, `state`, and `parent_industry` are character columns, that `date` has type date, and that `sales` and `ind_level` have type "double".
+We can also get a succinct take on the data using `summary()`:
+
+```{r}
+summary(retail_sales)
+```
+We start by investigating the data in `industry`, `ind_level`, and `parent_industry`.
+Below we see that `Total (Industry)` is the parent industry for all industries having `ind_level` equal to one and that `parent_industry` is missing whenever `ind_level` is zero.
+Note that only five industries are listed under `parent_industry` when `ind_level` is two.
+
+```{r}
+retail_sales |> 
+  count(parent_industry, ind_level) |>
+  arrange(ind_level)
+```
+
+We can identify the missing industry group by using an **anti-join** (`anti_join()`) and `join_by(industry == parent_industry)`.
+The output of following query identifies the problem case as "Department stores".
+
+```{r}
+retail_sales |>
+  filter(ind_level == 1) |>
+  anti_join(retail_sales, by = join_by(industry == parent_industry)) |>
+  count(industry)
+```
+Because the function `anti_join(x, y)` returns all rows in `x` that don’t have a match in `y`, it is useful for finding **implicit missing values**.^[TODO: Discuss *implicit missing values* in an earlier section on `left_join()`.]
+
+Additionally, while the ABS website describes the data as "comprising 15 industry subgroups", we see only 14 subgroups in the data:
+
+```{r}
+retail_sales |> 
+  distinct(industry, ind_level) |> 
+  count(ind_level)
+```
+
+What explains these discrepancies?
+The natural explanation is that *Department stores* is an industry group that has only one subgroup, itself.
+In effect, *Department stores* could be considered as having `ind_level` equal to both one and two.
+
+A natural question is whether sales of the subgroups add up to the sales of the industry groups.^[Once we recognize that *Department stores* is its own parent industry, it is trivial that its own sales will "add up" in the sense here, so we don't need to consider that industry for present purposes.]
+To answer this question, I first collect data---the sum of sales by state and year---on industry groups directly and store them in `level_1_df`.
+
+```{r}
+level_1_df <-
+  retail_sales |> 
+  mutate(year = year(date)) |>
+  filter(ind_level == 1, year < 2024) |>
+  group_by(state, year, industry, ind_level) |>
+  summarize(no_missing = as.integer(all(!is.na(sales))),
+            sales = sum(sales, na.rm = TRUE),
+            .groups = "drop")
+```
+
+I then collect the same data on industry groups directly by aggregating the applicable industry subgroups and store them in `level_2_df`.
+
+```{r}
+level_2_df <-
+  retail_sales |> 
+  mutate(year = year(date)) |>
+  filter(ind_level == 2, year < 2024) |>
+  group_by(state, year, parent_industry, ind_level) |>
+  summarize(no_missing = as.integer(all(!is.na(sales))),
+            sales = sum(sales, na.rm = TRUE),
+            .groups = "drop") |>
+  rename(industry = parent_industry)
+```
+
+Finally, I combine the data from both of these data frames into one data frame using `union_all()` and save the result in `combined_levels`.
+
+```{r}
+combined_levels <-
+  level_1_df |>
+  union_all(level_2_df) |>
+  mutate(year = as.character(year),
+         ind_level = as.character(ind_level))
+```
+
+I will use `datasummary()` from the `modelsummary` package to display summary statistics.
+I create `Sum()` to sum up values while removing `NA` values and `pretty_num()` to format the numbers in the way that I want.
+
+```{r}
+Sum <- function(x) sum(as.double(x), na.rm = TRUE)
+pretty_num <- function(x) prettyNum(as.integer(x), format = "f", 
+                                    big.mark = ",")
+```
+
+I create alternative shorter names for two industries that have names that are too long to fit in the tables I want to display.
+
+```{r}
+short_names <-
+  tribble(
+  ~industry, ~short_ind,
+  "Cafes, restaurants and takeaway food services", "Cafes, restaurants, etc",
+  "Clothing, footwear and personal accessory retailing", 
+    "Clothing, footwear, accessories")
+```
+
+In @tbl-reconc, I display the total sales for each industry group calculated in two ways: once by summing up the values for the industry group and again by summing up the values for the subgroups comprised by the group.
+
+```{r}
+#| label: tbl-reconc
+#| tbl-cap: "Reconciliation of sales by group and sub-groups: Total (State)"
+combined_levels |>
+  left_join(short_names, by = "industry") |>
+  mutate(industry = coalesce(short_ind, industry)) |>
+  filter(year >= 2019, 
+         state == "Total (State)",
+         industry != "Department stores") |>
+  datasummary(industry * ind_level ~ sales * Sum * year,
+              data = _, fmt = pretty_num,
+              digits = 1)
+```
+
+
+With any data set it is important to understand the meaning of any explicit missing values.
+For the five industry groups (excluding *Department stores* for the reasons discussed above), we have complete information at level 1 for a year if there are 12 months of data for each industry group at level 1.
+And we have complete information at level 2 for a year if there are 12 months of data for each sub-group at level 2.
+From @tbl-non-missing, we see that larger states have complete data for all five industries at both levels one and two, but that smaller states such as Tasmania and Northern Territory have missing values at both levels.^[Of course, Northern Territory is not a *state*, but a territory.]
+
+```{r}
+#| label: tbl-non-missing
+#| tbl-cap: "Non-missing values by state and year and industry level"
+combined_levels |>
+  filter(year >= 2019, 
+         industry != "Department stores") |>
+  datasummary(state * ind_level ~ no_missing * Sum * year,
+              data = _, fmt = pretty_num)
+```
+
+## Exercises
+
+1. Describe in words what the query above using `anti_join()` is doing.
+
+2. Suppose we wanted to focus our analysis on industry subgroups, but wanted to retain "Department stores" as part of this.
+Write code to create `ind_sub_groups`, a data set comprising data from `retail_sales` that we could use for this purpose.
+
+```{r}
+#| label: tbl-reconc-level-2
+#| tbl-cap: "Sales by industry subgroup"
+#| include: false
+combined_levels |>
+  mutate(ind_level = if_else(industry == "Department stores", "2", ind_level)) |>
+  filter(ind_level == "2",
+         year >= 2019) |>
+  datasummary(industry * ind_level ~ sales * Sum * year,
+              data = _, fmt = pretty_num)
+```
+
+3. What industry group has missing values at level 2 for Queensland, as seen in @tbl-non-missing?
+Which subgroups are affected?
+
+```{r}
+#| include: false
+combined_levels |>
+  filter(year >= 2019, 
+         state == "Queensland",
+         industry != "Department stores") |>
+  datasummary(industry * ind_level ~ sales * Sum * year,
+              data = _, fmt = pretty_num)
+```
+
+4. Produce a version of @tbl-reconc but focused on Queensland instead of all of Australia (`Total (State)`).
+Do you see an issue related to the issue flagged in the previous question?
+
+```{r}
+#| label: tbl-reconc-qld
+#| tbl-cap: "Reconciliation of sales by group and sub-groups: Queensland"
+#| include: false
+combined_levels |>
+  left_join(short_names, by = "industry") |>
+  mutate(industry = coalesce(short_ind, industry)) |>
+  filter(year >= 2019, 
+         state == "Queensland",
+         industry != "Department stores") |>
+  datasummary(industry * ind_level ~ sales * Sum * year,
+              data = _, fmt = pretty_num,
+              digits = 1)
+```
+
+5. Produce a version of @tbl-reconc but focused on Tasmania instead of all of Australia (`Total (State)`).
+Do you see an issue related to the issue flagged in the previous question?
+
+```{r}
+#| label: tbl-reconc-tas
+#| tbl-cap: "Reconciliation of sales by group and sub-groups: Tasmania"
+#| include: false
+combined_levels |>
+  left_join(short_names, by = "industry") |>
+  mutate(industry = coalesce(short_ind, industry)) |>
+  filter(year >= 2019, 
+         state == "Tasmania",
+         industry != "Department stores") |>
+  datasummary(industry * ind_level ~ sales * Sum * year,
+              data = _, fmt = pretty_num,
+              digits = 1)
+```
+
+# Time-series analysis
+
+```{r}
+start_date <- as.Date("2010-01-01")
+end_date <- as.Date("2024-11-30")
+
+df_group_plot <-
+  retail_sales |>
+  left_join(short_names, by = "industry") |>
+  mutate(industry = coalesce(short_ind, industry)) |>
+  filter(state == "Total (State)", ind_level == 1,
+         between(date, start_date, end_date))
+```
+
+Figures [-@fig-all-ind] and [-@fig-all-ind2] plot sales from `r format(start_date, "%B %Y")` until `r format(end_date, "%B %Y")` by industry group.
+
+```{r}
+#| label: fig-all-ind
+#| fig-cap: Retail sales by industry using `facet_wrap()`
+df_group_plot |>
+  ggplot(aes(x = date, y = sales)) +
+  ylab("Sales ($ million)") +
+  xlab("Month") +
+  geom_line() +
+  facet_wrap(industry ~ ., ncol = 2, scales = "free_y")
+```
+
+```{r}
+#| label: fig-all-ind2
+#| fig-cap: Retail sales by industry
+df_group_plot |>
+  ggplot(aes(x = date, y = sales, colour = industry)) +
+  ylab("Sales ($ million)") +
+  xlab("Month") +
+  geom_line() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+liquor <-
+  retail_sales |>
+  filter(state %in% c("Victoria", "Western Australia"),
+         industry == "Liquor retailing") |>
+  filter(between(date, 
+                 as.Date("2018-01-01"), 
+                 as.Date("2024-08-31"))) |>
+  mutate(year = year(date),
+         month = month(date, label = TRUE))
+```
+
+```{r}
+#| label: fig-vic-wa-liq
+#| fig-cap: Liquor retailing sales (normalised by 2018 average monthly sales)
+#| fig-height: 8
+liquor |>
+  filter(year == 2018) |>
+  group_by(state) |>
+  summarize(scale_factor = mean(sales)) |>
+  inner_join(liquor, by = "state") |>
+  mutate(sales_normalised = sales / scale_factor) |>
+  ggplot(aes(x = month, y = sales_normalised, fill = state)) +
+  geom_col(position = "dodge") +
+  facet_wrap(year ~ ., ncol = 1) +
+  theme(legend.position = "bottom") +
+  theme(plot.title.position = "plot")
+```
+
+:::{#tip-abs .callout-tip text-align="left"}
+
+### Where to find the data
+
+The data used to create `retail_sales` come from the ABS
+
+```{r}
+#| cache: true
+Sys.setenv(R_READABS_PATH = "~/Downloads/")
+
+library(readabs)
+
+df <-
+  read_abs("8501.0", tables = 11) |>
+  separate_wider_regex(series,
+                       c("^.*;\\s+", 
+                         state = ".*?", "\\s+;\\s+",
+                         industry = ".*?", "\\s+;$")) |>
+  select(industry, state, date, value) |>
+  rename(sales = value) |>
+  arrange(date, industry, state) 
+```
+
+:::
