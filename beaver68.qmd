@@ -121,6 +121,37 @@ In this chapter, we will revisit the question of whether "earnings announcements
 ### Core set of events from Compustat
 
 We begin by connecting to the several tables we will use in our analysis.
+#### Option 1: Use DuckDB with WRDS PostgreSQL
+
+```{python}
+#| label: env-vars
+#| include: false
+os.environ["WRDS_ID"] = "iangow"
+```
+
+```{python}
+#| label: load_wrds
+#| eval: true
+def load_wrds(db, table, schema, wrds_id=None):
+    if not wrds_id:
+        wrds_id = os.getenv('WRDS_ID')
+    # uri = f"postgres://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+    uri = f"postgres://localhost:5432/iangow"
+    
+    return db.read_postgres(uri, table_name=table, database=schema)
+```
+
+```{python}
+#| label: connect-pg-db
+#| eval: false
+db = ibis.duckdb.connect()
+
+fundq = load_wrds(db, "fundq", "comp")
+ccmxpf_lnkhist = load_wrds(db, "ccmxpf_lnkhist", "crsp")
+dsi = load_wrds(db, "dsi", "crsp")
+dsf = load_wrds(db, "dsf", "crsp")
+stocknames = load_wrds(db, "stocknames", "crsp")
+```
 To this end I create a small function---`load_parquet()`---to mimic the equivalent function in the R version.
 
 ```{python}
@@ -325,7 +356,10 @@ Here, we are interested in stock and market returns (`ret` and `ret_mkt`, respec
 #| label: mkt_rets
 mkt_rets = (
     dsf 
+    .mutate(ret = _.ret.cast("float64"),
+            vol = _.vol.cast("float64"))
     .inner_join(dsi, "date")
+    .mutate(vwretd = _.vwretd.cast("float64"))
     .mutate(ret_mkt = _.ret - _.vwretd)
     .select("permno", "date", "ret", "ret_mkt", "vol"))
 ```
