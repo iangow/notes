@@ -252,6 +252,10 @@ To address this, we make a table `annc_dates` as follows:
 @ibis.udf.scalar.builtin
 def generate_series(a, b, c) -> ibis.dtype("Date"):
     ...
+
+@ibis.udf.scalar.builtin
+def unnest(a) -> ibis.dtype("Date"):
+    ...
                  
 win = ibis.window(order_by=ibis.desc(_.annc_date), following=0)
 
@@ -262,6 +266,7 @@ annc_dates = (
     .mutate(annc_date = generate_series(_.min_date, _.max_date, 
                                         ibis.interval(days=1)))
     .select("annc_date")
+    .mutate(annc_date = unnest(_.annc_date))
     .left_join(trading_dates, _.annc_date == trading_dates.date)
     .mutate(td = _.td.min().over(win),
             date = _.date.min().over(win))
