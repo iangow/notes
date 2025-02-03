@@ -1,0 +1,154 @@
+---
+title: "Doing math with Python"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-02-03
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+        \sisetup{output-decimal-marker = {,}}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+Due to the tragic passing of a colleague, my wife has taken over the support of students participating in competitions such as MathCounts at the school at which she is a mathematics specialist.
+Often she seeks my input on solving problems and asked me about the problem that requires replacing letters with digits to solve the following equation:
+
+```
+  DOS +
+  DOS
+ TRES
+-----
+SIETE
+```
+
+My natural inclination was to use a mix of brute force and educated guesses.
+For example, it seems that one could narrow down `S` to be 1 because even the greatest sum of two three-digit numbers and one four-digit number is $999 + 999 + 9999 = 11997$.
+This then suggests `E` is `3` ...
+
+At this point, I wanted a way to check a solution quickly.
+In my mind, a solution is a mapping of each of the letters in the equation above to the digits $\{0, 1, \dots, 8, 9\}$.
+And then a mapping is just another word for a **dictionary** in Python.
+
+I start by putting the words into a **list**:
+
+```{python}
+words = ["dos", "dos", "tres", "siete"]
+```
+
+I then need to work out what letters need to be mapped to digits.
+It is helpful to note that iterating over a string containing a word yields the letters in that string.
+
+```{python}
+[letter for letter in "dos"]
+```
+
+I can use a list comprehension to do that for all words in `words`.
+
+```{python}
+[letter for word in words for letter in word]
+```
+
+Of course, I get some duplicates and I can use `set()` to clean this up.
+
+```{python}
+set([letter for word in words for letter in word])
+```
+
+Finally, I stick this logic in a function `get_letters()`.
+
+```{python}
+def get_letters(words):
+    return set([letter for word in words for letter in word])
+```
+
+Through brute force, I might come up with a solution such as `sol_candidate`:
+
+```{python}
+sol_candidate = {'o': 8, 't': 9, 's': 1, 'r': 2, 'e': 4, 'i': 0, 'd': 6}
+```
+
+To check this candidate solution, I need to convert each word into a number and then check the equation.
+Given a word, I can start by iterating over the string and getting the digit assigned to each letter.
+
+```{python}
+[sol_candidate[letter] for letter in "dos"]
+```
+
+I next convert each digit into a string.^[In some ways, it might have made sense to construct `sol_candidate` so that the values were strings to start with, but we will see there's no problem with the current set-up.]
+
+```{python}
+[str(sol_candidate[letter]) for letter in "dos"]
+```
+
+I can combine the digits into a single string using `''.join()`:
+
+```{python}
+''.join([str(sol_candidate[letter]) for letter in "dos"])
+```
+
+And finally, I turn this string into an integer using `int()`:
+
+```{python}
+int(''.join([str(sol_candidate[letter]) for letter in "dos"]))
+```
+
+Now I can stick this logic into a function taking a `string` and a dictionary (`mapping`) and returning an integer:
+
+```{python}
+def to_val(string, mapping):
+    return int(''.join([str(mapping[i]) for i in string]))
+```
+
+```{python}
+def check_map(words, code):
+    first_sum = sum([to_val(word, code) for word in words[:-1]])
+    second_sum = to_val(words[-1], code)
+    return first_sum == second_sum
+```
+
+```{python}
+import itertools
+
+def get_maps(letters):
+    digits = range(10)
+    vals = [i for i in itertools.permutations(digits, len(letters))]
+    all_maps = [dict(zip(letters, i)) for i in vals]
+    return all_maps
+```
+
+```{python}
+def solve_problem(words):
+    letters = get_letters(words)
+    codes = get_maps(letters)
+    results = [code for code in codes if check_map(words, code)]
+    return [res for res in results if res]
+```
+
+
+
+```{python}
+solution = solve_problem(words)
+solution
+```
+
+```{python}
+check_map(words, solution[0])
+```
+
