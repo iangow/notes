@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2025-01-27
+date: 2025-02-03
 number-sections: true
 format:
   html:
@@ -28,7 +28,7 @@ bibliography: papers.bib
 ---
 
 
-:::{.callout-tip text-align="left"}
+:::{#tip-pkgs .callout-tip text-align="left"}
 The code in this chapter uses the packages listed below.
 For instructions on how to set up your computer to use the code found in this book, see @sec-install.
 Quarto templates for the exercises below are available on [GitHub](https://github.com/iangow/far_templates/blob/main/README.md).
@@ -75,7 +75,7 @@ retail_industries <- tribble(
   mutate(parent_industry = if_else(ind_level == 1, "Total (Industry)", 
                                    parent_industry)) 
 
-retail_sales <-
+abs_data <-
   read_abs("8501.0", tables = 11) |>
   separate_wider_regex(series,
                        c("^.*;\\s+", 
@@ -84,6 +84,9 @@ retail_sales <-
   select(industry, state, date, value) |>
   rename(sales = value) |>
   arrange(date, industry, state) |>
+  
+retail_sales <-
+  abs_data |>
   left_join(retail_industries, join_by(industry)) |>
   write_csv("data/retail_sales.csv") 
 ```
@@ -231,7 +234,6 @@ combined_levels |>
               digits = 1)
 ```
 
-
 With any data set it is important to understand the meaning of any explicit missing values.
 For the five industry groups (excluding *Department stores* for the reasons discussed above), we have complete information at level 1 for a year if there are 12 months of data for each industry group at level 1.
 And we have complete information at level 2 for a year if there are 12 months of data for each sub-group at level 2.
@@ -317,6 +319,10 @@ combined_levels |>
 
 # Time-series analysis
 
+What are time-series data?
+
+## Plotting time-series data
+
 ```{r}
 start_date <- as.Date("2010-01-01")
 end_date <- as.Date("2024-11-30")
@@ -352,6 +358,31 @@ df_group_plot |>
   geom_line() +
   theme(legend.position = "bottom")
 ```
+### Seasonality
+
+```{r}
+
+retail_sales |>
+  filter(industry == "Cafes, restaurants and takeaway food services",
+         state == "Total (State)",
+         between(date, start_date, end_date)) |>
+  mutate(month = month(date),
+         year = year(date)) |>
+  ggplot(aes(x = month, y = sales)) +
+  ylab("Sales ($ million)") +
+  xlab("Month") +
+  geom_col() +
+  facet_wrap(. ~ year, ncol = 3, scales = "free_y")
+  
+```
+
+#### Exercises
+
+
+
+### Economic shocks
+
+
 
 ```{r}
 liquor <-
@@ -389,12 +420,13 @@ liquor |>
 The data used to create `retail_sales` come from the ABS
 
 ```{r}
-#| cache: true
 Sys.setenv(R_READABS_PATH = "~/Downloads/")
-
 library(readabs)
+```
 
-df <-
+```{r}
+#| cache: true
+abs_data <-
   read_abs("8501.0", tables = 11) |>
   separate_wider_regex(series,
                        c("^.*;\\s+", 
@@ -403,6 +435,48 @@ df <-
   select(industry, state, date, value) |>
   rename(sales = value) |>
   arrange(date, industry, state) 
+
+abs_data
 ```
 
+One thing that can be observed in the output above is that there is no indication of which industries are groups and which are subgroups.
+Also there is no indication of how the subgroups map to groups.
+To handle this, I created the following data frame to map `industry` to `ind_level`.
+
+```{r}
+retail_industries <- tribble(
+  ~industry, ~ind_level,
+  "Supermarket and grocery stores", 2,
+  "Liquor retailing", 2,
+  "Other specialised food retailing", 2,
+  "Food retailing", 1,
+  "Furniture, floor coverings, houseware and textile goods retailing", 2,
+  "Electrical and electronic goods retailing", 2,
+  "Hardware, building and garden supplies retailing", 2,
+  "Household goods retailing", 1,
+  "Clothing retailing", 2,
+  "Footwear and other personal accessory retailing", 2,
+  "Clothing, footwear and personal accessory retailing", 1,
+  "Department stores", 1,
+  "Newspaper and book retailing", 2,
+  "Other recreational goods retailing", 2,
+  "Pharmaceutical, cosmetic and toiletry goods retailing", 2,
+  "Other retailing n.e.c.", 2,
+  "Other retailing", 1,
+  "Cafes, restaurants and catering services", 2,
+  "Takeaway food services", 2,
+  "Cafes, restaurants and takeaway food services", 1,
+  "Total (Industry)", 0) |>
+  mutate(parent_industry = if_else(ind_level == 1, industry, NA)) |>
+  fill(parent_industry, .direction = "up") |>
+  mutate(parent_industry = if_else(ind_level == 1, "Total (Industry)", 
+                                   parent_industry)) 
+```
+
+```{r}
+retail_sales <-
+  abs_data |>
+  left_join(retail_industries, join_by(industry)) |>
+  write_csv("data/retail_sales.csv") 
+```
 :::
