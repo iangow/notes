@@ -116,12 +116,56 @@ def to_val(string, mapping):
     return int(''.join([str(mapping[i]) for i in string]))
 ```
 
+Now I have all the pieces to check whether an answer is correct.
+I want to check that the sum of the values of all elements of `words` except the last one equals the value of the last one.
+I can use `words[:-1]` to get a list of all words in `words` except the last one.
+
+```{python}
+words[:-1]
+```
+
+So the following list comprehension gets numerical values for the the words for the candidate mapping.
+
+```{python}
+[to_val(word, sol_candidate) for word in words[:-1]]
+```
+
+And I can sum them up using `sum()`.
+
+```{python}
+sum([to_val(word, sol_candidate) for word in words[:-1]])
+```
+
+I can use `words[-1]` to get a the last word in `words`.
+
+```{python}
+words[-1]
+```
+
+So the following list comprehension gets numerical value for the word for the candidate mapping.
+
+```{python}
+to_val(words[-1], sol_candidate)
+```
+
+This logic can all be put into a function `check_map()`:
+
 ```{python}
 def check_map(words, code):
     first_sum = sum([to_val(word, code) for word in words[:-1]])
     second_sum = to_val(words[-1], code)
     return first_sum == second_sum
 ```
+
+```{python}
+check_map(words, sol_candidate)
+```
+
+So we see that `sol_candidate` is not a valid solution.
+
+It turns out that the number of possible solutions to a problem like this is small enough that I can just solve it by brute force.
+That is, just consider every possible solution, meaning every permutation of mappings of the letters to digits.
+The list of possible solutions for a given set of letters is easily obtained using `permutations()` from the built-in `itertools` package.
 
 ```{python}
 import itertools
@@ -133,22 +177,21 @@ def get_maps(letters):
     return all_maps
 ```
 
+The `solve_problem()` function takes a list of words, generates the possible mappings, checks each one and returns a list of those that are valid.
+
 ```{python}
 def solve_problem(words):
     letters = get_letters(words)
-    codes = get_maps(letters)
-    results = [code for code in codes if check_map(words, code)]
-    return [res for res in results if res]
+    mappings = get_maps(letters)
+    return [mapping for mapping in mappings if check_map(words, mapping)]
 ```
 
-
+I can now apply `solve_problem()` to `words` to solve the problem.
 
 ```{python}
 solution = solve_problem(words)
 solution
 ```
-
 ```{python}
-check_map(words, solution[0])
+[to_val(word, solution[0]) for word in words]
 ```
-
