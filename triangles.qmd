@@ -1,0 +1,68 @@
+---
+title: "Perimeter of a triangle"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-02-02
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+Denote $AD$ as $x$ and $BD$ as $y$.
+We know that ${AC}^2 = 12^2 + x^2$ and that ${BC}^2 = 12^2 + y^2$.
+But we also know that  ${AC}^2 + {BC}^2 = {AB}^2$ and that $AB = x + y$.
+This means we have:
+
+$$
+\begin{aligned}
+12^2 + x^2 + 12^2 + y^2 &=  (x + y)^2 \\
+288 + x^2 + y^2 &=  x^2 + 2xy + y^2 \\
+xy &= 144
+\end{aligned}
+$$
+
+
+But we need $12^2 + x^2$ to be a perfect square, which rules out $x < 5$ (the smallest perfect square above $12^2 = 144$ is $13^2 = 169$, which requires that $x = 5$, as $169 - 144 = 25$).
+Similarly we can rule out $y < 5$.
+
+So we have:
+
+$$(x, y) \in \{ (6, 24), (8, 18), (9, 16), (12,12), (16, 9), (18, 8), (24, 6) \}.$$
+
+If $x = 6$, $12^2 + x^2 = 144 + 36 = 180$, which is not a perfect square.
+We can rule out $y = 6$ for the same reason.
+
+If $x = 8$, ${AC}^2 = 12^2 + x^2 = 144 + 64 = 208$, which is not a perfect square.
+For the same reason, we can rule ouf $y = 8$.
+
+If $x = 9$, ${AC}^2 = 12^2 + x^2 = 144 + 81 = 225$, which is a perfect square and we have $AC = 15$.
+If $x = 9$, then $y = 16$, which gives $BC = \sqrt{12^2 + 16 ^ 2} = 20$.
+We then have $AB = \sqrt{15^2 + 20^2} = 25$.
+So the perimeter is $AC + BC + AB = 15 + 20 + 25 = 60$.
+
+If $x = 12$, ${AC}^2 = 12^2 + 12^2 = 144 + 144 = 288$, which is not a perfect square.
+
+If $x = 16$, ${AC}^2 = 12^2 + x^2 = 144 + 256 = 400$, which is a perfect square and we have $AC = 20$.
+If $x = 16$, then $y = 9$, which gives $BC = \sqrt{12^2 + 9^2} = 25$.
+We then have $AB^2 = 20^2 + 25^2 = 1025$, which is not a perfect square.
+
+The minimum perimeter has $AC + BC + AB = 15 + 20 + 25 = 60$.
+
