@@ -1,0 +1,203 @@
+---
+title: "Macro homework"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-02-01
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+```
+
+```{r}
+#| cache: true
+#| include: false
+get_series_names <- function(url) {
+  df_names <- read_csv(url, n_max = 1,
+                       show_col_types = FALSE)
+  t(df_names[1, ]) |> 
+    as_tibble(rownames = "desc") |> 
+    rename(series = `V1`)
+}
+
+get_data <- function() {
+  url <- str_c("https://www.ons.gov.uk/file?uri=/",
+               "employmentandlabourmarket/peopleinwork/labourproductivity/",
+               "datasets/labourproductivity/current/prdy.csv")
+  df <- read_csv(url, skip = 6, show_col_types = FALSE)
+
+  series_details <- get_series_names(url)
+  
+  colnames(df) <- series_details$series
+  return(df)
+}
+
+df <- get_data()
+```
+
+```{r}
+#| include: false
+qtr_to_date <- function(yearq) {
+  year <- str_extract(yearq, "^([\\d]+)", 1)
+  quarter <- as.integer(str_extract(yearq, "Q(\\d)", 1))
+  month <- quarter * 3
+  date <- as.Date(str_c(year, "-", month, "-01"))
+  date + months(1) - days(1)
+}
+```
+
+```{r}
+#| include: false
+labour_data <-
+  df |> 
+  select(CDID, LZVB, A4YM) |>
+  filter(!is.na(LZVB), str_detect(CDID, "[\\d]{4} Q[\\d]")) |>
+  pivot_longer(-CDID, names_to = "series", values_to = "value") |>
+  mutate(date = qtr_to_date(CDID))
+```
+
+# Data and the current economy
+
+## 1. Labour productivity
+Download data on UK "Labour Productivity" from weblearn or from the [website of the Office for
+National Statistics](http://www.ons.gov.uk/). 
+The correct data should have the name PRDY.
+
+  i. Using a spreadsheet or other computer program, make a graph of the column labelled
+"UK Whole Economy: Output per hour worked SA: Index 2018 = 100" over time (code =
+LZVB). 
+Make sure you only use the quarterly data from 1971Q1 to as close to the present
+day as possible.
+
+See @fig-lzvb.
+
+```{r}
+#| label: fig-lzvb
+#| fig-cap: Output per hour (LZVB) over time
+labour_data |>
+  filter(series == "LZVB") |>
+  ggplot(aes(x = date, y = value, colour = series)) +
+  geom_line()
+```
+
+  ii. Discuss the shape of the graph after the 2008 financial crisis.
+  
+After 2008, it apppears from @fig-lzvb that producitivity growth (ie, increases in output per hour worked) levels off (ie, its growth rate decreases).
+  
+  iii. Add a trend line to the graph to more precisely pin down how UK labour productivity
+behaved after the 2008 financial crisis. 
+  What is the big picture? 
+Why does the trend line in your graph look different to that produced [by the ONS](http://visual.ons.gov.uk/productivity-puzzle)? 
+Which graph gives the most accurate description of reality, yours or the one by the ONS?
+
+Not clear which trendline the question is asking for, but I add two trendlines: one for pre-crisis and another for post-crisis.^[I label anything in 2008 or later as post-crisis.]
+The graph produced by the ONS effectively projects the pre-crisis trend into the post-crisis period.
+It is not entirely clear what "reality" is intended to be described by the ONS plot.
+In some sense, the "reality" intended to be described by the ONS plot might be the **counterfactual** world in which the pre-crisis trend continued into the post-crisis period.
+But clearly @fig-lzvb-trend better describes the reality of the world actually observed post-crisis.
+
+```{r}
+#| label: fig-lzvb-trend
+#| fig-cap: Output per hour (LZVB) with trendlines
+df_lzvb <- 
+  labour_data |>
+  filter(series == "LZVB") |>
+  mutate(post_crisis = date >= "2008-01-01") 
+
+df_lzvb |>
+  ggplot(aes(x = date, y = value, colour = post_crisis)) +
+  geom_line() +
+  geom_smooth(data = df_lzvb |> filter(post_crisis), 
+              method = "lm",
+              formula = 'y ~ x',
+              se = FALSE) +
+  geom_smooth(data = df_lzvb |> filter(!post_crisis), 
+              method = "lm",
+              formula = 'y ~ x',
+              se = FALSE)
+```
+
+   iv. Why might UK labour productivity have behaved as it has since the 2008 financial crisis?
+Have a look at the [Bank of England's Quarterly Bulletin 2014 Q2](https://www.bankofengland.co.uk/-/media/boe/files/quarterly-bulletin/2014/the-uk-
+productivity-puzzle.pdf) and the [2014 speech by
+Martin Weale "The UK productivity puzzle: an international perspective"](https://www.bankofengland.co.uk/-/media/boe/files/news/2014/december/the-uk-
+productivity-puzzle-an-international-perspective-speech-by-martin-weale.pdf) for background
+reading.
+  v. Examine also the series "Output per Worker: Whole Economy SA: Index 2018=100: UK"
+(code = A4YM). Are you surprised by the behaviour of the productivity series in 2020 Q2
+when the pandemic hit? If so, why? If not, why not?
+
+In @fig-both, I also include the "Output per Worker" series.
+There was a much-sharper decrease during Covid for this additional series than there was for output per hour worked, consistent with a sharp decrease in hours worked duing the early part of the Covid pandemic.
+
+```{r}
+#| label: fig-both
+#| fig-cap: Output per hour (LZVB) and per worker (A4YM) over time
+labour_data |>
+  ggplot(aes(x = date, y = value, colour = series)) +
+  geom_line()
+```
+
+## 2. Real versus nominal variables
+
+If there is one place in the world that does not understand inflation it is Hollywood.
+Even after being open for less than a month, *Star Wars Ep. VIII: The Last Jedi* had moved to 8th on the all-time, highest-grossing domestic movie list.^[<http://variety.com/2017/film/news/box-office-star-wars-last-jedi-jumanji-2-1202650420/>] 
+And the 2015 release of *Star Wars Ep. VII: The Force Awakens* shattered every box office record.^[<https://www.cinemablend.com/new/Star-Wars-Force-Awakens-Poised-Shatter-Every-Box-Office-Record-We-Have-70996.html>]
+
+How do reported worldwide box office takings of $1,370,011,043 for *Star Wars Ep. VII: The Force
+Awakens* in 2015 really compare with the $786,535,665 brought in by the original *Star Wars Ep.
+IV: A New Hope* in 1977?
+Download data for CPI inflation from <https://research.stlouisfed.org/fred2/> to calculate the box
+office takings of Ep. IV in 2015 dollars and the box office takings of Ep. VII in 1977 dollars.
+Which film had the greater takings?
+(Bonus for Star Wars fans: which do you think was the better film?)
+
+# Models in economics
+
+Suppose a representative agent has a utility function involving consumption and labour supply
+of the form $U = \log(C) - 2L^2$ where $\log (C)$ is the natural logarithm.
+ 
+ i) The agent is a 'yeoman farmer', that produces their own output with a production
+function $𝐶 = Y = AL^{\alpha}$, where $Y$ is output per head.
+Derive the optimal level of labour supply, and comment on what it implies for the relationship between labour supply and productivity growth.
+
+ ii) The agent is instead a worker, who receives a real wage $w$.
+Their budget constraint is $C = wL + \pi$, where $\pi$ are profits distributed by firms, and both $w$ and $\pi$ are assumed to be exogenous by the worker.
+Derive an expression for optimal labour supply as a function of $w$ and $C$.
+ 
+ iii) An individual, perfectly competitive firm maximises profits $\pi = A N^n - w N$, where $N$ is the number of workers it employs.
+Derive the labour demand curve for this firm.
+What is the relationship between the marginal product of labour and the real wage?
+
+ iv) Since each worker works $L$ hours and each firm wishes to employ a total of $N$ hours, equilibrium requires that $L = nN$ where $n$ is the number of firms per worker (or, equivalently, the reciprocal of the number of workers per firm).
+As consumption per head is equal to output per head, $C = nY = n AN^n$.
+Use this, plus the expression for the real wage, in the labour supply equation to derive the equilibrium value for $L$ in terms of model parameters.
+Compare this to your answer to (i), and comment.
+
+ v) Suppose the number of agents in the economy increases (because of immigration, for example), but the new agents are just like the existing ones.
+As a result, the number of firms $n$ falls.
+Show what happens to real wages, output per head and consumption per head.
+
+ vi) By deriving an expression for profits per firm in terms of $L$ and $n$, comment on what might happen in the long run as $n$ changes.
