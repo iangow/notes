@@ -27,7 +27,6 @@ format:
 bibliography: papers.bib
 ---
 
-
 :::{#tip-pkgs .callout-tip text-align="left"}
 The code in this chapter uses the packages listed below.
 For instructions on how to set up your computer to use the code found in this book, see @sec-install.
@@ -38,6 +37,8 @@ Quarto templates for the exercises below are available on [GitHub](https://githu
 #| warning: false
 library(tidyverse)
 library(modelsummary)
+library(dbplyr)
+library(DBI)
 ```
 
 ```{r}
@@ -411,6 +412,81 @@ liquor |>
   facet_wrap(year ~ ., ncol = 1) +
   theme(legend.position = "bottom") +
   theme(plot.title.position = "plot")
+```
+
+:::{#tip-backends .callout-tip text-align="left"}
+
+# Alternative backends
+
+So far, we have done many calculations using `mutate()` and `summarize()`, combined data frames using functions like `inner_join()`, or focused on certain rows or columns using `filter()` or `select()`.
+We have generally applied the functions to data in data frames, which we understand to comprise vectors of data stored in the memory (RAM) of our computer.
+However, as you work more with data, you are likely to encounters situations where this approach needs to be modified.
+
+For example, the data you want to work with might be stored on a remote computer, such as a database server or a Spark cluster.
+Alternatively, you might have the data stored on disk, but it either would take too long to load or simply cannot fit into RAM.
+
+It turns out that there are packages that can help us work with this kind data with little change to how we have worked with data so far.
+
+
+Backend      | Native language  | R package    | `dplyr` interface |
+-------------|------------------|--------------|-------------------|
+SQL database | SQL              | `DBI`        | `dbplyr`          |
+Arrow        | Apache Arrow API | `arrow`      | `arrow`           |
+Spark        | Spark SQL, etc.  | `splarklyr`  | `splarklyr`       |
+`data.table` | `data.table`     | `data.table` | `dtplyr`          |
+
+In this book, in addition to using `dplyr` with data frames, we explore the use of SQL database as an alternative backend.
+
+Advantages
+
+ - Moving processing to where the data are located
+ - Moving processing to a more powerful computer
+ - Avoiding loading of data into RAM
+ - Using a more powerful backend
+ - Using additional functions
+
+:::
+
+## Time windows
+
+Many analyses in business and economics involve calculations over **time windows**.
+Some examples:
+
+ - Returns on stocks after their initial public offerings (IPOs)
+ - Comparing sales or profits for the year to date with previous years
+ - Smoothing sales over time using moving averages
+
+### Moving averages
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+retail_sales_db <-
+  retail_sales |>
+  copy_to(db, df = _, overwrite = TRUE)
+
+df_group_ma_plot <-
+  retail_sales_db |>
+  left_join(short_names, by = "industry", copy = TRUE) |>
+  mutate(industry = coalesce(short_ind, industry)) |>
+  group_by(industry, state) |>
+  window_order(date) |>
+  window_frame(-11, 0) |>
+  mutate(sales_ma = cummean(sales),
+         count_ma = cumsum(as.integer(!is.na(sales)))) |>
+  filter(state == "Total (State)", ind_level == 1,
+         between(date, start_date, end_date),
+         count_ma >= 12) 
+```
+
+```{r}
+#| label: fig-all-ind-ma
+#| fig-cap: Retail sales (12-month moving average) by industry
+df_group_ma_plot |>
+  ggplot(aes(x = date, y = sales_ma)) +
+  ylab("Sales, 12-month moving average ($ million)") +
+  xlab("Month") +
+  geom_line() +
+  facet_wrap(industry ~ ., ncol = 2, scales = "free_y")
 ```
 
 :::{#tip-abs .callout-tip text-align="left"}
