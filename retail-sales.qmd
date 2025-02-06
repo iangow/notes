@@ -76,16 +76,20 @@ retail_industries <- tribble(
   mutate(parent_industry = if_else(ind_level == 1, "Total (Industry)", 
                                    parent_industry)) 
 
+table <- "TABLE 11. Retail Turnover, State by Industry Subgroup, Original"
+
 abs_data <-
-  read_abs("8501.0", tables = 11) |>
+  read_abs("8501.0") |>
+  filter(table_title == table) |>
   separate_wider_regex(series,
-                       c("^.*;\\s+", 
-                         state = ".*?", "\\s+;\\s+",
-                         industry = ".*?", "\\s+;$")) |>
+                       c(label = "^.*", ";\\s+", 
+                         state = ".*?", "\\s*;\\s*",
+                         industry = ".*?", "\\s*;$")) |>
+  mutate(label = str_trim(label)) |>
   select(industry, state, date, value) |>
   rename(sales = value) |>
-  arrange(date, industry, state) |>
-  
+  arrange(date, industry, state)
+
 retail_sales <-
   abs_data |>
   left_join(retail_industries, join_by(industry)) |>
@@ -109,6 +113,7 @@ retail_sales <- read_csv("data/retail_sales.csv")
 ```
 
 The data in `retail_sales` are monthly estimates of turnover and volumes for retail businesses, including store and online sales, by industry group and industry subgroup.
+The data 
 
 # Understanding the industries
 
@@ -502,15 +507,19 @@ library(readabs)
 
 ```{r}
 #| cache: true
+table <- "TABLE 11. Retail Turnover, State by Industry Subgroup, Original"
+
 abs_data <-
-  read_abs("8501.0", tables = 11) |>
+  read_abs("8501.0") |>
+  filter(table_title == table) |>
   separate_wider_regex(series,
-                       c("^.*;\\s+", 
-                         state = ".*?", "\\s+;\\s+",
-                         industry = ".*?", "\\s+;$")) |>
+                       c(label = "^.*", ";\\s+", 
+                         state = ".*?", "\\s*;\\s*",
+                         industry = ".*?", "\\s*;$")) |>
+  mutate(label = str_trim(label)) |>
   select(industry, state, date, value) |>
   rename(sales = value) |>
-  arrange(date, industry, state) 
+  arrange(date, industry, state)
 
 abs_data
 ```
