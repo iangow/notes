@@ -382,45 +382,11 @@ retail_sales |>
   xlab("Month") +
   geom_col() +
   facet_wrap(. ~ year, ncol = 3) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "none") +
+  scale_x_discrete(labels = \(x) str_sub(x, 1, 1))
 ```
 
 #### Exercises
-
-
-
-### Economic shocks
-
-
-
-```{r}
-liquor <-
-  retail_sales |>
-  filter(state %in% c("Victoria", "Western Australia"),
-         industry == "Liquor retailing") |>
-  filter(between(date, 
-                 as.Date("2018-01-01"), 
-                 as.Date("2024-08-31"))) |>
-  mutate(year = year(date),
-         month = month(date, label = TRUE))
-```
-
-```{r}
-#| label: fig-vic-wa-liq
-#| fig-cap: Liquor retailing sales (normalised by 2018 average monthly sales)
-#| fig-height: 8
-liquor |>
-  filter(year == 2018) |>
-  group_by(state) |>
-  summarize(scale_factor = mean(sales)) |>
-  inner_join(liquor, by = "state") |>
-  mutate(sales_normalised = sales / scale_factor) |>
-  ggplot(aes(x = month, y = sales_normalised, fill = state)) +
-  geom_col(position = "dodge") +
-  facet_wrap(year ~ ., ncol = 1) +
-  theme(legend.position = "bottom") +
-  theme(plot.title.position = "plot")
-```
 
 :::{#tip-backends .callout-tip text-align="left"}
 
@@ -464,14 +430,46 @@ Some examples:
  - Comparing sales or profits for the year to date with previous years
  - Smoothing sales over time using moving averages
 
-### Moving averages
-
 ```{r}
 db <- dbConnect(duckdb::duckdb())
 retail_sales_db <-
   retail_sales |>
   copy_to(db, df = _, overwrite = TRUE)
+```
 
+### Year-to-date (YTD)
+
+```{r}
+df_group_ytd_plot <-
+  retail_sales_db |> 
+  filter(str_detect(parent_industry, "^Cafes")) |>
+  mutate(year = year(date)) |>
+  group_by(industry, state, year) |>
+  window_order(date) |>
+  mutate(sales_ytd = cumsum(sales)) |>
+  filter(year >= 2020) |>
+  collect() |>
+  mutate(year = as.character(year),
+         month = month(date, label = TRUE))
+```
+
+```{r}
+#| label: fig-all-ind-ytd
+#| fig-cap: Year-to-date retail sales by industry
+df_group_ytd_plot |>
+  filter(state %in% c("Victoria", "Western Australia")) |>
+  ggplot(aes(x = month, y = sales_ytd / 1e3, color = year, group = year)) +
+  ylab("Sales, year-to-date ($ billion)") +
+  xlab("Month") +
+  geom_line() +
+  facet_wrap(industry ~ state, ncol = 2, scales = "free_y") +
+  theme(legend.position = "bottom")
+```
+
+
+### Moving averages
+
+```{r}
 df_group_ma_plot <-
   retail_sales_db |>
   left_join(short_names, by = "industry", copy = TRUE) |>
@@ -495,6 +493,37 @@ df_group_ma_plot |>
   xlab("Month") +
   geom_line() +
   facet_wrap(industry ~ ., ncol = 2, scales = "free_y")
+```
+
+### Economic shocks
+
+```{r}
+liquor <-
+  retail_sales |>
+  filter(state %in% c("Victoria", "Western Australia"),
+         industry == "Liquor retailing") |>
+  filter(between(date, 
+                 as.Date("2018-01-01"), 
+                 as.Date("2024-08-31"))) |>
+  mutate(year = year(date),
+         month = month(date, label = TRUE))
+```
+
+```{r}
+#| label: fig-vic-wa-liq
+#| fig-cap: Liquor retailing sales (normalised by 2018 average monthly sales)
+#| fig-height: 8
+liquor |>
+  filter(year == 2018) |>
+  group_by(state) |>
+  summarize(scale_factor = mean(sales)) |>
+  inner_join(liquor, by = "state") |>
+  mutate(sales_normalised = sales / scale_factor) |>
+  ggplot(aes(x = month, y = sales_normalised, fill = state)) +
+  geom_col(position = "dodge") +
+  facet_wrap(year ~ ., ncol = 1) +
+  theme(legend.position = "bottom") +
+  theme(plot.title.position = "plot")
 ```
 
 :::{#tip-abs .callout-tip text-align="left"}
