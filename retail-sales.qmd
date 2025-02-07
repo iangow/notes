@@ -347,8 +347,8 @@ Figures [-@fig-all-ind] and [-@fig-all-ind2] plot sales from `r format(start_dat
 #| label: fig-all-ind
 #| fig-cap: Retail sales by industry using `facet_wrap()`
 df_group_plot |>
-  ggplot(aes(x = date, y = sales)) +
-  ylab("Sales ($ million)") +
+  ggplot(aes(x = date, y = sales / 1e3)) +
+  ylab("Sales ($ billion)") +
   xlab("Month") +
   geom_line() +
   facet_wrap(industry ~ ., ncol = 2, scales = "free_y")
@@ -358,8 +358,8 @@ df_group_plot |>
 #| label: fig-all-ind2
 #| fig-cap: Retail sales by industry
 df_group_plot |>
-  ggplot(aes(x = date, y = sales, colour = industry)) +
-  ylab("Sales ($ million)") +
+  ggplot(aes(x = date, y = sales / 1e3, colour = industry)) +
+  ylab("Sales ($ billion)") +
   xlab("Month") +
   geom_line() +
   theme(legend.position = "bottom")
@@ -367,19 +367,22 @@ df_group_plot |>
 ### Seasonality
 
 ```{r}
-
+#| label: fig-season
+#| fig-cap: Seasonality
+#| fig-height: 5
+#| fig-width: 6
 retail_sales |>
   filter(industry == "Cafes, restaurants and takeaway food services",
          state == "Total (State)",
          between(date, start_date, end_date)) |>
-  mutate(month = month(date),
+  mutate(month = month(date, label = TRUE),
          year = year(date)) |>
-  ggplot(aes(x = month, y = sales)) +
-  ylab("Sales ($ million)") +
+  ggplot(aes(x = month, y = sales / 1e3, fill = month)) +
+  ylab("Sales ($ billion)") +
   xlab("Month") +
   geom_col() +
-  facet_wrap(. ~ year, ncol = 3, scales = "free_y")
-  
+  facet_wrap(. ~ year, ncol = 3) +
+  theme(legend.position = "bottom")
 ```
 
 #### Exercises
@@ -487,8 +490,8 @@ df_group_ma_plot <-
 #| label: fig-all-ind-ma
 #| fig-cap: Retail sales (12-month moving average) by industry
 df_group_ma_plot |>
-  ggplot(aes(x = date, y = sales_ma)) +
-  ylab("Sales, 12-month moving average ($ million)") +
+  ggplot(aes(x = date, y = sales_ma / 1e3)) +
+  ylab("Sales, 12-month moving average ($ billion)") +
   xlab("Month") +
   geom_line() +
   facet_wrap(industry ~ ., ncol = 2, scales = "free_y")
