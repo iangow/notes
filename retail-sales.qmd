@@ -101,7 +101,7 @@ The ABS describes itself as "Australia's national statistical agency and an offi
 We discuss the source of the data in more detail in @tip-abs.
 
 The data are stored as a **comma-separated value** (CSV) file format in `data/retail_sales.csv` in the repository you downloaded for this course.
-There is a good chance that, if you have Microsoft Excel is installed on your computer, double-clicking on this file on your computer will open it in Excel.
+There is a good chance that, if Microsoft Excel is installed on your computer, double-clicking on this file on your computer will open it in Excel.
 To understand the contents of the file, it's actually better to open it in a text editor, such as Notepad (Windows) or TextEdit (MacOS).
 CSV files are a common format for sharing data, as it is a simple format that many software packages can handle.
 [Chapter 7](https://r4ds.hadley.nz/data-import.html) of *R for Data Science* discusses CSVs in more detail.
@@ -112,8 +112,14 @@ Here we use `read_csv()` from the Tidyverse to load the data into R.
 retail_sales <- read_csv("data/retail_sales.csv")
 ```
 
-The data in `retail_sales` are monthly estimates of turnover and volumes for retail businesses, including store and online sales, by industry group and industry subgroup.
-The data 
+As can be seen in the output above, `read_csv()` will attempt to infer a number of features of the data.
+For example, the first row of the CSV file (`industry,state,date,sales,ind_level,parent_industry`) is assumed to provide the names the columns of the resulting data frame.
+Additionally, `read_csv()` will guess the appropriate type for each column.
+From the output above, we can see that `industry`, `state`, and `parent_industry` are imported as character columns, that `date` has type date, and that `sales` and `ind_level` have type `dbl` ("double" being the R type for storing real numbers).
+
+The data in `retail_sales` are monthly estimates of turnover [sales in dollars] and volumes for retail businesses, including store and online sales, by industry group and industry subgroup.
+According to [the ABS](https://www.abs.gov.au/methodologies/retail-trade-australia-methodology/dec-2024), "estimates of turnover are compiled from the monthly Retail Business Survey.
+About 700 'large' businesses are included in the survey every month, while a sample of about 2,700 'smaller' businesses is selected."
 
 # Understanding the industries
 
@@ -127,7 +133,7 @@ We can take a peek at the first few rows of data by typing `retail_sales` in the
 retail_sales
 ```
 
-From the output above, we can see that `industry`, `state`, and `parent_industry` are character columns, that `date` has type date, and that `sales` and `ind_level` have type "double".
+
 We can also get a succinct take on the data using `summary()`:
 
 ```{r}
@@ -135,7 +141,7 @@ summary(retail_sales)
 ```
 We start by investigating the data in `industry`, `ind_level`, and `parent_industry`.
 Below we see that `Total (Industry)` is the parent industry for all industries having `ind_level` equal to one and that `parent_industry` is missing whenever `ind_level` is zero.
-Note that only five industries are listed under `parent_industry` when `ind_level` is two.
+Note that only five distinct industries are listed under `parent_industry` when `ind_level` is two.
 
 ```{r}
 retail_sales |> 
@@ -152,6 +158,7 @@ retail_sales |>
   anti_join(retail_sales, by = join_by(industry == parent_industry)) |>
   count(industry)
 ```
+
 Because the function `anti_join(x, y)` returns all rows in `x` that don’t have a match in `y`, it is useful for finding **implicit missing values**.^[TODO: Discuss *implicit missing values* in an earlier section on `left_join()`.]
 
 Additionally, while the ABS website describes the data as "comprising 15 industry subgroups", we see only 14 subgroups in the data:
