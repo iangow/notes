@@ -334,15 +334,40 @@ combined_levels |>
 
 
 
-# Time-series analysis
+# Panel data
 
-What are time-series data?
+A very common form of data in business and economics is the **time-series**.
+Time-series data involve repeated measurements over time, typically at regular intervals.
+Some examples of time-series data sets are:
 
-## Plotting time-series data
+ - Daily stock prices over time
+ - Quarterly measures of an economy's gross domestic product
+ - Measures of annual profits for a company
+ 
+An alternative to time-series data is known as **cross-sectional** data, which involves measures at a point of time for multiple entities.
+Some examples of cross-sectional data sets are:
+
+ - Stock prices for multiple companies on a given day
+ - Measures of the gross domestic product for different economics for a given quarter
+ - Measures of profits for several companies in a given year
+ 
+Often cross-sectional and time-series data will exist in a single data set.
+Such a data set is often known as a **panel data** set.
+Some examples of panel data sets are:
+
+ - Daily stock prices for multiple companies over time
+ - Quarterly measures of the gross domestic product for different economics over several periods
+ - Annual profits for several companies over several year
+
+## Plotting panel data
+
+The `retail_sales` data set is a panel data set with monthly data on retail sales for several "states" and several industries.
+For a given state and industry, the monthly retail sales series is a time-series.
+For an initial exploration of `retail_sales` in more depth, I construct `df_group_plot`, a data set focused on a subset of the available dates and the data for all states combined (`state == "Total (State)"`) and the industry groups (`ind_level == 1`).
 
 ```{r}
 start_date <- as.Date("2010-01-01")
-end_date <- as.Date("2024-11-30")
+end_date <- as.Date("2024-07-01")
 
 df_group_plot <-
   retail_sales |>
@@ -353,16 +378,18 @@ df_group_plot <-
 ```
 
 Figures [-@fig-all-ind] and [-@fig-all-ind2] plot sales from `r format(start_date, "%B %Y")` until `r format(end_date, "%B %Y")` by industry group.
+Figures [-@fig-all-ind] and [-@fig-all-ind2] plot the same underlying information in two different ways.
 
 ```{r}
 #| label: fig-all-ind
 #| fig-cap: Retail sales by industry using `facet_wrap()`
 df_group_plot |>
-  ggplot(aes(x = date, y = sales / 1e3)) +
+  ggplot(aes(x = date, y = sales / 1e3, colour = industry)) +
   ylab("Sales ($ billion)") +
   xlab("Month") +
   geom_line() +
-  facet_wrap(industry ~ ., ncol = 2, scales = "free_y")
+  facet_wrap(industry ~ ., ncol = 2, scales = "free_y") +
+  theme(legend.position = "none")
 ```
 
 ```{r}
@@ -375,7 +402,25 @@ df_group_plot |>
   geom_line() +
   theme(legend.position = "bottom")
 ```
-### Seasonality
+
+### Exercises
+
+1. Identify three patterns in the data observed in Figures [-@fig-all-ind] and [-@fig-all-ind2].
+For each pattern, provide a conjecture for what explains the pattern.
+
+2. Describe in words how @fig-all-ind differs from @fig-all-ind2.
+
+3. Describe in words how the code used to create @fig-all-ind was modified to create @fig-all-ind2.
+
+4. In your view, which plot---@fig-all-ind or @fig-all-ind2---best presents the information?
+Is one better than the other for identifying the patterns you identified in the previous question?
+
+## Seasonality
+
+One thing you likely noticed about Figures [-@fig-all-ind] and [-@fig-all-ind2] is that retail sales appear to be highly **seasonal**.
+Seasonality refers to the tendency of some time-series to exhibit recurring patterns over time.
+For example, ice cream sales tend to be higher in summer, while sales of ski boots probably peak in winter months.
+To see how we can better understand seasonality, consider @fig-season, which plots sales of *Cafes, restaurants and takeaway food services* for all states combined in a way that allows us to consider each year separately.
 
 ```{r}
 #| label: fig-season
@@ -392,12 +437,24 @@ retail_sales |>
   ylab("Sales ($ billion)") +
   xlab("Month") +
   geom_col() +
-  facet_wrap(. ~ year, ncol = 3) +
+  facet_wrap(year ~ ., ncol = 3) +
   theme(legend.position = "none") +
   scale_x_discrete(labels = \(x) str_sub(x, 1, 1))
 ```
 
-#### Exercises
+### Exercises
+
+1. Looking at @fig-season, which month (if any) generally has the *highest* sales in each year?
+Provide a conjecture for the underlying forces causing this month to have the highest sales in most or all years?
+
+2. Looking at @fig-season, which month (if any) generally has the *lowest* sales in each year?
+Provide a conjecture for the underlying forces causing this month to have the lowest sales in most or all years?
+
+3. What happens if you omit `, fill = month` from the code creating @fig-season?
+Does the use of colour add useful information to this plot?
+
+4. What is the line of code `scale_x_discrete(labels = \(x) str_sub(x, 1, 1))` doing here?
+(*Hint:* Omit this line and compare the plot produced with @fig-season.)
 
 :::{#tip-backends .callout-tip text-align="left"}
 
