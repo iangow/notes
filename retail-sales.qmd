@@ -212,10 +212,9 @@ combined_levels <-
 ```
 
 I will use `datasummary()` from the `modelsummary` package to display summary statistics.
-I create `Sum()` to sum up values while removing `NA` values and `pretty_num()` to format the numbers in the way that I want.
+I create `pretty_num()` to format the numbers in the way that I want.
 
 ```{r}
-Sum <- function(x) sum(as.double(x), na.rm = TRUE)
 pretty_num <- function(x) prettyNum(as.integer(x), format = "f", 
                                     big.mark = ",")
 ```
@@ -242,7 +241,7 @@ combined_levels |>
   filter(year >= 2019, 
          state == "Total (State)",
          industry != "Department stores") |>
-  datasummary(industry * ind_level ~ sales * Sum * year,
+  datasummary(industry * ind_level ~ sales * sum * year,
               data = _, fmt = pretty_num,
               digits = 1)
 ```
@@ -258,7 +257,7 @@ From @tbl-non-missing, we see that larger states have complete data for all five
 combined_levels |>
   filter(year >= 2019, 
          industry != "Department stores") |>
-  datasummary(state * ind_level ~ no_missing * Sum * year,
+  datasummary(state * ind_level ~ no_missing * sum * year,
               data = _, fmt = pretty_num)
 ```
 
@@ -277,9 +276,12 @@ combined_levels |>
   mutate(ind_level = if_else(industry == "Department stores", "2", ind_level)) |>
   filter(ind_level == "2",
          year >= 2019) |>
-  datasummary(industry * ind_level ~ sales * Sum * year,
+  datasummary(industry * ind_level ~ sales * sum * year,
               data = _, fmt = pretty_num)
 ```
+
+3. In creating @tbl-reconc, I used `left_join()` and then `coalesce()`.
+Why did I need to use `left_join()` rather than `inner_join()`. (*Hint:* Replace `left_join()` with  `inner_join()` and see what happens.)
 
 3. What industry group has missing values at level 2 for Queensland, as seen in @tbl-non-missing?
 Which subgroups are affected?
@@ -290,7 +292,7 @@ combined_levels |>
   filter(year >= 2019, 
          state == "Queensland",
          industry != "Department stores") |>
-  datasummary(industry * ind_level ~ sales * Sum * year,
+  datasummary(industry * ind_level ~ sales * sum * year,
               data = _, fmt = pretty_num)
 ```
 
@@ -307,7 +309,7 @@ combined_levels |>
   filter(year >= 2019, 
          state == "Queensland",
          industry != "Department stores") |>
-  datasummary(industry * ind_level ~ sales * Sum * year,
+  datasummary(industry * ind_level ~ sales * sum * year,
               data = _, fmt = pretty_num,
               digits = 1)
 ```
@@ -325,10 +327,12 @@ combined_levels |>
   filter(year >= 2019, 
          state == "Tasmania",
          industry != "Department stores") |>
-  datasummary(industry * ind_level ~ sales * Sum * year,
+  datasummary(industry * ind_level ~ sales * sum * year,
               data = _, fmt = pretty_num,
               digits = 1)
 ```
+
+
 
 # Time-series analysis
 
