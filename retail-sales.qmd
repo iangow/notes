@@ -446,10 +446,18 @@ retail_sales_db <-
 
 ### Year-to-date (YTD)
 
+Often we will want to compare performance for the current period with that in earlier periods.
+If we are in August of 2025, it does not make omparing the sales for 2025 with total sales for 2024, as this would be comparing sales for seven months (January through July) with twelve months.
+So it is common to calculate **year-to-date** performance and compare that with performance for a comparable period from earlier years.
+
 ```{r}
-df_group_ytd_plot <-
+cafes_vic_wa <-
   retail_sales_db |> 
-  filter(str_detect(parent_industry, "^Cafes")) |>
+  filter(str_detect(parent_industry, "^Cafes"),
+         state %in% c("Victoria", "Western Australia"))
+
+df_group_ytd_plot <-
+  cafes_vic_wa |>
   mutate(year = year(date)) |>
   group_by(industry, state, year) |>
   window_order(date) |>
@@ -462,10 +470,48 @@ df_group_ytd_plot <-
 
 ```{r}
 #| label: fig-all-ind-ytd
-#| fig-cap: Year-to-date retail sales by industry
+#| fig-cap: Year-to-date sales for cafes
+#| fig-height: 6
+#| fig-width: 6
 df_group_ytd_plot |>
-  filter(state %in% c("Victoria", "Western Australia")) |>
-  ggplot(aes(x = month, y = sales_ytd / 1e3, color = year, group = year)) +
+  ggplot(aes(x = month, y = sales_ytd / 1e3,
+             color = year, group = year)) +
+  ylab("Sales, year-to-date ($ billion)") +
+  xlab("Month") +
+  geom_line() +
+  facet_wrap(industry ~ state, ncol = 2, scales = "free_y") +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+fiscal_month <- function(x, first_month = 1, label = TRUE, abbr = TRUE) {
+  new_order <- c(first_month:12, 1:(first_month - 1))
+  labels <- levels(month(x, label = label, abbr = abbr))
+  new_labels <- labels[new_order]
+  ordered(month(x), levels = new_order, labels = new_labels)
+}
+
+df_group_fytd_plot <-
+  cafes_vic_wa |>
+  mutate(fyear = year(date) + as.integer(month(date) >= 7)) |>
+  group_by(industry, state, fyear) |>
+  window_order(date) |>
+  mutate(sales_ytd = cumsum(sales)) |>
+  filter(fyear >= 2020) |>
+  ungroup() |>
+  collect() |>
+  mutate(fyear = as.character(fyear),
+         month = fiscal_month(date, first_month = 7))
+```
+
+```{r}
+#| label: fig-all-ind-fytd
+#| fig-cap: Fiscal year-to-date sales for cafes
+#| fig-height: 6
+#| fig-width: 6
+df_group_fytd_plot |>
+  ggplot(aes(x = month, y = sales_ytd / 1e3,
+             color = fyear, group = fyear)) +
   ylab("Sales, year-to-date ($ billion)") +
   xlab("Month") +
   geom_line() +
