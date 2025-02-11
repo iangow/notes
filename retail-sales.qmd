@@ -468,12 +468,20 @@ What complications do you anticipate in measuring seasonality?
 
 So far, we have done many calculations using `mutate()` and `summarize()`, combined data frames using functions like `inner_join()`, or focused on certain rows or columns using `filter()` or `select()`.
 We have generally applied the functions to data in data frames, which we understand to comprise vectors of data stored in the memory (RAM) of our computer.
-However, as you work more with data, you are likely to encounters situations where this approach needs to be modified.
+However, as you work more with data, you are likely to encounter situations where this approach has limitations.
 
 For example, the data you want to work with might be stored on a remote computer, such as a database server or a Spark cluster.
 Alternatively, you might have the data stored on disk, but it either would take too long to load or simply cannot fit into RAM.
-
 It turns out that there are packages that can help us work with this kind data with little change to how we have worked with data so far.
+
+If the data or interest are stored in a database, the `DBI` package provides an interface allowing users to connect to most popular databases, execute SQL, and retrieve results.
+The `dbplyr` package allows users to create **remote data frames** and execute queries using a familiar interface often identical to that offered by `dplyr`.
+
+One popular option is `data.table`, a package that provides a "high-performance version of base R's `data.frame` with syntax and feature enhancements for ease of use, convenience and programming speed."
+Another option is Apache Arrow, "a multi-language toolbox designed for efficient analysis and transport of large datasets."
+The `arrow` R package provides a `dplyr` backend allowing users to analyze larger-than-memory datasets using familiar syntax.
+
+
 
 
 Backend      | Native language  | R package    | `dplyr` interface |
