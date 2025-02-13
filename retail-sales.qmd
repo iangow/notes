@@ -265,7 +265,13 @@ combined_levels |>
 
 1. Describe in words what the query above using `anti_join()` is doing.
 
-2. Suppose we wanted to focus our analysis on industry subgroups, but wanted to retain "Department stores" as part of this.
+2. What do functions like `inner_join()` and `union_all()` have in common?
+How do they differ?
+
+3. Using the documentation provided for them, explain how `union_all()` and `union()` differ.
+Would you expect different results if we had used `union()` instead of `union_all()` in the code above?
+
+4. Suppose we wanted to focus our analysis on industry subgroups, but wanted to retain "Department stores" as part of this.
 Write code to create `ind_sub_groups`, a data set comprising data from `retail_sales` that we could use for this purpose.
 
 ```{r}
@@ -280,10 +286,10 @@ combined_levels |>
               data = _, fmt = pretty_num)
 ```
 
-3. In creating @tbl-reconc, I used `left_join()` and then `coalesce()`.
+5. In creating @tbl-reconc, I used `left_join()` and then `coalesce()`.
 Why did I need to use `left_join()` rather than `inner_join()`. (*Hint:* Replace `left_join()` with  `inner_join()` and see what happens.)
 
-3. What industry group has missing values at level 2 for Queensland, as seen in @tbl-non-missing?
+6. What industry group has missing values at level 2 for Queensland, as seen in @tbl-non-missing?
 Which subgroups are affected?
 
 ```{r}
@@ -347,8 +353,8 @@ Some examples of time-series data sets are:
 An alternative to time-series data is known as **cross-sectional** data, which involves measures at a point of time for multiple entities.
 Some examples of cross-sectional data sets are:
 
- - Stock prices for multiple companies on a given day
- - Measures of the gross domestic product for different economics for a given quarter
+ - Closing stock prices for multiple companies on a given day
+ - Measures of the gross domestic product for different economies for a given quarter
  - Measures of profits for several companies in a given year
  
 Often cross-sectional and time-series data will exist in a single data set.
@@ -356,14 +362,14 @@ Such a data set is often known as a **panel data** set.
 Some examples of panel data sets are:
 
  - Daily stock prices for multiple companies over time
- - Quarterly measures of the gross domestic product for different economics over several periods
+ - Quarterly measures of the gross domestic product for different economies over several periods
  - Annual profits for several companies over several year
 
 ## Plotting panel data
 
-The `retail_sales` data set is a panel data set with monthly data on retail sales for several "states" and several industries.
+The `retail_sales` data set is a panel data set with monthly data on retail sales for several "states" and several industries.^[I put "states" in scare quotes because it includes territories and also a series for all states combined (`Total (State)`).]
 For a given state and industry, the monthly retail sales series is a time-series.
-For an initial exploration of `retail_sales` in more depth, I construct `df_group_plot`, a data set focused on a subset of the available dates and the data for all states combined (`state == "Total (State)"`) and the industry groups (`ind_level == 1`).
+For an initial exploration of `retail_sales`, I construct `df_group_plot`, a data set focused on a subset of the available dates and the data for all states combined (`state == "Total (State)"`) and the industry groups (`ind_level == 1`).
 
 ```{r}
 start_date <- as.Date("2010-01-01")
@@ -378,7 +384,7 @@ df_group_plot <-
 ```
 
 Figures [-@fig-all-ind] and [-@fig-all-ind2] plot sales from `r format(start_date, "%B %Y")` until `r format(end_date, "%B %Y")` by industry group.
-Figures [-@fig-all-ind] and [-@fig-all-ind2] plot the same underlying information in two different ways.
+While Figures [-@fig-all-ind] and [-@fig-all-ind2] use the same underlying data, they present the information in two different ways.
 
 ```{r}
 #| label: fig-all-ind
@@ -450,11 +456,12 @@ Provide a conjecture for the underlying forces causing this month to have the hi
 2. Looking at @fig-season, which month (if any) generally has the *lowest* sales in each year?
 Provide a conjecture for the underlying forces causing this month to have the lowest sales in most or all years?
 
-3. What happens if you omit `, fill = month` from the code creating @fig-season?
+3. What happens if you omit "`, fill = month`" from the code creating @fig-season?
 Does the use of colour add useful information to this plot?
 
-4. What is the line of code `scale_x_discrete(labels = \(x) str_sub(x, 1, 1))` doing here?
-(*Hint:* Omit this line and compare the plot produced with @fig-season.)
+4. What is the line of code "`scale_x_discrete(labels = \(x) str_sub(x, 1, 1))`" doing here?
+(*Hint:* Omit this line and compare the plot produced with @fig-season.
+Also look at the documentation for `str_sub()`.)
 
 5. Looking again at Figures [-@fig-all-ind] and [-@fig-all-ind2], are all industries equally seasonal?
 Which industry do you consider to be the most seasonal?
@@ -464,91 +471,148 @@ What complications do you anticipate in measuring seasonality?
 
 :::{#tip-backends .callout-tip text-align="left"}
 
-# Alternative backends
+# Alternative engines
 
 So far, we have done many calculations using `mutate()` and `summarize()`, combined data frames using functions like `inner_join()`, or focused on certain rows or columns using `filter()` or `select()`.
 We have generally applied the functions to data in data frames, which we understand to comprise vectors of data stored in the memory (RAM) of our computer.
 However, as you work more with data, you are likely to encounter situations where this approach has limitations.
 
-For example, the data you want to work with might be stored on a remote computer, such as a database server or a Spark cluster.
-Alternatively, you might have the data stored on disk, but it either would take too long to load or simply cannot fit into RAM.
-It turns out that there are packages that can help us work with this kind data with little change to how we have worked with data so far.
+For example, you might have the data stored on disk, but it either would take too long to load or simply cannot fit into RAM.
+It turns out that there are packages that provide alternative **engines** that can help us work with this kind data with little change to how we have done things so far:
 
+ - One popular option is `data.table`, a package that provides a "high-performance version of base R's `data.frame` with syntax and feature enhancements for ease of use, convenience and programming speed."
+ - Another option is Apache Arrow, "a multi-language toolbox designed for efficient analysis and transport of large datasets."
+The `arrow` R package provides a `dplyr` backend allowing users to analyze  larger-than-memory datasets using familiar syntax.
+ - Another possibility is that the data you want to work with are stored on a remote computer, such as a database server or a Spark cluster.
 If the data or interest are stored in a database, the `DBI` package provides an interface allowing users to connect to most popular databases, execute SQL, and retrieve results.
+
 The `dbplyr` package allows users to create **remote data frames** and execute queries using a familiar interface often identical to that offered by `dplyr`.
-
-One popular option is `data.table`, a package that provides a "high-performance version of base R's `data.frame` with syntax and feature enhancements for ease of use, convenience and programming speed."
-Another option is Apache Arrow, "a multi-language toolbox designed for efficient analysis and transport of large datasets."
-The `arrow` R package provides a `dplyr` backend allowing users to analyze larger-than-memory datasets using familiar syntax.
-
-
-
-
-Backend      | Native language  | R package    | `dplyr` interface |
--------------|------------------|--------------|-------------------|
-SQL database | SQL              | `DBI`        | `dbplyr`          |
-Arrow        | Apache Arrow API | `arrow`      | `arrow`           |
-Spark        | Spark SQL, etc.  | `splarklyr`  | `splarklyr`       |
-`data.table` | `data.table`     | `data.table` | `dtplyr`          |
-
-In this book, in addition to using `dplyr` with data frames, we explore the use of SQL database as an alternative backend.
-
-Advantages
+Using a remote database server offers a number of potential advantages:
 
  - Moving processing to where the data are located
  - Moving processing to a more powerful computer
  - Avoiding loading of data into RAM
- - Using a more powerful backend
- - Using additional functions
+
+In this book, in addition to using `dplyr` with data frames, we explore the use of DuckDB as an analytical engine.
+DuckDB provides an SQL interface, so working with it is much like working with PostgreSQL or MySQL but, unlike most database server products, DuckDB requires almost no setup and offers significant performance benefits.
+While we use DuckDB largely for these performance benefits, we also get the happy side-effect of learning how to work with remote databases.
+
+Another advantage offered by DuckDB is access to more powerful window functions than are offered by `dplyr` itself.
+We see these in use in @sec-windows.
 
 :::
 
-## Time windows
+## Time windows {#sec-windows}
 
 Many analyses in business and economics involve calculations over **time windows**.
 Some examples:
 
- - Returns on stocks after their initial public offerings (IPOs)
+ - Returns on stocks over the days or months after their initial public offerings (IPOs)
  - Comparing sales or profits for the year to date with previous years
  - Smoothing sales over time using moving averages
 
+We will see that working with time windows is greatly facilitated by the use of **window functions** and that the SQL engine offered by DuckDB provides the more-powerful window functions that we will need here.
+
+To create a DuckDB engine, we simply create a connection.
+
 ```{r}
 db <- dbConnect(duckdb::duckdb())
+```
+
+We can then use the function `copy_to()` to move the data from R into the in-memory DuckDB database we have created.^[TODO: Consider alternative approaches to getting data into DuckDB. Probably choose whichever is simplest pedagogically.]
+
+```{r}
 retail_sales_db <-
   retail_sales |>
   copy_to(db, df = _, overwrite = TRUE)
 ```
 
+We can inspect `retail_sales_db` at the R console much as we did with `retail_sales` above.
+
+```{r}
+retail_sales_db
+```
+The output is almost identical to the output shown above when we typed `retail_sales` at the R console.
+The two differences are at the top and bottom of the output.
+At the top, we now see two lines indicating that the data come from a table inside an in-memory (`:memory`) DuckDB database and thus represent a **remote data frame** rather than a local data frame.^[The terminology "remote" is used even though the data are on the same computer, hence local in a sense. In principle, the data could be on a computer on the other side of the planet (e.g., in a remote PostgreSQL database).]
+At the bottom, we no longer see the numeber of rows.
+This partly reflects the **lazy** nature of remote data frames: we have to execute a specific query to determine the number of rows.^[TODO: This statement could be tightened up and clarified.]
+
 ### Year-to-date (YTD)
 
 Often we will want to compare performance for the current period with that in earlier periods.
-If we are in August of 2025, it does not make omparing the sales for 2025 with total sales for 2024, as this would be comparing sales for seven months (January through July) with twelve months.
-So it is common to calculate **year-to-date** performance and compare that with performance for a comparable period from earlier years.
+If we were in the middle of August 2025, it would not make sense to compare total sales for 2025 with total sales for 2024, as this would be comparing seven months (January through July) with twelve months.
+One standard approach is to calculate **year-to-date** performance and compare that with performance for a comparable period from earlier years.
+
+For this exercise, I will focus on industry subgroups of *Cafes, restaurants and takeaway food services* and just two states---Victoria and Western Australia.
+I create `cafes_vic_wa_db`, a data frame focused on these observations.
 
 ```{r}
-cafes_vic_wa <-
+cafes_vic_wa_db <-
   retail_sales_db |> 
   filter(str_detect(parent_industry, "^Cafes"),
          state %in% c("Victoria", "Western Australia"))
+```
 
-df_group_ytd_plot <-
-  cafes_vic_wa |>
+```{r}
+#| include: false
+cafes_vic_wa <-
+  retail_sales |> 
+  filter(str_detect(parent_industry, "^Cafes"),
+         state %in% c("Victoria", "Western Australia"))
+```
+
+The next step is to create `ytd_plot_df`, the data frame that will contain the data we need to plot year-to-date sales.
+Here we first calculate `year` and then group by `industry`, `state`, and `year`.
+Grouping by `industry` and `state` makes sense as it does not make sense to aggregate data across industries and states in this context.
+Grouping additionally by `year` reflects the nature of the YTD calculation we are making: only values for a given year should be consider.
+
+We next use `window_order(date)` so that the following `mutate()` command puts the data in the correct order.
+It is helpful to think of the windows that are being created.^[TODO: Put a fleshed-out example of a window here.]
+
+The following line invokes `cumsum(sum)` to calculate the cumulate sales for each `(industry, state, year)` up to the current row (remember that the rows are order by `date`) before invoking `ungroup()` and then `filter()` to focus on the years we want to plot.
+
+The `collect()` command brings the data into R, converting the remote data frame to a local data frame.
+The last line converts `year` to a character variable and calculates `month` using the `month()` function.
+
+```{r}
+ytd_plot_df <-
+  cafes_vic_wa_db |>
   mutate(year = year(date)) |>
   group_by(industry, state, year) |>
   window_order(date) |>
   mutate(sales_ytd = cumsum(sales)) |>
-  filter(year >= 2020) |>
+  ungroup() |>
+  filter(between(year, 2018, 2021)) |>
   collect() |>
   mutate(year = as.character(year),
          month = month(date, label = TRUE))
 ```
 
 ```{r}
+#| include: false
+#| eval: false
+ytd_plot_df <-
+  cafes_vic_wa |>
+  mutate(year = year(date)) |>
+  group_by(industry, state, year) |>
+  arrange(date) |>
+  mutate(sales_ytd = cumsum(sales)) |>
+  ungroup() |>
+  filter(between(year, 2018, 2021)) |>
+  collect() |>
+  mutate(year = as.character(year),
+         month = month(date, label = TRUE))
+```
+
+With `ytd_plot_df` in hand, creating @fig-all-ind-ytd is quite straightforward:^[TODO: Should I scale by `1e3` throughout?]
+
+```{r}
 #| label: fig-all-ind-ytd
 #| fig-cap: Year-to-date sales for cafes
 #| fig-height: 6
 #| fig-width: 6
-df_group_ytd_plot |>
+ytd_plot_df |>
   ggplot(aes(x = month, y = sales_ytd / 1e3,
              color = year, group = year)) +
   ylab("Sales, year-to-date ($ billion)") +
@@ -558,42 +622,134 @@ df_group_ytd_plot |>
   theme(legend.position = "bottom")
 ```
 
+#### Exercises
+
+1. What patterns do you observe in @fig-all-ind-ytd?
+Can you suggest explanations for these patterns?
+
+1. Is `cafes_vic_wa_db` (created by the code above) a remote data frame or a local data frame?
+How can you tell?
+
+2. Does `filter(str_detect(parent_industry, "^Cafes"))` produce the same result as `filter(parent_industry == "Cafes, restaurants and takeaway food services")`?
+What benefit is there from using the former option rather than the latter?
+
+3. What happens if you replace the function `window_order()` with function `arrange()`.
+
+3. As an analogue to `cafes_vic_wa_db` (created using `retail_sales_db`), create `cafes_vic_wa` using `retail_sales`.
+Use `cafes_vic_wa` to create a version of `ytd_plot_df`.
+(*Hint:* You will need to use `arrange()` in place of `window_order()`.)
+Does the plot created using this version of `ytd_plot_df` look the same as @fig-all-ind-ytd?
+
+4. Do we need both `color = year` *and* `group = year` in creating @fig-all-ind-ytd?
+How can you tell?
+
+5. What happens if we omit `ungroup()` from the code creating `ytd_plot_df`?
+Is there any effect on `ytd_plot_df`?
+Is there any effect on the appearance of @fig-all-ind-ytd?
+
+6. What is the data type for `month` in `ytd_plot_df`?
+(*Hint:* You may find it helpful to type `ytd_plot_df$month` at the R console or to use the function `class()`.)
+
+7. What happens if we move the `mutate()` code creating `year` and `month` in `ytd_plot_df` *before* the `collect()` call?
+Does the code still run?
+Does the plot look fine?
+Can you explain what's going on?
+(*Hint:* Go back to the previous question with the new version of `ytd_plot_df`.)
+
+8. In creating `ytd_plot_df`, can we move the application of `as.character()` to the line `mutate(year = year(date))`? 
+(That is, can we use `as.character(year(date))` in that line?)
+What other code do we need to modify to take this approach?
+After making the needed modification, does the plot produced look the same as @fig-all-ind-ytd?
+Why did we not need to use the same type for `year` as we did for `month`?
+(*Hint:* You may find it helpful to type `ytd_plot_df$year` at the R console or to use the function `class()`.)
+
+### Fiscal year-to-date (YTD)
+
+Above we calculated YTD numbers using *calendar* years.
+However, for many purposes, most companies in Australia reckon **fiscal years** from 1 July to 30 June and we might want to plot *fiscal* YTD numbers.
+
+To make this happen, I do two things.
+First, I create a function `fiscal_month()` that behaves a lot like `month()`, but with an extra argument that allows me to specify the first month of the fiscal year (e.g., `first_month = 7` would make July the first month of the fiscal year).
+For present purposes, you don't need to understand the details of `fiscal_month()`, but note that this actually borrows elements from the original `month()` function itself.
+
 ```{r}
-fiscal_month <- function(x, first_month = 1, label = TRUE, abbr = TRUE) {
+fiscal_month <- function(x, first_month = 7, label = TRUE, abbr = TRUE) {
   new_order <- c(first_month:12, 1:(first_month - 1))
   labels <- levels(month(x, label = label, abbr = abbr))
   new_labels <- labels[new_order]
   ordered(month(x), levels = new_order, labels = new_labels)
 }
+```
 
-df_group_fytd_plot <-
-  cafes_vic_wa |>
-  mutate(fyear = year(date) + as.integer(month(date) >= 7)) |>
+The second thing I do is create `fyear` to represent fiscal year based on fiscal years starting in July.
+Below is code creating `fytd_plot_df` using `fyear` in place of `year` used in `ytd_plot_df` and using `fiscal_month()` in place of `month()`.
+
+
+```{r}
+fytd_plot_df <-
+  cafes_vic_wa_db |>
+  mutate(year = year(date),
+         fyear = year + as.integer(month(date) >= 7)) |>
   group_by(industry, state, fyear) |>
   window_order(date) |>
   mutate(sales_ytd = cumsum(sales)) |>
-  filter(fyear >= 2020) |>
+  ungroup() |>
+  filter(between(fyear, 2018, 2021)) |>
+  collect() |>
+  mutate(fyear = as.character(fyear),
+         month = fiscal_month(date))
+```
+
+```{r}
+#| include: false
+#| eval: false
+fytd_plot_df <-
+  cafes_vic_wa |>
+  mutate(year = year(date),
+         fyear = year + as.integer(month(date) >= 7)) |>
+  group_by(industry, state, fyear) |>
+  arrange(date) |>
+  mutate(sales_ytd = cumsum(sales)) |>
+  filter(between(fyear, 2018, 2021)) |>
   ungroup() |>
   collect() |>
   mutate(fyear = as.character(fyear),
-         month = fiscal_month(date, first_month = 7))
+         month = fiscal_month(date))
 ```
+
+The following code creates @fig-all-ind-fytd and is essentially identical to that used to create @fig-all-ind-ytd except for changes to reflect use of `fyear` in place of `year`.
 
 ```{r}
 #| label: fig-all-ind-fytd
 #| fig-cap: Fiscal year-to-date sales for cafes
 #| fig-height: 6
 #| fig-width: 6
-df_group_fytd_plot |>
+fytd_plot_df |>
   ggplot(aes(x = month, y = sales_ytd / 1e3,
              color = fyear, group = fyear)) +
-  ylab("Sales, year-to-date ($ billion)") +
+  ylab("Sales, fiscal year-to-date ($ billion)") +
   xlab("Month") +
   geom_line() +
   facet_wrap(industry ~ state, ncol = 2, scales = "free_y") +
   theme(legend.position = "bottom")
 ```
 
+#### Exercises
+
+1. In words, what is the code creating `fyear` in the creation of `fytd_plot_df` doing?
+(*Hint:* You might find it helpful to append `count(fyear, date) |> arrange(date)` to the first two lines of the code creating `fytd_plot_df`.)
+
+2. Why is important to `filter()` using `fyear` rather than `year` (i.e., `between(fyear, 2018, 2021))`)?
+(*Hint:* Change the `filter()` to use `year` instead and look at the resulting plot.)
+
+3. What happens if the call to `fiscal_month()` in the creation of `fytd_plot_df` is replaced by a call to `month = month(date, label = TRUE)`?
+(*Hint:* Change the code and look at the resulting plot.)
+
+4. What features of the variable `month` in the data frame `fytd_plot_df` ensure that we get the plot we are looking for?
+
+5. Could we use `cafes_vic_wa` in place of `cafes_vic_wa_db` to create `fytd_plot_df`?
+What changes do we need to make to the code?
+Does the resulting plot look the same as @fig-all-ind-fytd?
 
 ### Moving averages
 
