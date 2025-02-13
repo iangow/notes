@@ -753,31 +753,95 @@ Does the resulting plot look the same as @fig-all-ind-fytd?
 
 ### Moving averages
 
+Another calculation using time windows that is commonly used is the moving average.
+A **moving average** can be used to smooth out a volatile time series by replacing the value for period $t$ with the average values for the periods $t - k$ through $t$, where $k \geq 1$.
+With seasonal data, it seems natural to consider twelve-month periods (i.e., $k = 11$).
+
+To indicate that we want to use windows from $t - 11$ to $t$, we can use `window_frame(-11, 0)`.
+This causes aggregate functions such as `mean()` and `sum()` to be applied as window functions to the resulting data frame.^[For some reason, `cumsum()` does not behave correctly if used with `window_frame()`.
+This much can be seen if you read the documentation shown when you type `? window_order` at the R console.
+I don't see the reason for this behaviour.]
+
 ```{r}
-df_group_ma_plot <-
+group_ma_plot_df <-
   retail_sales_db |>
   left_join(short_names, by = "industry", copy = TRUE) |>
   mutate(industry = coalesce(short_ind, industry)) |>
   group_by(industry, state) |>
   window_order(date) |>
   window_frame(-11, 0) |>
-  mutate(sales_ma = cummean(sales),
-         count_ma = cumsum(as.integer(!is.na(sales)))) |>
+  mutate(sales_ma = mean(sales, na.rm = TRUE),
+         count_ma = sum(as.integer(!is.na(sales)), na.rm = TRUE)) |>
+  ungroup() |>
   filter(state == "Total (State)", ind_level == 1,
          between(date, start_date, end_date),
-         count_ma >= 12) 
+         count_ma == 12)
 ```
 
 ```{r}
 #| label: fig-all-ind-ma
-#| fig-cap: Retail sales (12-month moving average) by industry
-df_group_ma_plot |>
-  ggplot(aes(x = date, y = sales_ma / 1e3)) +
-  ylab("Sales, 12-month moving average ($ billion)") +
+#| fig-height: 5
+#| fig-width: 6
+#| fig-cap: Retail sales by industry with moving average
+group_ma_plot_df |>
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = sales / 1e3, colour = "Sales")) +
+  geom_line(aes(y = sales_ma / 1e3, colour = "12-month moving average")) +
+  ylab("Sales ($ billion)") +
   xlab("Month") +
-  geom_line() +
-  facet_wrap(industry ~ ., ncol = 2, scales = "free_y")
+  facet_wrap(industry ~ ., ncol = 2, scales = "free_y") +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom")
 ```
+
+An alternative approach to constructing the data frame for the plot above would use `pivot_longer`:
+
+```{r}
+group_ma_plot_df_alt <-
+  group_ma_plot_df |>
+  pivot_longer(cols = starts_with("sales"), 
+               names_to = "series", 
+               values_to = "sales")
+```
+
+```{r}
+#| label: fig-all-ind-ma-alt
+#| fig-height: 5
+#| fig-width: 6
+#| fig-cap: Retail sales by industry with moving average (alternative)
+#| eval: false
+#| include: false
+group_ma_plot_df_alt |>
+  mutate(series = 
+           case_when(series == "sales" ~ "Sales",
+                     series == "sales_ma" ~ "12-month moving average")) |>
+  ggplot(aes(x = date, y = sales, colour = series)) +
+  geom_line() +
+  ylab("Sales ($ billion)") +
+  xlab("Month") +
+  facet_wrap(industry ~ ., ncol = 2, scales = "free_y") +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom")
+```
+#### Exercises
+
+1. Construct a plot like @fig-all-ind-ma using `group_ma_plot_df_alt` instead of `group_ma_plot_df`.
+(*Hint:* These code snippets may help: `ggplot(aes(x = date, y = sales, colour = series))` and `geom_line()`.)
+What differences do you see between your plot and @fig-all-ind-ma?
+Can you remove these differences by modifying `group_ma_plot_df_alt`?
+(*Hint:* Try using `mutate()` with `case_when()`.)
+
+2. Does the moving average help you to discern trends or patterns that are more difficult to see with the original time-series?
+If so, discuss how it helps.
+If not, why not?
+
+3. Why do you think I included `count_ma == 12` in the `filter()` arguments?
+What happens if you omit this?
+Suppose I wanted to include the moving average in the plot only when `count_ma == 12` but wanted to include all values of underlying time-series.
+How could I achieve this?
+Construct a plot applying this approach.
+Do you think that this plot is more informative?
+(*Hint:* Try using `mutate()` with `if_else()`.)
 
 ### Economic shocks
 
