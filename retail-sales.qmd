@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2025-02-03
+date: 2025-02-14
 number-sections: true
 format:
   html:
@@ -29,8 +29,8 @@ bibliography: papers.bib
 
 :::{#tip-pkgs .callout-tip text-align="left"}
 The code in this chapter uses the packages listed below.
-For instructions on how to set up your computer to use the code found in this book, see @sec-install.
-Quarto templates for the exercises below are available on [GitHub](https://github.com/iangow/far_templates/blob/main/README.md).
+For instructions on how to set up your computer to use the code found in this book, see [TBD].^[TODO: Add instructions for setting up R. For now, Steps 1 and 2 from [here](https://iangow.github.io/far_book/intro.html#sec-install) would probably work. Then run `install.packages(c("tidyverse", "modelsummary", "dbplyr", "DBI", "readabs"))`.]
+Quarto templates for the exercises below are available on [GitHub](https://github.com/iangow/far_templates/blob/main/README.md).^[TODO: Add templates. Current link goes to templates for a different book.]
 :::
 
 ```{r}
@@ -98,9 +98,9 @@ retail_sales <-
 
 The data we focus on in this chapter come from the [Australian Bureau of Statistics](https://www.abs.gov.au) (ABS).
 The ABS describes itself as "Australia's national statistical agency and an official source of independent, reliable information."
-We discuss the source of the data in more detail in @tip-abs.
+We discuss the source of the data in more detail in @sec-abs.
 
-The data are stored as a **comma-separated value** (CSV) file format in `data/retail_sales.csv` in the repository you downloaded for this course.
+The data are stored as a **comma-separated value** (CSV) file format in `data/retail_sales.csv` in the repository you downloaded for this course.^[TODO: This repository has not yet been set up. For now you can get the data by running the code provided in @sec-abs.]
 There is a good chance that, if Microsoft Excel is installed on your computer, double-clicking on this file on your computer will open it in Excel.
 To understand the contents of the file, it's actually better to open it in a text editor, such as Notepad (Windows) or TextEdit (MacOS).
 CSV files are a common format for sharing data, as it is a simple format that many software packages can handle.
@@ -113,19 +113,18 @@ retail_sales <- read_csv("data/retail_sales.csv")
 ```
 
 As can be seen in the output above, `read_csv()` will attempt to infer a number of features of the data.
-For example, the first row of the CSV file (`industry,state,date,sales,ind_level,parent_industry`) is assumed to provide the names the columns of the resulting data frame.
+For example, the first row of the CSV file is assumed to provide the names the columns of the resulting data frame: 
+
+```
+industry,state,date,sales,ind_level,parent_industry
+```
+
 Additionally, `read_csv()` will guess the appropriate type for each column.
 From the output above, we can see that `industry`, `state`, and `parent_industry` are imported as character columns, that `date` has type date, and that `sales` and `ind_level` have type `dbl` ("double" being the R type for storing real numbers).
 
 The data in `retail_sales` are monthly estimates of turnover [sales in dollars] and volumes for retail businesses, including store and online sales, by industry group and industry subgroup.
 According to [the ABS](https://www.abs.gov.au/methodologies/retail-trade-australia-methodology/dec-2024), "estimates of turnover are compiled from the monthly Retail Business Survey.
 About 700 'large' businesses are included in the survey every month, while a sample of about 2,700 'smaller' businesses is selected."
-
-# Understanding the industries
-
-According to [the ABS,](https://www.abs.gov.au/methodologies/retail-trade-australia-methodology/jul-2024#defining-retail-trade) the statistics from which `retail_sales` are derived are presented at two levels of detail: *industry group*, "the broadest industry level comprising 6 industry groups", and *industry subgroup*, which is "the most detailed industry level comprising 15 industry subgroups."
-In `retail_sales`, industry groups are associated with `ind_level` equal to 1 and industry subgroups are associated with `ind_level` equal to 2.
-For each, industry subgroup, the industry group to which it belongs is identified in `parent_industry`.
 
 We can take a peek at the first few rows of data by typing `retail_sales` in the R console:
 
@@ -139,6 +138,13 @@ We can also get a succinct take on the data using `summary()`:
 ```{r}
 summary(retail_sales)
 ```
+
+# Understanding the industries
+
+According to [the ABS,](https://www.abs.gov.au/methodologies/retail-trade-australia-methodology/jul-2024#defining-retail-trade) the statistics from which `retail_sales` are derived are presented at two levels of detail: *industry group*, "the broadest industry level comprising 6 industry groups", and *industry subgroup*, which is "the most detailed industry level comprising 15 industry subgroups."
+In `retail_sales`, industry groups are associated with `ind_level` equal to 1 and industry subgroups are associated with `ind_level` equal to 2.
+For each, industry subgroup, the industry group to which it belongs is identified in `parent_industry`.
+
 We start by investigating the data in `industry`, `ind_level`, and `parent_industry`.
 Below we see that `Total (Industry)` is the parent industry for all industries having `ind_level` equal to one and that `parent_industry` is missing whenever `ind_level` is zero.
 Note that only five distinct industries are listed under `parent_industry` when `ind_level` is two.
@@ -778,6 +784,8 @@ group_ma_plot_df <-
          count_ma == 12)
 ```
 
+@fig-all-ind-ma plots both the underlying time-series and the twelve-month moving average.
+
 ```{r}
 #| label: fig-all-ind-ma
 #| fig-height: 5
@@ -843,47 +851,111 @@ Construct a plot applying this approach.
 Do you think that this plot is more informative?
 (*Hint:* Try using `mutate()` with `if_else()`.)
 
+4. How helpful is the use of the moving average in @fig-all-ind-ma?
+Are there some features of the data that are highlighted or obscured?
+
 ### Economic shocks
 
+I guess that one of the observations you had about Figures [-@fig-all-ind] and [-@fig-all-ind2] is the sharp decrease in sales, especially to cafes and restaurants, in early 2020.
+Assuming you are more than ten years old, you probably attributed this to the Covid-19 pandemic of 2020--2022.
+
+On 25 February 2020, the federal government of Australia activated an emergency response plan in response to the rising number of cases of Covid-19 around the world.
+During 2020 and 2021, Australia largely pursued a strategy of eliminating Covid-19.^[Using the term "elimination" to describe Australia's approach was controversial. Nonetheless, it is clear that the approach in Australia differed radically from that in much of Europe and the United States.]
+Even entertaining such a strategy was only possible due to special features of Australia, including the absence of any land borders and the fact that the majority of the population is located in urban areas that are largely isolated from each other.
+Most Australians live in capital cities of Australia's six states and these cities are far apart from each other.
+The two state capitals on the Australian mainland that are closest to each other are Melbourne (Victoria) and Adelaide (South Australia), which are 654km apart.^[TODO: Tighten up the material here, including fact-checking of the data used herein.]
+
+One consequence of Australia's approach to Covid-19 is that Australians spent a lot more time in lockdowns than did citizens of other developed countries.
+That said, not all states had the same experience.
+Victoria had the worst experience with Covid-19, in terms of both the number of cases and total days spent in lockdown.
+Melbourne spent 262 days in lockdown with the last lockdown ending on 21 October 2021.^[See [Wikipedia](https://en.wikipedia.org/wiki/COVID-19_pandemic_in_Victoria#cite_note-191) for more details.]
+Western Australia, isolated even by Australian standards, had perhaps the best experience; it had just 13 days in lockdown.
+These lockdowns were much more rigorous than their equivalents in many other countries, as these were not "advisories" but strictly enforced requirements for people to stay at home with few exceptions.
+
+There is plenty of anecdotal evidence that alcohol consumption increased during Covid-19.^[See "Australia’s COVID-19 relationship with booze" in [Pursuit](https://pursuit.unimelb.edu.au/articles/australia-s-covid-19-relationship-with-booze) for some illustrative statistics from the early part of the pandemic.]
+One question might be whether there are differences in consumption patterns between Victoria and Western Australia given their radically different experiences with lockdowns.
+
+I begin by constructing `liquor_df`, a data frame with sales for *Liquor retailing* from 1 January 2018 onwards for Victoria and Western Australia
+
 ```{r}
-liquor <-
+liquor_df <-
   retail_sales |>
   filter(state %in% c("Victoria", "Western Australia"),
          industry == "Liquor retailing") |>
-  filter(between(date, 
-                 as.Date("2018-01-01"), 
-                 as.Date("2024-08-31"))) |>
-  mutate(year = year(date),
-         month = month(date, label = TRUE))
+  filter(date >= "2018-01-01")
 ```
+
+I use the data in `liquor_df` to construct `liquor_plot_df`, which I will use for a plot.
+I first construct `scale_factor` for each state based on average sales in 2018 and then use that to scale `sales` to calculate `sales_normalised`.
+
+```{r}
+liquor_plot_df <-
+  liquor_df |>
+  filter(year(date) == 2018) |>
+  group_by(state) |>
+  summarize(scale_factor = mean(sales, na.rm = TRUE), .groups = "drop") |>
+  inner_join(liquor_df, by = "state") |>
+  mutate(year = year(date),
+         month = month(date, label = TRUE),
+         sales_normalised = sales / scale_factor)
+```
+
+@fig-vic-wa-liq plots the data in `liquor_plot_df` by month and state by year. 
 
 ```{r}
 #| label: fig-vic-wa-liq
 #| fig-cap: Liquor retailing sales (normalised by 2018 average monthly sales)
 #| fig-height: 8
-liquor |>
-  filter(year == 2018) |>
-  group_by(state) |>
-  summarize(scale_factor = mean(sales)) |>
-  inner_join(liquor, by = "state") |>
-  mutate(sales_normalised = sales / scale_factor) |>
+liquor_plot_df |>
   ggplot(aes(x = month, y = sales_normalised, fill = state)) +
   geom_col(position = "dodge") +
   facet_wrap(year ~ ., ncol = 1) +
-  theme(legend.position = "bottom") +
-  theme(plot.title.position = "plot")
+  theme(legend.position = "bottom")
 ```
+Looking at @fig-vic-wa-liq, we can see that Victoria and Western Australia look very similar to each other in 2018.
+This is to be expected as the mean value of `sales_normalised` in 2018 is exactly one by construction for both states.
+However, there is some evidence of greater seasonality in sales in Victoria, with the value `sales_normalised` in December 2018 being higher there, while values in months in the middle of the year are lower.
 
-:::{#tip-abs .callout-tip text-align="left"}
+In 2019, we see a pretty similar pattern to that of 2018 even though there is no mechanical requirement for average `sales_normalised` to be the same across the two states to be the same in that year.
 
-### Where to find the data
+But from 2020 onwards, we start to see some divergence that is explored in the exercises.
 
-The data used to create `retail_sales` come from the ABS
+#### Exercises
+
+1. What is `position ="dodge"` doing in @fig-vic-wa-liq?
+(*Hint:* Take this out and compare the plot created with @fig-vic-wa-liq.)
+
+2. What patterns do you observe in @fig-vic-wa-liq over time?
+What do you conjecture explains these patterns?
+
+3. What alternative explanations (other than the one you just gave) could explain the patterns observed in @fig-vic-wa-liq?
+What data would you need to get to determine which explanation for these patterns is the most plausible?
+
+4. What do you find most surprising about @fig-vic-wa-liq?
+Does this support your conjectured explanations or raise questions about it?
+
+### Where can I get the data? {#sec-abs}
+
+::: {.callout-caution collapse="true"}
+
+The material in this section is relatively advanced.
+You could skip this on a first reading and come back to this material when your skills have developed more or when you are interested in getting and working with other data from ABS.
+
+:::
+
+As discussed, I got the data used to create `retail_sales.csv` from the ABS.
+While the ABS provides an **application programming interface** (**API**), [this API](https://www.abs.gov.au/about/data-services/application-programming-interfaces-apis/data-api-user-guide) is difficult to use relative to using community-supplied R packages that extract data from the older spreadsheet formats provided by the ABS.
+I used the `readabs` package [@readabs] to download the data.
+The `readabs` package downloads spreadsheets into a directory identified using the environment variable `R_READABS_PATH`, which I set to `"~/Downloads/"`, a location on *my* computer.
 
 ```{r}
 Sys.setenv(R_READABS_PATH = "~/Downloads/")
 library(readabs)
 ```
+
+I get data for code `8501.0`, which is covers retail trade data in Australia.
+I focus on table 11 from that series.^[For some reason, supplying `tables = 11` to `read_abs()` does not work for me, so I use `filter()` to focus on the data of interest.]
+I use regular expressions to split the `series` column into three columns: `label`, `state`, and `industry`.^[TODO: Add material to an earlier chapter on regular expression. For now, see the chapter on *Importing data* at `https://iangow.github.io/far_book/web-data.html`.]
 
 ```{r}
 #| cache: true
@@ -944,4 +1016,11 @@ retail_sales <-
   left_join(retail_industries, join_by(industry)) |>
   write_csv("data/retail_sales.csv") 
 ```
-:::
+
+#### Exercises
+
+1. Describe in words what the `mutate()`-`fill()`-`mutate()` sequence is doing in the creation of `retail_industries` above?
+Why do I first populate `parent_industry` with the value of `industry` before overwriting that wtih `"Total (Industry)"` two lines later?
+What assumptions does the code make about how the data provided by preceding steps?
+
+## References {-}
