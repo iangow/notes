@@ -1,0 +1,132 @@
+---
+title: "Stock prices"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-02-17
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+        \sisetup{output-decimal-marker = {,}}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+:::{#tip-pkgs .callout-tip text-align="left"}
+The code in this chapter uses the packages listed below.
+For instructions on how to set up your computer to use the code found in this book, see @sec-install.
+Quarto templates for the exercises below are available on [GitHub](https://github.com/iangow/far_templates/blob/main/README.md).
+:::
+
+```{r}
+#| warning: false
+library(tidyquant)
+library(tidyverse)
+```
+# The company
+
+The limited-liability company is one of the great inventions of the nineteenth century.
+
+The basic unit of ownership of a company is a share.
+Many companies have a single class of share.
+Each share entitles the holder to a equal share (go figure?) in any distributions to owners.
+
+To better understand shares and stock prices, we focus initially on one company, Domino’s Pizza Enterprises Ltd ("Domino's").
+According to its [website](https://www.dominos.com.au/about-us), Domino's is "the Australian-owned master franchise holder for Domino’s in Australia, New Zealand, Belgium, France, the Netherlands, Japan, Germany, Luxembourg, Taiwan, Malaysia, Singapore and Cambodia."
+Domino's is a distinct entity from the American firm, Domino's Pizza, Inc.
+
+Stock prices symbolize capitalism in more ways than one.
+For example, it's actually difficult to identify a completely open source of data on stock prices for many stock exchanges.
+Typically databases on stock prices are behind paywalls and the like and so it is difficult for to just post pre-processed data.
+
+That said, there are many websites that redistribute stock price data in a form that we can access readily.
+One such site is Yahoo! Finance (Yahoo) and if you type "Domino's Pizza Enterprises" into the search bar of that site, you will learn that the **ticker** for Domino's is, for the purposes of Yahoo is `DMP.AX`.
+If you go to <https://finance.yahoo.com/quote/DMP.AX>, you will see information about Domino's, including news, financials, and historical stock prices.
+
+While, in principle, we could download stock prices from <https://finance.yahoo.com/quote/DMP.AX/history/>, we will find it easier to use `tq_get()` from the `tidyquant` package to get historical stock price information:
+
+```{r}
+dmp_df <- tq_get("DMP.AX", from = "2017-01-01", to = "2024-12-31")
+```
+
+If we look at the data, we see the following:
+
+```{r}
+dmp_df
+```
+The first thing to note about the data is that it appears to be *daily* data.
+There are gaps in the data (e.g., where is `2017-01-06`?), but this can be explained by the fact that most stock exchanges do not trade on weekends.
+
+However, an element of mystery enters when we check the days of the week associated with each 
+
+```{r}
+dmp_df |> 
+  mutate(dow = wday(date, label = TRUE)) |> 
+  count(dow)
+```
+
+```{r}
+fix_date <- function(x) {
+  time <- as.POSIXct(str_c(as.character(x), " 10:00:00"),
+                     tz = "Australia/Sydney")
+  mod <- as.Date(time, tz = "GMT")
+  diff <- x - mod
+  return(x + (x - mod))
+}
+```
+
+
+```{r}
+dmp_df <- 
+  tq_get("DMP.AX", from = "2017-01-01", to = "2024-12-31") |>
+  mutate(date = fix_date(date))
+
+dmp_df |> mutate(dow = wday(date, label = TRUE)) |> count(dow)
+```
+
+```{r}
+#| include: false
+dmp_df |> arrow::write_parquet("data/dmp.parquet")
+dmp_df <- arrow::read_parquet("data/dmp.parquet")
+```
+
+- `open`: The price at which the stock started trading when the market opened for the day
+- `high`: The highest price the stock reached during trading on `date`.
+- `low`: The lowest price the stock reached during trading on `date`.
+- `close`: The last price at which the stock was traded when the market closed for `date`.
+-	`volume`: The total number of shares traded on `date`.
+-	`adjusted`: The closing price adjusted for corporate actions such as dividends, stock splits, and other events to reflect the stock’s actual value over time.
+	
+
+```{r}
+rets_df <-
+  dmp_df |>
+  group_by(symbol) |>
+  arrange(date) |>
+  mutate(ret_1 = close / lag(close) - 1,
+         ret_2 = adjusted / lag(adjusted) - 1,
+         adj_close = lag(close) * (1 + ret_2)) |>
+  ungroup() |>
+  mutate(close_diff = close - adjusted)
+
+rets_df |>
+  filter(abs(ret_1 - ret_2) > 0.000001)
+
+rets_df |>
+  filter(between(date, as.Date("2024-08-23"), as.Date("2024-08-30")))
+```
