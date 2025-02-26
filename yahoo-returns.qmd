@@ -212,7 +212,7 @@ This confirms that the two calculations yield (*slightly*) different results.
 ## Comparing with CRSP returns
 
 The Center for Research in Security Prices, LLC (CRSP) is the *de facto* standard source of stock returns for US stocks in academic finance.^[See [Section 7.2](https://iangow.github.io/far_book/identifiers.html#the-crsp-database) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) for more on CRSP.]
-I have a significant subset of CRSP in a respository of parquet files along the lines described in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
+I have a significant subset of CRSP in a repository of parquet files along the lines described in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
 
 Here I collect data from the CRSP daily stock file (`crsp.dsf`) for Coca-Cola and store it in `crsp_rets_ko`, a **remote data frame**.^[For more on remote data frames see [Chapter 6](https://iangow.github.io/far_book/fin-state.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).]
 
@@ -239,7 +239,65 @@ crsp_rets_ko |>
   mutate(ret_std = (close + adj_amt) / lag_close - 1) |>
   filter(adj_amt != 0) |>
   select(date, ret_yahoo, ret_std, ret) |>
+  arrange(desc(date)) |>
   collect()
+```
+
+# Creating an alternative version of `adjusted`
+
+Can we create a version of `adjusted` that achieves the following desiderata?
+
+ 1. The final value of `close` equals `adjusted`
+ 2. Returns calculated using `adjusted` match the "standard" approach
+ 
+The answer is "yes" (of course).
+
+I first create `ko_prices_alt` with `adjusted` modified in the necessary way.
+Note that I use window functions with the data sorted by `desc(date)` so that the time-series ends with `close` equal to `adjusted` and the adjustment ratio changes going back in time.
+
+```{r}
+ko_prices_alt <-
+  ko_rets |> 
+  arrange(desc(date)) |>
+  mutate(adj_ratio = coalesce(lag(cumprod(close / (close + adj_amt))), 1)) |>
+  mutate(adjusted = close * adj_ratio) |> 
+  ungroup() |>
+  select(symbol, date, close, adjusted, adj_amt)
+```
+
+I can then calculate returns and store them in `ko_rets_alt`.
+
+```{r}
+ko_rets_alt <-
+  ko_prices_alt |>
+  group_by(symbol) |>
+  arrange(date) |>
+  mutate(ret_adj = adjusted / lag(adjusted) - 1) |>
+  ungroup() 
+```
+
+Finally, I focus on those `dates` where `adj_amt` is non-zero so that I can check that `ret` from CRSP equals `ret_adj`, the return calculated from `adjusted` in `ko_prices_alt`.
+
+```{r}
+crsp_rets_ko |>
+  inner_join(ko_rets_alt, by = "date", copy = TRUE) |>
+  filter(adj_amt != 0) |>
+  select(date, ret_adj, ret) |>
+  arrange(desc(date)) |>
+  collect() 
+```
+
+Thus we see that the second desideratum is obtained.
+To see that we get the first, I create @fig-adj-rets, where it can be seen that the two lines converge by the end of the time-series.
+
+```{r}
+#| label: fig-adj-rets
+#| fig-cap: Adjusted and raw close prices (using `ko_prices_alt`)
+ko_prices_alt |>
+  filter(year(date) >= 2024) |>
+  pivot_longer(cols = c(close, adjusted)) |>
+  ggplot(aes(x = date, y = value, color = name, line = name)) +
+  geom_line()
 ```
 
 # Glossary
