@@ -1,0 +1,258 @@
+---
+title: "Stock returns on Yahoo Finance"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-02-26
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+        \sisetup{output-decimal-marker = {,}}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+# Summary
+
+There appear to be few easy-to-use sources of *free* stock price data out there, but one venerable source is [Yahoo Finance](https://finance.yahoo.com/), which was a source of such data before Google was even a twinkle in the eye of Larry Page and Sergey Brin.
+So you may have used Yahoo Finance yourself to calculate stock returns.
+Yahoo Finance offers two versions of daily closing prices: `close` ("close price adjusted for splits") and `adjusted` ("adjusted for splits and dividend and/or capital gain distributions").
+If I denote `close` and `adjusted` on date $t$ as $c_t$ and $a_t$, respectively, you likely calculated returns as 
+
+$$ r_t = \frac{a_t}{a_{t-1}} - 1 $$
+And denoting dividends (including capital gain distributions) on date $t$ as $d_t$, you likely figured that the above was equivalent to the standard formula:
+
+$$ r_t = \frac{c_t + d_t}{c_{t-1}} - 1 $$
+But I have discovered that this is *not true*.
+Instead, the adjusted stock price is calculated so that returns are calculated using the following expression:
+
+$$ r_t = \frac{a_t}{a_{t-1}} - 1 =  \frac{c_t}{c_{t-1} - d_t} - 1 $$
+I'm guessing that many finance experts would regard the latter formula as simply *wrong*.
+Interestingly, [Investopedia](https://www.investopedia.com/ask/answers/06/adjustedclosingprice.asp) suggests that one adjusts stock prices for dividends in precisely the way implied by the Yahoo Finance calculation: that is, you adjust $c_{t-1}$ by subtracting $d_t$ from it.^[This approach to calculating adjusted stock price works only on the day the ex-dividend date when the previous values of `close` and `adjusted` are equal.]
+I'm inclined to label it as *unorthodox* rather than simply wrong.
+While the good news is that the differences are not large, I wonder how many realize that this is how Yahoo Finance is doing things.
+
+In effect, the standard calculation assumes that you buy for cash at close one day and sell the next day, getting the proceeds of the sale and the associated dividends at that time.
+In contrast, the Yahoo Finance calculation assumes that you only need to supply cash to buy the shares at close one day *net of dividends* and sell the next day.
+The former seems a bit easier to describe and perhaps to pull off.
+Try asking your broker if you can do the latter!
+Of course, there's a bit of fiction in all these calculations with trades at closing prices and dividends being paid on the ex-dividend date, but they are useful benchmark.
+
+I think this case illustrates the reality that many data items are not well-documented and, even if they are, it makes sense to check that the data line up with the documentation.
+
+# Data analysis
+
+:::{#tip-pkgs .callout-tip text-align="left"}
+In writing this note, I used the packages listed below.^[Execute `install.packages(c("tidyquant", "tidyverse", "farr", "DBI", "duckdb", "dbplyr")` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/yahoo-returns.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/yahoo-returns.pdf).
+:::
+
+
+
+```{r}
+#| warning: false
+library(tidyquant)
+library(tidyverse)
+library(farr)
+library(DBI)
+```
+
+In this note, I focus on the Coca-Cola Company (ticker symbol `KO`).
+While, in principle, I could download historical stock prices directly from <https://finance.yahoo.com/quote/KO/history/>, I find it easier to use `tq_get()` from the `tidyquant` package to get these prices.
+
+```{r}
+ko_prices <- tq_get("KO", from = "2017-01-01", to = "2024-12-31")
+```
+
+If we look at the data, we see the following:
+
+```{r}
+ko_prices
+```
+
+The first thing to note is that we appear to have *daily* data.
+There are gaps in the data (e.g., where are `2017-01-07` and `2017-01-08`?), but this can be explained by the fact that most stock exchanges do not trade on weekends, including the New York Stock Exchange (NYSE) on which Coca-Cola trades.
+
+```{r}
+ko_prices |> 
+  mutate(dow = wday(date, label = TRUE)) |> 
+  count(dow)
+```
+
+Having understood `date`, we can shift our attention to the other fields in `ko_prices`:
+
+- `symbol`: The stock's ticker symbol. 
+For non-US exchanges, this can differ from the ticker used by the exchange on which the stock is traded because a suffix is added to indicate the exchange (e.g., `.AX` for Australian stocks).
+Tickers are problematic firm identifiers because a firm's ticker can change over time (much like a CUSIP) and also because tickers can be reused by different companies (unlike CUSIPs).
+More on firm identifiers can be found in [Chapter 7](https://iangow.github.io/far_book/identifiers.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
+- `open`: The price at which the stock started trading when the market opened on `date`.
+- `high`: The highest price the stock reached during trading on `date`.
+- `low`: The lowest price the stock reached during trading on `date`.
+- `close`: The last price at which the stock was traded when the market closed for `date`.
+-	`volume`: The total number of shares traded on `date`.
+-	`adjusted`: The closing price adjusted for corporate actions such as dividends, stock splits, and other events to reflect the stock’s actual value over time.
+	
+Focusing on the two closing prices---`close` and `adjusted`---the natural first question is what does the word "adjusted" mean?
+As we have done before, we will use the data and our knowledge of the setting to infer the meaning of this word.
+Knowing what plots can reveal quickly, I start with @fig-adj-ratio. 
+
+```{r}
+#| label: fig-adj-ratio
+#| fig-cap: Ratio of `adjusted` to `close` over time
+ko_prices |>
+  mutate(adj_ratio = adjusted / close) |>
+  ggplot(aes(x = date, y = adj_ratio)) +
+  geom_line()
+```
+
+We can see a couple of things in @fig-adj-ratio.
+First, the `adj_ratio` (defined as `adjusted` divided by `close`) equals one at the end of the period of our data set.
+Second, it appears that `adj_ratio` is a step function with respect to time: it is constant for periods, then steps up in discrete amounts on certain dates.
+This latter fact is consistent with "corporate actions such as dividends" occurring relatively infrequently on discrete dates.
+
+In practice, the most common "corporate action" is the payment of dividends and we can get data on dividends using `tq_get()` with the argument `get = "dividends"`.
+
+```{r}
+ko_divs <- tq_get("KO", from = "2017-01-01", to = "2024-12-31", 
+                  get = "dividends")
+```
+
+Here it seems that Coca-Cola pays quarterly dividends that can vary from one year to the next:
+
+```{r}
+ko_divs |> arrange(desc(date)) 
+```
+
+In the following code, I calculate `adj_amt`, which represents the amount of the dividend implied by the values in `close` and `adjusted` on a given trading day and the previous day.^[Note that I use `round(., 4)` to eliminate quirky issues related to less-significant digits with double-precision numbers.]
+
+```{r}
+ko_rets <-
+  ko_prices |>
+  select(symbol, date, close, adjusted) |>
+  mutate(adj_ratio = adjusted / close) |>
+  group_by(symbol) |>
+  arrange(date) |>
+  mutate(lag_close = lag(close),
+         lag_adjusted = lag(adjusted)) |>
+  ungroup() |>
+  mutate(ret_yahoo = adjusted / lag_adjusted - 1,
+         adj_amt = round(lag_close - lag_adjusted / adj_ratio, 4)) |>
+  arrange(desc(date))
+```
+
+```{r}
+#| include: false
+options(pillar.sigfig = 4)
+```
+
+As can be seen below, I have managed to recover precisely the amounts seen in `ko_divs`.
+
+```{r}
+ko_rets |>
+  select(-symbol, -adj_ratio) |>
+  filter(adj_amt != 0) |>
+  head()
+```
+
+So this provides verification of the formula I used to calculate `adj_amt`.
+But where did this calculation come from?
+
+To be honest, I played around with the numbers until my calculation of `adj_amt` equalled `value` in `ko_divs`.
+If I denote `adj_ratio` at time $t$ as $\alpha_t$, then my calculation implies
+
+$$ d_t = c_{t-1} - \frac{a_{t-1}}{\alpha_t} $$
+Given that $\alpha_t = \frac{a_t}{c_t}$, I can then show that this yields the expression provided in the introduction.
+
+$$
+\begin{aligned}
+d_t &= c_{t-1} - \frac{a_{t-1}}{\alpha_t} \\
+d_t &= c_{t-1} - c_t \frac{a_{t-1}}{a_t} \\
+c_t \frac{a_{t-1}}{a_t} &= c_{t-1} - d_t \\
+ \frac{a_{t-1}}{a_t} &= \frac{c_{t-1} - d_t}{c_t} \\
+ \frac{a_t}{a_{t-1}} &= \frac{c_t}{c_{t-1} - d_t} \\
+ \frac{a_t}{a_{t-1}} - 1 &= \frac{c_t}{c_{t-1} - d_t}  - 1\\
+\end{aligned}
+$$
+
+```{r}
+#| include: false
+example_data <-
+  ko_rets |>
+  select(-symbol, -adj_ratio) |>
+  filter(adj_amt != 0)
+
+row <- 1
+```
+
+I can verify this equation using the first row of data above.
+The left-hand side is already found in `ko_rets` as `ret_yahoo`, which was calculated by dividing `r round(example_data$adjusted[row], 4)` by `r round(example_data$lag_adjusted[row], 4)` and subtracting one to get a percentage return of `r round(100 * (example_data$adjusted[row] / example_data$lag_adjusted[row] - 1), 4)`%.
+
+The right-hand side expression can be calculated using $c_t = `r round(example_data$close[row], 4)`$, $c_{t-1} = `r round(example_data$lag_close[row], 4)`$, and $d_t = `r round(example_data$adj_amt[row], 4)`$, to get `r round(100 * (example_data$close[row]/ (example_data$lag_close[row] - example_data$adj_amt[row]) - 1), 4)`%.
+This confirms the equation in this case.
+
+Using the standard formula gives a percentage return of `r round(100 * (example_data$close[row] - example_data$lag_close[row] + example_data$adj_amt[row]) / example_data$lag_close[row], 4)`%.
+This confirms that the two calculations yield (*slightly*) different results.
+
+## Comparing with CRSP returns
+
+The Center for Research in Security Prices, LLC (CRSP) is the *de facto* standard source of stock returns for US stocks in academic finance.^[See [Section 7.2](https://iangow.github.io/far_book/identifiers.html#the-crsp-database) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) for more on CRSP.]
+I have a significant subset of CRSP in a respository of parquet files along the lines described in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
+
+Here I collect data from the CRSP daily stock file (`crsp.dsf`) for Coca-Cola and store it in `crsp_rets_ko`, a **remote data frame**.^[For more on remote data frames see [Chapter 6](https://iangow.github.io/far_book/fin-state.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).]
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+stocknames <- load_parquet(db, "stocknames", "crsp")
+dsf <- load_parquet(db, "dsf", "crsp")
+
+crsp_rets_ko <- 
+  stocknames |>
+  filter(ticker == "KO") |> 
+  distinct(permno) |> 
+  inner_join(dsf, by = "permno") |>
+  select(permno, date, prc, ret)
+```
+
+The standard measure of returns on CRSP is `ret` and I compare this with `ret_yahoo` (calculated using adjusted stock prices) and with `ret_std`, calculated using the "standard" formula discussed above.
+As can be seen below, the CRSP calculation (`ret`) and the standard formula (`ret_std`) line up pretty much perfectly.
+
+```{r}
+crsp_rets_ko |>
+  inner_join(ko_rets, by = "date", copy = TRUE) |>
+  mutate(ret_std = (close + adj_amt) / lag_close - 1) |>
+  filter(adj_amt != 0) |>
+  select(date, ret_yahoo, ret_std, ret) |>
+  collect()
+```
+
+# Glossary
+
+Here is a small glossary of terms related to dividends.
+
+ - **Dividend**: A distribution made by a company to its shareholders, usually from profits, either in cash or additional shares. 
+ Cash dividends are generally expressed on a per-share basis (e.g., 50.4 cents per share) with all shareholders in a given **class**.
+ Most companies have a single class of shares.
+ For many firms with multiple classes of shares, the dividends paid are the same for all classes, but shares from different classes have different voting rights.
+ - **Cum dividend**: When a stock is purchased *cum dividend*, the purchaser gets the right to the upcoming dividend.
+ If you buy the stock before the ex-dividend date, you will receive the associated dividend payment.
+ - **Ex-dividend date**: The first trading day on which a stock no longer carries the right to receive the previously declared dividend. 
+ If you buy the stock on or after the ex-dividend date, you will not receive the upcoming dividend.
+ - **Record date**: The date when the company checks its books to determine who the dividend should be paid to. Due to stock exchange settlement rules, you must buy the stock before the ex-dividend date to receive the dividend.
+ - **Payment date**: The date when the dividend is actually paid to shareholders.
