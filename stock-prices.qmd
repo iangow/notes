@@ -44,12 +44,11 @@ library(tidyverse)
 The limited-liability company is one of the great inventions of the nineteenth century.
 
 The basic unit of ownership of a company is a share.
-Many companies have a single class of share.
-Each share entitles the holder to a equal share (go figure?) in any distributions to owners.
+Many companies have a single class of share in which share entitles the holder to an equal share (go figure?) in any distributions to shareholders.
 
 To better understand shares and stock prices, we focus initially on one company, Domino’s Pizza Enterprises Ltd ("Domino's").
 According to its [website](https://www.dominos.com.au/about-us), Domino's is "the Australian-owned master franchise holder for Domino’s in Australia, New Zealand, Belgium, France, the Netherlands, Japan, Germany, Luxembourg, Taiwan, Malaysia, Singapore and Cambodia."
-Domino's is a distinct entity from the American firm, Domino's Pizza, Inc.
+Domino's is a distinct entity from the American firm Domino's Pizza, Inc.
 
 Stock prices symbolize capitalism in more ways than one.
 For example, it's actually difficult to identify a completely open source of data on stock prices for many stock exchanges.
@@ -64,22 +63,26 @@ While, in principle, we could download historical stock prices directly from <ht
 
 ```{r}
 ticker <- "DMP.AX"
-ticker <- "KO"
-dmp_df <- tq_get(ticker, from = "2017-01-01", to = "2024-12-31")
+start_date <- "2016-12-29"
+end_date <- "2024-12-31"
+dmp_prices <- tq_get(ticker, from = start_date, to = end_date)
 ```
+
+
 
 If we look at the data, we see the following:
 
 ```{r}
-dmp_df
+dmp_prices
 ```
+
 The first thing to note is that we appear to have *daily* data.
 There are gaps in the data (e.g., where is `2017-01-06`?), but this can be explained by the fact that most stock exchanges do not trade on weekends, including the Australian Stock Exchange (ASX) on which Domino's trades.
 
 However, an element of mystery enters when we check the days of the week associated with each date.
 
 ```{r}
-dmp_df |> 
+dmp_prices |> 
   mutate(dow = wday(date, label = TRUE)) |> 
   count(dow)
 ```
@@ -106,27 +109,27 @@ fix_date <- function(x) {
 }
 ```
 
-We apply `fix_date()` in the following code to create a new version of `dmp_df`:
+We apply `fix_date()` in the following code to create a new version of `dmp_prices`:
 
 ```{r}
-dmp_df <- 
-  tq_get(ticker, from = "2017-01-01", to = "2024-12-31") |>
+dmp_prices <- 
+  tq_get(ticker, from = start_date, to = end_date) |>
   mutate(date = fix_date(date))
 ```
 
-Now we can check the day of the week of the dates on `dmp_df` and can see that there are no more Sundays and many more Fridays than we had before, suggesting that we have correctly shifted the dates.
+Now we can check the day of the week of the dates on `dmp_prices` and can see that there are no more Sundays and many more Fridays than we had before, suggesting that we have correctly shifted the dates.
 
 ```{r}
-dmp_df |> mutate(dow = wday(date, label = TRUE)) |> count(dow)
+dmp_prices |> mutate(dow = wday(date, label = TRUE)) |> count(dow)
 ```
 
 ```{r}
 #| include: false
-dmp_df |> arrow::write_parquet("data/dmp.parquet")
-dmp_df <- arrow::read_parquet("data/dmp.parquet")
+dmp_prices |> arrow::write_parquet("data/dmp.parquet")
+dmp_prices <- arrow::read_parquet("data/dmp.parquet")
 ```
 
-Having fixed `date`, we can shift our attention to the other fields in `dmp_df`:
+Having fixed `date`, we can shift our attention to the other fields in `dmp_prices`:
 
 - `open`: The price at which the stock started trading when the market opened on `date`.
 - `high`: The highest price the stock reached during trading on `date`.
@@ -134,6 +137,126 @@ Having fixed `date`, we can shift our attention to the other fields in `dmp_df`:
 - `close`: The last price at which the stock was traded when the market closed for `date`.
 -	`volume`: The total number of shares traded on `date`.
 -	`adjusted`: The closing price adjusted for corporate actions such as dividends, stock splits, and other events to reflect the stock’s actual value over time.
+
+## Dividends
+
+As mentioned above, the core idea of a share in a company is that it entitles the holder to an equal share in any distributions to shareholders.
+The most familiar form of distribution is the cash dividend. 
+Cash dividends are generally expressed on a per-share basis (e.g., 50.4 cents per share) with all shareholders in a given **class** receiving the same per-share the company
+Most companies have a single class of shares.
+For many firms with multiple classes of shares, the dividends paid are the same for all classes, but shares from different classes have different voting rights.
+
+The first trading day on which the purchaser of a stock does not get the right to receive the previously declared dividend is the **ex-dividend date**.
+In other words, buying the stock before the ex-dividend date occurs on a **cum dividend** basis, in that the purchaser gets the right to the upcoming dividend.
+
+The date when the company checks its books to determine who the dividend should be paid to is the **record date**.
+The date when the dividend is actually paid to shareholders is the **payment date**.
+
+A central idea of finance is that the value of a stock equals (the sum of) the present value of future dividends.^[TODO: Discuss present value in an earlier chapter.]
+If the present value of dividends exceeded the stock price, then there would be extra demand for the stock, and this demand would push the price up.
+If the present value of dividends was lower than the stock price, then shareholders would rather sell the stock, and this would push the price down.
+Thus, in equilbrium, we expect the present value of dividends to equal the stock price.^[TODO: Direct readers to further reading on this topic.]
+
+We can get data on dividends for using `tq_get()` with the argument `get = "dividends"`.^[Because the issue with dates discussed above appears to apply to these data, I use `fix_date()` to address this issue.]
+
+```{r}
+dmp_divs <- 
+  tq_get(ticker, from = start_date, to = end_date, 
+         get = "dividends") |>
+  mutate(date = fix_date(date))
+```
+
+### Exercises
+
+
+1. Confirm ex-dividend dates.
+
+2. 
+
+## Cumulative returns
+
+Many analyses in finance involve comparison of alternative investment strategies and a standard analysis of such strategies involves **backtesting**, which typically involves conducting a kind of thought experiment in which it is assumed that we can go back in time and implement the investment strategy and evaluate how it would have performed given the historical returns on the securities invested in as part of the strategy.
+
+For the purposes of this chapter, I will assume that the strategy we are interested in involved purchasing stock in `r ticker` at the close of `r start_date` and holding that stock until selling it at the close of `r end_date`.
+
+```{r}
+start_price <-
+  dmp_prices |> 
+  filter(date == start_date) |>
+  select(close) |> 
+  pull()
+
+end_price <-
+  dmp_prices |> 
+  filter(date == end_date) |>
+  select(close) |> 
+  pull()
+
+total_divs <-
+  dmp_divs |> 
+  summarize(divs = sum(value)) |>
+  pull()
+```
+
+
+During that time, we would have seen the stock go from `r round(start_price, 4)` (`start_price`) to `r round(end_price, 4)` (`end_price`) while receiving `r round(total_divs, 4)` (`total_divs`) in dividends.
+So one calculation of the **gross return** would be the following (here $p_s$ and $p_t$ refer to the close prices on `r start_date` and `r end_date`, respectively, and the expression involving $d_i$ refers to dividends paid between those dates).
+
+$$ r_{s, t} = \frac{p_t + \sum_{i: i \in (s, t]} d_i}{p_s}$$
+The numerator equals `r round(end_price + total_divs, 4)` and the denominator equals `r round(start_price, 4)`, yielding a gross return of `r 100*round((end_price + total_divs) /start_price, 4)`%, or a net return of  `r 100*round((end_price + total_divs) /start_price - 1, 4)`%.
+But an astute reader might have noticed that, by simply summing up the dividends ($\sum_{i: i \in (s, t]} d_i$), we are effectively assuming that the dividends are stored in an interest-free account, or perhaps under a mattress, until the time comes to tally them up to calculate returns.
+
+A more conventional approach is to assume that the dividends are reinvested in the stock itself at the close price on the ex-dividend date.
+
+```{r}
+#| include: false
+options(pillar.sigfig = 4)
+```
+
+```{r}
+dmp_rets <-
+  dmp_prices |>
+  left_join(dmp_divs, by = join_by(symbol, date)) |>
+  group_by(symbol) |>
+  arrange(date) |>
+  mutate(lag_close = lag(close),
+         dividend = coalesce(value, 0)) |>
+  select(symbol, date, close, lag_close, dividend) |>
+  mutate(ret = (close + dividend) / lag_close) |>
+  mutate(share_multiplier = cumprod(coalesce(1 + dividend / close, 1)),
+         cumret = cumprod(coalesce(ret, 1))) |>
+  ungroup() |>
+  arrange(desc(date))
+```
+
+
+```{r}
+#| include: false
+div_stuff <-
+  dmp_rets |>
+  arrange(date) |>
+  filter(dividend != 0)
+```
+
+Take the first dividend paid in our sample period, that with an ex-dividend date of `r div_stuff$date[1]`.
+At a close price of `r round(div_stuff$close[1], 4)`, this dividend of `r round(div_stuff$dividend[1], 4)` could be used to purchase `r round(div_stuff$dividend[1]/div_stuff$close[1], 4)` additional shares, so we now have `r round(1 + div_stuff$dividend[1]/div_stuff$close[1], 4)` shares.
+
+Moving to the second dividend paid in our sample period, which had an ex-dividend date of `r div_stuff$date[3]`.
+At a close price of `r round(div_stuff$close[2], 4)`, this dividend of `r round(div_stuff$dividend[2], 4)` per share on `r round(1 + div_stuff$dividend[1]/div_stuff$close[1], 4)` shares, could be used to purchase `r round(div_stuff$dividend[2]/div_stuff$close[2] * (1 + div_stuff$dividend[1]/div_stuff$close[1]), 4)` additional shares, so we now have `r round(div_stuff$share_multiplier[2], 4)` shares.
+
+```{r}
+#| include: false
+final_mult <-
+  div_stuff |> 
+  filter(date == max(date)) |>
+  select(share_multiplier) |> 
+  pull()
+```
+
+Applying this process to each dividend, we end up with `r round(final_mult, 4)` shares for each share we started with.
+With each of these shares having a price of `r round(end_price, 4)`, we have a return of `r round(final_mult * end_price, 4)` on an initial investment of `r round(start_price, 4)` for a gross return of `r round(final_mult * end_price / start_price, 4) * 100`%.
+
+## Adjusted prices
 	
 Focusing on the two closing prices---`close` and `adjusted`---the natural first question is what does the word "adjusted" mean?
 As we have done before, we will use the data and our knowledge of the setting to infer the meaning of this word.
@@ -142,7 +265,7 @@ Knowing what plot can reveal quickly, we can create @fig-adj-ratio.
 ```{r}
 #| label: fig-adj-ratio
 #| fig-cap: Ratio of `adjusted` to `close` over time
-dmp_df |>
+dmp_prices |>
   mutate(adj_ratio = adjusted / close) |>
   ggplot(aes(x = date, y = adj_ratio)) +
   geom_line()
@@ -155,22 +278,11 @@ This latter fact is consistent with "corporate actions such as dividends" occurr
 
 In practice, the most common "corporate action" is the payment of dividends.
 
- - **Dividend**: A distribution made by a company to its shareholders, usually from profits, either in cash or additional shares. 
- Cash dividends are generally expressed on a per-share basis (e.g., 50.4 cents per share) with all shareholders in a given **class**.
- Most companies have a single class of shares.
- For firms with multiple classes of shares, the dividends paid are the same
- - **Cum Dividend**: When a stock is purchased *cum dividend*, the purchaser getsthe right to the upcoming dividend. If you buy the stock before the ex-dividend date, you will receive the associated dividend payment.
- - **Ex-Dividend Date**: The first trading day on which a stock no longer carries the right to receive the previously declared dividend. 
- If you buy the stock on or after the ex-dividend date, you will not receive the upcoming dividend.
-	•	
-	•	**Record Date**: The date when the company checks its books to determine who the dividend should be paid to. Due to stock exchange settlement rules, you must buy the stock before the ex-dividend date to receive the dividend.
-	-	**Payment Date**: The date when the dividend is actually paid to shareholders.
-
 In the following code, I calculate `adj_amt`, which represents the amount of the dividend implied by the values in `close` and `adjusted` on a given trading day and the previous day.
 
 ```{r}
 dmp_adjs <-
-  dmp_df |>
+  dmp_prices |>
   select(symbol, date, close, adjusted) |>
   mutate(adj_ratio = adjusted / close) |>
   group_by(symbol) |>
@@ -223,7 +335,7 @@ Checking this with $c_t = `r round(example_data$close[row], 4)`$, $c_{t-1} = `r 
 
 ```{r}
 rets_df <-
-  dmp_df |>
+  dmp_prices |>
   group_by(symbol) |>
   arrange(date) |>
   mutate(ret_1 = close / lag(close) - 1,
