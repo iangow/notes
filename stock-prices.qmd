@@ -52,7 +52,7 @@ Domino's is a distinct entity from the American firm Domino's Pizza, Inc.
 
 Stock prices symbolize capitalism in more ways than one.
 For example, it's actually difficult to identify a completely open source of data on stock prices for many stock exchanges.
-Typically databases on stock prices are behind paywalls and the like and so it is difficult for to just post pre-processed data.
+Typically databases on stock prices are behind paywalls and the like and so it is difficult to just post pre-processed data for readers.
 
 That said, there are many websites that redistribute stock price data in a form that we can access readily.
 One such site is Yahoo Finance (Yahoo) and if you type "Domino's Pizza Enterprises" into the search bar of that site, you will learn that the **ticker** for Domino's is, for the purposes of Yahoo is `DMP.AX`.
@@ -166,6 +166,13 @@ dmp_divs <-
   mutate(date = fix_date(date))
 ```
 
+```{r}
+tail(dmp_divs)
+```
+
+The amounts in `dmp_divs` can be compared with the amounts reported by the company in filings with the ASX.
+For example, we can [confirm](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02774825-2A1506103) the \$0.555 dividend with an ex-dividend date of 2024-02-26 and also [confirm](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02700627-2A1468084) the \$0.426 dividend with an ex-dividend date of 2023-08-28.
+
 ### Exercises
 
 
@@ -202,9 +209,11 @@ total_divs <-
 During that time, we would have seen the stock go from `r round(start_price, 4)` (`start_price`) to `r round(end_price, 4)` (`end_price`) while receiving `r round(total_divs, 4)` (`total_divs`) in dividends.
 So one calculation of the **gross return** would be the following (here $p_s$ and $p_t$ refer to the close prices on `r start_date` and `r end_date`, respectively, and the expression involving $d_i$ refers to dividends paid between those dates).
 
+### Incorporating dividends
+
 $$ r_{s, t} = \frac{p_t + \sum_{i: i \in (s, t]} d_i}{p_s}$$
 The numerator equals `r round(end_price + total_divs, 4)` and the denominator equals `r round(start_price, 4)`, yielding a gross return of `r 100*round((end_price + total_divs) /start_price, 4)`%, or a net return of  `r 100*round((end_price + total_divs) /start_price - 1, 4)`%.
-But an astute reader might have noticed that, by simply summing up the dividends ($\sum_{i: i \in (s, t]} d_i$), we are effectively assuming that the dividends are stored in an interest-free account, or perhaps under a mattress, until the time comes to tally them up to calculate returns.
+But an astute reader might have noticed that, by simply summing up the dividends $\left(\sum_{i: i \in (s, t]} d_i \right)$, we are effectively assuming that the dividends are stored in an interest-free account, or perhaps under a mattress, until the time comes to tally them up to calculate returns.
 
 A more conventional approach is to assume that the dividends are reinvested in the stock itself at the close price on the ex-dividend date.
 
@@ -214,26 +223,24 @@ options(pillar.sigfig = 4)
 ```
 
 ```{r}
-dmp_rets <-
+#| label: dmp_adjusted_fwd
+#| include: false
+dmp_adjusted_fwd <-
   dmp_prices |>
   left_join(dmp_divs, by = join_by(symbol, date)) |>
+  mutate(dividend = coalesce(value, 0)) |>
   group_by(symbol) |>
   arrange(date) |>
-  mutate(lag_close = lag(close),
-         dividend = coalesce(value, 0)) |>
-  select(symbol, date, close, lag_close, dividend) |>
-  mutate(ret = (close + dividend) / lag_close) |>
-  mutate(share_multiplier = cumprod(coalesce(1 + dividend / close, 1)),
-         cumret = cumprod(coalesce(ret, 1))) |>
+  mutate(shares_adj = cumprod(coalesce((close + dividend) / close, 1))) |>
   ungroup() |>
+  mutate(adjusted_alt = close * shares_adj) |>
   arrange(desc(date))
 ```
-
 
 ```{r}
 #| include: false
 div_stuff <-
-  dmp_rets |>
+  dmp_adjusted_fwd |>
   arrange(date) |>
   filter(dividend != 0)
 ```
@@ -242,45 +249,115 @@ Take the first dividend paid in our sample period, that with an ex-dividend date
 At a close price of `r round(div_stuff$close[1], 4)`, this dividend of `r round(div_stuff$dividend[1], 4)` could be used to purchase `r round(div_stuff$dividend[1]/div_stuff$close[1], 4)` additional shares, so we now have `r round(1 + div_stuff$dividend[1]/div_stuff$close[1], 4)` shares.
 
 Moving to the second dividend paid in our sample period, which had an ex-dividend date of `r div_stuff$date[3]`.
-At a close price of `r round(div_stuff$close[2], 4)`, this dividend of `r round(div_stuff$dividend[2], 4)` per share on `r round(1 + div_stuff$dividend[1]/div_stuff$close[1], 4)` shares, could be used to purchase `r round(div_stuff$dividend[2]/div_stuff$close[2] * (1 + div_stuff$dividend[1]/div_stuff$close[1]), 4)` additional shares, so we now have `r round(div_stuff$share_multiplier[2], 4)` shares.
+At a close price of `r round(div_stuff$close[2], 4)`, this dividend of `r round(div_stuff$dividend[2], 4)` per share on `r round(1 + div_stuff$dividend[1]/div_stuff$close[1], 4)` shares, could be used to purchase `r round(div_stuff$dividend[2]/div_stuff$close[2] * (1 + div_stuff$dividend[1]/div_stuff$close[1]), 4)` additional shares, so we now have `r round(div_stuff$shares_adj[2], 4)` shares.
 
 ```{r}
 #| include: false
 final_mult <-
   div_stuff |> 
   filter(date == max(date)) |>
-  select(share_multiplier) |> 
+  select(shares_adj) |> 
   pull()
 ```
 
 Applying this process to each dividend, we end up with `r round(final_mult, 4)` shares for each share we started with.
 With each of these shares having a price of `r round(end_price, 4)`, we have a return of `r round(final_mult * end_price, 4)` on an initial investment of `r round(start_price, 4)` for a gross return of `r round(final_mult * end_price / start_price, 4) * 100`%.
 
-## Adjusted prices
-	
-Focusing on the two closing prices---`close` and `adjusted`---the natural first question is what does the word "adjusted" mean?
-As we have done before, we will use the data and our knowledge of the setting to infer the meaning of this word.
-Knowing what plot can reveal quickly, we can create @fig-adj-ratio. 
+### Adjusted prices
+
+Note that it is common to combine the close price and the adjusted number of shares in a single "adjusted" price, such as can be seen below as `adjusted_alt`.
 
 ```{r}
-#| label: fig-adj-ratio
-#| fig-cap: Ratio of `adjusted` to `close` over time
-dmp_prices |>
-  mutate(adj_ratio = adjusted / close) |>
-  ggplot(aes(x = date, y = adj_ratio)) +
-  geom_line()
+#| ref.label: dmp_adjusted_fwd
+#| eval: false
 ```
 
-We see a couple of things in @fig-adj-ratio.
-First, the `adj_ratio` (defined as `adjusted` divided by `close`) equals one at the end of the period of our data set.
-Second, it appears that `adj_ratio` is a step function with respect to time: it is constant for periods, then steps up in discrete amounts on certain dates.
-This latter fact is consistent with "corporate actions such as dividends" occurring relatively infrequently on discrete dates.
+```{r}
+dmp_adjusted_fwd |>
+  select(date, close, shares_adj, adjusted_alt)
+```
 
-In practice, the most common "corporate action" is the payment of dividends.
+This approach is implicit in the approach used by the Center for Research in Security Prices, LLC (CRSP), the *de facto* standard source of stock returns for US stocks in academic finance.^[See [Section 7.2](https://iangow.github.io/far_book/identifiers.html#the-crsp-database) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) for more on CRSP.]
+CRSP calculates daily (gross) returns as the close plus any applicable dividends divided by the lagged close.
 
-In the following code, I calculate `adj_amt`, which represents the amount of the dividend implied by the values in `close` and `adjusted` on a given trading day and the previous day.
+The equivalence between the two approaches can be seen in the output from the following code, which calculates (gross) returns in two ways.
+First, `cumret_alt` is calculated by comparing the adjusted price (`adjusted_alt`) with `start_price`.
+Second, `cumret` is calculated by accumulating `ret`, which represents daily returns defined according to the formula provided by CRSP.
 
 ```{r}
+dmp_adjusted_fwd |>
+  group_by(symbol) |>
+  arrange(date) |>
+  mutate(ret = (close + dividend) / lag(close),
+         cumret = cumprod(coalesce(ret, 1))) |>
+  ungroup() |>
+  mutate(cumret_alt = adjusted_alt / start_price) |>
+  select(date, close, adjusted_alt, cumret_alt, cumret) |>
+  arrange(desc(date))
+```
+
+It is more common to see adjusted prices calculated not in the "forward" manner described above (i.e., starting at the start of the sample and reinvesting dividends), but in a "backward" fashion that adjusts past prices so they can be compared with the current stock price.
+Code to perform this is provided below with the result being stored in `dmp_adjusted`.
+
+```{r}
+#| label: dmp_adjusted
+dmp_adjusted <-
+  dmp_prices |>
+  left_join(dmp_divs, by = join_by(symbol, date)) |>
+  mutate(dividend = coalesce(value, 0)) |>
+  group_by(symbol) |>
+  arrange(desc(date)) |>
+  mutate(shares_adj = cumprod(coalesce(close / (dividend + close), 1))) |>
+  ungroup() |>
+  mutate(adjusted_alt = close * shares_adj)
+```
+
+The code for `dmp_adjusted` is identical to that for `dmp_adjusted_fwd` but for two changes.
+First, `arrange(desc(date))` replaces `arrange(date)`.
+Second, `shares_adj = cumprod(coalesce((close + dividend) / close, 1))` is replaced by `shares_adj = cumprod(coalesce(close / (dividend + close), 1))`.
+In other words, the formula is inverted to reflect the fact that it is going backwards in time.
+
+```{r}
+start_price_adj <-
+  dmp_adjusted |> 
+  filter(date == start_date) |>
+  select(adjusted_alt) |> 
+  pull()  
+
+dmp_adjusted |>
+  arrange(date) |>
+  mutate(cumret_alt = adjusted_alt / start_price_adj) |>
+  ungroup() |>
+  select(date, close, adjusted_alt, cumret_alt) |>
+  arrange(desc(date))
+```
+
+### Testing our assumptions
+
+The approach used to calculate returns above makes a number of assumptions:
+
+1. Dividends are available to reinvest on the ex-dividend date.
+2. No taxes are due on the dividends
+3. Reinvestment occurs at the `close` price on on the ex-dividend date.
+
+I consider each assumption in turn.
+First, we can inspect the [filing](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02852229-2A1548239) made by Domino's with the ASX to check the payment date of the dividend with an ex-dividend date of 26 August 2024.
+There we see that the dividend was actually paid on 25 September 2024, nearly a full month after the ex-dividend date.
+
+Regarding the second assumption, we can get some information from the filing above, but a lot of the information we need comes from consideration of the circumstances of the investor in our thought experiment and the relevant tax law.
+Starting with the [filing](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02852229-2A1548239), we see that the dividend in question is not **franked**.
+Franked dividends arise because Australian tax law allows companies to pass to shareholders tax credits arising from the payment of corporate taxes.
+These tax credits can be used by Australian shareholders when filing their tax returns.
+But such credits do not apply in the current case because the dividend is unfranked.
+
+For Australian taxpayers, unfranked dividends will be taxed as income at the marginal tax rate.
+This rate will vary according to the circumstances of the investor.
+A
+
+### Using Yahoo Finance `adjusted`
+
+```{r}
+#| include: false
 dmp_adjs <-
   dmp_prices |>
   select(symbol, date, close, adjusted) |>
@@ -290,26 +367,8 @@ dmp_adjs <-
   mutate(lag_close = lag(close),
          lag_adjusted = lag(adjusted),
          adj_amt = round(lag(close) - lag(adjusted) / adj_ratio, 4)) |>
-  ungroup() |>
-  arrange(desc(date))
-```
+  ungroup()
 
-The amounts in `adj_amt` below can be compared with the amounts reported by the company in filings with the ASX.
-For example, we can [confirm](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02774825-2A1506103) the \$0.555 dividend with an ex-dividend date of 2024-02-26 and also [confirm](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02700627-2A1468084) the \$0.426 dividend with an ex-dividend date of 2023-08-28.
-
-```{r}
-dmp_adjs |>
-  select(-symbol, -adj_ratio) |>
-  filter(adj_amt != 0) |>
-  head()
-```
-So this provides verification of the formula I used to calculate `adj_amt`.
-But where did this calculation come from?
-Alternatively, how are the dividends incorporated into the values for `adjusted`?
-Answering the latter question will actually provide the answer to the former.
-
-```{r}
-#| include: false
 example_data <-
   dmp_adjs |>
   select(-symbol, -adj_ratio) |>
@@ -319,11 +378,6 @@ row <- 1
 ```
 
 
-Taking the first value from above, we can imagine that if we purchased the stock at the closing price (\$`r round(example_data$lag_close[row], 4)`) on the trading day prior to `r round(example_data$date[row], 4)` and then sold at the closing price (\$`r round(example_data$close[row], 4)`) on the ex-dividend date, we could enjoy a capital appreciation of \$`r round(example_data$close[row] - example_data$lag_close[row], 4)` plus the dividend of \$`r example_data$adj_amt[row]` for a total per-share dollar return of \$`r round(example_data$close[row] - example_data$lag_close[row] + example_data$adj_amt[row], 4)`.
-This implies a percentage return of `r round(100 * (example_data$close[row] - example_data$lag_close[row] + example_data$adj_amt[row]) / example_data$lag_close[row], 4)`%.
-
-If we use the `adjusted` data directly we would divide `r round(example_data$adjusted[row], 4)` by `r round(example_data$lag_adjusted[row], 4)` and subtract `1` to get a percentage return of `r round(100 * (example_data$adjusted[row] / example_data$lag_adjusted[row] - 1), 4)`%.
-
 Oh. There's slight difference here!
 
 It can be shown that the returns on embedded in `adjusted` can be calculated as
@@ -331,22 +385,50 @@ It can be shown that the returns on embedded in `adjusted` can be calculated as
 $$ r_{t} = \frac{a_{t}}{a_{t-1}} - 1 = \frac{c_{t}}{c_{t-1} - d_{t}} - 1. $$ 
 Checking this with $c_t = `r round(example_data$close[row], 4)`$, $c_{t-1} = `r round(example_data$lag_close[row], 4)`$, and $d_t = `r round(example_data$adj_amt[row], 4)`$, we get `r round(100 * (example_data$close[row]/ (example_data$lag_close[row] - example_data$adj_amt[row]) - 1), 4)`%.
 
+### Returns
+
+```{r}
+dmp_ret_data <-
+  dmp_prices |>
+  left_join(dmp_divs, by = join_by(symbol, date)) |>
+  mutate(dividend = coalesce(value, 0)) |>
+  group_by(symbol) |>
+  arrange(date) |>
+  mutate(close_open_amt =lag(close) - (open + dividend),
+         close_open = (open + dividend) / lag(close),
+         open_close = (close + dividend) / (open + dividend),
+         close_close = (close + dividend) / lag(close)) 
+```
+
+```{r}
+rets_dist_df <-
+  dmp_ret_data |>
+  filter(dividend == 0, !is.na(close_close)) |>
+  select(symbol, date, close_open, open_close, close_close) |>
+  pivot_longer(cols = -c(symbol, date)) 
+```
 
 
 ```{r}
-rets_df <-
-  dmp_prices |>
-  group_by(symbol) |>
-  arrange(date) |>
-  mutate(ret_1 = close / lag(close) - 1,
-         ret_2 = adjusted / lag(adjusted) - 1,
-         adj_close = lag(close) * (1 + ret_2)) |>
-  ungroup() |>
-  mutate(close_diff = close - adjusted)
+rets_dist_df |>
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_grid(name ~ .)
+```
 
-rets_df |>
-  filter(abs(ret_1 - ret_2) > 0.000001)
+```{r}
+rets_dist_df |>
+  ggplot(aes(x = name, y = value)) +
+  geom_boxplot()
+```
 
-rets_df |>
-  filter(between(date, as.Date("2024-08-23"), as.Date("2024-08-30")))
+## Event study
+
+```{r}
+dmp_ret_data |>
+  filter(dividend != 0, !is.na(close_open_amt)) |>
+  select(symbol, date, close_open_amt, dividend) |>
+  ggplot(aes(x = dividend, y = close_open_amt)) +
+  geom_point() +
+  geom_smooth(method = lm, formula = 'y ~ x', se = FALSE)
 ```
