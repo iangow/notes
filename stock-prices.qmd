@@ -388,21 +388,33 @@ Checking this with $c_t = `r round(example_data$close[row], 4)`$, $c_{t-1} = `r 
 ### Returns
 
 ```{r}
-dmp_ret_data <-
-  dmp_prices |>
-  left_join(dmp_divs, by = join_by(symbol, date)) |>
+tickers <- c("KSL.AX", "CYC.AX", "ADA.AX", "SST.AX",  "UOS.AX",
+             "NGI.AX", "BVS.AX", "JMS.AX", "ZIM.AX")
+sample_prices <- 
+  tq_get(tickers, from = start_date, to = end_date) |>
+  mutate(date = fix_date(date))
+sample_divs <- tq_get(tickers, from = start_date, to = end_date,
+                      get = "dividends") |>
+  mutate(date = fix_date(date))
+```
+
+```{r}
+sample_ret_data <-
+  sample_prices |>
+  left_join(sample_divs, by = join_by(symbol, date)) |>
   mutate(dividend = coalesce(value, 0)) |>
   group_by(symbol) |>
   arrange(date) |>
-  mutate(close_open_amt =lag(close) - (open + dividend),
+  mutate(close_open_ret = (open + dividend) / lag(close) - 1,
+         dividend_yld = dividend / lag(close),
          close_open = (open + dividend) / lag(close),
          open_close = (close + dividend) / (open + dividend),
          close_close = (close + dividend) / lag(close)) 
 ```
 
 ```{r}
-rets_dist_df <-
-  dmp_ret_data |>
+sample_dist_df <-
+  sample_ret_data |>
   filter(dividend == 0, !is.na(close_close)) |>
   select(symbol, date, close_open, open_close, close_close) |>
   pivot_longer(cols = -c(symbol, date)) 
@@ -410,14 +422,14 @@ rets_dist_df <-
 
 
 ```{r}
-rets_dist_df |>
+sample_dist_df |>
   ggplot(aes(x = value)) +
   geom_histogram() +
   facet_grid(name ~ .)
 ```
 
 ```{r}
-rets_dist_df |>
+sample_dist_df |>
   ggplot(aes(x = name, y = value)) +
   geom_boxplot()
 ```
@@ -425,10 +437,11 @@ rets_dist_df |>
 ## Event study
 
 ```{r}
-dmp_ret_data |>
-  filter(dividend != 0, !is.na(close_open_amt)) |>
-  select(symbol, date, close_open_amt, dividend) |>
-  ggplot(aes(x = dividend, y = close_open_amt)) +
+sample_ret_data |>
+  # filter(!symbol %in% c("ZIM.AX", "WOR.AX")) |>
+  filter(dividend_yld != 0, !is.na(close_open_ret)) |>
+  select(symbol, date, close_open_ret, dividend_yld) |>
+  ggplot(aes(x = dividend_yld, y = close_open_ret)) +
   geom_point() +
   geom_smooth(method = lm, formula = 'y ~ x', se = FALSE)
 ```
