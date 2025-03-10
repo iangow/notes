@@ -142,9 +142,9 @@ Having fixed `date`, we can shift our attention to the other fields in `dmp_pric
 
 As mentioned above, the core idea of a share in a company is that it entitles the holder to an equal share in any distributions to shareholders.
 The most familiar form of distribution is the cash dividend. 
-Cash dividends are generally expressed on a per-share basis (e.g., 50.4 cents per share) with all shareholders in a given **class** receiving the same per-share the company
-Most companies have a single class of shares.
-For many firms with multiple classes of shares, the dividends paid are the same for all classes, but shares from different classes have different voting rights.
+Cash dividends are generally expressed on a per-share basis (e.g., 50.4 cents per share) with all shareholders in a given **class** receiving the same per-share dividend.
+Most companies have a single class of share.
+And many firms with multiple classes of shares pay the same the dividends for all classes, with classes differing only regarding voting rights.
 
 The first trading day on which the purchaser of a stock does not get the right to receive the previously declared dividend is the **ex-dividend date**.
 In other words, buying the stock before the ex-dividend date occurs on a **cum dividend** basis, in that the purchaser gets the right to the upcoming dividend.
@@ -184,7 +184,7 @@ For example, we can [confirm](https://cdn-api.markitdigital.com/apiman-gateway/A
 
 Many analyses in finance involve comparison of alternative investment strategies and a standard analysis of such strategies involves **backtesting**, which typically involves conducting a kind of thought experiment in which it is assumed that we can go back in time and implement the investment strategy and evaluate how it would have performed given the historical returns on the securities invested in as part of the strategy.
 
-For the purposes of this chapter, I will assume that the strategy we are interested in involved purchasing stock in `r ticker` at the close of `r start_date` and holding that stock until selling it at the close of `r end_date`.
+For the purposes of this chapter, I will assume that the strategy we are interested in involves purchasing stock in `r ticker` at the close of `r start_date` and holding that stock until selling it at the close of `r end_date`.
 
 ```{r}
 start_price <-
@@ -209,11 +209,11 @@ total_divs <-
 During that time, we would have seen the stock go from `r round(start_price, 4)` (`start_price`) to `r round(end_price, 4)` (`end_price`) while receiving `r round(total_divs, 4)` (`total_divs`) in dividends.
 So one calculation of the **gross return** would be the following (here $p_s$ and $p_t$ refer to the close prices on `r start_date` and `r end_date`, respectively, and the expression involving $d_i$ refers to dividends paid between those dates).
 
-### Incorporating dividends
-
 $$ r_{s, t} = \frac{p_t + \sum_{i: i \in (s, t]} d_i}{p_s}$$
 The numerator equals `r round(end_price + total_divs, 4)` and the denominator equals `r round(start_price, 4)`, yielding a gross return of `r 100*round((end_price + total_divs) /start_price, 4)`%, or a net return of  `r 100*round((end_price + total_divs) /start_price - 1, 4)`%.
 But an astute reader might have noticed that, by simply summing up the dividends $\left(\sum_{i: i \in (s, t]} d_i \right)$, we are effectively assuming that the dividends are stored in an interest-free account, or perhaps under a mattress, until the time comes to tally them up to calculate returns.
+
+### Reinvestment of dividends
 
 A more conventional approach is to assume that the dividends are reinvested in the stock itself at the close price on the ex-dividend date.
 
