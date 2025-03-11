@@ -182,6 +182,30 @@ For example, we can [confirm](https://cdn-api.markitdigital.com/apiman-gateway/A
 
 ## Cumulative returns
 
+
+Suppose that you put \$1,000 dollars in a bank account paying 6% interest per annum *compounded monthly*.
+This means that each month, interest equal to 0.5% of the beginning balance will be calculated and added to the account balance.
+
+```{r}
+beg_balance <- 1000
+interest_rate_annual <- 0.06
+interest_rate_monthly <- interest_rate_annual / 12
+periods <- 1:10
+```
+
+```{r}
+bank_df <-
+  tibble(period = periods) |>
+  mutate(end_balance = beg_balance * (1 + interest_rate_monthly)^(period),
+         beg_balance = coalesce(lag(end_balance), beg_balance),
+         interest = interest_rate_monthly * beg_balance,
+         check = abs(beg_balance + interest - end_balance) < 1e-10,
+         ret = interest / beg_balance) |>
+  select(period, beg_balance, interest, end_balance, ret, check)
+
+bank_df
+```
+
 Many analyses in finance involve comparison of alternative investment strategies and a standard analysis of such strategies involves **backtesting**, which typically involves conducting a kind of thought experiment in which it is assumed that we can go back in time and implement the investment strategy and evaluate how it would have performed given the historical returns on the securities invested in as part of the strategy.
 
 For the purposes of this chapter, I will assume that the strategy we are interested in involves purchasing stock in `r ticker` at the close of `r start_date` and holding that stock until selling it at the close of `r end_date`.
@@ -337,14 +361,29 @@ dmp_adjusted |>
 The approach used to calculate returns above makes a number of assumptions:
 
 1. Dividends are available to reinvest on the ex-dividend date.
-2. No taxes are due on the dividends
-3. Reinvestment occurs at the `close` price on on the ex-dividend date.
+2. Reinvestment occurs at the `close` price on on the ex-dividend date.
+3. No taxes are due on the dividends
 
 I consider each assumption in turn.
 First, we can inspect the [filing](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02852229-2A1548239) made by Domino's with the ASX to check the payment date of the dividend with an ex-dividend date of 26 August 2024.
 There we see that the dividend was actually paid on 25 September 2024, nearly a full month after the ex-dividend date.
 
-Regarding the second assumption, we can get some information from the filing above, but a lot of the information we need comes from consideration of the circumstances of the investor in our thought experiment and the relevant tax law.
+```{r}
+#| include: false
+ex_div_close <-
+  dmp_adjusted_fwd |> 
+  filter(dividend > 0) |> 
+  select(close) |> 
+  pull() %>%
+  .[1]
+```
+
+The second assumption is related to the first in that we would need to borrow money to purchase at the close price if dividends are not paid till later.
+Many Australian firms offer dividend reinvestment plans.
+DMP is one such company, but its dividend reinvestment plan sets the purchase price at dividend reinvestment plans as the "average of the daily volume-weighted average market price [of DMP stock] ... during the 10 trading days commencing on 30 August 2024 and ending on 12 September 2024, with a 1.0 percent discount."
+This results in a price of \$29.75, compared to the ex-dividend date close of \$`r round(ex_div_close, 2)`.
+
+Regarding the third assumption, we can get some information from the filing above, but a lot of the information we need comes from consideration of the circumstances of the investor in our thought experiment and the relevant tax law.
 Starting with the [filing](https://cdn-api.markitdigital.com/apiman-gateway/ASX/asx-research/1.0/file/2924-02852229-2A1548239), we see that the dividend in question is not **franked**.
 Franked dividends arise because Australian tax law allows companies to pass to shareholders tax credits arising from the payment of corporate taxes.
 These tax credits can be used by Australian shareholders when filing their tax returns.
@@ -352,7 +391,14 @@ But such credits do not apply in the current case because the dividend is unfran
 
 For Australian taxpayers, unfranked dividends will be taxed as income at the marginal tax rate.
 This rate will vary according to the circumstances of the investor.
-A
+A taxpayer resident in Australia and earning less than \$18,200 will pay no income tax.
+A taxpayer resident in Australia and earning more than \$190,001 will pay income tax at a rate of 45% (plus a 2% Medicare levy).
+Superannuation funds---often the dominant shareholders in Australian firms---pay taxes at the rate of 15%.
+International investors would often see taxes withheld on dividend payments and then pay taxes in their home jurisdictions.
+In other words, taxes are complicated.
+Further complicating thing is that taxes may be due if we realize gains at the end of period by selling our hypothetical holdings.
+
+
 
 ### Using Yahoo Finance `adjusted`
 
@@ -413,7 +459,7 @@ dmp_dist_df <-
 ```{r}
 dmp_dist_df |>
   ggplot(aes(x = value)) +
-  geom_histogram() +
+  geom_histogram(binwidth = 0.01) +
   facet_grid(name ~ .)
 ```
 
@@ -423,14 +469,3 @@ dmp_dist_df |>
   geom_boxplot()
 ```
 
-## Event study
-
-```{r}
-dmp_ret_data |>
-  # filter(!symbol %in% c("ZIM.AX", "WOR.AX")) |>
-  filter(dividend_yld != 0, !is.na(close_open_ret)) |>
-  select(symbol, date, close_open_ret, dividend_yld) |>
-  ggplot(aes(x = dividend_yld, y = close_open_ret)) +
-  geom_point() +
-  geom_smooth(method = lm, formula = 'y ~ x', se = FALSE)
-```
