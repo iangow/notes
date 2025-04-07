@@ -1,0 +1,97 @@
+---
+title: "Trump's tariff formula"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-04-07
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+        \sisetup{output-decimal-marker = {,}}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+As it's not often that a mathematical formula with Greek letters get so much attention, lovers of equations might be excited about the publicity for the following:
+
+$$
+\begin{aligned}
+\Delta \tau_i &= \frac{x_i - m_i}{\epsilon* \varphi* m_i} \\
+\end{aligned}
+$$
+
+While one explanation was provided by President Trump "himself" on [Saturday Night Live](https://youtu.be/VEle3pZRqmI?si=KWEMznghnFhbqIBd&t=192), in this note I will offer a slightly different one.^[This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/tariffs.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/tariffs.pdf).]
+First $x_i$ represents exports of goods to country $i$ and $m_i$ means imports of goods from that country.
+
+What is $\epsilon$?
+If you know any economics (and even if you don't), you probably understand that increases in the price of a good generally lead to less demand for that good.
+But how much less?
+This is where $\epsilon$ comes in.
+It seems that it represents the price elasticity of demand for imports and is intended to represent the following, where $q$ is quantity demanded, $p$ is price, and $\Delta$ represents the change in the indicated quantity:
+
+$$
+\begin{aligned}
+\epsilon &= \frac{\Delta q}{q} \div \frac{\Delta p}{p} \\
+\end{aligned}
+$$
+
+In other words $\epsilon$ indicates the estimated percentage change in quantity ($\Delta q/q$) for a given percentage change in price ($\Delta p/p$).^[Strictly speaking, "percentages" mean multiplying by 100, but this happens in both the numerator and the denominator, thus cancelling out.]
+
+If the goal of trade policy is the eliminate goods trade deficits, then the $\Delta q$ we seek is $x_i - m_i$ in the equation above and the quantity in the denominator ($q$) is total imports $m_i$.^[Much has been written on the folly (e.g., [by Maurice Obstfeld](https://www.brookings.edu/articles/the-us-trade-deficit-myths-and-realities/)) of having this as a goal of trade policy, so I see little chance that I can add much to that here.]
+So we have:
+
+$$
+\begin{aligned}
+\epsilon &= \frac{x_i - m_i}{m_i} \div \frac{\Delta p}{p} \\
+\end{aligned}
+$$
+
+Now we just need to figure out $\Delta p/p$.
+This is where tariffs come in.
+If the existing tariff is zero and we impose a tariff of $\tau_i$ then the change in tariff will be $\Delta \tau_i$.
+But perhaps the full amount of the tariff will not be passed along as a price increase.
+This is where $\varphi$, the assumed passthrough rate, comes in.
+Given an increase in tariff rates of $\Delta \tau_i$ and passthrough rate of $\varphi$, the increase in prices will be $\tau_i* \varphi$:
+
+
+$$
+\begin{aligned}
+\epsilon &= \frac{x_i - m_i}{m_i} \div \left( \Delta \tau_i* \varphi \right) \\
+\end{aligned}
+$$
+Moving $\Delta \tau_i$ to the left and other terms to the right, we have the famous formula:
+
+$$
+\begin{aligned}
+\Delta \tau_i &= \frac{x_i - m_i}{\epsilon* \varphi * m_i}
+\end{aligned}
+$$
+The "reciprocal tariff calculations" provided by President Trump are predicated on a passthrough rate of $\varphi = 0.25$.^[Apart from ignoring any existing US tariffs, these calculations also explicitly assume "that offsetting exchange rate and general equilibrium effects are small enough to be ignored" and that there are no retaliatory tariffs imposed by other countries. The substitution of US production for higher-priced imports would presumably be among those "general equilibrium effects" that are "small enough to be ignored".]
+The calculations are also "generous" in that they only impose the tariff rate needed to reduce the trade deficit by half ... unless you're a country with which the US has a trade surplus, in which case, the tariff rates is a not so "generous" 10\%.
+
+In a nutshell, the whole premise of the formula is that tariffs are passed along as increases in the prices of imports.
+Without price increases, the Trump formula implies there would be no change in imports, hence no narrowing of the trade deficit in goods.
+With 2024 [imports of \$438.9 billion](https://ustr.gov/countries-regions/china-mongolia-taiwan/peoples-republic-china) and a tariff rate of 34%, the increase in the price of imports from China would be---using the parameters assumed in the Trump formula---about \$37 billion.
+However, researchers quoted by [FT Alphaville](https://www.ft.com/content/bbaa8daf-b7b0-4dca-bc23-c2e8eee6835d) argue that $\varphi = 0.25$ is too low and a better estimate would be "very close to 1".
+With $\varphi = 1$, the assumed increased cost to American consumers and producers would be close to \$150 billion.
+For the [European Union](https://ustr.gov/countries-regions/europe-middle-east/europe/european-union), the increased cost on this basis would exceed \$120 billion.^[Here *I* get to assume "that general equilibrium effects are small enough to be ignored"! Presumably there would be shifts resulting from the hundreds of billions of dollars in reduced imports, including sales of those to other places, or reduced production of these goods, or increased output by US producers.]
+
+To paraphrase one-time US senator [Everett Dirksen](https://web.archive.org/web/20040816153245/http://www.dirksencenter.org/print_emd_billionhere.htm), "a [few hundred] billion here, a [few hundred] billion there, and pretty soon you’re talking real money."
+
+
