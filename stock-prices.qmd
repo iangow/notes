@@ -176,21 +176,22 @@ For example, we can [confirm](https://cdn-api.markitdigital.com/apiman-gateway/A
 ### Exercises
 
 
-1. Confirm ex-dividend dates.
+1. Are these the ex-dividend dates consistent with those reported in the ASX filings?
 
-2. 
+2. What are the **record dates** and **payment dates** of these two dividends?
 
-## Cumulative returns
-
+## Compound interest
 
 Suppose that you put \$1,000 dollars in a bank account paying 6% interest per annum *compounded monthly*.
 This means that each month, interest equal to 0.5% of the beginning balance will be calculated and added to the account balance.
+Here I generate 10 years of data.
 
 ```{r}
 beg_balance <- 1000
 interest_rate_annual <- 0.06
 interest_rate_monthly <- interest_rate_annual / 12
-periods <- 1:10
+n_years <- 10
+periods <- 1:(12 * n_years)
 ```
 
 ```{r}
@@ -205,6 +206,40 @@ bank_df <-
 
 bank_df
 ```
+
+### Exercises
+
+1. What is the ending balance in the bank account?
+How much interest has been earned over ten-year period?
+
+```{r}
+#| include: false
+#| eval: false
+end_balance <-
+  bank_df |> 
+  filter(period == n_years * 12) |>
+  select(end_balance) |>
+  pull()
+
+interest_earnt <- end_balance - beg_balance
+
+interest_earnt
+```
+
+2. How much interest would have been earnt *without* compounding.
+(Interest calculated in this way is termed **simple interest**.)
+
+```{r}
+#| include: false
+#| eval: false
+n_years * 12 * interest_rate_monthly * beg_balance
+```
+
+
+## Cumulative returns
+
+
+
 
 Many analyses in finance involve comparison of alternative investment strategies and a standard analysis of such strategies involves **backtesting**, which typically involves conducting a kind of thought experiment in which it is assumed that we can go back in time and implement the investment strategy and evaluate how it would have performed given the historical returns on the securities invested in as part of the strategy.
 
