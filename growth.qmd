@@ -1,0 +1,165 @@
+---
+title: "Growth"
+author: Ian D. Gow
+date: 2025-04-10
+date-format: "D MMMM YYYY"
+format:
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+```{r}
+#| message: false
+#| include: false
+library(tidyverse)
+library(DBI)
+library(farr)
+library(googlesheets4)
+```
+
+```{r}
+#| include: false
+#| warning: false
+# gs4_auth(email = "iandgow@gmail.com")
+```
+
+```{r}
+#| include: false
+start_year <- 2008L
+end_year <- 2017L
+n_years <- end_year - start_year
+```
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+
+funda <- load_parquet(db, schema = "comp", table = "funda")
+company <- load_parquet(db, schema = "comp", table = "company")
+
+funda_mod <-
+  funda |>
+  filter(indfmt == "INDL", datafmt == "STD",
+         consol == "C", popsrc == "D")
+
+```
+
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note can be found [here](https://github.com/iangow/notes/blob/main/growth.qmd) and the current version of this PDF can be found [here](https://github.com/iangow/notes/blob/main/growth.pdf)
+
+@fig-growth-ind is a rough replication of Exhibit 9.1 of @Koller:2020aa [p. 157].
+While the numbers do not line up exactly, the broad thrust is similar (e.g., *Biotechnology* has high median growth and the widest dispersion).
+I think it is helpful to make it possible for readers to see the choices underlying a plot (and to produce their own version with their own choices).
+
+Some observations:
+
+ - While "Compustat" is listed as a data source in the note to Exhibit 9.1 of @Koller:2020aa, it is not clear what sample restrictions were imposed (e.g., size).
+ - The industry mapping is not entirely clear. I had ChatGPT [guess](https://chatgpt.com/share/67f82079-ab7c-800b-9448-dcd28f7305f9) a possible mapping. I then cleaned this up a tad and posted it in a [Google Sheets document](https://docs.google.com/spreadsheets/d/1B0YvlXC1Mw7fM8IMLe_DhYh1n1E1Et-3__gi9vZoIwY/edit?usp=sharing).
+ I would proably need to go through carefully "by hand" to check that no firms are inadvertedly omitted or put in the wrong industry group.
+ - I like the way the word "Industry" appears (in **bold**) at the top of the y-axis labels (industries) in Exhibit 9.1 of @Koller:2020aa.
+ I couldn't quite replicate that here.
+ - I couldn't get the legend seen in Exhibit 9.1 of @Koller:2020aa to look good in @fig-growth-ind.
+ - I had ChatGPT [help me](https://chatgpt.com/share/67f82079-ab7c-800b-9448-dcd28f7305f9) with the creation of the markers at each quantile.
+ - Updating @fig-growth-ind to cover different periods is quite easy.
+ - Other plots in Chapter 9 of @Koller:2020aa might be amenable to creation in the same way.
+
+```{r}
+#| echo: false
+#| warning: false
+gs_inds <- 
+  read_sheet("1B0YvlXC1Mw7fM8IMLe_DhYh1n1E1Et-3__gi9vZoIwY") |>
+  separate_longer_delim(c(codes, field), ",") |> 
+  mutate(codes = str_trim(codes)) |>
+  copy_to(db, df = _, name = "gs_inds", overwrite = TRUE) |>
+  pivot_wider(values_from = "codes", names_from = "field") |>
+  compute()
+```
+```{r}
+#| echo: false
+industries_mck <-
+  company |>
+  filter(fic == "USA") |>
+  left_join(
+    gs_inds |> 
+      select(industry_mck, gsubind), by = "gsubind") |>
+  rename(industry_mck_subind = industry_mck) |>
+  left_join(
+     gs_inds |> 
+      select(industry_mck, gind), by = "gind") |>
+  rename(industry_mck_ind = industry_mck) |>
+  left_join(
+    gs_inds |> 
+      select(industry_mck, ggroup), by = "ggroup") |>
+  rename(industry_mck_group = industry_mck) |>
+  mutate(industry_mck = coalesce(industry_mck_subind, 
+                                 industry_mck_ind, 
+                                 industry_mck_group)) |>
+  select(gvkey, industry_mck, ggroup, gind, gsubind) |>
+  compute()
+```
+
+```{r}
+#| echo: false
+years <-
+  tibble(period = c("start_year", "end_year"), 
+         fyear = c(start_year, end_year)) |>
+  copy_to(db, df = _, name = "years", overwrite = TRUE)
+
+
+growth_data <-
+  funda_mod |> 
+  inner_join(years, by = join_by(fyear)) |>
+  select(gvkey, period, sale) |> 
+  pivot_wider(names_from = "period", values_from = "sale") |> 
+  mutate(cagr = 100 * ((end_year / start_year) ^ (1 / n_years) - 1)) |>
+  inner_join(industries_mck, by = join_by(gvkey)) |>
+  compute()
+
+growth_stats <- 
+  growth_data |>
+  group_by(industry_mck) |>
+  summarise(
+    q25 = approx_quantile(cagr, 0.25),
+    median = approx_quantile(cagr, 0.50),
+    q75 = approx_quantile(cagr, 0.75)
+  ) |>
+  collect()
+```
+
+```{r}
+#| echo: false
+#| label: fig-growth-ind
+#| fig-cap: Variation in revenue growth by industry
+#| fig-cap-location: top
+growth_stats |>
+  filter(!is.na(industry_mck)) |>
+  arrange(median) |>
+  mutate(industry_mck = factor(industry_mck, levels = industry_mck)) |>
+  ggplot(aes(x = median, y = industry_mck)) +
+  geom_pointrange(aes(xmin = q25, xmax = q75), color = "steelblue", 
+                  shape = 22, size = .5, fill = "white") +
+  # Square at Q1
+  geom_point(aes(x = q25), shape = 15, size = 2.5, color = "steelblue") +
+  # Circle at Q3
+  geom_point(aes(x = q75), shape = 16, size = 2.5, color = "steelblue") +
+  theme_minimal() +
+  labs(
+    # title = "Annual revenue growth rate, %",
+    x = "2008-2017 average, %",
+    y = "Industry"
+  ) +
+  labs(y = NULL) +
+  theme(
+    axis.text.y = element_text(
+      size = 8,
+      hjust = 0)
+  )
+```
+# References {-}
