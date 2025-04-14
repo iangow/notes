@@ -1,0 +1,89 @@
+---
+title: "Analysing revenue of Duolingo"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-02-26
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \usepackage{scrextend}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+        \sisetup{output-decimal-marker = {,}}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+# Introduction
+
+After dabbling with the mysteries of Tesla's financial statements, I was interested to look at a set of financials that were a bit easier to interpret.
+I figured that Duolingo's might have enough going on to make things interesting, yet be straightforward enough that I could make sense of them.
+
+In this note, I describe how I went about analysing Duolingo's revenue-related accounts.
+I first tackled the problem much as I might have done in the 1990s.
+I then examined whether I could do things more easily using the XBRL data that has become widely available for US firms since around 2010.
+This second task provides a good opportunity to examine the strengths and weaknesses of XBRL for a fairly standard task.
+
+# Duolingo
+
+According to the Duolingo app installed on my phone, I signed up as a Duolingo user in August 2013, the year in which it won Apple's "App of the Year" award as a ["crowd-sourced language-learning app"](https://www.latintimes.com/app-year-2013-apple-honors-duolingo-language-learning-app-140096).
+Duolingo had been formed as a company in 2011 and launched to the public on 19 June 2012.^[See [Vator article from 2018](https://vator.tv/2018-06-22-when-duolingo-was-young-the-early-years/).]
+Duolingo was co-founded by Luis von Ahn, a Guatemalan-born Carnegie Mellon University professor and Severin Hacker, a Swiss-born graduate student.
+Luis von Ahn had previously worked on reCAPTCHA, which had parly functioned as crowd-sourced service helping with the digitization of books.
+
+One can glean a sense of the language-learning app marketplace in 2013 from reviews in *The Economist* that year.
+The apps [covered](https://www.economist.com/johnson/2013/06/14/review-babbel-and-duolingo) by *The Economist* were Duolingo, Rosetta Stone, Livemocha, and Babbel.
+Clicking [the link](https://livemocha.com) today takes you to Rosetta Stone suggesting that just three of the four survive today.
+[According to *The Economist*](https://www.economist.com/johnson/2013/01/03/rosetta-stone), the "sophisticated but pricey" Rosetta Stone is "mostly built around a common set of thousands of pictures" that "uses only pictures and words in the target language."
+In contrast, [Babbel](https://www.economist.com/johnson/2013/06/14/review-babbel-and-duolingo) has a "focus on building basic conversational skills ... occasionally set off [by] immersive lessons explaining grammatical concepts".
+
+At one point, the quality of the highly curated Babbel was clearly superior to the crowdsourced Duolingo.
+However, while crowdsourcing seems *passé* in 2024, Duolingo's model was perhaps better placed to adapt to the rise of AI in recent years.
+Babbel considered an IPO in 2021, but ended up [putting this on ice](https://www.reuters.com/article/business/language-learning-app-babbel-postpones-its-frankfurt-ipo-idUSKBN2GH23X/), perhaps because [investors had concerns](https://www.globalcapital.com/article/293a72851wr93taq7icqo/equity/equity-ipos/babbel-cancels-ipo-as-business-model-fails-to-woo-investors) about its business model, which seems much more labour-intensive than that of Duolingo.
+
+Meanwhile, [Duolingo completed its IPO](https://investors.duolingo.com/news-releases/news-release-details/duolingo-announces-pricing-initial-public-offering) on 28 July 2021.
+Far from being a loss-making start-up burning through cash, Duolingo is highly profitable and generating loads of cash.
+As of 31 December 2024, Duolingo had \$788,526 (thousand) in [cash and cash equivalents](https://investors.duolingo.com/node/10676/html#ifc3562d262a04e28b5a3f8d0c76ceb6e_55).^[That is more than $788 million; I follow Duolingo in reporting all numbers taken from Duolingo's financial statements in thousands of dollars.]
+
+
+# Analysing reveue accounts 
+
+I focus on a simple question: Can I reconcile the reported numbers for revenue and deferred revenue with the numbers reported under the "operating metric" of **bookings**?
+"**Subscription bookings** represent the amounts we receive from a purchase of any Duolingo subscription offering. 
+**Total bookings** include subscription bookings, income from advertising networks for advertisements served to our users, purchases of the Duolingo English Test, and in-app purchases of virtual goods. 
+We believe bookings provide an indication of trends in our operating results, including cash flows, that are not necessarily reflected in our revenues because we recognize subscription revenues ratably over the lifetime of a subscription, which is generally from one to twelve months."
+
+For the year ended 31 December 2024, Duolingo reported subscription bookings of \$730,737 and and total bookings of \$870,601.
+
+# Financial analysis: 1990s-style
+
+In 1997 and 1998, I was a member of a small team compiling Stern Stewart's rankings of market value-added (MVA) of public Australian companies.^[I believe I was the sole analyst on a later ranking of the top 50 New Zealand companies.]
+Those years are close to the beginning of time in Internet terms, but you can find vestiges of this work [online](https://www.afr.com/companies/finding-the-best-and-worst-wealth-creators-19970811-kb1y5?gift=g8WrqdktYTUG4WGhEeXbtk-ADmzWbv-tnmXL7JDcIYiQ5Zcm28ZM1tXBX1XvAYsicFmzDHZ4kCANeDKUgiTiuEyNNrAgPjH-5hKHCeWP2Qub6MDQZgLy1Z8T03IwzakWVr4).
+The process for constructing these rankings started with a phone call to the investor relations department with a request for annual reports for the last five years to be mailed to Stern Stewart's Sydney office.
+Once the annual reports arrived, we could then enter information from them into a specialized Excel template called Finanseer.^[At one point, Finanseer was a registered trademark of Stern Stewart. 
+Finanseer was a template with a specialized Excel add-in written in Visual Basic for Applications (VBA).]
+In Australia in the 1990s, there was no equivalent to SEC EDGAR to conveniently download annual reports.^[SEC EDGAR has provided filings with the SEC since around 1994 or 1995.
+In fact, there is no Australian equivalent today to SEC EDGAR today, but one can get PDFs of annual reports either from company websites or from the Australian Stock Exchange (ASX).]
+While there were commercial databases with financial statement information, these were riddled with errors and often did not include the detailed information we needed to enter into Finanseer.
+
+Today, even with PDFs of annual reports, I would guess that the process for making an MVA ranking would be little different, though getting a working copy of Finanseer might be challenging.
+One would still need to manually enter many numbers from annual reports into a spreadsheet and then crunch the numbers.
+While not a lot of people were making MVA rankings, a lot of analysis using financial statements I did in the 1990s took the form of getting numbers from those statements into Excel and crunching the data in some way.
+
+# Doing financial analysis today
+
+
+
