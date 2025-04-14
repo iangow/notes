@@ -6,9 +6,9 @@ if (!grepl("@", getOption("HTTPUserAgent"))) {
 }
 
 files_df <-
-  expand_grid(year = 2009:2024, quarter = 1:4) |>
+  expand_grid(year = 2025:2025, quarter = 1:4) |>
   mutate(file = paste0(year, "q", quarter)) |>
-  filter(file < "2024q3")
+  filter(file <= "2025q1")
 
 get_data <- function(file) {
   url <- str_c("https://www.sec.gov/files/dera/data/",
@@ -42,7 +42,7 @@ get_data <- function(file) {
   dbExecute(db, str_c("COPY pre TO '", pq_file, "'"))
 
   num <- read_tsv(unz(t, "num.txt"),
-                  col_types = "ccccddcdc") |>
+                  col_types = "ccccdcccdc") |>
     mutate(ddate = ymd(ddate)) |>
     copy_to(db, df = _, name = "num", overwrite = TRUE)
 
