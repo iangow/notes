@@ -206,31 +206,23 @@ oxon_seasons |>
   theme(legend.position = "bottom")
 ```
 
-In the United States, one often hears people speak of the "official" start of seasons.
-Ironically, there seems to be nothing that is official about these dates.
-However, there is consensus about the dates in the US.
-The "official" start of summer is the summer solstice (for 2024: 20 June in Oxford and Boston) and the "official" start of winter is the winter solstice (for 2024: 21 December in Oxford and Boston).^[Seasons reckoned in this way are known as **astronomical seasons**. See [here](https://en.wikipedia.org/wiki/Season#Meteorological).]
+In the United States, one often hears people speak of the "official" start of seasons. Ironically, there seems to be nothing that is official about these dates. However, there is consensus about the dates in the US. The "official" start of summer is the summer solstice (for 2024: 20 June in Oxford and Boston) and the "official" start of winter is the winter solstice (for 2024: 21 December in Oxford and Boston).[^1]
 
-In Australia, the usual convention is to divide seasons by months.
-On this basis, winter starts on 1 June and summer starts on 1 December.^[Seasons reckoned in this way are known as **meteorological seasons**. See [here](https://en.wikipedia.org/wiki/Season#Astronomical).]
+[^1]: Seasons reckoned in this way are known as **astronomical seasons**. See [here](https://en.wikipedia.org/wiki/Season#Meteorological).
 
-Is there a sense in which one approach is more correct than the other?
-Focusing on summer and winter, one definition for these seasons would be that winter starts on the first day of the `r max_n_days`-day period that is the coldest such period for a year averaged over a number of years.
-Similarly, summer should start on the first day of the `r max_n_days`-day period that is the hottest such period for a year averaged over a number of years.
+In Australia, the usual convention is to divide seasons by months. On this basis, winter starts on 1 June and summer starts on 1 December.[^2]
+
+[^2]: Seasons reckoned in this way are known as **meteorological seasons**. See [here](https://en.wikipedia.org/wiki/Season#Astronomical).
+
+Is there a sense in which one approach is more correct than the other? Focusing on summer and winter, one definition for these seasons would be that winter starts on the first day of the `r max_n_days`-day period that is the coldest such period for a year averaged over a number of years. Similarly, summer should start on the first day of the `r max_n_days`-day period that is the hottest such period for a year averaged over a number of years.
 
 We answer this question focusing on Oxford, England (latitude of `r latitude`, longitude: `r longitude`).
 
-Daily temperature data from [Open-Meteo](https://open-meteo.com) comprise a maximum and minimum temperature.
-So immediately we have two possible definitions of each season according to the temperature we use (e.g., summer could be the `r max_n_days`-day period that has the highest average minimum temperature or it could be the period that has the highest average maximum temperature).
-Here we consider both.
+Daily temperature data from [Open-Meteo](https://open-meteo.com) comprise a maximum and minimum temperature. So immediately we have two possible definitions of each season according to the temperature we use (e.g., summer could be the `r max_n_days`-day period that has the highest average minimum temperature or it could be the period that has the highest average maximum temperature). Here we consider both.
 
-The start of winter based on the `r max_n_days`-day period with the lowest average maximum temperature is **`r format(winter_max, "%d %B")`**.
-The start of winter based on the `r max_n_days`-day period with the lowest average minimum temperature is **`r format(winter_min, "%d %B")`**.
+The start of winter based on the `r max_n_days`-day period with the lowest average maximum temperature is **`r format(winter_max, "%d %B")`**. The start of winter based on the `r max_n_days`-day period with the lowest average minimum temperature is **`r format(winter_min, "%d %B")`**.
 
-The start of summer based on the `r max_n_days`-day period with the highest average maximum temperature is **`r format(summer_max, "%d %B")`**.
-The start of summer based on the `r max_n_days`-day period with the highest average minimum temperature is **`r format(summer_min, "%d %B")`**.
-So using maximums, we get close to the Australian convention for winter and close to the US convention for summer.
-
+The start of summer based on the `r max_n_days`-day period with the highest average maximum temperature is **`r format(summer_max, "%d %B")`**. The start of summer based on the `r max_n_days`-day period with the highest average minimum temperature is **`r format(summer_min, "%d %B")`**. So using maximums, we get close to the Australian convention for winter and close to the US convention for summer.
 
 ```{r}
 #| include: false
@@ -238,9 +230,7 @@ spring_max <- winter_max + days(max_n_days)
 autumn_max <- summer_max + days(max_n_days)
 ```
 
-Interestingly, it seems that using average maximums for summer and winter gets closest to the current approach in Australia.
-However, even using these we have the issue that spring begins on `r format(spring_max, "%d %B")` and autumn begins on `r format(autumn_max, "%d %B")`.
-This implies a spring of `r summer_max + years(1) - spring_max` days and an autumn of `r winter_max - autumn_max` days.
+Interestingly, it seems that using average maximums for summer and winter gets closest to the current approach in Australia. However, even using these we have the issue that spring begins on `r format(spring_max, "%d %B")` and autumn begins on `r format(autumn_max, "%d %B")`. This implies a spring of `r summer_max + years(1) - spring_max` days and an autumn of `r winter_max - autumn_max` days.
 
 ```{r}
 #| include: false
