@@ -1,0 +1,74 @@
+---
+title: "Growth"
+author: Ian D. Gow
+date: 2025-04-10
+date-format: "D MMMM YYYY"
+format:
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+```{r}
+#| message: false
+#| include: false
+library(tidyverse)
+library(dbplyr)
+library(DBI)
+library(farr)
+library(googlesheets4)
+```
+
+```{r}
+#| include: false
+#| warning: false
+# gs4_auth(email = "iandgow@gmail.com")
+```
+
+```{r}
+#| include: false
+start_year <- 2008L
+end_year <- 2017L
+n_years <- end_year - start_year
+```
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+
+funda <- load_parquet(db, schema = "comp", table = "funda")
+company <- load_parquet(db, schema = "comp", table = "company")
+
+funda_mod <-
+  funda |>
+  filter(indfmt == "INDL", datafmt == "STD",
+         consol == "C", popsrc == "D")
+```
+
+```{r}
+funda_mod |>
+  filter(fyear >= 1995) |>
+  mutate(pti = sql("pi")) |>
+  mutate(ctr = txpd / pti,
+         nopat = ebit * (1 - txpd / pti),
+         noa = (at - che - (lct - dlc))) |>
+  group_by(gvkey) |>
+  window_order(datadate) |>
+  mutate(roic = nopat / lag(noa)) |>
+  select(gvkey, datadate, ebit, txpd, pti, ebit, nopat, noa, ctr, roic) |>
+  ungroup() |>
+  arrange(gvkey, datadate)
+  
+```
+
+
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note can be found [here](https://github.com/iangow/notes/blob/main/growth.qmd) and the current version of this PDF can be found [here](https://github.com/iangow/notes/blob/main/growth.pdf)
+
+# References {-}
