@@ -1,0 +1,84 @@
+---
+title: "Noncontrolling interests"
+author: Ian D. Gow
+date: 2025-05-03
+date-format: "D MMMM YYYY"
+format:
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+```{r}
+#| message: false
+#| include: false
+library(tidyverse)
+library(dbplyr)
+library(DBI)
+library(farr)
+library(googlesheets4)
+```
+
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+
+funda <- load_parquet(db, schema = "comp", table = "funda")
+company <- load_parquet(db, schema = "comp", table = "company")
+
+funda_mod <-
+  funda |>
+  filter(indfmt == "INDL", datafmt == "STD",
+         consol == "C", popsrc == "D")
+```
+
+```{r}
+nci_df <-
+  funda_mod |>
+  select(gvkey, datadate, fyear, mib, mibn, seq, ceq, teq, ibmii, mii)
+```
+
+```{r}
+nci_df |>
+  filter(between(fyear, 2000, 2024)) |>
+  group_by(fyear) |>
+  summarize(mib = sum(mib), 
+            mibn = sum(mibn),
+            teq = sum(teq), .groups = "drop") |>
+  mutate(nci_ratio = (mib + mibn) / teq) |>
+  ggplot(aes(x = fyear, y = nci_ratio)) +
+  geom_line()
+```
+
+```{r}
+nci_hi <- 0.1
+
+nci_df |>
+  filter(fyear >= 2007) |>
+  mutate(nci_ratio = (mibn + coalesce(mib, 0)) / teq) |>
+  group_by(fyear) |>
+  summarize(prop_hi_nci = mean(as.double(nci_ratio > nci_hi)), .groups = "drop") |>
+  ggplot(aes(x = fyear, y = prop_hi_nci)) +
+  geom_line()
+```
+
+```{r}
+nci_df |>
+  filter(between(fyear, 2009, 2024)) |>
+  group_by(fyear) |>
+  summarize(mii = sum(mii), 
+            ibmii = sum(ibmii), .groups = "drop") |>
+  mutate(nci_ratio_inc = mii / ibmii) |>
+  ggplot(aes(x = fyear, y = nci_ratio_inc)) +
+  geom_line()
+```
+
+
+# References {-}
