@@ -1,0 +1,90 @@
+---
+title: "SIRCA Mergers and Acquisitions collection"
+author: 
+  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-09-11
+date-format: "D MMMM YYYY"
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2.5cm
+      - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+# Overview
+
+SIRCA's Mergers and Acquisitions collection provides data on Australian M&A transactions.
+
+The code in this note uses the packages listed below, plus the `duckdb` package.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr", "dbplyr"))` within R to install all the packages you need to run the code in this note. While `duckdb` and `arrow` are not listed below, they are needed to run the download script and to create the database we will use.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/sirca_ma.qmd) and the latest PDF version is available [here](https://raw.githubusercontent.com/iangow/notes/main/sirca_ma.pdf).
+
+```{r}
+#| include: false
+library(tinytable)
+
+knit_print_alt <- function(x, ...) {
+  res <- knitr::knit_print(knitr::kable(x, digits = 3))
+  knitr::asis_output(res)
+}
+```
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(arrow)
+```
+
+# Getting SIRCA Merger and Acquisitions data
+
+SIRCA supplies the data we will use as two compressed CSV files.
+I provide the code needed to prepare the data for the analysis below.
+I merely assume that you have access to SIRCA and have downloaded the raw data from SIRCA along the lines discussed below.^[See [SIRCA's documentation](http://www.sirca.org.au/wp-content/uploads/2023/11/How-to-use-the-Data-Library.pdf) for details on getting the data.]
+Once you have done that you should be able to execute all the code in this note and thereby produce all the output (tables and graphs) contained herein.
+
+You should download these files and place them *as is* in a single `sirca` directory and you should edit the code below to tell my script where to look for that directory.
+
+In my case, `sirca` is found in `~/Dropbox/raw_data` and so I execute the following command in RStudio:
+
+```{r}
+Sys.setenv(RAW_DATA_DIR = "~/Dropbox/raw_data")
+```
+
+The script also needs to know where to put the processed data files, which will be in parquet format.
+You should edit the following line to refer to a location on *your* computer that you would like to use to store processed SIRCA data.
+
+```{r}
+#| eval: false
+Sys.setenv(DATA_DIR = "~/Dropbox/pq_data")
+```
+
+```{r}
+pq_dir <- file.path(Sys.getenv("DATA_DIR"), "sirca")
+ma_delisted_file <- file.path(Sys.getenv("RAW_DATA_DIR"), 
+                              "sirca",
+                              "Delisted_MergerAndAcquisition-2025-08.csv.gz")
+
+ma_delisted <- read_csv(ma_delisted_file, show_col_types = FALSE)
+
+
+ma_other_file <- file.path(Sys.getenv("RAW_DATA_DIR"), 
+                              "sirca",
+                              "MergerAndAcquisition-2025-08.csv.gz")
+
+ma_other <- read_csv(ma_other_file, show_col_types = FALSE)
+
+si_ms_ma <-
+  ma_delisted |>
+  union_all(ma_other) |> 
+  write_parquet(sink = file.path(pq_dir, "si_ms_ma.parquet"))
+```
