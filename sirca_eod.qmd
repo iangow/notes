@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2024-07-07
+date: 2025-09-11
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -93,10 +93,10 @@ Once you have done that you should be able to execute all the code in this note 
 
 You should download these files and place them *as is* in a single `sirca` directory and you should edit the code below to tell my script where to look for that directory.
 
-In my case, `sirca` is found in `~/Library/CloudStorage/Dropbox/raw_data` and so I execute the following command in RStudio:
+In my case, `sirca` is found in `~/Dropbox/raw_data` and so I execute the following command in RStudio:
 
 ```{r}
-Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data")
+Sys.setenv(RAW_DATA_DIR = "~/Dropbox/raw_data")
 ```
 
 @tbl-csv-files provides details on the contents of the `sirca` subdirectory of `RAW_DATA_DIR` on my computer.
@@ -123,7 +123,7 @@ You should edit the following line to refer to a location on *your* computer tha
 
 ```{r}
 #| eval: false
-Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data")
+Sys.setenv(DATA_DIR = "~/Dropbox/pq_data")
 ```
 
 ```{r}
@@ -148,7 +148,7 @@ Details on the resulting parquet files that I have on my computer are provided i
 
 ```{r}
 #| include: false
-Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
+Sys.setenv(DATA_DIR = "~/Dropbox/pq_data/")
 ```   
 
 ```{r}
@@ -607,14 +607,14 @@ While further research would be needed to understand these, these are fortunatel
 
 ```{r}
 #| label: tbl-strange-factors
-#| tbl-cap: "Other difficult-to-explain `factor` values"
+#| tbl-cap: "A sample of other difficult-to-explain `factor` values"
 #| render: !expr function(x, ...) knit_print_alt(collect(x), ...)
 cum_factor_calcs |>
   filter(gcode != "gcm2") |>
   filter(abs(abs(cumulativefactor) - abs(cum_factor_calc)) > 0.001) |>
   distinct(gcode, cumulativefactor, cum_factor_calc) |>
   arrange(gcode, cumulativefactor) |>
-  collect()
+  collect(n = 20)
 ```
 
 The example provided in @tbl-npx1-factor shows dividends between `2000-03-06` and `2001-09-28` without any trading.
@@ -830,8 +830,8 @@ si_au_prc_daily |>
   mutate(month = floor_date(date, "month")) |>
   group_by(month) |>
   summarize(AvgPropCentrePtNonCross = 
-              mean((valuecentrept - valuecentreptcross) /
-                     (valueonmkt - valueonmktcross), na.rm = TRUE)) |>
+              sum(valuecentrept - valuecentreptcross, na.rm = TRUE) /
+                     sum(valueonmkt - valueonmktcross, na.rm = TRUE)) |>
   ggplot(aes(x = month, y = AvgPropCentrePtNonCross)) +
   geom_line()
 ```
@@ -848,8 +848,8 @@ si_au_prc_daily |>
   mutate(month = floor_date(date, "month")) |>
   group_by(month) |>
   summarize(AvgPropCentrePtNonCross = 
-              mean((valuecentrept - valuecentreptcross) /
-                     (valueonmkt - valueonmktcross), na.rm = TRUE)) |>
+              sum(valuecentrept - valuecentreptcross, na.rm = TRUE) /
+                     sum(valueonmkt - valueonmktcross, na.rm = TRUE)) |>
   ggplot(aes(x = month, y = AvgPropCentrePtNonCross)) +
   geom_line()
 ```

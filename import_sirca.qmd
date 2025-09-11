@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2024-07-17
+date: 2025-09-11
 number-sections: true
 date-format: "D MMMM YYYY"
 format:
@@ -238,7 +238,7 @@ The first step of our process will be to obtain these four CSV files and save th
 You should specify the location of that subdirectory by editing the following command, replacing with `"~/Library/CloudStorage/Dropbox/raw_data/"` with, say, `"C:\Data\CSV Files"`, if that is where you have created this `sirca` directory on your computer.
 
 ```{r}
-Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data")
+Sys.setenv(RAW_DATA_DIR = "~/Dropbox/raw_data")
 ```
 
 Thus, the CSV files should be stored in the location that we will assign to the variable `csv_dir`.
@@ -282,7 +282,7 @@ We will store our data in a `sirca` subdirectory in a different location from `R
 You should specify the location `DATA_DIR` by editing the line of code below, much as you specified `RAW_DATA_DIR` above.^[Using environment variables to specify `RAW_DATA_DIR` and `DATA_DIR` may not have an obvious payoff in the context of this note. The benefit comes more from follow-on work using the data and also from applying the approach to managing raw data more broadly.]
 
 ```{r}
-Sys.setenv(DATA_DIR = "~/Library/CloudStorage/Dropbox/pq_data/")
+Sys.setenv(DATA_DIR = "~/Dropbox/pq_data/")
 ```
 
 ## Importing `si_au_ref_names`
@@ -297,7 +297,7 @@ As can be seen, `si_au_ref_names` contains 20 columns that `read_csv()` parses a
 
 ```{r}
 si_au_ref_names_csv <- file.path(csv_dir, "si_au_ref_names.csv.gz")
-si_au_ref_names <- read_csv(si_au_ref_names_csv)
+si_au_ref_names <- read_csv(si_au_ref_names_csv, guess_max = 10000)
 ```
 The next step we take is to inspect the columns to determine whether refinement of types makes sense.
 In practice, we can infer appropriate types by looking at the data.
@@ -911,7 +911,7 @@ I organize the code above (e.g., removed redundate elements) and placed it in a 
 With the raw data in `RAW_DATA_DIR` and the necessary packages installed, I can create parquet data files by simply running the following code:^[Note that I set `DATA_DIR`  to a different directory to avoid overwriting the files I just created and creating problems with Dropbox having to sync new files before it's even uploaded old ones.]
 
 ```{r}
-Sys.setenv(RAW_DATA_DIR = "~/Library/CloudStorage/Dropbox/raw_data")
+Sys.setenv(RAW_DATA_DIR = "~/Dropbox/raw_data")
 t <- tempdir()
 Sys.setenv(DATA_DIR = t)
 source("https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R") |>
