@@ -30,19 +30,19 @@ In writing about data science there is a definite tendency to emphasize the "sex
 This is the case even though it seems to be widely understood that a lot of the critical work involves unsexy tasks related to the organization of data.
 One resource that bucks the trend is [*R for Data Science*](https://r4ds.hadley.nz) [@Wickham:2023aa], which eschews the sexy stuff in providing excellent materials for learning how to tidy and transform data to generate insights.
 
-But even @Wickham:2023aa draws the line at data collection.^[This is not intended to be a criticism of  @Wickham:2023aa. One needs to draw the line for a book somewhere. Also, based on my experience in writing this note, writing about data collection is surprisingly challenging.]
+But even @Wickham:2023aa draws the line at data collection.^[This is not intended to be a criticism of @Wickham:2023aa. One needs to draw the line for a book somewhere. Also, based on my experience in writing this note, writing about data collection is surprisingly challenging.]
 Figure 1-1 of @Wickham:2023aa suggests that the "whole game" of data science kicks off with *Import*.^[I capitalize *Import* and put it in italics to indicate a reference to @fig-whole-game.]
 But where do these imported data come from?
 Who collected them?
 Often data analysts are blessed with ready-to-import data sources.
 But sometimes the only way to get data is to *Collect* them ourselves.^[In @fig-whole-game, I actually propose an extension of Figure 1-1 of @Wickham:2023aa that includes a *Collect* process.]
 
-At first impression, it might seem that data collection is too dull a topic for data scientists to think much about and there is not much to be said for writers of educational materials.
+At first impression, it might seem that data collection is too dull a topic for data scientists to think much about and there is not much for writers of educational materials (e.g., textbooks) to say on the topic.
 But @Broman:2018aa seems to suggest otherwise.
 While its title is "Data organization in spreadsheets", @Broman:2018aa could equally well be entitled "Data collection (with spreadsheets)" (and I have used the latter as the title for this note).
 @Broman:2018aa is a concise, well-written paper that provides a number of best practices for data collection and I highly recommend it.
 
-However, when I first saw @Broman:2018aa in [web form](https://kbroman.org/dataorg/) in 2016, I had a number of thoughts.
+However, when I first saw @Broman:2018aa [online](https://kbroman.org/dataorg/) in 2016, I had a number of thoughts.
 I dutifully filed these as (somewhat obnoxious) issues on Karl Broman's GitHub repository, but had no real expectation that Karl would address these.^[See issues [#3](https://github.com/kbroman/dataorg/issues/3) and [#5](https://github.com/kbroman/dataorg/issues/5) there. Hopefully, this note addresses those issues.]
 Instead I figured that I would write a short follow-up paper digging more deeply into issues that interested me.
 This document is that follow-up paper ... a mere nine years later!
@@ -87,7 +87,7 @@ In the other scenario, spreadsheets are used by the researcher as part of the da
 ## Scenario 1: Importing spreadsheet data
 
 [Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa covers spreadsheets with an emphasis on importing data provided in spreadsheet form---either in a Microsoft Excel file or in a Google Sheets document.
-While the chapter in @Wickham:2023aa does cover writing data to Excel or Google Sheets, it does not discuss *why* you would want to do this.^[In general, there are much better formats for exporting data than either of these approaches and I would see no good reason to use Excel files as part of a data science workflow.]
+While the chapter in @Wickham:2023aa does cover writing data to Excel or Google Sheets, it does not discuss *why* you would want to do this.^[In general, there are much better formats for exporting data than either of these approaches and I see no good reason to use Excel files as part of a data science workflow.]
 
 The coverage provided in @Wickham:2023aa is excellent and I refer readers to that book for details on importing spreadsheet data.
 However, a weakness of [Chapter 20](https://r4ds.hadley.nz/spreadsheets) of @Wickham:2023aa is its limited guidance on what I would regard as essential best practices for importing spreadsheet data.^[To be fair, earlier chapters of @Wickham:2023aa do discuss issues regarding importing data and scripts, but I think the importance of reproducibility is high enough---and the tendency for many to neglect it in practice---that it really bears repetition and more detailed guidance in each context.]
@@ -511,7 +511,7 @@ first_auditors <-
 
 I now move onto the task of creating a **link table** between the IPO data and the Form AP data.
 Even if the ultimate goal is to produce a data set drawing on data on both IPOs and auditors, it is important to view the production of a link table as the final product of the linking task.
-In its simplest form, a link table contains primary-key values from each of the two data sources with the appropriate primary key being driven by the level at which observations are being linked.^[In some sense, I really talking about *foreign keys* here, but it probably more important to be precise in thinking than it is to be precise in terminology.]
+In its simplest form, a link table contains primary-key values from each of the two data sources with the appropriate primary key being driven by the level at which observations are being linked.^[In some sense, I really talking about *foreign keys* here, but it is probably more important to be precise in thinking than it is to be precise in terminology.]
 In the current context, we want to link each IPO---identified by `dealID`---with the auditor in the Form AP database.
 
 In the Form AP database, an auditor is identified by `firm_id`.
@@ -985,14 +985,14 @@ One idea might be to export the underlying data to CSV and back *that* up, but t
 
 Also @Broman:2018aa [p. 8] suggests "keep all versions of the data files" without indicating what counts as a version of a file.
 If an RA is between entering data in one column and entering data in another column, we probably don't want to keep that version.
-Nor is it clear that a back-up between each row is necessary.
-If you're a researcher working on papers, the sensible view might be that some back-up be retained for each version of a paper that is posted or shared with others.
+Nor is it clear that a backup between each row is necessary.
+If you're a researcher working on papers, the sensible view might be that some backup be retained for each version of a paper that is posted or shared with others.
 In such a case, one could restore the spreadsheet data applicable to a particular version of your paper.
 But this can be unhelpful in practice if you are using data from other sources and isn't doing some kind of version control for those other sources.
 
 Additionally, my experience is that "regular backups ... in multiple locations" can be a recipe for complexity and confusion.
 If I need to go back to an earlier version, how do I decide whether to use the copy of `glucose_6_weeks` stored on a thumb drive in my drawer or the copy of `glucose_6_weeks` in Dropbox?
-Perhaps I would need to add the date on which I made the back-up (e.g.,  `glucose_6_weeks_2024-12-31`) to allow me to distinguish them.
+Perhaps I would need to add the date on which I made the backup (e.g.,  `glucose_6_weeks_2024-12-31`) to allow me to distinguish them.
 But maybe I don't always want the latest version of the data (if I did, why keep anything but the last copy?).
 If the reason for restoring the data is some issue that came up in the last week of 2024 then I'd probably prefer the `glucose_6_weeks_2024-12-21` version.
 Of course, I may not even be sure when the issue arose, so versions named just for dates may not be particularly helpful.
