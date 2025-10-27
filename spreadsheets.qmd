@@ -11,9 +11,8 @@ format:
     include-in-header:
       text: |
         \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
-        \usepackage{scrextend}
+        \usepackage{fontspec}
         \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
-        \addtokomafont{disposition}{\rmfamily}
     colorlinks: true
     geometry:
       - left=2cm
@@ -21,7 +20,6 @@ format:
     papersize: a4
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
-    CJKmainfont: AppleMyungjo
 bibliography: papers.bib
 csl: jfe.csl
 ---
@@ -660,8 +658,7 @@ top_match_problems |>
   tt() |>
   format_tt(escape = TRUE) |>
   style_tt(fontsize = 0.9,
-           align = "rllr") |>
-  theme_tt("spacing")
+           align = "rllr")
 ```
 
 Some additional digging (using data in `form_aps`) confirms that the main explanation is that the different `firm_id` values relate to different national partnerships of Big Four audit firms.
@@ -680,8 +677,7 @@ form_aps |>
   collect() |> 
   tt() |>
   format_tt(escape = TRUE) |>
-  style_tt(fontsize = 0.9) |>
-  theme_tt("spacing")
+  style_tt(fontsize = 0.9)
 ```
 
 ### Manual links by `dealID`
