@@ -29,6 +29,11 @@ The main change I make is to switch from PostgreSQL to DuckDB, as the setup cost
 If you started working in the data field 20 years ago, you probably used a lot of SQL.
 It's a robust, 50-year-old technology that excels at querying data, thanks to decades of research and development in database engines.
 
+::: {.callout-note}
+I started in strategy consulting 30 years ago (not even "the data field") and I used SQL a lot back then.
+I wrote a little bit about that [here](https://iangow.github.io/sql_book/#sql-and-me).
+:::
+
 But if you're working in data analyst or scientist today, you're likely more familiar with dataframe APIs like Pandas, Polars, or PySpark.
 Dataframe libraries have become the standard in data science and analytics.
 In fact, more data professionals today know how to use a dataframe library like Pandas than SQL. 
@@ -190,7 +195,7 @@ con.table('sales_orders')
 
 ## Aggregations and sorting
 
-Let’s determine which clothing category generates the most revenue, and then rank all the clothing categories in descending order based on their total revenue.
+Let's determine which clothing category generates the most revenue, and then rank all the clothing categories in descending order based on their total revenue.
 
 ```{python}
 (t
@@ -319,7 +324,7 @@ bar_chart.show()
 If you typically do your data analysis in Excel, then pivot tables are likely your go-to tool.
 Fortunately, Ibis also supports pivot table transformations, so you won't need to switch back to Excel.
 
-Let’s create a pivot table that shows the total quantity for each month in 2014. The months will be the columns, with the total quantity values displayed in the corresponding column for each month.
+Let's create a pivot table that shows the total quantity for each month in 2014. The months will be the columns, with the total quantity values displayed in the corresponding column for each month.
 
 ```{python}
 (t
@@ -337,7 +342,7 @@ The months aren't in the correct calendar order.
 Let's fix that!
 
 ::: {.callout-note}
-The [original note](https://www.conterval.com/blog/ibis-for-data-analysis/index.html) took more complicated approach than what I use here.
+The [original note](https://www.conterval.com/blog/ibis-for-data-analysis/index.html) took a more complicated approach than the one I use here.
 I drop `names_sort=True` from `pivot_wider()` and instead create a new column `month` that truncates the date to the month, and then use that column to sort the data before formatting `month` as `'%b-%Y'`.
 I believe that the original code would not be robust to including data from different years, but the approach below would be.
 :::
@@ -379,7 +384,7 @@ In most cases, we won't know in advance how many product categories are availabl
 That means the previous query wouldn't be suitable.
 Here's the revised version of the query for situations where the number of product categories is unknown.
 
-And since we’re only interested in the customers, we'll remove `category_num` from the table.
+And since we're only interested in the customers, we'll remove `category_num` from the table.
 
 ```{python}
 (t
@@ -413,7 +418,6 @@ Next, let's identify the top five customers who contribute the highest percentag
  .mutate(percent=(_.ext_price / _.ext_price.sum()) * 100)
  .order_by(_.percent.desc())
  .head(5)
-#  .limit(5)
  )
 ```
 
@@ -454,4 +458,4 @@ Hopefully, I've whetted your appetite to give this powerful library a try becaus
 Maybe data people are not talking about Ibis because they're keeping it a secret.
 They want to be the only ones benefiting from it.
 
-Well, the ibis is out of the nest now, and it’s taking flight. Let’s spread the word and let it soar across the data landscape. And to all the data podcasts out there, I’d be thrilled to be a guest on your show to talk about this unsung hero of a Python library in the data field. Do reach out!
+Well, the ibis is out of the nest now, and it's taking flight. Let's spread the word and let it soar across the data landscape. And to all the data podcasts out there, I'd be thrilled to be a guest on your show to talk about this unsung hero of a Python library in the data field. Do reach out!
