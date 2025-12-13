@@ -314,8 +314,7 @@ crsp_dates = (
     .select("date")
     .mutate(
         td = ibis.row_number().over(order_by="date"),
-        month = _.date.truncate("month"))
-)
+        month = _.date.truncate("month")))
 
 print(crsp_dates.head(10).execute())
 ```
@@ -328,13 +327,11 @@ The table `annc_months` has each value of `annc_month` and its corresponding `an
 #| label: annc_months
 annc_months = (
     crsp_dates
-     .select(
+    .select(
         _.month.name("annc_month"),
         _.td.name("annc_td"))
-    .mutate(
-        start_td = _.annc_td - 11,
-        end_td = _.annc_td + 6)
-)
+    .mutate(start_td = _.annc_td - 11,
+            end_td = _.annc_td + 6))
 ```
 
 We can then join `annc_months` with `crsp_dates` to create the table `td_link`.
@@ -343,12 +340,10 @@ We can then join `annc_months` with `crsp_dates` to create the table `td_link`.
 #| label: td_link
 td_link = (
     crsp_dates
-    .inner_join(
-        annc_months,
-        (crsp_dates.td >= annc_months.start_td)
-        & (crsp_dates.td <= annc_months.end_td)
-    )
-    .mutate(rel_td=crsp_dates.td - annc_months.annc_td)
+    .inner_join(annc_months,
+          (crsp_dates.td >= annc_months.start_td)
+        & (crsp_dates.td <= annc_months.end_td))
+    .mutate(rel_td = crsp_dates.td - annc_months.annc_td)
     .select("annc_month", "rel_td", "date")
 )
 ```
@@ -358,8 +353,8 @@ Here are the data for one `annc_month`:
 ```{python}
 with pd.option_context("display.max_rows", None):
     print(td_link
-    .filter(_.annc_month == "2001-04-01")
-    .execute())
+          .filter(_.annc_month == "2001-04-01")
+          .execute())
 ```
 
 We use `ccm_link` (as used in Chapter 7) to connect earnings announcement dates on Compustat with returns from CRSP.
@@ -371,13 +366,10 @@ ccm_link = (
     .filter(ccmxpf_lnkhist.linktype.isin(["LC", "LU", "LS"]))
     .filter(ccmxpf_lnkhist.linkprim.isin(["C", "P"]))
     .mutate(
-        permno=ccmxpf_lnkhist.lpermno,
-        linkenddt=ccmxpf_lnkhist.linkenddt.fill_null(
-            ccmxpf_lnkhist.linkenddt.max()
-        ),
-    )
-    .select("gvkey", "permno", "linkdt", "linkenddt")
-)
+        permno = ccmxpf_lnkhist.lpermno,
+        linkenddt = ccmxpf_lnkhist.linkenddt.fill_null(
+            ccmxpf_lnkhist.linkenddt.max()))
+    .select("gvkey", "permno", "linkdt", "linkenddt"))
 ```
 
 @Nichols:2004tb focus on firms listed on NYSE, AMEX, and NASDAQ, which correspond to firms with `exchcd` values of 1, 2, and 3, respectively.
@@ -431,10 +423,8 @@ full_panel = (
 ```{python}
 #| label: rets
 #| cache: false
-rets = (
-    rets_all
-    .inner_join(full_panel, ["gvkey", "datadate"])
-)
+rets = (rets_all
+        .inner_join(full_panel, ["gvkey", "datadate"]))
 ```
 
 Note that, unlike other early papers [e.g., @Beaver:1968vf; @Fama:1969wc], @Ball:1968ub do not exclude observations due to known confounding events.^[This issue seems related to that discussed on p.164, where @Ball:1968ub state "our prediction [is] that, or certain months around the report dates, the expected values of the $v_j$'s are nonzero."
@@ -470,11 +460,8 @@ def url_to_lines(url: str) -> pd.DataFrame:
 ```
 
 ```{python}
-url = (
-    "https://mba.tuck.dartmouth.edu"
-    "/pages/faculty/ken.french/ftp/"
-    "Portfolios_Formed_on_ME_CSV.zip"
-)
+url = ("https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
+       "Portfolios_Formed_on_ME_CSV.zip")
 
 lines = url_to_lines(url)
 ```
@@ -568,11 +555,8 @@ print(size_rets.head(10).execute())
 The second set of data we need to get from Ken French's website is data on the cut-offs we will use in assigning firms to decile portfolios in calculating size-adjusted returns:
 
 ```{python}
-url_bp = (
-    "https://mba.tuck.dartmouth.edu"
-    "/pages/faculty/ken.french/ftp/"
-    "ME_Breakpoints_CSV.zip"
-)
+url_bp = ("https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
+          "ME_Breakpoints_CSV.zip")
 
 lines = url_to_lines(url_bp)
 ```
