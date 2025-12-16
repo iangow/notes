@@ -1,0 +1,221 @@
+---
+title: Window functions with `dbplyr`
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2025-12-16
+number-sections: true
+format:
+  html:
+    default
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+        \sisetup{output-decimal-marker = {,}}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+---
+
+:::{#tip-pkgs .callout-tip text-align="left"}
+In writing this note, I used the packages listed below.^[Execute `install.packages(c("tidyquant", "tidyverse", "farr", "DBI", "duckdb", "dbplyr")` within R to install all the packages you need to run the code in this note.]
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/window-functions.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/window-functions.pdf).
+:::
+
+```{r}
+#| eval: false
+pak::pak("tidyverse/dbplyr@main")
+```
+
+```{r}
+#| message: false
+library(DBI)
+library(tidyverse)
+```
+
+```{r}
+load_csv <- function(conn, url, ...) {
+  
+  dbExecute(db, "INSTALL httpfs")
+  
+  df_sql <- paste0("SELECT * FROM read_csv('", url, "')")
+  dplyr::tbl(conn, dplyr::sql(df_sql)) |> 
+    dplyr::compute(...)
+}
+```
+
+```{r}
+get_data <- function(conn, dir, file, ...) {
+  url <-  str_c("https://github.com/cathytanimura/",
+                "sql_book/raw/refs/heads/master/", 
+                dir, "/", file)
+        
+  load_csv(conn, url, ...)
+}
+```
+
+## The Retail Sales Data Set {#sec-retail-data}
+
+     
+```{r}
+#| eval: true
+db <- dbConnect(duckdb::duckdb())
+```
+
+```{r}
+retail_sales <- get_data(db, 
+                         dir = "Chapter 3: Time Series Analysis",
+                         file = "us_retail_sales.csv",
+                         name = "retail_sales")
+```
+
+
+```{sql}
+#| connection: db
+SELECT sales_month,
+  avg(sales) OVER w AS moving_avg,
+  count(sales) OVER w AS records_count
+FROM retail_sales
+WHERE kind_of_business = 'Women''s clothing stores'
+WINDOW w AS (ORDER BY sales_month 
+             ROWS BETWEEN 11 PRECEDING AND CURRENT ROW)
+ORDER BY sales_month DESC;
+```
+```{r}
+mvg_avg <-
+  retail_sales |>
+  filter(kind_of_business == "Women's clothing stores") |>
+  mutate(moving_avg = mean(sales, na.rm = TRUE),
+         records_count = n(),
+         .order = sales_month,
+         .frame = c(-11, 0)) |>
+  select(sales_month, moving_avg, records_count) |>
+  arrange(desc(sales_month))
+```
+
+```{r}
+#| label: tbl-mvg-avg
+#| tbl-cap: Moving average sales
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x, digits = 3))
+mvg_avg |>
+  collect(n = 10)
+```
+
+```{r}
+legislators_terms <- get_data(db, 
+                         dir = "Chapter 4: Cohorts",
+                         file = "legislators_terms.csv",
+                         name = "legislators_terms")
+
+legislators <- get_data(db, 
+                         dir = "Chapter 4: Cohorts",
+                         file = "legislators.csv",
+                         name = "legislators")
+```
+```{r}
+year_ends <-
+  tibble(date = seq(as.Date('1770-12-31'), 
+                    as.Date('2030-12-31'), 
+                    by = "1 year")) |>
+  copy_to(db, df = _, overwrite = TRUE, name = "year_ends")
+```
+
+## The legislators data
+
+```{sql}
+#| connection: db
+WITH term_dates AS (
+  SELECT DISTINCT a.id_bioguide, b.date
+  FROM legislators_terms a
+  JOIN year_ends b 
+  ON b.date BETWEEN a.term_start AND a.term_end 
+    AND b.date <= '2020-01-01'),
+
+cum_term_dates AS (
+  SELECT id_bioguide, date,
+    count(date) OVER w AS cume_years
+  FROM term_dates
+  WINDOW w AS (PARTITION BY id_bioguide 
+               ORDER BY date 
+               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)),
+  
+cum_term_bands AS (
+  SELECT date,
+    CASE WHEN cume_years <= 4 THEN '1 to 4'
+         WHEN cume_years <= 10 THEN '5 to 10'
+         WHEN cume_years <= 20 THEN '11 to 20'
+         ELSE '21+' END AS tenure,
+    COUNT(DISTINCT id_bioguide) AS legislators
+  FROM cum_term_dates
+  GROUP BY 1,2)
+  
+SELECT date, tenure,
+  legislators * 100.0 / sum(legislators) over w as pct_legislators 
+FROM cum_term_bands
+WINDOW w AS (partition by date)
+ORDER BY date DESC;
+```
+
+```{r}
+term_dates <-
+  legislators_terms |>
+  inner_join(year_ends |> filter(date <= '2020-01-01'),
+             join_by(between(y$date, x$term_start, x$term_end))) |>
+  distinct(id_bioguide, date) 
+```
+
+```{r}
+cum_term_dates <-
+  term_dates |>
+  mutate(cume_years = n(),
+         .by = id_bioguide,
+         .order = date,
+         .frame = c(-Inf, 0)) |>
+  select(id_bioguide, date, cume_years) 
+```
+
+```{r}
+library(dbplyr)
+
+cum_term_bands <-
+  cum_term_dates |> 
+  mutate(tenure = case_when(cume_years <= 4 ~ '1 to 4',
+                            cume_years <= 10 ~ '5 to 10',
+                            cume_years <= 20 ~ '11 to 20',
+                            TRUE ~ '21+')) |>
+  summarize(legislators = n_distinct(id_bioguide),
+            .by = c(date, tenure))
+```
+
+```{r}
+total_legs <-
+  cum_term_bands |>
+  group_by(date) |>
+  summarize(num_legs = sum(legislators, na.rm = TRUE),
+            .groups = "drop")
+```
+
+```{r}
+packageVersion("dbplyr")
+find.package("dbplyr")
+exists("glue_sql2", envir = asNamespace("dbplyr"), inherits = FALSE)
+```
+
+```{r}
+cum_term_bands |>
+  inner_join(total_legs, by = "date") |>
+  mutate(pct_legislators = legislators * 100.0 / num_legs) |>
+  select(date, tenure, pct_legislators) |>
+  arrange(desc(date)) |>
+  collect(n = 8)
+```
