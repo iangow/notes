@@ -185,15 +185,13 @@ cum_term_dates <-
 ```
 
 ```{r}
-library(dbplyr)
-
 cum_term_bands <-
   cum_term_dates |> 
   mutate(tenure = case_when(cume_years <= 4 ~ '1 to 4',
                             cume_years <= 10 ~ '5 to 10',
                             cume_years <= 20 ~ '11 to 20',
                             TRUE ~ '21+')) |>
-  summarize(legislators = n_distinct(id_bioguide),
+  summarize(legislators = sql("COUNT(DISTINCT id_bioguide)"),
             .by = c(date, tenure))
 ```
 
@@ -203,12 +201,6 @@ total_legs <-
   group_by(date) |>
   summarize(num_legs = sum(legislators, na.rm = TRUE),
             .groups = "drop")
-```
-
-```{r}
-packageVersion("dbplyr")
-find.package("dbplyr")
-exists("glue_sql2", envir = asNamespace("dbplyr"), inherits = FALSE)
 ```
 
 ```{r}
