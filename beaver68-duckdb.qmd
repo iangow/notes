@@ -136,7 +136,7 @@ def load_wrds(db, table, schema, wrds_id=None):
     if not wrds_id:
         wrds_id = os.getenv('WRDS_ID')
     
-    # uri = f"postgres://localhost:5432/igow"
+    uri = f"postgres://localhost:5432/igow"
     
     return db.read_postgres(uri, table_name=table, database=schema)
 ```
@@ -316,12 +316,19 @@ single_event_window = (
     .drop("annc_date", "date")  
     .inner_join(trading_dates, _.start_td == trading_dates.td)
     .rename(start_date = "date")
+    .drop("td_right")
     .inner_join(trading_dates, _.end_td == trading_dates.td)
+    .drop("td_right")
     .rename(end_date = "date",
-            event_td = "td")
-    .drop("start_td", "end_td", s.endswith("_right")))
+             event_td = "td")
+    .drop("start_td", "end_td", s.endswith("_right"))
+    )
 
 single_event_window 
+```
+
+```{python}
+trading_dates
 ```
 
 We merge this data set with our link table to make a table that we can link with CRSP.
