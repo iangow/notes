@@ -1,10 +1,10 @@
 ---
-title: Window functions with `dbplyr`
+title: Open-source software and `dbplyr`
 author: 
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2025-12-16
+date: 2025-12-17
 number-sections: true
 format:
   html:
@@ -12,6 +12,7 @@ format:
   pdf: 
     include-in-header:
       text: |
+        \usepackage{microtype}
         \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
         \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
         \addtokomafont{disposition}{\rmfamily}
@@ -26,27 +27,121 @@ format:
 bibliography: papers.bib
 ---
 
-:::{#tip-pkgs .callout-tip text-align="left"}
-In writing this note, I used the packages listed below.^[Execute `install.packages(c("tidyquant", "tidyverse", "farr", "DBI", "duckdb", "dbplyr")` within R to install all the packages you need to run the code in this note.]
-This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+# Introduction
+
+In this note, I explore some recent changes in the open-source R package `dbplyr` to illustrate some of the beauty of how open-source software evolves in practice.
+In particular, I offer two case studies where features requested by users became reality in `dbplyr`, which may be my favourite R package.
+
+:::{.callout-tip text-align="left"}
+In writing this note, I used the packages listed below.^[Run `install.packages(c("farr", "dplyr", "DBI", "duckdb"))` within R to install all the packages you need to run the code in this note.]
+At the time of writing, you also need to install the development version of `dbplyr`, which you can do using the `remotes::install_github()` command below.
+This note was written and compiled using [Quarto](https://quarto.org) with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/window-functions.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/window-functions.pdf).
 :::
 
 ```{r}
-#| eval: false
-pak::pak("tidyverse/dbplyr@main")
+#| warnings: false
+#| message: false
+library(farr)
+library(dplyr, warn.conflicts = FALSE)
+library(DBI)
 ```
 
 ```{r}
-#| message: false
-library(DBI)
-library(tidyverse)
+#| eval: false
+remotes::install_github("tidyverse/dbplyr", ref = "main")
 ```
+
+# The `copy_inline()` function
+
+In the early days of writing [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/), I encountered an issue.
+The vision from the outset was that all the analyses in the book could be executed by the reader (primarily students taking a course based on the book) with minimal overhead.
+One aspect of that was reliance on the WRDS PostgreSQL database as the primary source for data without the need to download large amounts of data.
+
+However, if we wanted to run an event study for a set of events in a local data set using CRSP daily data, we'd either have to download the gigabytes of data in the CRSP table or somehow upload our events to the WRDS database.
+Unfortunately, WRDS does not allow users to upload data.
+
+So on 31 March 2021, I filed [an issue](https://github.com/tidyverse/dbplyr/issues/628) in the GitHub repository for `dbplyr`, the relevant R package, where I outlined my problem:
+
+> I use a database server where normal users do not have `TEMPORARY` privileges.
+> This means that connections to the database are read-only and functions such as `compute()` or `dbWriteTable()` are not available.
+> I suspect that this is not uncommon in the real world.
+>
+> One downside of this is that if I have data locally that I want to join with data on the server, the only real option is to `collect()` or otherwise download data from the server.
+But in a typical use case, the data I have locally are small, while the data on the server are large. 
+So this is very inefficient.
+
+I even made a (fairly awful) function that provided a stop-gap fix for my problem and asked if it made sense to add a more robust function to `dbplyr`.
+The initial response (coming within one day) from Hadley Wickham, the creator of `dbplyr`, was that "this just feels too specialised for `dbplyr`, sorry."
+
+But six weeks later, Kirill Müller, a leading `dbplyr` contributor, suggested a (much better) function for consideration.
+Still Hadley said he was "sceptical that there are many purely read-only databases in the wild; there's no security risk to enabling temporary tables."
+As such, there would be little demand for the proposed function.
+Nonetheless, after a couple of other users pushed back on this point and Kirill pointed out performance benefits of the proposed approach, the go-ahead was given for the proposal.^[The "go-ahead" seems to be implied by Hadley's reopening of the issue on 24 June 2021.]
+
+The proposal evolved into the `copy_inline()` function, which was released as part of `dbplyr` 2.2.0 on 6 June 2022.
+For a function that seemed to get little love at first, `copy_inline()` seems to have proven quite useful, as there are eight references to it in the [`NEWS.md` file](https://github.com/tidyverse/dbplyr/blob/main/NEWS.md) for the `dbplyr` package.
+
+A recent tweak makes this function even more useful, as one can simply supply `copy = "inline"` as an argument to a join function to implicitly invoke `copy_inline()`.
+The following example illustrates how I can merge the 423 events in the `michels_2017` data set from the `farr` package with returns over the period from three days before through to three days after the event.^[See [Chapter 17](https://iangow.github.io/far_book/natural.html) of *Empirical Research in Accounting: Tools and Methods* for more on the `michels_2017` data.
+Of course, a more careful approach would probably use *trading days* before and after events; see [Chapter 12](https://iangow.github.io/far_book/beaver68.html#replication-for-a-single-event) of *Empirical Research in Accounting: Tools and Methods* for discussion of how to do this.]
+
+```{r}
+#| include: false
+Sys.setenv(PGUSER = "iangow")
+```
+
+```{r}
+#| cache: true
+Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
+           PGPORT = 9737L,
+           # PGUSER = "your_WRDS_ID", 
+           PGDATABASE = "wrds")
+
+db <- dbConnect(RPostgres::Postgres())
+
+crsp <- tbl(db, I("crsp.dsf"))
+
+event_rets <-
+  crsp |>
+  select(permno, date, ret) |>
+  mutate(win_start = date - days(3),
+         win_end = date + days(3)) |>
+  inner_join(michels_2017 |> select(permno, eventdate),
+             join_by(permno, 
+                     between(y$eventdate, x$win_start, x$win_end)),
+             copy = "inline") |>
+  select(-starts_with("win")) |>
+  collect() |>
+  system_time()
+```
+
+This code runs in about one second and is quite easy to follow.
+The following is a sample of the resulting data frame.
+
+```{r}
+event_rets
+```
+
+# Changes to `mutate()`
+
+Another [recent change](https://github.com/tidyverse/dbplyr/pull/1697#) to `dbplyr` relates to the `mutate()` function.
+Back in 2017, I made a [request](https://github.com/tidyverse/dplyr/issues/2593) to add window-function capabilities to `dplyr`.
+This request morphed into an issue on `dbplyr` and resulted in the addition of `window_order()` and `window_frame()` functions in that package.
+These functions were one of two possible implementations considered at that time and, given the way that other functions worked, seemed to be the better of the two.
+
+Subsequent developments in the `mutate()` function suggested the possibility that the other of the two implementations considered might now actually be preferable and I filed an [issue](https://github.com/tidyverse/dbplyr/issues/1542) on GitHub asking if it made sense to consider this alternative implementation.
+
+Another recent change to `dbplyr` implements this alternative approach whereby `.order` and `.frame` arguments to `mutate()` allow users to access window functions.
+
+To illustrate these changes, I will use data and queries from the book [*SQL for Data Analysis*](https://www.amazon.com/dp/1492088781) by Cathy Tanimura.^[I have written about this book [here](https://iangow.github.io/sql_book/).]
+
+To make it easy to get the data from the GitHub repository for *SQL for Data Analysis*, I made a couple of small functions:
 
 ```{r}
 load_csv <- function(conn, url, ...) {
   
-  dbExecute(db, "INSTALL httpfs")
+  DBI::dbExecute(db, "INSTALL httpfs")
   
   df_sql <- paste0("SELECT * FROM read_csv('", url, "')")
   dplyr::tbl(conn, dplyr::sql(df_sql)) |> 
@@ -56,21 +151,28 @@ load_csv <- function(conn, url, ...) {
 
 ```{r}
 get_data <- function(conn, dir, file, ...) {
-  url <-  str_c("https://github.com/cathytanimura/",
-                "sql_book/raw/refs/heads/master/", 
-                dir, "/", file)
+  url <-  stringr::str_c("https://github.com/cathytanimura/",
+                         "sql_book/raw/refs/heads/master/", 
+                         dir, "/", file)
         
   load_csv(conn, url, ...)
 }
 ```
 
-## The Retail Sales Data Set {#sec-retail-data}
+## The retail sales data set {#sec-retail-data}
 
-     
+The first query I will use to illustrate the use of window functions with `mutate()` comes from Chapter 3 of *SQL for Data Analysis*, which uses data on retail sales by industry in the United States to explore ideas on time-series analysis.
+
+I will use DuckDB as my database engine.
+Creating a DuckDB database requires just one line of code:
+
 ```{r}
 #| eval: true
 db <- dbConnect(duckdb::duckdb())
 ```
+
+I then call `get_data()` to load the data into the database.
+I name the table (`"retail_sales"`) so that I can refer to it when using SQL.^[It is not necessary to specify a table name if we are just using `dbplyr` to analyse the data.]
 
 ```{r}
 retail_sales <- get_data(db, 
@@ -79,6 +181,7 @@ retail_sales <- get_data(db,
                          name = "retail_sales")
 ```
 
+The SQL version of the query provided in *SQL for Data Analysis* is as follows: 
 
 ```{sql}
 #| connection: db
@@ -91,6 +194,9 @@ WINDOW w AS (ORDER BY sales_month
              ROWS BETWEEN 11 PRECEDING AND CURRENT ROW)
 ORDER BY sales_month DESC;
 ```
+
+To do the same using `dbplyr`, I can just specify `.order` and `.frame` in the call to `mutate()`.
+
 ```{r}
 mvg_avg <-
   retail_sales |>
@@ -103,13 +209,20 @@ mvg_avg <-
   arrange(desc(sales_month))
 ```
 
+As can be seen in @tbl-mvg-avg, the resulting data set is the same.^[This makes sense as the `dplyr`/`dbplyr` code is translated into SQL behind the scenes.]
+
 ```{r}
 #| label: tbl-mvg-avg
-#| tbl-cap: Moving average sales
+#| tbl-cap: Moving average sales for women's clothing store (first 10 records)
 #| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x, digits = 3))
 mvg_avg |>
   collect(n = 10)
 ```
+
+## The legislators data
+
+Another data set I will use to illustrate the use of `mutate()` is the legislators data set used in Chapter 4 of *SQL for Data Analysis* to explore cohort analysis.
+The legislators data set comprises two tables, which I read into my DuckDB database using the following code.
 
 ```{r}
 legislators_terms <- get_data(db, 
@@ -122,6 +235,9 @@ legislators <- get_data(db,
                          file = "legislators.csv",
                          name = "legislators")
 ```
+
+A third data set used in Chapter 4 of *SQL for Data Analysis* is the `year_ends` table, which I construct in R and copy to my DuckDB database using the following code.^[In Chapter 4 of *SQL for Data Analysis*, `year_ends` is created using SQL in the relevant dialect, which is PostgreSQL in the book.]
+
 ```{r}
 year_ends <-
   tibble(date = seq(as.Date('1770-12-31'), 
@@ -130,7 +246,16 @@ year_ends <-
   copy_to(db, df = _, overwrite = TRUE, name = "year_ends")
 ```
 
-## The legislators data
+Finally, I add a minor tweak to original query by adding an enumerated data type that ensures the tables are ordered meaningfully.^[This data type is similar to **factors** in R, a topic covered in [Chapter 2](https://iangow.github.io/far_book/r-intro.html#data-visualization) of *Empirical Research in Accounting: Tools and Methods*.]
+
+```{sql}
+#| connection: db
+CREATE TYPE band AS ENUM ('1 to 4', '5 to 10', '11 to 20', '21+')
+```
+
+The following is a modified version of the SQL query found on page 173 of Chapter 4 of *SQL for Data Analysis*.^[Apart from formatting changes, the main modification I made to the query was the use of **common-table expressions** (**CTEs**) in place of subqueries. 
+I discuss the merits of CTEs (and of using `dbplyr` to write SQL) [here](https://github.com/iangow/notes/blob/main/ctes.pdf).]
+As can be seen, because of how we defined the `band` data type, it is meaningful to sort by `tenure` (check what happens if you omit the casting of `tenure` to type `band` using `::band`).
 
 ```{sql}
 #| connection: db
@@ -159,12 +284,17 @@ cum_term_bands AS (
   FROM cum_term_dates
   GROUP BY 1,2)
   
-SELECT date, tenure,
-  legislators * 100.0 / sum(legislators) over w as pct_legislators 
+SELECT date, tenure::band AS tenure,
+  legislators * 100.0 / sum(legislators) OVER w AS pct_legislators 
 FROM cum_term_bands
 WINDOW w AS (partition by date)
-ORDER BY date DESC;
+ORDER BY date DESC, tenure;
 ```
+
+Translating the query to `dbplyr` is greatly facilitated by the use of CTEs, as each CTE can be constructed as a separate **remote** or **lazy data frame**.
+Here *remote* means that the data are in a database.
+In this case, "remote" does not mean "far away", but the data could be physically distant as in the case of the `dsf` data frame examined above.
+The term "lazy" refers to the fact that the underlying SQL query for the data frame is not executed until we ask it to be evaluated using functions like `collect()` (to bring the data into R) or `compute()` (to create a temporary table in the database).
 
 ```{r}
 term_dates <-
@@ -173,6 +303,8 @@ term_dates <-
              join_by(between(y$date, x$term_start, x$term_end))) |>
   distinct(id_bioguide, date) 
 ```
+
+Here I use `.order`, `.frame`, and `.by` to get the same window used in the SQL above.
 
 ```{r}
 cum_term_dates <-
@@ -184,6 +316,9 @@ cum_term_dates <-
   select(id_bioguide, date, cume_years) 
 ```
 
+The following query aggregates the data into different ranges of tenure.
+Note that a glitch in `n_distinct()` in the `duckdb` package (presumably something that will be fixed soon enough) means that I need to directly call SQL `COUNT(DISTINCT id_bioguide)` as can be seen in the code below.
+
 ```{r}
 cum_term_bands <-
   cum_term_dates |> 
@@ -191,23 +326,26 @@ cum_term_bands <-
                             cume_years <= 10 ~ '5 to 10',
                             cume_years <= 20 ~ '11 to 20',
                             TRUE ~ '21+')) |>
+  mutate(tenure = sql("tenure::band")) |>
   summarize(legislators = sql("COUNT(DISTINCT id_bioguide)"),
             .by = c(date, tenure))
 ```
 
-```{r}
-total_legs <-
-  cum_term_bands |>
-  group_by(date) |>
-  summarize(num_legs = sum(legislators, na.rm = TRUE),
-            .groups = "drop")
-```
+The final query pulls everything together and uses a window function to count the number of legislators in the denominator of `pct_legislators`.
+As can be seen in @tbl-cum-terms, the resulting data set is the same as that produced by the SQL above.
 
 ```{r}
+#| label: tbl-cum-terms
+#| tbl-cap: Percentage of legislators by tenure (first 10 records)
+#| render: !expr function(x, ...) knitr::knit_print(knitr::kable(x, digits = 3))
+#| warning: false
 cum_term_bands |>
-  inner_join(total_legs, by = "date") |>
-  mutate(pct_legislators = legislators * 100.0 / num_legs) |>
+  mutate(sum_legislators = sum(legislators),
+         pct_legislators = legislators * 100.0 / sum_legislators,
+         .by = date) |>
   select(date, tenure, pct_legislators) |>
-  arrange(desc(date)) |>
-  collect(n = 8)
+  arrange(desc(date), tenure) |>
+  collect(n = 10)
 ```
+
+Again, the new functionality supports powerful analyses with clean, easy-to-read code.
