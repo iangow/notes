@@ -62,6 +62,11 @@ The source code for this note is available [here](https://raw.githubusercontent.
 :::
 
 ```{python}
+#| eval: false
+! pip install 'ibis-framework[duckdb]' pandas requests plotnine
+```
+
+```{python}
 import ibis
 from ibis import _
 import ibis.selectors as s
@@ -222,12 +227,14 @@ fundq = load_parquet(db, "fundq", "comp")
 db = ibis.duckdb.connect()
 wrds_id = os.getenv("WRDS_ID")
 uri = f"postgresql://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+# uri = f"postgresql://igow@localhost:5432/igow"
 db.raw_sql("INSTALL postgres;")
 db.raw_sql("LOAD postgres;")
 db.raw_sql(f"ATTACH '{uri}' AS pg (TYPE POSTGRES);")
 ```
 
 ```{python}
+#| eval: true
 msf = db.table("msf", database="pg.crsp")
 msi = db.table("msi", database="pg.crsp")
 ccmxpf_lnkhist = db.table("ccmxpf_lnkhist", database="pg.crsp")
