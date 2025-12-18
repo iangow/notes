@@ -71,7 +71,7 @@ import requests
 import zipfile
 from io import BytesIO, StringIO
 import re
-
+import os
 from plotnine import ggplot, aes, geom_line, theme_bw, theme
 ```
 
@@ -79,14 +79,6 @@ from plotnine import ggplot, aes, geom_line, theme_bw, theme
 #| echo: false
 ibis.options.interactive = True
 ibis.options.repr.show_types = False
-```
-
-```{python}
-#| label: env-vars
-#| include: false
-import os
-
-os.environ["WRDS_ID"] = "iangow"
 ```
 
 ## Principal results of @Ball:1968ub
@@ -225,35 +217,29 @@ fundq = load_parquet(db, "fundq", "comp")
 #### PostgreSQL
 
 ```{python}
-#| label: load_wrds
-#| eval: false
-def load_wrds(db, table, schema, wrds_id=None):
-    if not wrds_id:
-        wrds_id = os.getenv('WRDS_ID')
-    
-    uri = f"postgres://localhost:5432/igow"
-    
-    return db.read_postgres(uri, table_name=table, database=schema)
+#| label: connect-pg-db
+#| eval: true
+db = ibis.duckdb.connect()
+wrds_id = os.getenv("WRDS_ID")
+uri = f"postgresql://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+db.raw_sql("INSTALL postgres;")
+db.raw_sql("LOAD postgres;")
+db.raw_sql(f"ATTACH '{uri}' AS pg (TYPE POSTGRES);")
 ```
 
 ```{python}
-#| label: connect-pg-db
-#| eval: false
-db = ibis.duckdb.connect(pg_connection_limit = 1)
-
-msi = load_wrds(db, "msi", "crsp")
-msf = load_wrds(db, "msf", "crsp")
-ccmxpf_lnkhist = load_wrds(db, "ccmxpf_lnkhist", "crsp")
-stocknames = load_wrds(db, "stocknames", "crsp")
-
-funda = load_wrds(db, "funda", "comp")
-fundq = load_wrds(db, "fundq", "comp")
+msf = db.table("msf", database="pg.crsp")
+msi = db.table("msi", database="pg.crsp")
+ccmxpf_lnkhist = db.table("ccmxpf_lnkhist", database="pg.crsp")
+stocknames = db.table("stocknames", database="pg.crsp")
+funda = db.table("funda", database="pg.comp")
+fundq = db.table("fundq", database="pg.comp")
 ```
 
 #### parquet
 
 ```{python}
-#| eval: true
+#| eval: false
 #| include: true
 def load_parquet(con, table, schema, data_dir=None):
     if not data_dir:
@@ -264,7 +250,7 @@ def load_parquet(con, table, schema, data_dir=None):
 ```
 
 ```{python}
-#| eval: true
+#| eval: false
 db = ibis.duckdb.connect()
 
 msi = load_parquet(db, "msi", "crsp")
@@ -363,12 +349,11 @@ We use `ccm_link` (as used in Chapter 7) to connect earnings announcement dates 
 #| label: ccm_link
 ccm_link = (
     ccmxpf_lnkhist
-    .filter(ccmxpf_lnkhist.linktype.isin(["LC", "LU", "LS"]))
-    .filter(ccmxpf_lnkhist.linkprim.isin(["C", "P"]))
+    .filter(_.linktype.isin(["LC", "LU", "LS"]))
+    .filter(_.linkprim.isin(["C", "P"]))
     .mutate(
-        permno = ccmxpf_lnkhist.lpermno,
-        linkenddt = ccmxpf_lnkhist.linkenddt.fill_null(
-            ccmxpf_lnkhist.linkenddt.max()))
+        permno = _.lpermno,
+        linkenddt = _.linkenddt.fill_null(_.linkenddt.max()))
     .select("gvkey", "permno", "linkdt", "linkenddt"))
 ```
 
@@ -706,6 +691,8 @@ merged = (
     .inner_join(size_rets, ["decile", "month"])
     .drop(["permno", "month"])
 )
+
+# merged = db.create_table("merged", merged_expr, overwrite=True)
 ```
 
 To prepare the data for our plot, we first need to accumulate returns over time for each firm.
