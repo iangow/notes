@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2025-01-10
+date: 2025-12-17
 date-format: "D MMMM YYYY"
 number-sections: true
 format:
@@ -496,9 +496,8 @@ I start with `cohorts`:
 cohorts <-
   legislators_terms |>
   filter(term_type == 'rep') |>
-  group_by(id_bioguide) |>
   summarize(first_rep_term = min(term_start, na.rm = TRUE),
-            .groups = "drop") |>
+            .by = id_bioguide) |>
   mutate(cohort = century(first_rep_term))
 ```
 
@@ -510,8 +509,7 @@ Translating `cohort_sizes` is also straightforward:
 cohort_sizes <-
   cohorts |>
   filter(first_rep_term <= '2009-12-31') |>
-  group_by(cohort) |>
-  summarize(reps = n(), .groups = "drop")
+  summarize(reps = n(), .by = cohort)
 ```
 
 Note that `.groups = "drop"` is strictly optional in this case.
@@ -543,9 +541,9 @@ age_cuts <-
   mutate(num_5_yrs = case_when(age <= years(5) ~ id_bioguide),
          num_10_yrs = case_when(age <= years(10) ~ id_bioguide),
          num_15_yrs = case_when(age <= years(15) ~ id_bioguide)) |>
-  group_by(cohort) |>
   summarize(across(starts_with("num_"), 
-            \(x) n_distinct(x, na.rm = TRUE)))
+            \(x) n_distinct(x, na.rm = TRUE)),
+            .by = cohort)
 ```
 
 The final step of the translation is straightforward enough.
@@ -575,7 +573,7 @@ Before launching into the code, it is perhaps useful to step back and identify s
  - **population**: Legislators who started as representatives before 31 December 2009.^[Strictly speaking, it should be "on or before 31 December 2009", but legislators never start terms on 31 December.]
  - **cohorts**: Century of the start date of the first term.
  - **exposure date**: Date of the first term. Another term might be **entry date**.
- - **event date**: The **event** of interst is "becoming a senator" and the date is the first date of the first term as a senator (if any). Another term might be **exit date**.
+ - **event date**: The **event** of interest is "becoming a senator" and the date is the first date of the first term as a senator (if any). Another term might be **exit date**.
  
 Note that cohorts here are defined based on dates, but this need not be the case in general.
 For example, A/B testing with websites involves cohorts based on which version of website the user is exposed to (either "A" or "B").
@@ -591,11 +589,11 @@ I start by creating `first_terms`, a table with information about first terms fo
 #| warning: false
 first_terms <-
   legislators_terms |>
-  group_by(id_bioguide) |>
   summarize(first_rep_term = min(case_when(term_type == 'rep' ~ term_start)),
             first_sen_term = min(case_when(term_type == 'sen' ~ term_start)),
             last_sen_term = max(case_when(term_type == 'sen' ~ term_start)),
-            first_term = min(term_start)) |>
+            first_term = min(term_start),
+            .by = id_bioguide) |>
   compute()
 ```
 
@@ -622,8 +620,7 @@ We can now calculate the sizes of the cohorts that we have formed.
 ```{r}
 cohort_sizes <-
   cohorts_revised |>
-  group_by(cohort) |>
-  summarize(reps = n(), .groups = "drop")
+  summarize(reps = n(), .by = cohort)
 ```
 
 Now we have our data together, we can calculate the "time to event (if any)" (`event_time`) using the SQL function `age()`.
@@ -647,12 +644,11 @@ Below I accomplish using the `max()` aggregate grouped by `cohort` and `event_ti
 pct_rep_then_sen <-
   cohorts_revised |>
   mutate(event_time = age(first_sen_term, first_rep_term)) |>
-  group_by(cohort) |>
-  window_order(event_time) |>
-  mutate(cum_ids = cumsum(1)) |>
-  group_by(cohort, event_time) |>
-  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
-  ungroup() |>
+  mutate(cum_ids = cumsum(1),
+         .by = cohort,
+         .order = event_time) |>
+  mutate(cum_ids = max(cum_ids, na.rm = TRUE),
+         .by = c(cohort, event_time)) |>
   inner_join(cohort_sizes, by = "cohort") |>
   mutate(pct = cum_ids / reps) 
 ```
@@ -676,9 +672,8 @@ I then use `cross_join()` to combine `pct_rep_then_sen` and `event_time_cutoffs`
 pct_rep_then_sen |>
   cross_join(event_time_cutoffs) |>
   filter(event_time <= cutoff) |>
-  group_by(cohort, cutoff) |>
   summarize(pct = max(pct, na.rm = TRUE),
-            .groups = "drop") |>
+            .by = c(cohort, cutoff)) |>
   mutate(cutoff = year(cutoff)) |>
   pivot_wider(names_from = "cutoff",
               names_prefix = "pct_",
@@ -697,10 +692,8 @@ Because of the more general form of our data with this modified query, it is eas
 pct_rep_then_sen |>
   mutate(event_time = (year(event_time) * 12 + month(event_time)) / 12) |>
   filter(event_time <= 15) |>
-  group_by(cohort, event_time) |>
   summarize(pct = max(pct, na.rm = TRUE),
-            .groups = "drop") |>
-  # collect() |>
+            .by = c(cohort, event_time)) |>
   mutate(cohort = as.character(cohort)) |>
   ggplot(aes(x = event_time, y = pct, group = cohort,
              colour = cohort)) +
@@ -729,13 +722,10 @@ pct_rep_then_sen <-
   filter(first_rep_term <= "1999-12-31") |>
   mutate(cohort = decade(first_rep_term),
          event_time = age(first_sen_term, first_rep_term)) |>
-  group_by(cohort) |>
-  mutate(reps = n()) |>
-  window_order(event_time) |>
-  mutate(cum_ids = cumsum(1)) |>
-  group_by(cohort, event_time) |>
-  mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
-  ungroup() |>
+  mutate(reps = n(), .by = cohort) |>
+  mutate(cum_ids = cumsum(1), .by = cohort, .order = event_time) |>
+  mutate(cum_ids = max(cum_ids, na.rm = TRUE),
+         .by = c(cohort, event_time)) |>
   mutate(pct = cum_ids / reps) 
 ```
 
@@ -758,9 +748,8 @@ Making the plot is now quite straightforward and the results of the following co
 pct_rep_then_sen |>
   cross_join(event_time_cutoffs) |>
   filter(event_time <= cutoff) |>
-  group_by(cohort, cutoff) |>
   summarize(pct = max(pct, na.rm = TRUE),
-            .groups = "drop") |>
+            .by = c(cohort, cutoff)) |>
   mutate(cutoff = as.character(year(cutoff))) |>
   ggplot(aes(x = cohort, y = pct, color = cutoff, group = cutoff)) +
   geom_line()
@@ -781,13 +770,10 @@ make_plot <- function(cohorts, survival_data, cutoffs = c(10, 20)) {
     survival_data |>
     mutate(event_time = age(event_date, entry_date)) |>
     inner_join(cohorts, by = "id") |>
-    group_by(cohort) |>
-    mutate(reps = n()) |>
-    window_order(event_time) |>
-    mutate(cum_ids = cumsum(1)) |>
-    group_by(cohort, event_time) |>
-    mutate(cum_ids = max(cum_ids, na.rm = TRUE)) |>
-    ungroup() |>
+    mutate(reps = n(), .by = cohort) |>
+    mutate(cum_ids = cumsum(1), .by = cohort, .order = event_time) |>
+    mutate(cum_ids = max(cum_ids, na.rm = TRUE),
+           .by = c(cohort, event_time)) |>
     mutate(pct = cum_ids / reps) 
   
   event_time_cutoffs <-
@@ -799,9 +785,8 @@ make_plot <- function(cohorts, survival_data, cutoffs = c(10, 20)) {
   plot_data |>
     cross_join(event_time_cutoffs) |>
     filter(event_time <= cutoff) |>
-    group_by(cohort, cutoff) |>
     summarize(pct = max(pct, na.rm = TRUE),
-              .groups = "drop") |>
+              .by = c(cohort, cutoff)) |>
     mutate(cutoff = as.character(year(cutoff))) |>
     ggplot(aes(x = cohort, y = pct, color = cutoff, group = cutoff)) +
     geom_line()
@@ -901,7 +886,8 @@ problem_cases |>
   collect() |>
   tt() |>
   format_tt(escape = TRUE) |>
-  theme_tt("spacing")
+  theme_html(class = "table table-sm") |>
+  theme_latex(inner = "rowsep=2pt, colsep=4pt")
 ```
 
 The second subset are those legislators who started as senators, then became representatives, but did *not* became senators again after serving as a representative.
@@ -926,7 +912,8 @@ problem_cases |>
   collect(n = 10) |>
   tt() |>
   format_tt(escape = TRUE) |>
-  theme_tt("spacing")
+  theme_html(class = "table table-sm") |>
+  theme_latex(inner = "rowsep=2pt, colsep=4pt")
 ```
 
 The second set of problem cases are representatives whose terms began after `'2009-12-31'`.
@@ -954,7 +941,8 @@ problem_cases |>
   collect() |>
   tt() |>
   format_tt(escape = TRUE) |>
-  theme_tt("spacing")
+  theme_html(class = "table table-sm") |>
+  theme_latex(inner = "rowsep=2pt, colsep=4pt")
 ```
 
 
@@ -979,9 +967,9 @@ age_cuts <-
   mutate(num_5_yrs = if_else(age <= years(5), id_bioguide, NA),
          num_10_yrs = if_else(age <= years(10), id_bioguide, NA),
          num_15_yrs = if_else(age <= years(15), id_bioguide, NA)) |>
-  group_by(cohort) |>
   summarize(across(starts_with("num_"), 
-            \(x) n_distinct(x, na.rm = TRUE)))
+            \(x) n_distinct(x, na.rm = TRUE)),
+            .by = cohort)
 ```
 
 Finally, I `left_join()` this revised `age_cuts` to produce @tbl-translated-fixed.
