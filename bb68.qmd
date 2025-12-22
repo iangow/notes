@@ -190,27 +190,24 @@ We get earnings and returns data from Compustat and CRSP, respectively.
 \indexc{comp.funda} \indexc{comp.fundq} 
 
 ```{python}
+#| label: connect-pg-db
 #| eval: false
-#| include: true
-def load_parquet(con, table, schema, data_dir=None):
-    if not data_dir:
-        data_dir =  os.path.expanduser(os.environ["DATA_DIR"])
-    
-    pq_file = pq_dir = os.path.join(data_dir, schema, table + ".parquet")
-    return con.read_parquet(pq_file)
+db = ibis.duckdb.connect()
+wrds_id = os.getenv("WRDS_ID")
+uri = f"postgresql://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+db.raw_sql("INSTALL postgres;")
+db.raw_sql("LOAD postgres;")
+db.raw_sql(f"ATTACH '{uri}' AS pg (TYPE POSTGRES);")
 ```
 
 ```{python}
 #| eval: false
-db = ibis.duckdb.connect()
-
-msi = load_parquet(db, "msi", "crsp")
-msf = load_parquet(db, "msf", "crsp")
-ccmxpf_lnkhist = load_parquet(db, "ccmxpf_lnkhist", "crsp")
-stocknames = load_parquet(db, "stocknames", "crsp")
-
-funda = load_parquet(db, "funda", "comp")
-fundq = load_parquet(db, "fundq", "comp")
+msf = db.table("msf", database="pg.crsp")
+msi = db.table("msi", database="pg.crsp")
+ccmxpf_lnkhist = db.table("ccmxpf_lnkhist", database="pg.crsp")
+stocknames = db.table("stocknames", database="pg.crsp")
+funda = db.table("funda", database="pg.comp")
+fundq = db.table("fundq", database="pg.comp")
 ```
 
 :::
