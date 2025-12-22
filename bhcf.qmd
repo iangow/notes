@@ -1,0 +1,240 @@
+---
+title: "Untitled"
+jupyter: python3
+---
+
+
+
+```{python}
+#| include: false
+import os
+from pathlib import Path
+import pandas as pd
+import numpy as np
+# Some other modules
+import glob
+import ibis
+import time
+import zipfile
+import tempfile
+```
+
+```{python}
+#| echo: false
+ibis.options.interactive = True
+ibis.options.repr.show_types = False
+```
+
+```{python}
+#| label: download-bhcf
+#| cache: true
+#| eval: true
+#| message: true
+#| warning: false
+raw_dir = os.environ.get("RAW_DATA_DIR")
+if raw_dir is None:
+    raise RuntimeError("RAW_DATA_DIR environment variable is not set")
+
+bhcf_dir = Path(raw_dir) / "bhcf"
+bhcf_dir.mkdir(parents=True, exist_ok=True)
+```
+```{python}
+
+
+def load_bhc_data(bhcf_dir):
+    bhcf_dir = Path(bhcf_dir)
+
+    dfs = []
+    for path in bhcf_dir.glob("BHCF*.ZIP"):
+        print(path)
+        dfs.append(
+            pd.read_csv(
+                path,
+                sep="^",
+                encoding="ISO-8859-1",
+                low_memory=False,
+            )
+        )
+
+    df = pd.concat(dfs, ignore_index=True)
+
+    print(f"\nDone!\n\nTotal rows in data frame {len(df)}")
+    print(f"\nTotal columns in data frame {df.shape[1]}\nThat is a lot!")
+
+    return df
+```
+
+```{python}
+#| cache: true
+import time
+
+start = time.perf_counter()
+
+df = load_bhc_data(bhcf_dir)
+
+elapsed = time.perf_counter() - start
+print(f"Chunk runtime: {elapsed:.2f} seconds")
+```
+
+```{python}
+#| cache: true
+start = time.perf_counter()
+
+con = ibis.duckdb.connect()
+
+bhcf_zip_dir = Path(os.environ["RAW_DATA_DIR"]) / "bhcf"
+out_dir = Path(os.environ["DATA_DIR"]) / "bhcf"
+out_dir.mkdir(parents=True, exist_ok=True)
+
+zip_paths = sorted(bhcf_zip_dir.glob("BHCF*.ZIP"))
+if not zip_paths:
+    raise RuntimeError(f"No BHCF*.ZIP files found in {bhcf_zip_dir}")
+
+def first_data_member(zip_path: Path) -> str:
+    """Return the first non-directory member inside the zip."""
+    with zipfile.ZipFile(zip_path) as z:
+        for name in z.namelist():
+            if not name.endswith("/"):
+                return name
+    raise RuntimeError(f"No data file found inside {zip_path}")
+
+# Extract all inputs to temp files (stable file paths for DuckDB)
+tmpdir_obj = tempfile.TemporaryDirectory()
+tmpdir = Path(tmpdir_obj.name)
+
+inputs = []
+for zp in zip_paths:
+    member = first_data_member(zp)
+    stem = zp.stem  # e.g., BHCF20190630
+
+    out_txt = tmpdir / f"{stem}__{Path(member).name}"
+    with zipfile.ZipFile(zp) as z:
+        with z.open(member) as src, open(out_txt, "wb") as dst:
+            dst.write(src.read())
+
+    inputs.append((stem, out_txt))
+
+# Build one UNION ALL BY NAME query so DuckDB infers a common schema across files
+selects = []
+for stem, txt_path in inputs:
+    p = txt_path.as_posix().replace("'", "''")
+    s = stem.replace("'", "''")
+    selects.append(f"""
+        SELECT
+            *,
+            '{s}' AS source_stem
+        FROM read_csv_auto(
+            '{p}',
+            delim='^',
+            header=true,
+            encoding='latin-1'
+        )
+    """.strip())
+
+union_query = "\nUNION ALL BY NAME\n".join(selects)
+
+con.raw_sql("DROP TABLE IF EXISTS bhcf_all;")
+con.raw_sql(f"CREATE TABLE bhcf_all AS {union_query};")
+
+# Write one parquet per original input (matching original partition by file stem)
+for stem, _ in inputs:
+    parquet_path = (out_dir / f"{stem}.parquet").as_posix().replace("'", "''")
+    s = stem.replace("'", "''")
+    con.raw_sql(f"""
+        COPY (
+            SELECT * EXCLUDE (source_stem)
+            FROM bhcf_all
+            WHERE source_stem = '{s}'
+        )
+        TO '{parquet_path}'
+        (FORMAT parquet);
+    """)
+    print(f"Wrote {parquet_path}")
+
+elapsed = time.perf_counter() - start
+print(f"Chunk runtime: {elapsed:.2f} seconds")
+
+```
+
+```{python}
+# Ibis table over the unified DuckDB table
+
+# Where you wrote the parquet files
+bhcf_parquet_dir = Path(os.environ["DATA_DIR"]) / "bhcf"
+
+con = ibis.duckdb.connect()
+bhcf_dir = Path(os.environ["DATA_DIR"]) / "bhcf"
+
+pattern = str(bhcf_dir / "*.parquet").replace("'", "''")
+
+con.raw_sql(f"""
+CREATE OR REPLACE VIEW bhcf AS
+SELECT * FROM read_parquet('{pattern}', union_by_name=true);
+""")
+
+bhcf = con.table("bhcf")
+bhcf
+```
+
+```{python}
+bhcf.count().execute()
+```
+
+```{python}
+var_names = {
+    "RSSD9999": "Reporting date",
+    "RSSD9001": "Borrower RSSD ID",
+    "RSSD9010": "Entity short name",
+    "RSSD9200": "Abbreviated state name",
+    "RSSD4087": "Entity website",
+
+    # Capital ratios
+    "BHCAP793": "Common Equity Tier 1 capital ratio",
+    "BHCA7206": "Tier 1 risk-based capital ratio",
+    "BHCA7204": "Tier 1 leverage capital ratio",
+    "BHCA7205": "Total risk-based capital ratio",
+
+    # Capital and risk-weighted assets
+    "BHCA8274": "Tier 1 capital (risk-based guidelines)",
+    "BHCAA223": "Risk-weighted assets (net of allowances)",
+
+    # Loans
+    "BHCKB529": "Loans and leases, net of unearned income and allowance",
+    "BHCKB528": "Loans and leases, net of unearned income (total)",
+    "BHCK5369": "Loans and leases held for sale",
+    "BHCK3123": "Allowance for loan and lease losses",
+    "BHCK4635": "Charge-offs on allowance for loan and lease losses",
+    "BHCK4605": "Recoveries on allowance for loan and lease losses",
+
+    # Balance sheet totals
+    "BHCK2170": "Total assets",
+    "BHCK3210": "Total equity capital",
+
+    # Securities
+    "BHCK1773": "Available-for-sale debt securities (RC-B, column D)",
+
+    # Cash and balances
+    "BHCK0397": (
+        "Interest-bearing balances in foreign offices, "
+        "Edge and agreement subsidiaries, and IBFs"
+    ),
+    "BHCK0395": "Interest-bearing balances in U.S. offices",
+    "BHCK0081": "Noninterest-bearing balances and currency and coin",
+}
+```
+
+```{python}
+cols_to_keep = [c for c in bhcf.columns if c in var_names]
+
+bhcf_subset = bhcf.select(cols_to_keep)
+bhcf_subset
+```
+
+```{python}
+bhcf_subset.columns
+```
+
+```{python}
+bhcf_subset.count().execute()
+```
+
