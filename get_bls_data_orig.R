@@ -29,8 +29,6 @@ bls_process <- function(year) {
   blsdata_yr
 }
 
-raw_data_dir <- path.expand(file.path(Sys.getenv("RAW_DATA_DIR"), "bls"))
-
 bls_all <- rbind(lapply(2001:2019L, bls_process))
 
 bls_state <- bls_all[which(bls_all$state_level_flag==1),]
