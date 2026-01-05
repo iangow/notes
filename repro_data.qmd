@@ -19,14 +19,14 @@ bibliography: papers.bib
 csl: jfe.csl
 ---
 
-## Introduction
+# Introduction
 
 An exercise I have assigned to students in the past is to go to the [online supplements and datasheets](https://www.chicagobooth.edu/research/chookaszian/journal-of-accounting-research/online-supplements-and-datasheets) page for the *Journal of Accounting Research*, pick an issue of the journal and evaluate whether one could reproduce the analysis in the associated paper using the materials made available there.
 Generally, the answer has been negative.^[Not always, as several of the papers covered in [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) are replicated there using code from the *Journal of Accounting Research* page.]
 That said, it seems that the *Journal of Accounting Research* is still the (relative) leader among accounting-focused academic journals with regard to requiring authors to supply materials.
 
 :::{.callout-tip text-align="left"}
-In writing this note, I use several packages including those listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "remotes", "arrow", "dbplyr")` within R to install all the packages you need to run the code in this note.]
+In writing this note, I use several packages including those listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "remotes", "arrow", "dbplyr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/repro_data.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/repro_data.pdf).
 
@@ -93,7 +93,7 @@ get_qcew_zip_data <- function(year, raw_data_dir = NULL,
                            "/csv/{year}_annual_singlefile.zip")
   t <- file.path(raw_data_dir, basename(url))
   if (!file.exists(t)) download.file(url, t)
-  return(TRUE)
+  invisible(t)
 }
 
 res <- lapply(years, get_qcew_zip_data)
@@ -195,7 +195,9 @@ I unzip the data, then use DuckDB's `read_csv()` piped directly into parquet fil
 ```{r}
 #| label: get_qcew_data_duckdb
 #| cache: true
-get_qcew_data_duckdb <- function(year, schema = "qcew", data_dir = NULL) {
+get_qcew_data_duckdb <- function(year, schema = "qcew", 
+                                 data_dir = NULL,
+                                 raw_data_dir = NULL) {
 
   if (is.null(raw_data_dir)) {
     raw_data_dir <- file.path(Sys.getenv("RAW_DATA_DIR"), schema)
@@ -207,13 +209,13 @@ get_qcew_data_duckdb <- function(year, schema = "qcew", data_dir = NULL) {
 
   filename <- str_glue("{year}_annual_singlefile.zip")
   t <- path.expand(file.path(raw_data_dir, filename))
-  csv_file <- unzip(t)
+  csv_file <- unzip(t, exdir = tempdir())
 
   pq_file <- stringr::str_glue("annual_{year}.parquet")
   pq_path <- path.expand(file.path(data_dir, pq_file))
   db <- DBI::dbConnect(duckdb::duckdb())
 
-  args = ", types = {'year': 'INTEGER'}"
+  args <- ", types = {'year': 'INTEGER'}"
 
   sql <- stringr::str_glue("COPY (SELECT * FROM read_csv('{csv_file}'{args})) ",
                            "TO '{pq_path}' (FORMAT parquet)")
@@ -236,12 +238,19 @@ Also, much less RAM used (more like hundreds of megabytes than gigabytes).
 system.time(lapply(2001:2019L, get_qcew_data_duckdb))
 ```
 
-I said before that the comparison was a bit oranges-to-apples because I've skipped some steps from the "original" code.
+### Creating a code repository for the raw data
+
+Given the general-purpose nature of the QCEW data, it seems to be a good candidate for creating a public repository that facilitates sharing of the data.
+I made such a repository [here](https://github.com/iangow/qcew).
+
+### Performing the final steps
+
+I said before that the comparison was a bit apples-to-oranges because I've skipped some steps from the "original" code.
 First, the original code applied some fields (e.g., `industry_code < 100` and `own_code %in% c(0, 5)`).
 I apply these filters in the code below.
 
 First, I connect to a fresh DuckDB database (a single line of code).
-Second, I use `load_parquet()` from the `farr` package with a wildcard (`"qcew_all_*"`) to load *all* the BLS data into a single table.
+Second, I use `load_parquet()` from the `farr` package with a wildcard (`"annual_*"`) to load *all* the QCEW data into a single table.
 I then apply the filters.
 As you can see, this step is *fast*.
 One reason it is so fast is because the `dbplyr` package I am using to connect to DuckDB uses **lazy evaluation**, so it doesn't actually realize any data in this step.
@@ -273,14 +282,15 @@ qcew_data <-
   filter(own_code %in% c(0, 5)) |>
   system_time()
 ```
-I can take a quick peek at a sample of the data:
+
+I can take a quick peek at a sample from this data set:
 
 ```{r}
 qcew_data
 ```
 
-The original code created three data sets (all saved as CSV files): `bls_state`, `bls_county`, and `bls_national`.
-The following code chunks creates each of these in turn.
+The original code created three data sets (all saved as CSV files): `bls_state`, `bls_county`, and `bls_national`.^[I use the same names for these files as were used by the original authors.]
+The following code chunks creates each of these in turn and saves them in the `dlr` schema (this might be considered to be the "project directory" for the paper, with `qcew` being a schema shared across projects).
 Note that the `duckdb_to_parquet()` function returns a DuckDB table based on the created parquet file, so it can be examined and used in subsequent analysis.
 As can be seen, none of these steps takes much time.
 Hence the apples-to-apples aspect of the performance comparison can be restored by adding up the time taken for all the steps (under a minute given that the zipped CSV files are already on my hard drive).
@@ -313,11 +323,6 @@ bls_national <-
   duckdb_to_parquet(name = "bls_national", schema = "dlr") |>
   system_time()
 ```
-
-# Creating a code repository for the raw data
-
-Given the general-purpose nature of the QCEW data, it seems to be a good candidate for creating a public repository that facilitates sharing of the data.
-I made such a repository [here](https://github.com/iangow/qcew).
 
 # Revising the datasheet
 

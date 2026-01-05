@@ -6,7 +6,8 @@ data_dir <- path.expand(file.path(Sys.getenv("DATA_DIR"), "dlr"))
 
 ######### FIRST, PREPROCESS RAW BLS DATA ##############
 bls_process <- function(year) {
-  zipfile <- unzip(str_glue("{raw_data_dir}/{year}_annual_singlefile.zip"))
+  zipfile <- unzip(str_glue("{raw_data_dir}/{year}_annual_singlefile.zip"),
+                   exdir = tempdir())
   blsdata_yr <- read.csv(zipfile)
   blsdata_yr$industry_code <- as.character(blsdata_yr$industry_code)
   blsdata_yr$industry_code[which(blsdata_yr$industry_code=="31-33")] <- "31";
