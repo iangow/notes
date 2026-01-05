@@ -18,7 +18,6 @@ bls_process <- function(year) {
   # now keep only 2-digit industry level observations...
   blsdata_yr <- blsdata_yr[which(blsdata_yr$industry_code < 100),]
 
-
   # and for now just keep the ownership codes for
   # (a) total employment levels -- own_code = 0; and
   # (b) total private sector employment -- own_code = 5
@@ -30,7 +29,9 @@ bls_process <- function(year) {
   blsdata_yr
 }
 
-bls_all <- rbind(lapply(2001:2019, bls_process))
+raw_data_dir <- path.expand(file.path(Sys.getenv("RAW_DATA_DIR"), "bls"))
+
+bls_all <- rbind(lapply(2001:2019L, bls_process))
 
 bls_state <- bls_all[which(bls_all$state_level_flag==1),]
 bls_county <- bls_all[which(bls_all$county_level_flag==1),]
