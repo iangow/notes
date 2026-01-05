@@ -1,7 +1,7 @@
 ---
 title: "Reproducible data collection"
 author: Ian D. Gow
-date: 2026-01-04
+date: 2026-01-05
 date-format: "D MMMM YYYY"
 number-sections: true
 format:
@@ -18,6 +18,8 @@ format:
 bibliography: papers.bib
 csl: jfe.csl
 ---
+
+## Introduction
 
 An exercise I have assigned to students in the past is to go to the [online supplements and datasheets](https://www.chicagobooth.edu/research/chookaszian/journal-of-accounting-research/online-supplements-and-datasheets) page for the *Journal of Accounting Research*, pick an issue of the journal and evaluate whether one could reproduce the analysis in the associated paper using the materials made available there.
 Generally, the answer has been negative.^[Not always, as several of the papers covered in [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) are replicated there using code from the *Journal of Accounting Research* page.]
@@ -45,16 +47,23 @@ Or are they preferring the domain-specific strengths of R?
 The answer is: neither.
 Based on the six papers in [Volume 63, Issue 1](https://www.chicagobooth.edu/research/chookaszian/journal-of-accounting-research/online-supplements-and-datasheets/volume-63) that are not listed as "datasheet and code forthcoming" and that provide something in terms of data, all used some combination of SAS and Stata.
 This is probably not much different from what you would have seen around fifteen years ago.
+The persistence of SAS and Stata surprises me given how easy modern tools make a lot of data analysis steps.^[It seems that the typical SAS user dumps data to Excel to make plots and the typical Stata user exports tables to Excel for copy-pasting to Word. Does the typical Python or R user do that too?]
 
 But looking at the [first paper](https://onlinelibrary.wiley.com/doi/10.1111/1475-679X.12591) in Volume 63, Issue 2, I see a mix of Stata and R.
 So, moving to the assignment I have given to students in the past, how reproducible is the analysis contained therein?
 I made some progress on this, but I didn't get far (to be fair, I didn't try very hard).
 
+# Employment data
+
 The first data set in the R code file is described as "Employment and Investment" in the PDF data sheet (`DLR datasheet.pdf`).
-The source is "the [U.S. Bureau of Labor Statistics (BLS) website](https://www.bls.gov/audience/economists.htm)" and the authors say "we downloaded Zip files. We then merged these data with our sample dataset. There was no manual entry at any point in the process."
+The source is "the [U.S. Bureau of Labor Statistics (BLS) website](https://www.bls.gov/audience/economists.htm)" and the authors say "we downloaded Zip files.
+We then merged these data with our sample dataset.
+There was no manual entry at any point in the process."
 However, when I go to the website, I struggled to figure out what data file covers "employment and investment".
 
-Based on the filenames listed in the code (e.g., `2001_annual_singlefile.zip`), ChatGPT suggested that I should go to the BLS's [QCEW data files page](https://www.bls.gov/cew/downloadable-data-files.htm), where QCEW stands for "Quarterly Census of Employment and Wages" (not sure what happened to "investment" ... I guess it's a typo of sorts).
+## Getting the raw data
+
+Based on the file names listed in the code (e.g., `2001_annual_singlefile.zip`), ChatGPT suggested that I should go to the BLS's [QCEW data files page](https://www.bls.gov/cew/downloadable-data-files.htm), where QCEW stands for "Quarterly Census of Employment and Wages" (not sure what happened to "investment" ... I guess it's a typo of sorts).
 If the authors had provided that link, it would've been very helpful for anyone trying to reproduce their analysis.
 
 Getting to the QCEW site, I guess the authors clicked the link for each year's data---the paper used data from 2001 to 2019---and saved the `.zip` data file somewhere on one of their computers.
@@ -89,6 +98,8 @@ get_qcew_zip_data <- function(year, raw_data_dir = NULL,
 
 res <- lapply(years, get_qcew_zip_data)
 ```
+
+## Processing the data: The authors' approach
 
 The original R code supplied by the authors had code more or less like this (I omitted the code for `bls03` through `bls17` for reasons of space):
 
@@ -130,6 +141,8 @@ But it's an additional cost for anyone attempting to replicate the analysis in t
 
 Note that the original "original" code left a lot of unzipped text files lying about on my hard drive; my modified code eliminates these (using `unlink()`).
 Also, quite a lot of memory is used up by having all the dataframes in memory before calling `rbind()`.
+
+## Processing the data: My first attempt
 
 Can we do better?
 I think one approach is to put the processed data into a **parquet data repository** of the kind I describe [here](https://iangow.github.io/far_book/parquet-wrds.html).
@@ -174,8 +187,10 @@ For one thing, there is still about 3GB of RAM used in the process of loading da
 system.time(lapply(years, get_qcew_data))
 ```
 
-My next approach does all the processing using DuckDB.
-I unzip the data, then use DuckDB's `read_csv()` piped into a direct save to parquet files, again saved in the same location.^[So the files created in the previous step will be overwritten here.]
+## Processing the data: My second attempt
+
+For my second approach, I will do all the data processing using DuckDB.
+I unzip the data, then use DuckDB's `read_csv()` piped directly into parquet files, again saved in the same location.^[So the files created in the previous step will be overwritten here.]
 
 ```{r}
 #| label: get_qcew_data_duckdb
@@ -270,15 +285,7 @@ Note that the `duckdb_to_parquet()` function returns a DuckDB table based on the
 As can be seen, none of these steps takes much time.
 Hence the apples-to-apples aspect of the performance comparison can be restored by adding up the time taken for all the steps (under a minute given that the zipped CSV files are already on my hard drive).
 
-```{r}
-bls_state <-
-  qcew_data |>
-  filter(agglvl_code > 49, agglvl_code < 60) |>
-  duckdb_to_parquet(name = "bls_state", schema = "dlr") |>
-  system_time()
-
-bls_state
-```
+Note that the underlying CSV files represented about 10 gigabytes of data, so the fact that creating data sets from the parquet versions of these can take a second or less is quite impressive.
 
 ```{r}
 bls_county <-
@@ -290,19 +297,102 @@ bls_county <-
 bls_county
 ```
 
+
+```{r}
+bls_state <-
+  qcew_data |>
+  filter(agglvl_code > 49, agglvl_code < 60) |>
+  duckdb_to_parquet(name = "bls_state", schema = "dlr") |>
+  system_time()
+```
+
 ```{r}
 bls_national <-
   qcew_data |>
   filter(agglvl_code == 10) |>
   duckdb_to_parquet(name = "bls_national", schema = "dlr") |>
   system_time()
-
-bls_national
 ```
 
-The upshot of all this is that I think this demonstrates how it is possible to have completely reproducible data steps that are also researcher-friendly and take very little computing resources to process.
-For example, all the BLS data created using my version of the code can be found [here](https://www.dropbox.com/scl/fo/g5yat3ugd6n95fl0y71kp/AHX6QGGxWA6-Bid69a-Ys1Q?rlkey=dgzcgfdq7h7by0b1qpxwgedce&dl=0).^[Note that this is as far as I got in looking at the reproducibility of the steps in the original paper.]
+# Creating a code repository for the raw data
+
+Given the general-purpose nature of the QCEW data, it seems to be a good candidate for creating a public repository that facilitates sharing of the data.
+I made such a repository [here](https://github.com/iangow/qcew).
+
+# Revising the datasheet
+
+With all the pieces above in place, we can reimagine the datasheet entry for this data set.
+Because everything has been done using code and because elements have been done in a way that is easy to share, preparing the datasheet requires very little incremental effort.
+In many ways, research teams should maintain datasheets like this even for their own purposes, so preparing the final datasheet becomes quite trivial.
+
+Here's my attempt:
+
+:::{.callout text-align="left"}
+
+**2. Employment**
+
+We sourced raw data from the [website](https://www.bls.gov/cew/downloadable-data-files.htm) for the Quarterly Census of Employment and Wages (QCEW) program of the United States Bureau of Labor Statistics (BLS).
+We downloaded and processed the raw data using code available at <https://github.com/iangow/qcew>.
+The downloaded Zip files can be found [here](https://www.dropbox.com/scl/fo/rb1298e5oyio1oqujk4w3/AH12yMReDIe86N-jarXuKyI?rlkey=lipfmv05c6nqwlinkokql9w89&dl=0) and the processed parquet data files can be found [here](https://www.dropbox.com/scl/fo/g5yat3ugd6n95fl0y71kp/AHX6QGGxWA6-Bid69a-Ys1Q?rlkey=dgzcgfdq7h7by0b1qpxwgedce&dl=0).
 
 ```{r}
+#| message: false
+library(DBI)
+library(tidyverse)
+library(farr)
+
+years <- 2001:2019L
+
+db <- DBI::dbConnect(duckdb::duckdb())
+
+qcew_data <-
+  load_parquet(db, "annual_*", schema = "qcew") |>
+  filter(year %in% years) |>
+  mutate(industry_code =
+           case_when(industry_code == "31-33" ~ "31",
+                     industry_code == "44-45" ~ "44",
+                     industry_code == "48-49" ~ "48",
+                     .default = industry_code),
+         industry_code = as.integer(industry_code)) |>
+  filter(industry_code < 100) |>
+  # and for now just keep the ownership codes for
+  # - (a) total employment levels -- own_code = 0; and
+  # - (b) total private sector employment -- own_code = 5
+  filter(own_code %in% c(0, 5))
+```
+
+We used data from years `r min(years)` through `r max(years)` and applied filters based on industry (`industry_code` less than 100) and ownership (`own_code %in% c(0, 5))`).
+We then created three data sets at different levels of aggregation: county, state, and national.
+
+```{r}
+bls_county <-
+  qcew_data |>
+  filter(agglvl_code > 69, agglvl_code < 80) |>
+  duckdb_to_parquet(name = "bls_county", schema = "dlr")
+
+bls_state <-
+  qcew_data |>
+  filter(agglvl_code > 49, agglvl_code < 60) |>
+  duckdb_to_parquet(name = "bls_state", schema = "dlr")
+
+bls_national <-
+  qcew_data |>
+  filter(agglvl_code == 10) |>
+  duckdb_to_parquet(name = "bls_national", schema = "dlr")
+```
+
+These data sets are available [here](https://www.dropbox.com/scl/fo/lb3r9vi2gxouavm5i1pn2/AIR3AbhBa26Rr09B967_MXM?rlkey=8vwxts0zcirc8gnf77vjvrp4l&dl=0).
+
+:::
+
+While this entry is much longer than the original entry, I think the benefits of greater transparency for any reader make the extra length more than worthwhile.
+
+# Conclusion
+
+The upshot of all this is that I think this demonstrates how it is possible to have completely reproducible data steps that are also researcher-friendly and take very little computing resources to process.
+For example, all the QCEW parquet data files created using my version of the code can be found [here](https://www.dropbox.com/scl/fo/g5yat3ugd6n95fl0y71kp/AHX6QGGxWA6-Bid69a-Ys1Q?rlkey=dgzcgfdq7h7by0b1qpxwgedce&dl=0).^[Note that this is as far as I got in looking at the reproducibility of the steps in the original paper.]
+
+```{r}
+#| include: false
 dbDisconnect(db)
 ```
