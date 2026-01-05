@@ -1,6 +1,9 @@
 library(plyr)
 library(stringr)
 
+raw_data_dir <- path.expand(file.path(Sys.getenv("RAW_DATA_DIR"), "qcew"))
+data_dir <- path.expand(file.path(Sys.getenv("DATA_DIR"), "dlr"))
+
 ######### FIRST, PREPROCESS RAW BLS DATA ##############
 bls_process <- function(year) {
   zipfile <- unzip(str_glue("{raw_data_dir}/{year}_annual_singlefile.zip"))
@@ -27,14 +30,12 @@ bls_process <- function(year) {
   blsdata_yr
 }
 
-raw_data_dir <- path.expand(file.path(Sys.getenv("RAW_DATA_DIR"), "bls"))
-
 bls_all <- rbind(lapply(2001:2019, bls_process))
 
 bls_state <- bls_all[which(bls_all$state_level_flag==1),]
 bls_county <- bls_all[which(bls_all$county_level_flag==1),]
 bls_national <- bls_all[which(bls_all$agglvl_code==10),]
 
-write.csv(bls_state, str_glue("{raw_data_dir}/bls_state.csv"),row.names=FALSE)
-write.csv(bls_county, str_glue("{raw_data_dir}/bls_county.csv"),row.names=FALSE)
-write.csv(bls_national, str_glue("{raw_data_dir}/bls_national.csv"),row.names=FALSE)
+write.csv(bls_state, str_glue("{data_dir}/bls_state.csv"),row.names=FALSE)
+write.csv(bls_county, str_glue("{data_dir}/bls_county.csv"),row.names=FALSE)
+write.csv(bls_national, str_glue("{data_dir}/bls_national.csv"),row.names=FALSE)
