@@ -92,8 +92,6 @@ compustat <- compustat %>%
   window_order(gvkey, datadate) %>%
   filter(row_number() == 1) %>%
   ungroup() |>
-  collect()
-
-# Save data
-saveRDS(compustat, file = 'compustat_annual_mod.RDS')
+  # Save data
+  duckdb_to_parquet(name = "compustat_annual", schema="data", data_dir=".")
 
