@@ -3,17 +3,13 @@ library(tidyverse)
 library(RPostgres)
 library(lubridate)
 library(dbplyr) # for window_order()
+library(farr)
+
 # Set up WRDS object
-wrds <- dbConnect(Postgres(),
-                  host='wrds-pgdata.wharton.upenn.edu',
-                  port=9737,
-                  user='iangow',
-                  # password='PASSWORD',
-                  dbname='wrds',
-                  sslmode='require')
+db <- dbConnect(duckdb::duckdb())
 
 # Computstat
-compustat <- tbl(wrds, sql("SELECT * FROM comp.funda"))
+compustat <- load_parquet(db, "funda", "comp")
 
 # Impose date filter
 compustat <- compustat %>%
