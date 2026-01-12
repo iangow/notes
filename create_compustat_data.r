@@ -2,7 +2,7 @@
 library(tidyverse)
 library(RPostgres)
 library(lubridate)
-
+library(dbplyr) # for window_order()
 # Set up WRDS object
 wrds <- dbConnect(Postgres(),
                   host='wrds-pgdata.wharton.upenn.edu',
@@ -21,8 +21,7 @@ compustat <- compustat %>%
 
 # Impose filter to obtain unique gvkey-datadate records
 compustat <- compustat %>%
-  filter(indfmt == 'INDL' & datafmt == 'STD' & popsrc == 'D' & consol == 'C')  %>%
-  collect()
+  filter(indfmt == 'INDL' & datafmt == 'STD' & popsrc == 'D' & consol == 'C')
 
 # Create Compustat dataset to merge #####################################################
 # Create new variables
@@ -44,32 +43,35 @@ compustat <- compustat %>%
 
 # Create lagged variables by gvkey
 # Order data by gvkey-date (to calculate lagged variables properly)
-compustat <- compustat %>%
-  arrange(gvkey, datadate)
-
 # Operating accruals calculation (This has been checked against the below sources).
 compustat <- compustat %>%
   group_by(gvkey) %>%
-mutate(acc= coalesce(
-  # Calculate in accordinace with Hribar and Collins (2002, JAR) if possible.
-  (ib-oancf) /  ((at+lag(at))/2),
+  window_order(gvkey, datadate) %>%
+  mutate(avg_at = (at + lag(at)) / 2) |>
+  mutate(acc = if_else(avg_at != 0,
+                       coalesce(
+    # Calculate in accordinace with Hribar and Collins (2002, JAR) if possible.
+    (ib-oancf) / avg_at,
+    (((act - lag(act)) - (che - lag(che))) -
+      ((lct - lag(lct)) - (dlc - lag(dlc)) - (txp - lag(txp)))- dp) / avg_at),
+  NA)
   # This is how the original Sloan (1996, TAR) calculates this.
   # This is also in accordance with Ball et al. (2016, JFE)
-  ((act-lag(act) - (che-lag(che))) - ((lct-lag(lct))-(dlc-lag(dlc))-(txp-lag(txp))) - dp)/  ((at+lag(at))/2))) %>%
+  ) %>%
 
-  # Percent accurals
+  # Percent accruals
   mutate(pctacc = case_when(
     is.na(oancf) & ib==0 ~ (	(act-lag(act) - (che-lag(che))) - (  (lct-lag(lct))-(dlc-lag(dlc))-(txp-lag(txp))-dp ) )/.01,
     ib==0 ~ (ib-oancf)/.01,
     is.na(oancf) ~ (	(act-lag(act) - (che-lag(che))) - (  (lct-lag(lct))-(dlc-lag(dlc))-(txp-lag(txp))-dp ) )/abs(ib),
-    TRUE~ (ib-oancf)/abs(ib)
+    TRUE~ if_else(ib != 0, (ib-oancf)/abs(ib), NA)
   )) %>%
   ungroup()
 
 # Create lagged assets measures
 compustat <- compustat %>%
   mutate(at = if_else(at <= 0, as.numeric(NA), at)) %>%
-  arrange(gvkey, datadate) %>%
+  window_order(gvkey, datadate) %>%
   group_by(gvkey) %>%
   # Take lags
   mutate(at_lag1 = lag(at, n = 1),
@@ -81,7 +83,8 @@ compustat <- compustat %>%
 
 # Select necessary columns
 compustat <- compustat %>%
-  select(gvkey, sich, sic2, datadate, fyear, mkt_cap, bk_mkt, ln_size, asset_growth, roa, at, at_lag1, at_lag2, ib, acc, pctacc)
+  select(gvkey, sich, sic2, datadate, fyear, mkt_cap, bk_mkt, ln_size,
+         asset_growth, roa, at, at_lag1, at_lag2, ib, acc, pctacc)
 
 # Rename mkt cap column
 compustat <- compustat %>%
@@ -89,11 +92,12 @@ compustat <- compustat %>%
 
 # Select first entry in case of duplicates in Year-end
 compustat <- compustat %>%
-  arrange(gvkey, datadate) %>%
   group_by(gvkey, year(datadate)) %>%
-  slice(1) %>%
-  ungroup()
+  window_order(gvkey, datadate) %>%
+  filter(row_number() == 1) %>%
+  ungroup() |>
+  collect()
 
 # Save data
-saveRDS(compustat, file = 'compustat_annual.RDS')
+saveRDS(compustat, file = 'compustat_annual_mod.RDS')
 
