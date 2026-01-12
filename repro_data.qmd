@@ -166,7 +166,7 @@ get_qcew_data <- function(year, schema = "qcew", data_dir = NULL,
   data_dir <- file.path(data_dir, schema)
   if (!dir.exists(data_dir)) dir.create(data_dir, recursive = TRUE)
 
-  filename <- str_glue("{year}_annual_singlefile.zip")
+  filename <- stringr::str_glue("{year}_annual_singlefile.zip")
   t <- path.expand(file.path(raw_data_dir, filename))
 
   pq_path <- stringr::str_c("annual_", year, ".parquet")
@@ -207,7 +207,7 @@ get_qcew_data_duckdb <- function(year, schema = "qcew",
   data_dir <- file.path(data_dir, schema)
   if (!dir.exists(data_dir)) dir.create(data_dir, recursive = TRUE)
 
-  filename <- str_glue("{year}_annual_singlefile.zip")
+  filename <- stringr::str_glue("{year}_annual_singlefile.zip")
   t <- path.expand(file.path(raw_data_dir, filename))
   csv_file <- unzip(t, exdir = tempdir())
 
