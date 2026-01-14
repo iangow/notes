@@ -6,15 +6,20 @@ if (!grepl("@", getOption("HTTPUserAgent"))) {
 }
 
 files_df <-
-  expand_grid(year = 2025:2025, quarter = 1:4) |>
-  mutate(file = paste0(year, "q", quarter)) |>
-  filter(file <= "2025q1")
+  expand_grid(year = 2019:2025, quarter = 1:4) |>
+  mutate(file = paste0(year, "q", quarter))
 
-get_data <- function(file) {
+get_data <- function(file, keep_raw = FALSE) {
   url <- str_c("https://www.sec.gov/files/dera/data/",
                "financial-statement-data-sets/", file, ".zip")
 
-  t <- tempfile(fileext = ".zip")
+  if (keep_raw) {
+    raw_dir <- file.path(path.expand(System.getenv("RAW_DATA_DIR")), "dera")
+    if (!dir.exists(raw_dir)) dir.create(raw_dir, recursive = TRUE)
+    t <- file.path(System.getenv("RAW_DATA_DIR"), basename(url))
+  } else {
+    t <- tempfile(fileext = ".zip")
+  }
 
   download.file(url, t)
 
