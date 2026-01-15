@@ -7,7 +7,8 @@ if (!grepl("@", getOption("HTTPUserAgent"))) {
 
 files_df <-
   expand_grid(year = 2019:2025, quarter = 1:4) |>
-  mutate(file = paste0(year, "q", quarter))
+  mutate(file = paste0(year, "q", quarter)) |>
+  filter(file <= "2025q4")
 
 get_data <- function(file, keep_raw = FALSE) {
   url <- str_c("https://www.sec.gov/files/dera/data/",
