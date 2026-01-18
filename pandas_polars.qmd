@@ -1,0 +1,353 @@
+---
+title: "Some observations on pandas"
+author: Ian D. Gow
+date: 2026-01-18
+date-format: "D MMMM YYYY"
+number-sections: true
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+jupyter: python3
+---
+
+
+
+
+```{python}
+#| include: false
+#| eval: false
+# !pip3 install pyarrow polars
+```
+
+```{python}
+import pandas as pd
+import pyarrow as pa
+import pyarrow.compute as pc
+import polars as pl
+```
+
+# Introduction
+
+# Data science in Python and pandas
+
+I will not claim to be any kind of expert on data science in Python.
+However, it is clear that pandas continues to play a key role in data science in Python.
+
+
+
+
+# Some things I don't like about pandas
+
+## Data-type complexity (the missing-value morass)
+
+
+
+
+## Implicit logic
+
+## Indexes
+
+## Performance
+
+
+The code below assumes the existence of a data file `sgi_monitoring.parquet` in the current working directory.
+I used the following code (run once) to download this file.
+
+```{python}
+#| eval: false
+url = ("https://raw.githubusercontent.com/WillAyd/"
+       "Pandas-Cookbook-Third-Edition/refs/heads/"
+       "main/data/sgi_monitoring.parquet")
+!wget {url}
+```
+
+```{python}
+#| cache: true
+%time df = pd.read_parquet("sgi_monitoring.parquet", dtype_backend="numpy_nullable")
+print(df["Measurement Time"].head())
+%time df["Measurement Time"] = pd.to_datetime(df["Measurement Time"]).dt.tz_localize("US/Central")
+print(df["Measurement Time"].head())
+```
+
+```{python}
+#| cache: true
+%%time
+mask = (
+    (df["Measurement Description"] == "TM1 Temp Sensor")
+    & (df["Data Stream ID"] == 39176)
+)
+df = df[mask].set_index("Measurement Time").sort_index()
+df[["Measurement Type", "Units"]].value_counts()
+
+(df
+    .loc["2017-07-24":"2017-08-01"]
+    .resample("D")
+    ["Measurement Value"]
+    .mean())
+```
+
+```{python}
+#| cache: true
+%%time
+df[["Measurement Type", "Units"]].value_counts()
+```
+
+```{python}
+#| cache: true
+%%time
+df.resample("D")["Measurement Value"].mean().plot()
+```
+
+```{python}
+#| cache: true
+%time df = pd.read_parquet("sgi_monitoring.parquet", dtype_backend="pyarrow")
+print(df["Measurement Time"].head())
+%time df["Measurement Time"] = pd.to_datetime(df["Measurement Time"]).dt.tz_localize("US/Central")
+print(df["Measurement Time"].head())
+```
+
+```{python}
+#| cache: true
+def parse_timestamp(
+    x, 
+    format="%m/%d/%Y %I:%M:%S %p", 
+    unit="ns",
+    tz="US/Central"):
+    
+    arr = pa.array(x)
+    ts = pc.strptime(arr, format=format, unit=unit)   # timestamp[ns] (naive)
+    ts = pc.assume_timezone(ts, tz)                   # timestamp[ns, tz]
+    s = ts.to_pandas()                                # pandas tz-aware Series (should be)
+    # Ensure it stays tz-aware and in the tz you want
+    if getattr(s.dtype, "tz", None) is None:
+        # If tz got dropped, re-localize in pandas
+        s = pd.to_datetime(s).dt.tz_localize(tz)
+    else:
+        s = s.dt.tz_convert(tz)
+    return s
+```
+
+```{python}
+#| cache: true
+%time df = pd.read_parquet("sgi_monitoring.parquet", dtype_backend="pyarrow")
+print(df["Measurement Time"].head())
+%time df["Measurement Time"] = parse_timestamp(df["Measurement Time"])
+print(df["Measurement Time"].head())
+```
+
+```{python}
+#| cache: true
+%%time
+mask = (
+    (df["Measurement Description"] == "TM1 Temp Sensor")
+    & (df["Data Stream ID"] == 39176)
+)
+df = df[mask].set_index("Measurement Time").sort_index()
+df[["Measurement Type", "Units"]].value_counts()
+
+(df
+    .loc["2017-07-24":"2017-08-01"]
+    .resample("D")
+    ["Measurement Value"]
+    .mean())
+```
+
+```{python}
+
+%%time
+df[["Measurement Type", "Units"]].value_counts()
+```
+
+```{python}
+#| cache: true
+%%time 
+df_pl = pl.read_parquet("sgi_monitoring.parquet")
+
+print(df_pl.select("Measurement Time").head())
+
+# if "Measurement Time" is a string column, parse then localize (assume Central)
+fmt = "%m/%d/%Y %I:%M:%S %p"
+
+df_pl = df_pl.with_columns(
+    pl.col("Measurement Time")
+      .str.strptime(pl.Datetime, format=fmt, strict=True, exact=True)
+      .dt.replace_time_zone("US/Central")   # tz_localize equivalent
+      .alias("Measurement Time")
+)
+
+print(df_pl.select("Measurement Time").head())
+```
+
+```{python}
+#| cache: true
+%%time
+(
+    df_pl
+    .filter(pl.col("Measurement Description") == "TM1 Temp Sensor")
+    .group_by("Data Stream ID")
+    .agg(pl.len().alias("count"))
+    .sort("count", descending=True)
+)
+```
+
+```{python}
+#| cache: true
+%%time
+df_pl = df_pl.filter(
+    (pl.col("Measurement Description") == "TM1 Temp Sensor")
+    & (pl.col("Data Stream ID") == 39176)
+)
+
+(
+    df_pl
+    .group_by(["Measurement Type", "Units"])
+    .agg(pl.len().alias("count"))
+    .sort("count", descending=True)
+)
+```
+
+```{python}
+#| cache: true
+%%time
+tz = "US/Central"
+
+start = pl.datetime(2017, 7, 24, time_zone=tz)
+end   = pl.datetime(2017, 8, 2,  time_zone=tz)  # next day
+
+daily = (
+    df_pl
+    .filter(pl.col("Measurement Time").is_between(start, end, closed="both"))
+    .sort("Measurement Time")
+    .group_by_dynamic("Measurement Time", every="1d", closed="left", label="left")
+    .agg(pl.col("Measurement Value").mean().alias("mean"))
+)
+daily
+```
+
+```{python}
+#| cache: true
+%%time
+(df_pl
+    .sort("Measurement Time")
+    .group_by_dynamic("Measurement Time", every="1d", closed="left", label="left")
+    .agg(pl.col("Measurement Value").mean().alias("mean"))
+    .to_pandas()
+    .set_index("Measurement Time")
+    ["mean"]
+    .plot());
+```
+
+```{python}
+#| cache: true
+import ibis
+from ibis import _
+
+ibis.options.interactive = True
+
+con = ibis.polars.connect()
+# later, you can switch to:
+# con = ibis.duckdb.connect()
+```
+
+```{python}
+#| cache: true
+%%time
+fmt = "%m/%d/%Y %I:%M:%S %p"
+
+from ibis import _
+
+fmt = "%m/%d/%Y %I:%M:%S %p"
+
+t = (
+    con.read_parquet("sgi_monitoring.parquet")
+       .mutate(**{"Measurement Time": _["Measurement Time"].as_timestamp(fmt)})
+)
+
+t.select("Measurement Time").head()
+```
+
+```{python}
+#| cache: true
+%%time
+from ibis import _
+
+res = (
+    t
+    .filter(_["Measurement Description"] == "TM1 Temp Sensor")
+    .group_by(_["Data Stream ID"])
+    .aggregate(count=_.count())
+    .order_by(ibis.desc("count"))
+).execute()
+```
+
+```{python}
+#| cache: true
+%%time
+t = (
+    t
+    .filter(
+        (_["Measurement Description"] == "TM1 Temp Sensor")
+        & (_["Data Stream ID"] == 39176)
+    )
+)
+
+t_counts = (
+    t
+    .group_by(["Measurement Type", "Units"])
+    .aggregate(count=_.count())
+    .order_by(ibis.desc("count"))
+)
+
+t_counts.execute()
+```
+
+```{python}
+#| cache: true
+%%time
+import ibis.expr.datatypes as dt
+
+tz = "US/Central"
+
+# Half-open interval [2017-07-24, 2017-08-02)
+start = ibis.timestamp("2017-07-24 00:00:00")
+end   = ibis.timestamp("2017-08-02 00:00:00")
+
+t_daily = (
+    t
+    .filter((_["Measurement Time"] >= start) & (_["Measurement Time"] < end))
+    .mutate(day=_["Measurement Time"].date())   # daily bucket
+    .group_by("day")
+    .aggregate(mean=_["Measurement Value"].mean())
+    .order_by("day")
+)
+
+t_daily.execute()
+```
+
+```{python}
+#| cache: true
+%%time
+(
+    t
+    .mutate(day=_["Measurement Time"].date())
+    .group_by("day")
+    .aggregate(mean=_["Measurement Value"].mean())
+    .order_by("day")
+    .execute()
+    .set_index("day")["mean"]
+    .plot()
+);
+```
+
+
+
