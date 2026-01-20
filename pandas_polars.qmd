@@ -1,5 +1,5 @@
 ---
-title: "Some observations on pandas"
+title: "Some observations on pandas, polars, etc."
 author: Ian D. Gow
 date: 2026-01-18
 date-format: "D MMMM YYYY"
@@ -34,6 +34,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import polars as pl
+import matplotlib.pyplot as plt
 ```
 
 # Introduction
@@ -41,19 +42,431 @@ import polars as pl
 # Data science in Python and pandas
 
 I will not claim to be any kind of expert on data science in Python.
-However, it is clear that pandas continues to play a key role in data science in Python.
+The following are some observations I've made during a crash course on pandas I'm currently taking.^[This self-taught crash course includes working through *Pandas Cookbook* and *Data Science with Python*.]
+ 
+One approach to the history of data science in Python would go back to the 1990s and describe the emergence of Python, then move on to the development of scientific computing libraries in Python, and so on.
+But a shortcut might be to use the excellent book "Data Analysis with Open Source Tools" [@janert2010data], which was published in 2010.
+
+@janert2010data is an excellent book and probably worth reading even today.
+However, in some ways its a kind of historical artefact, as so much has changed since 2010.
+
+While the book is fairly eclectic, it focuses on Python---including NumPy and SciPy---and R.
+Yet the data frame doesn't appear until Chapter 10 [@janert2010data, p. 244]:
+
+> The essential data structure offered by R is the so-called data frame. 
+> A data frame encapsulates a data set and is the central abstraction that R is built on. 
+> Practically all operations involve the handling and manipulation of frames in one way or the other.
+
+@janert2010data makes no mention of pandas, which makes sense given the relatively unknown state of pandas in 2010.
+While @McKinney_2010 outlines an early iteration of pandas, a [blog post](https://wesmckinney.com/blog/a-roadmap-for-rich-scientific-data-structures-in-python/) by McKinney in 2011 makes it clear that data analysis in Python was still very fragmented and it was still early days for pandas.
+But by 2012, pandas was clearly on the map and, while a lot has changed since then, it was possible to write a book entitled "Python for Data Analysis" that focused on pandas. [@mckinney2012python].
 
 
+## pandas as *the* Python data frame library
+
+After 2012, pandas went on to become the dominant **data frame library** in Python.
+So what is a data frame library?
+The requirements set for pandas by @mckinney2012python [p. 111] provide a starting point:
+
+> - Data structures with labeled axes supporting automatic or explicit data alignment. ...
+> - Integrated time series functionality.
+> - The same data structures handle both time series data and non-time series data.
+> - Arithmetic operations and reductions (like summing across an axis) would pass
+on the metadata (axis labels).
+> - Flexible handling of missing data.
+> - Merge and other relational operations found in popular databases.
+
+The first requirement was implemented in pandas with three closely related data structures: the `Series`, the `Index`, and the `DataFrame`.
+As its name suggests, the `DataFrame` is the essential one for a data frame library.
+In @mckinney2012python [p. 115] writes that "a DataFrame represents a tabular, spreadsheet-like data structure containing an ordered collection of columns, each of which can be a different value type (numeric, string, boolean, etc.)."
+While pandas excels with time series functionality, any data frame library worthy of the name will support temporal data types (dates, timestamps, etc.), along with integer and floating-point numeric types, strings and more.
+A typical pandas `DataFrame` will comprise an `Index` and a number of `Series` objects.
+
+Data frame libraries typically include a rich set of functions for reading and writing data in common formats, such as `pd.read_csv()` and `pd.read_parquet()`.
+
+That pandas could be developed so quickly is partly attributable to the early decision to build it on top of the NumPy library, in particular its core `ndarray` data structure.
+This decision had a number of consequences for pandas's that can still be felt today.
+First, as NumPy had no native notion of missing data, pandas adopted its floating-point "not a number" sentinel (`np.nan`) as a general marker for missing values.
+
+Additionally, NumPy integer arrays cannot represent `np.nan`, so any pandas `Series` containing both integer values and missing data must be coerced to a floating-point type.
+Finally, NumPy lacked a suitable native string array type for general text data, forcing pandas to adopt a different internal representation for such data.
+
+In recent years, alternative Python data frame libraries---such as Dask and polars---have emerged.
+Today, there are also what might be called **framework libraries**, such as Ibis, that can work with other libraries (such as DuckDB) and systems (such as PostgreSQL) to produce much or all of the functionality of data frame libraries.
+Whereas data frame libraries typically define both a data structure and an execution model, framework libraries often define an abstraction layer that can target multiple backends.^[Note, some of these data frame libraries are not limited to Python.
+For example, the polars documentation states that polars "is written in Rust, and available for Python, R and NodeJS [sic]." <https://docs.pola.rs>]
+These libraries likely emerged in part to address perceived weaknesses in pandas, as I discuss in more detail below.
+Nonetheless, it is clear that pandas continues to play a central role in data science in Python.
+
+While R has always provided data frame functionality out of the box, so to speak, it has not stood still since pandas arrived.
+For instance, a number of alternative data frame libraries have emerged for R, including `data.table` and the Tidyverse libraries, such as `dplyr` and `tidyr`.^[While `dplyr` supplies much of the core data frame functionality, libraries such as `tidyr` and `readr` are required to fully meet the requirements outlined by @mckinney2012python.]
+
+# Expressive pandas
+
+The real strength appears to be its expressiveness, which allows a user to explore data with succinct code.
+To show this, I will adapt an example from @hilpisch2019.
+The following code reads data from a GitHub page and then one line of code generates a plot.
+
+```{python}
+url = ("https://raw.githubusercontent.com/yhilpisch/"
+       "py4fi2nd/refs/heads/master/source/"
+       "tr_eikon_eod_data.csv")
+       
+data = pd.read_csv(url, index_col=0, parse_dates=True)
+data.plot(figsize=(8, 12), subplots=True);
+```
+It seems that pandas has intuited that the data set comprises a number of time series, so a call to the `.plot()` method of the `pd.DataFrame` generates a plot and `subplots=True` makes a subplot for each series.
+Of course, it wasn't some special instinct for the meaning of data that allowed pandas to do this.
+Rather, by having dates in the first column of the CSV and then telling pandas to use that column to generate the `Index` for the `pd.DataFrame`, we get the data in the following form:
+
+```{python}
+data.head()
+```
+
+As can be seen, `Date` is different from the other "columns" of the data frame;
+in a sense, it's not a column at all, but the index for the data frame:
+
+```{python}
+data.index
+```
+
+```{python}
+data.loc['2010-01-08']
+```
+```{python}
+data['AAPL.O']
+```
+
+Financial time series data really is pandas's wheelhouse.
+This is unsurprising once you realize that pandas began life when Wes McKinney was working at AQR Capital Management.
+An important operation for financial time series is **resampling** [@hilpisch2019, p. 215].
+For example, we could transform the daily data in `data` into weekly data with one line:
+
+```{python}
+data.resample('W').last().head()
+```
+
+Similarly with monthly data ...
+
+```{python}
+data.resample('ME').last().head()
+```
+
+The idea of resampling is perhaps clearer with high-frequency data, such as the exchange rate data used in @hilpisch2019 [pp. 228-230].
+
+```{python}
+url = ("https://raw.githubusercontent.com/yhilpisch/"
+       "py4fi2nd/refs/heads/master/source/"
+       "fxcm_eur_usd_tick_data.csv")
+       
+tick = pd.read_csv(url, index_col=0, parse_dates=True)
+tick.shape
+```
+
+```{python}
+tick.head()
+```
+
+```{python}
+tick['Mid'] = tick.mean(axis=1)
+ax = plt.gca()
+tick['Mid'].plot(figsize=(8, 6));
+```
+
+```{python}
+tick_resam = tick.resample('5min').last()
+tick_resam.head()
+```
+
+```{python}
+tick.resample('5min').last()['Mid'].plot(figsize=(8, 6));
+```
+
+However, I think there is a danger of overestimating the facility of working with pandas from looking at financial time series data.
+My experience is that data sets rarely come in a form that allows one to use a `DatetimeIndex` with series identifiers.
+For example, 
+
+```{python}
+%%time
+from pathlib import Path
+import os
+
+def load_parquet(table, schema, *, data_dir=None, type=None):
+  if data_dir is None:
+    data_dir = Path(os.environ["DATA_DIR"]).expanduser()
+  
+  path = data_dir / schema / f"{table}.parquet"
+  
+  if type=="pandas":
+    return pd.read_parquet(path)
+  else:
+    return pl.scan_parquet(path)
+```
+
+```{python}
+#| eval: false
+dsf = load_parquet("dsf", "crsp", type="pandas")
+```
+
+```{python}
+%%time
+dsf = load_parquet("dsf", "crsp")
+stocknames = load_parquet("stocknames", "crsp")
+```
+
+```{python}
+from datetime import date
+
+start_date = pl.lit(date(2010, 1, 1))
+end_date = pl.lit(date(2018, 6, 29))
+```
+
+```{python}
+%%time
+tickers = (stocknames
+    .filter(pl.col("ticker").is_in(["MSFT", "AAPL", "AMZN", "GS"]))
+    .filter((end_date >= pl.col("namedt")) &
+        (end_date <= pl.col("nameenddt")))
+    .select("permno", "ticker"))
+```
+
+```{python}
+%%time
+dsf_sub = (dsf
+    .join(tickers.unique(subset=["permno"]), on="permno", how="inner")
+    .filter((pl.col("date") >= start_date) & 
+            (pl.col("date") <= end_date))
+    .select("ticker", "date", "prc", "ret")
+    .with_columns(
+        pl.col(["prc", "ret"]).cast(pl.Float64)
+    )
+)
+```
+
+```{python}
+%%time
+last_prc = (
+    dsf_sub
+    .filter(pl.col("date") <= end_date)
+    .sort("date")
+    .group_by("ticker")
+    .agg(pl.col("prc").last().alias("prc"),
+         pl.col("date").last().alias("date"))
+    .collect()
+)
+```
+
+```{python}
+%%time
+dsf_adj = (
+    dsf_sub
+    .sort(["ticker", "date"])
+    .with_columns(
+        growth=(1.0 + pl.col("ret")).cum_prod().over("ticker")
+    )
+    .with_columns(
+        prc_last=pl.col("prc").last().over("ticker"),
+        growth_last=pl.col("growth").last().over("ticker"),
+    )
+    .with_columns(
+        prc=pl.col("prc_last") * pl.col("growth") / pl.col("growth_last")
+    )
+    .drop(["growth", "prc_last", "growth_last"])
+    .collect()
+)
+```
+
+```{python}
+%%time
+data_alt = (dsf_adj
+    .pivot(
+        index="date",
+        on="ticker",
+        values="prc")
+    .to_pandas()
+    .set_index("date"))
+```
+
+```{python}
+data_alt.plot(subplots=True)
+```
 
 
-# Some things I don't like about pandas
+# Some weaknesses of pandas
 
-## Data-type complexity (the missing-value morass)
+To start, the success of pandas is clear testament to its value to data science.
+It is not clear that Python would have the status it has in data science, including machine learning and artificial intelligence applications, if pandas had not provided the missing DataFrame-shaped piece of the jigsaw puzzle.
 
+## Data-type complexity
 
+While pandas now provides explicit support for nullable NumPy-backed and Arrow-backed dtypes, as a matter of design, there is no corresponding one-line mechanism to convert a DataFrame back to the traditional NumPy dtype model.
+This position reflects the ambiguity of what such conversion would entail.
+For example, an integer array like `[1, 2, pd.NA]` or a boolean array like `[True, False, pd.NA]` would need to be converted to a floating-point NumPy array using the `np.nan` sentinel for missing values (e.g., `[1.0, 2.0, np.nan]`).
+These conversions would reintroduce the ambiguities and other issues that the newer types seek to address and, in some cases, would do so precisely when their value might be greatest---e.g., correct handling of missing values in statistical analysis).
+As a result, users encountering incompatibilities with downstream libraries must typically identify and coerce offending columns explicitly, as the following example demonstrates.
+
+Suppose we're using StatsModels to do regression analysis using the R-style `formula` API.
+
+```{python}
+import pandas as pd
+import statsmodels.formula.api as smf
+```
+
+With the traditional Numpy data types (i.e., the defaults), there is no issue.
+
+```{python}
+df = pd.DataFrame({"y": [1, 2, 3, 4], 
+                   "x": [1, 2, None, 4], 
+                   "treat": [True, False, True, None]})
+
+# baseline (often works if dtypes are plain numpy/object)
+res0 = smf.ols("y ~ x + treat", data=df).fit()
+```
+
+However, if we set `dtype_backend="numpy_nullable"` to use the Pandas extension data types, we get an error.
+
+```{python}
+df_nullable = df.convert_dtypes(dtype_backend="numpy_nullable")
+
+try:
+  res_nullable = smf.ols("y ~ x + treat", data=df_nullable).fit()
+except Exception as e:
+    print(type(e).__name__ + ":", e)
+```
+
+Similarly, if we set `dtype_backend="numpy_nullable"` (this requires `pyarrow` to be installed) we see the same issue.
+
+```{python}
+df_arrow = df.convert_dtypes(dtype_backend="pyarrow")  
+
+try:
+    res_arrow = smf.ols("y ~ x + treat", data=df_arrow).fit()
+except Exception as e:
+    print(type(e).__name__ + ":", e)
+```
+
+An adopter of the newer `dtype` backends would need to do something like the following, which avoids the error from `smf.ols()`.
+
+```{python}
+df_model = df_arrow.assign(
+    x=lambda d: d["x"].astype("float64"),
+    treat=lambda d: d["treat"].astype("float64"),
+)
+
+res_arrow = smf.ols("y ~ x + treat", data=df_model).fit()
+```
+
+In contrast, polars does not promise that its data frames can be passed to functions from libraries such as StatsModels.
+
+```{python}
+import polars as pl
+
+df_pl = pl.DataFrame(
+    {
+        "y": [1, 2, 3, 4],
+        "x": [1, 2, None, 4],
+        "treat": [True, False, True, None],
+    }
+)
+
+try:
+    res_pl = smf.ols("y ~ x + treat", data=df_pl).fit()
+except Exception as e:
+    print(type(e).__name__ + ":", e)
+```
+
+However, polars provides a `.to_pandas()` method that gets the job done with little user effort.
+
+```{python}
+res_pl = smf.ols("y ~ x + treat", data=df_pl.to_pandas()).fit()
+```
 
 
 ## Implicit logic
+
+```{python}
+s = pd.Series([10, 11, 12, 13, 14], index=[0, 1, 2, 3, 4])
+s.iloc[1:3]
+```
+
+```{python}
+s.loc[1:3]
+```
+
+This is the one that really trips beginners: an integer index looks positional, but it’s labels.
+
+```{python}
+s = pd.Series([10, 11, 12, 13], index=[10, 20, 30, 40])
+s.loc[10:30]
+```
+
+```{python}
+s.iloc[0:2]
+```
+
+```{python}
+idx = pd.to_datetime([
+    "2020-01-01 00:00:00",
+    "2020-01-01 00:02:00",
+    "2020-01-01 00:03:00",
+    "2020-01-01 00:05:00",
+])
+s = pd.Series([0, 2, 3, 5], index=idx)
+```
+
+```{python}
+s.resample("3min").sum()
+```
+
+```{python}
+s.resample("3min", label="right").sum()
+```
+
+```{python}
+s.resample("3min", label="right", closed="right").sum()
+```
+```{python}
+df = pd.DataFrame({"x": [1, 2, 3, 4], "y": [10, 20, 30, 40]})
+
+subset = df[df["x"] > 2]
+subset["y"] = 999            # chained assignment
+```
+
+```{python}
+df = pd.DataFrame({"x": [1, 2, 3, 4], "y": [10, 20, 30, 40]})
+
+subset = df[df["x"] > 2].copy()
+subset["y"] = 999
+```
+
+
+```{python}
+pd.options.mode.copy_on_write = False
+df2 = pd.DataFrame({"x": [1, 2, 3, 4], "y": [10, 20, 30, 40]})
+df2.loc[df2["x"] > 2, "y"] = 999
+print(df2)
+```
+
+```{python}
+s = df["y"]     # Series backed by df
+s.iloc[:] = 999
+df
+```
+
+```{python}
+pd.options.mode.copy_on_write = True
+df = pd.DataFrame({"x": [1, 2, 3, 4],
+                   "y": [10, 20, 30, 40]})
+
+subset = df[df["x"] > 2]
+subset["y"] = 999
+```
+
+```{python}
+s = df["y"]     # Series backed by df
+s.iloc[:] = 999
+df
+```
 
 ## Indexes
 
@@ -64,11 +477,21 @@ The code below assumes the existence of a data file `sgi_monitoring.parquet` in 
 I used the following code (run once) to download this file.
 
 ```{python}
-#| eval: false
-url = ("https://raw.githubusercontent.com/WillAyd/"
-       "Pandas-Cookbook-Third-Edition/refs/heads/"
-       "main/data/sgi_monitoring.parquet")
-!wget {url}
+#| eval: true
+from pathlib import Path
+from urllib.request import urlretrieve
+
+url = (
+    "https://raw.githubusercontent.com/WillAyd/"
+    "Pandas-Cookbook-Third-Edition/refs/heads/"
+    "main/data/sgi_monitoring.parquet"
+)
+
+dest = Path("sgi_monitoring.parquet")
+
+if not dest.exists():
+    print(f"Downloading {dest}...")
+    urlretrieve(url, dest)
 ```
 
 ```{python}
