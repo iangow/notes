@@ -54,18 +54,21 @@ def ptime(line, cell):
 
 A strong point of pandas is its expressiveness.
 Its API allows users to explore data using succinct and (generally) intuitive code.
-However, some of this expressiveness relies on data being in forms that often differs from the data we have (e.g., with date indexes) and pandas can struggle to manipulate the data into those forms, especially with larger data sets.
+However, some of this expressiveness relies on data being in forms (for example, with dates ready to make an index) that often differ from the data we have, and pandas can struggle to manipulate the data into those forms, especially with larger data sets.
 
 A number of modern data frame libraries have emerged that address weaknesses of pandas.
 In this note, I use polars and Ibis to show how one can use these libraries to get the data into the form with which pandas can shine.
 
 While the underlying data would occupy over 10 GB in memory, the polars variant below takes about a half-second to run.
-This variant may have particular appeal to pandas experts because the code is likely more familar to experienced analysts of data frames.
+This variant may have particular appeal to pandas experts because the code is likely more familiar to experienced analysts of data frames.
 
 I consider two Ibis variants.
 The first uses the same underlying parquet files used in the polars variant, but perhaps takes even less time than polars does.
-The second tweaks just a small portion of the earlier Ibis code to source the underlying data directly from the WRDS PostgreSQL datbase.
+The second tweaks just a small portion of the earlier Ibis code to source the underlying data directly from the WRDS PostgreSQL database.
 Even so, it takes less than a second to run.
+
+So we get the best of both worlds. 
+We can use modern, lazy libraries to perform the heavy data manipulation, and then hand off a compact result to pandas for exploration and visualization.
 
 :::{.callout-tip text-align="left"}
 This note uses several Python packages and parts of it rely on the existence of a local data repository of parquet files for WRDS data of the kind described in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq-pg) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
@@ -194,14 +197,14 @@ That doesn't count in my book.^[Though in @sec-wrds, I effectively run SQL again
 What I have in mind for the second question is "can I go from `dsf.parquet` to the @fig-original using pandas (and fairly normal hardware)?"
 No!
 I would say you get stuck with the very first step, which would be something like `dfs = pd.read_parquet("dsf.parquet")`.
-I tried it and my computer pretty much melted ... to the extent that I had to reach under the machine and press the little-used "off" button.^[This was on an M4 Pro Mac mini with 24GB of RAM.]
+I tried it and my computer pretty much melted ... to the extent that I had to reach under the machine and press the little-used "off" button.^[This was on an M4 Pro Mac mini with 24 GB of RAM.]
 
 # Generating @fig-original using polars
 
 In recent years, Python data frame libraries such as Dask and polars have emerged as alternatives to pandas.
 There are also what might be called **framework libraries**, such as Ibis, that can work with other libraries (such as DuckDB) and systems (such as PostgreSQL) to produce much or all of the functionality of data frame libraries.^[The term "framework libraries" is one I made up. If you go to the Ibis website <https://ibis-project.org>, Ibis is described as "an open source dataframe library that works with any data system".
 But Ibis relies on some other system to provide the **execution engine**, which it calls the *backend*.
-Most data frame libraries provide their own execution enginges.]
+Most data frame libraries provide their own execution engines.]
 In fact, Ibis can work with polars too.
 Whereas data frame libraries typically define both a data structure and an execution model, framework libraries often define an abstraction layer that can target multiple backends.^[Note, some of these data frame libraries are not limited to Python.
 For example, the polars documentation states that polars "is written in Rust, and available for Python, R and NodeJS [sic]." <https://docs.pola.rs>]
@@ -225,8 +228,7 @@ def load_parquet(table, schema, *, data_dir=None):
   return pl.scan_parquet(path)
 ```
 
-Because `pl.scan_parquet()` does not load the data into memory, it is very fast.
-
+Because `pl.scan_parquet()` does not immediately load data into memory, it returns almost instantly.
 
 ```{python}
 %%ptime
@@ -262,8 +264,6 @@ Having obtained the `permno` data, I can use this to get the relevant return dat
 Note that I get stock prices (`prc`) and returns both with (`ret`) and without (`retx`) dividends and other distributions.
 It turns out that the price series used by @hilpisch2019 did not include the effects of distributions.
 
- 
-
 ```{python}
 %%ptime
 start_date = pl.lit(data.index.min())
@@ -295,7 +295,7 @@ The code below confirms that the PostgreSQL types are effectively retained in th
 
 The next step is to recreate, as best we can, the price series used in @hilpisch2019.
 My assumption is that the prices are adjusted for splits such that the adjusted price at the end of the series used by @hilpisch2019 equals the unadjusted price on that date (i.e., what should be in `prc`).
-I then recreate preceding adjusted prices in each time series by working back from the ending price using returns (and I confirmed by looking at the @hilpisch2019 data that `retx` is the right return measure.
+I then recreate preceding adjusted prices in each time series by working back from the ending price using returns (and I confirmed by inspecting the data in @hilpisch2019 that `retx` is the appropriate return measure)..
 One way to interpret the code below is that taking one stock at a time, `growth_last` is the cumulative returns for each stock over the whole time series and the adjusted price for each date is the final price (`prc_last`) multiplied my the cumulative returns to date (`growth`) divided by `growth_last`.
 
 Note that the syntax here is pretty "pandas"-like in the sense that we sort the data and then apply `cum_prod()` to `(1 + retx)`.
@@ -503,7 +503,7 @@ I have my WRDS ID in the environment variable `WRDS_ID`.
 Only the first chunk of code below is changed from the Ibis-with-DuckDB version in @sec-ibis.
 This first chunk takes a (relatively!) long time to run because Ibis needs to connect to the WRDS database and query it for metadata about the two tables it is using.
 
-Looking at @fig-ibis-pg, it seems that this code also works to reproduce the data frame used the pandas code in @sec-pandas.
+Looking at @fig-ibis-pg, it seems that this code also works to reproduce the data frame created by the pandas code in @sec-pandas.
 
 ```{python}
 %%ptime
