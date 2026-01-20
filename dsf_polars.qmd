@@ -20,9 +20,6 @@ csl: jfe.csl
 jupyter: python3
 ---
 
-
-
-
 ```{python}
 #| include: false
 #| eval: false
@@ -57,7 +54,7 @@ def ptime(line, cell):
 
 A strong point of pandas is its expressiveness.
 Its API allows users to explore data using succinct and (generally) intuitive code.
-However, some of this expressiveness relies on data being in forms that often differs from the data we have (e.g., with date indexes) and pandas can struggle to manipulate the data into those forms, especially with larger data set.
+However, some of this expressiveness relies on data being in forms that often differs from the data we have (e.g., with date indexes) and pandas can struggle to manipulate the data into those forms, especially with larger data sets.
 
 A number of modern data frame libraries have emerged that address weaknesses of pandas.
 In this note, I use polars and Ibis to show how one can use these libraries to get the data into the form with which pandas can shine.
@@ -66,31 +63,33 @@ While the underlying data would occupy over 10 GB in memory, the polars variant 
 This variant may have particular appeal to pandas experts because the code is likely more familar to experienced analysts of data frames.
 
 I consider two Ibis variants.
-The first uses the same underlying parquet files used in the polars variant, but perhaps takes even less time than the polars does.
+The first uses the same underlying parquet files used in the polars variant, but perhaps takes even less time than polars does.
 The second tweaks just a small portion of the earlier Ibis code to source the underlying data directly from the WRDS PostgreSQL datbase.
 Even so, it takes less than a second to run.
 
 :::{.callout-tip text-align="left"}
 This note uses several Python packages and parts of it rely on the existence of a local data repository of parquet files for WRDS data of the kind described in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq-pg) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
+The following command (run in the terminal on your computer) installs the packages you need.
 
-```{bash}
+```{python}
 #| eval: false
 pip install 'ibis-framework[duckdb, postgres]' pandas polars db2pq
 ```
 
 The code assumes you have set the environment variables `DATA_DIR` and `WRDS_ID` to point to the location of the parquet repository on your computer and your WRDS ID, respectively.
 
-The necessary files for the parquet repository for this note can be created using the `db2pq` package as follows:
+The necessary files for the parquet repository for this note can be created using the `db2pq` package using the following code.
+Note that `wrds_update_pq("dsf", "crsp")` will take about 12 minutes with a fast connection to WRDS, but only runs if the file on your computer is not current with the data on the WRDS server.
 
 ```{python}
 #| eval: true
 from db2pq import wrds_update_pq
 
 wrds_update_pq("dsf", "crsp")  
-wrds_update_pq("stocknames", "crsp")
+wrds_update_pq("stocknames", "crsp");
 ```
 
-Note that `wrds_update_pq("dsf", "crsp")` will take about 12 minutes with a fast connection to WRDS, but only runs if the file on your computer is not current with the data on the WRDS server.
+
 
 This note was written using [Quarto](https://quarto.org).
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/dsf_polars.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/dsf_polars.pdf).
@@ -343,7 +342,6 @@ data_alt = (dsf_adj
 
 It turns out that the index in the original data frame is filled out with empty rows on public holidays, likely because the original data included commodities and exchange rates that traded on those dates and we omitted those data here.
 Having the dates in the index actually makes the plot look better, so I effectively add them to the index of `data_alt` by using `.reindex(data.index)`.
-We use `re`
 
 ```{python}
 %%ptime
