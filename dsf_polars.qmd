@@ -247,40 +247,60 @@ An important detail about tickers is that they get reused over time.
 So a ticker match with a `permno` may have a range of dates over which it is valid.
 I'm going to assume that the tickers in @hilpisch2019 were valid on the last date observed in his data set and look for the PERMNO match valid on that date.
 
+
 ```{python}
 %%ptime
 end_date = pl.lit(data.index.max())
 
-tickers = (stocknames
+tickers = (
+    stocknames
     .filter(pl.col("ticker").is_in(clean_tickers))
-    .filter((end_date >= pl.col("namedt")) &
-        (end_date <= pl.col("nameenddt")))
-    .select("permno", "ticker"))
+    .filter(end_date.is_between(pl.col("namedt"), pl.col("nameenddt")))
+    .select("permno", "ticker")
+)
+```
+
+Note that we could append `.unique()` to only select distinct rows if our code could produce duplicates.
+Or we could append `.unique(subset=["permno"])` to keep only one row for each `permno`. 
+
+The following code checks that each `permno` appears in a single row of `tickers`.
+If not Python's `assert` statement will trigger an error.
+
+```{python}
+assert (
+    tickers
+    .group_by("permno")
+    .agg(pl.len().alias("n_rows"))
+    .select((pl.col("n_rows") <= 1).all())
+    .collect()
+    .item()
+)
 ```
 
 Having obtained the `permno` data, I can use this to get the relevant return data from `crsp.dsf`.
-Note that I get stock prices (`prc`) and returns both with (`ret`) and without (`retx`) dividends and other distributions.
-It turns out that the price series used by @hilpisch2019 did not include the effects of distributions.
+Note that `.collect()` is the point at which the **lazy data frames** (`pl.LazyFrame` objects) created by `pl.scan_parquet()` are **materialized** as data frames (`pl.DataFrame` objects).
+So this step takes a (relatively!) long time.
+
+Note also that I get stock prices (`prc`) and returns both with (`ret`) and without (`retx`) dividends and other distributions.
+It turns out that the price series used by @hilpisch2019 did not include the effects of distributions, so I will use `retx` in my analysis below.
 
 ```{python}
 %%ptime
 start_date = pl.lit(data.index.min())
 
 dsf_sub = (dsf
-    .join(tickers.unique(subset=["permno"]), on="permno", how="inner")
-    .filter((pl.col("date") >= start_date) & 
-            (pl.col("date") <= end_date))
+    .join(tickers, on="permno", how="inner")
+    .filter(pl.col("date").is_between(start_date, end_date))
     .select("ticker", "date", "prc", "ret", "retx")
-    .with_columns(
-        pl.col(["prc", "ret", "retx"]).cast(pl.Float64)
-    )
+    .with_columns(pl.col(["prc", "ret", "retx"]).cast(pl.Float64))
+    .collect()
 )
 ```
 
 An important step in the code above is the conversion of prices and returns to floating-point data types, as they are stored in the WRDS PostgreSQL database as `NUMERIC` type.
 For example, `prc` is stored as `NUMERIC(11, 5)`, which means a numeric type with a total of 11 digits and 5 digits after the decimal place.
 The return variables (`ret` and `retx`) are stored as `NUMERIC(10, 6)`.
-The `db2pq` library I used to create the parquet files from the WRDS PostgreSQL data uses the `pyarrow` library to determine the best type to match the PostgreSQL type.
+The `db2pq` library I used to create the parquet files from the WRDS PostgreSQL data uses the `pyarrow` library to determine the best type to match the PostgreSQL type.^[See the [source code](https://github.com/iangow/db2pq/blob/6b1e7f3ab38421c916f0f4aecb89d093c7888518/db2pq/db2pq.py#L1039C1-L1045C35) for details.]
 The code below confirms that the PostgreSQL types are effectively retained in the parquet files I am loading with polars.
 
 ```{python}
@@ -299,9 +319,6 @@ One way to interpret the code below is that taking one stock at a time, `growth_
 Note that the syntax here is pretty "pandas"-like in the sense that we sort the data and then apply `cum_prod()` to `(1 + retx)`.
 The concatenation of three `.with_columns()` methods calls is needed to allow polars to refer to results from previous calls in each call.
 
-Note that `.collect()` is the point at which the **lazy data frames** (`pl.LazyFrame` objects) created by `pl.scan_parquet()` are **materialized** as data frames (`pl.DataFrame` objects).
-So this step takes a (relatively!) long time.
-
 ```{python}
 %%ptime
 dsf_adj = (
@@ -319,7 +336,6 @@ dsf_adj = (
                 pl.col("growth_last")
     )
     .drop(["growth", "prc_last", "growth_last"])
-    .collect()
 )
 ```
 
