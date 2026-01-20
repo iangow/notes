@@ -39,10 +39,7 @@ def ptime(line, cell):
     exec(cell, globals())
     dt = time.perf_counter() - t0
 
-    if dt < 1e-3:
-        msg = f"**Wall time:** {dt*1e3:.2f} ms"
-        # msg = f"**Wall time:** {dt*1e6:.0f} us"
-    elif dt < 1:
+    if dt < 1:
         msg = f"**Wall time:** {dt*1e3:.2f} ms"
     else:
         msg = f"**Wall time:** {dt:.3f} s"
@@ -228,7 +225,8 @@ def load_parquet(table, schema, *, data_dir=None):
   return pl.scan_parquet(path)
 ```
 
-Because `pl.scan_parquet()` does not immediately load data into memory, it returns almost instantly.
+Because `pl.scan_parquet()` does not immediately load data into memory, it returns almost instantly.^[Note that I use a little custom "cell magic" `%%ptime` to produce execution times in a way that prints nicely in the PDF output.
+See the [source code](https://raw.githubusercontent.com/iangow/notes/main/dsf_polars.qmd) for this document for details.]
 
 ```{python}
 %%ptime
