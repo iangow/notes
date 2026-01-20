@@ -54,15 +54,15 @@ def ptime(line, cell):
 
 A strong point of pandas is its expressiveness.
 Its API allows users to explore data using succinct and (generally) intuitive code.
-However, some of this expressiveness relies on data being in forms (for example, with dates ready to make an index) that often differ from the data we have, and pandas can struggle to manipulate the data into those forms, especially with larger data sets.
+However, some of this expressiveness relies on data being in forms (for example, with dates ready to serve as an index) that often differ from the data we have, and pandas can struggle to manipulate the data into those forms, especially with larger data sets.
 
 A number of modern data frame libraries have emerged that address weaknesses of pandas.
-In this note, I use polars and Ibis to show how one can use these libraries to get the data into the form with which pandas can shine.
+In this note, I use polars and Ibis to show how one can use these libraries to get the data into a form in which pandas can shine.
 
-While the underlying data would occupy over 10 GB in memory, the polars variant below takes about a half-second to run.
-This variant may have particular appeal to pandas experts because the code is likely more familiar to experienced analysts of data frames.
+While the underlying data would occupy over 10 GB in memory, the polars variant below runs in about half a second.
+This approach may have particular appeal to pandas experts because the code is likely more familiar to experienced analysts of data frames.
 
-I consider two Ibis variants.
+I consider two Ibis alternatives.
 The first uses the same underlying parquet files used in the polars variant, but perhaps takes even less time than polars does.
 The second tweaks just a small portion of the earlier Ibis code to source the underlying data directly from the WRDS PostgreSQL database.
 Even so, it takes less than a second to run.
@@ -172,7 +172,7 @@ data.resample('ME').last().head()
 These examples demonstrate the expressiveness of pandas, especially with financial time series data.
 This facility is less surprising once you realize that pandas began life when Wes McKinney was working at AQR Capital Management.
 
-However, I think there is a danger of overestimating the facility of working with pandas from such example.
+However, I think there is a danger of overestimating the facility of working with pandas from such examples.
 My experience is that data sets rarely come in a form that allows one to use a `DatetimeIndex` with series identifiers as the columns.
 
 Many data sets have a wider range of data types (one of the reasons for creating pandas in the first place) and data are often provided in a form that needs work to get to something like `data` above.
@@ -235,9 +235,9 @@ Because `pl.scan_parquet()` does not immediately load data into memory, it retur
 dsf = load_parquet("dsf", "crsp")
 stocknames = load_parquet("stocknames", "crsp")
 ```
-The next step is to look up tickers and link them to the security identify used by CRSP (`permno`).
+The next step is to look up tickers and link them to the security identifier used by CRSP (`permno`).
 The tickers found in the data provided by Hilpisch above include suffixes that indicate the exchange the stocks traded on.
-I use a simply regular expression to strip off these suffixes.
+I use a simple regular expression to strip off these suffixes.
 
 ```{python}
 import re
@@ -295,8 +295,8 @@ print(dsf
 
 The next step is to recreate, as best we can, the price series used in @hilpisch2019.
 My assumption is that the prices are adjusted for splits such that the adjusted price at the end of the series used by @hilpisch2019 equals the unadjusted price on that date (i.e., what should be in `prc`).
-I then recreate preceding adjusted prices in each time series by working back from the ending price using returns (and I confirmed by inspecting the data in @hilpisch2019 that `retx` is the appropriate return measure)..
-One way to interpret the code below is that taking one stock at a time, `growth_last` is the cumulative returns for each stock over the whole time series and the adjusted price for each date is the final price (`prc_last`) multiplied my the cumulative returns to date (`growth`) divided by `growth_last`.
+I then recreate preceding adjusted prices in each time series by working back from the ending price using returns (and I confirmed by inspecting the data in @hilpisch2019 that `retx` is the appropriate return measure).
+One way to interpret the code below is that taking one stock at a time, `growth_last` is the cumulative returns for each stock over the whole time series and the adjusted price for each date is the final price (`prc_last`) multiplied by the cumulative returns to date (`growth`) divided by `growth_last`.
 
 Note that the syntax here is pretty "pandas"-like in the sense that we sort the data and then apply `cum_prod()` to `(1 + retx)`.
 The concatenation of three `.with_columns()` methods calls is needed to allow polars to refer to results from previous calls in each call.
@@ -387,7 +387,7 @@ def load_parquet_ibis(con, table, schema, *, data_dir=None):
     return con.read_parquet(str(path), table_name=f"{schema}_{table}")
 ```
 
-The short time taken to "load" the data below suggests that, much as with `pl.scan_parquet()`, the data frames created here are "lazy" data frames.
+The short time taken to "load" the data below suggests that, analogous to the results of `pl.scan_parquet()`, the tables created here are lazy Ibis expressions rather than materialized data frames.
 
 ```{python}
 %%ptime
@@ -396,7 +396,7 @@ dsf = load_parquet_ibis(con, "dsf", "crsp")
 stocknames = load_parquet_ibis(con, "stocknames", "crsp")
 ```
 
-A lot of the remaining code is a pretty straightforward translation of the polars code into Ibis equivalents.
+A lot of the remaining code is a largely a straightforward translation of the polars code into Ibis equivalents.
 We start by creating `tickers`.
 
 ```{python}
@@ -417,18 +417,31 @@ Then the Ibis version of `dsf_sub` from above.
 %%ptime
 start_date = ibis.literal(data.index.min())
 
+num_cols = ["prc", "ret", "retx"]
+
 dsf_sub = (
     dsf
     .inner_join(tickers, predicates=[dsf.permno == tickers.permno])
-    .filter((_.date >= start_date) & (_.date <= end_date))
-    .select(
-        _.ticker.name("ticker"),
-        _.date.name("date"),
-        _.prc.cast("float64").name("prc"),
-        _.ret.cast("float64").name("ret"),
-        _.retx.cast("float64").name("retx"),
-    )
+    .filter(_.date.between(start_date, end_date))
+    .select("ticker", "date", *num_cols)
+    .mutate(**{c: getattr(_, c).cast("float64") for c in num_cols})
 )
+```
+
+Note that I am using some Python tricks here.
+First, `*num_cols` unpacks the list `num_cols` into positional arguments.
+So, `.select("ticker", "date", *num_cols)` is equivalent to `.select("ticker", "date", "prc", "ret", "retx")`.
+
+Second, `**` unpacks a dictionary into keyword arguments.
+So `.mutate(**{c: getattr(_, c).cast("float64") for c in num_cols})` unpacks into the following:
+
+```{python}
+#| eval: false
+{
+    "prc": _.prc.cast("float64"),
+    "ret": _.ret.cast("float64"),
+    "retx": _.retx.cast("float64"),
+}
 ```
 
 And finally, the equivalent of `dsf_adj`.
@@ -461,6 +474,10 @@ dsf_adj = (
 
 And the final step is very similar to what we saw with polars.
 We simply `pivot_wider()`, sort by `date` (important for the pandas index) and then `execute()` to create a pandas date frame, which we can apply `.set_index("date")` to just like above.
+Note that `pivot_wider()` is translated into a group-by aggregate query in SQL.
+If we don't specify `values_agg="max"`, it seems that `values_agg="first"` by default.
+This works with DuckDB, which has a `first()` [aggregate](https://duckdb.org/docs/stable/sql/functions/aggregates#firstarg), but will not work with PostgreSQL, which [does not](https://www.postgresql.org/docs/18/functions-aggregate.html).
+Because there should be just one `prc` for each `(date, ticker)` combination, the use of `max()` should not affect the output.
 
 ```{python}
 %%ptime
@@ -470,7 +487,7 @@ data_alt = (
     .pivot_wider(
         names_from="ticker",
         values_from="prc",
-        values_agg="max",   
+        values_agg="max", 
     )
     .order_by("date")
     .execute()
@@ -503,7 +520,7 @@ I have my WRDS ID in the environment variable `WRDS_ID`.
 Only the first chunk of code below is changed from the Ibis-with-DuckDB version in @sec-ibis.
 This first chunk takes a (relatively!) long time to run because Ibis needs to connect to the WRDS database and query it for metadata about the two tables it is using.
 
-Looking at @fig-ibis-pg, it seems that this code also works to reproduce the data frame created by the pandas code in @sec-pandas.
+Looking at @fig-ibis-pg, it seems that this code also effectively reproduces the data frame created by the pandas code in @sec-pandas.
 
 ```{python}
 %%ptime
@@ -538,17 +555,14 @@ tickers = (
 %%ptime
 start_date = ibis.literal(data.index.min())
 
+num_cols = ["prc", "ret", "retx"]
+
 dsf_sub = (
     dsf
     .inner_join(tickers, predicates=[dsf.permno == tickers.permno])
-    .filter((_.date >= start_date) & (_.date <= end_date))
-    .select(
-        _.ticker.name("ticker"),
-        _.date.name("date"),
-        _.prc.cast("float64").name("prc"),
-        _.ret.cast("float64").name("ret"),
-        _.retx.cast("float64").name("retx"),
-    )
+    .filter(_.date.between(start_date, end_date))
+    .select("ticker", "date", *num_cols)
+    .mutate(**{c: getattr(_, c).cast("float64") for c in num_cols})
 )
 ```
 
