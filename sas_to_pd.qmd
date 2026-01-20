@@ -67,6 +67,7 @@ The following command (run in the terminal on your computer) installs the packag
 ```{python}
 #| eval: false
 pip install wrds2pg --upgrade
+pip install pandas
 ```
 
 The code assumes you have set the environment variable `WRDS_ID` to your WRDS ID.
@@ -226,16 +227,24 @@ data_alt = (dsf_adj
 )
 ```
 
+I use `clean_tickers` to order the columns in the data frame so that @fig-sas better mirrors @fig-original.
+
+```{python}
+import re
+
+clean_tickers = [re.sub(r"\.[A-Z]+$", "", t) for t in ticker_list]
+```
+
 It turns out that the index in the original data frame is filled out with empty rows on public holidays, likely because the original data included commodities and exchange rates that traded on those dates and we omitted those data here.
 Having the dates in the index actually makes the plot look better, so I effectively add them to the index of `data_alt` by using `.reindex(data.index)`.
 
 ```{python}
 %%ptime
-data_alt = data_alt.reindex(data.index)
+data_alt = data_alt.reindex(data.index)[clean_tickers]
 ```
 
 ```{python}
-#| label: fig-ibis
+#| label: fig-sas
 #| fig-cap: "Stock prices for five firms: Using SAS and `wrds2pg`"
 data_alt.plot(figsize=(8, 8), subplots=True);
 ```
