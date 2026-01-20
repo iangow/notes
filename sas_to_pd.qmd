@@ -1,0 +1,276 @@
+---
+title: "Using SAS to create pandas data"
+author: Ian D. Gow
+date: 2026-01-20
+date-format: "D MMMM YYYY"
+number-sections: true
+format:
+  html:
+    colorlinks: true
+    syntax-definitions:
+      - sas.xml
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+    syntax-definitions:
+      - sas.xml
+bibliography: papers.bib
+csl: jfe.csl
+jupyter: python3
+---
+
+```{python}
+#| include: false
+#| eval: false
+# !pip3 install pyarrow polars
+```
+
+```{python}
+#| eval: true
+#| echo: false
+from IPython.core.magic import register_cell_magic
+from IPython.display import display, Markdown
+import time
+
+@register_cell_magic
+def ptime(line, cell):
+    t0 = time.perf_counter()
+    exec(cell, globals())
+    dt = time.perf_counter() - t0
+
+    if dt < 1:
+        msg = f"**Wall time:** {dt*1e3:.2f} ms"
+    else:
+        msg = f"**Wall time:** {dt:.3f} s"
+
+    display(Markdown(msg))
+```
+
+# Introduction
+
+A strong point of pandas is its expressiveness.
+Its API allows users to explore data using succinct and (generally) intuitive code.
+However, some of this expressiveness relies on data being in forms (for example, with dates ready to serve as an index) that often differ from the data we have, and pandas can struggle to manipulate the data into those forms, especially with larger data sets.
+
+SAS might be another approach to manipulating data for pandas.
+My Python package `wrds2pg` offers a `sas_to_pandas()` function that can run code on the WRDS server and return the results as a pandas dataframe.
+While not quite as fast as using Ibis with the PostgreSQL server, SAS performs pretty well with this task.
+
+:::{.callout-tip text-align="left"}
+The following command (run in the terminal on your computer) installs the packages you need.
+
+```{python}
+#| eval: false
+pip install wrds2pg --update
+```
+
+The code assumes you have set the environment variable `WRDS_ID` to your WRDS ID.
+
+This note was written using [Quarto](https://quarto.org).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/sas_to_pd.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/sas_to_pd.pdf).
+:::
+
+# Expressive pandas {#sec-pandas}
+
+Since 2012, pandas has become the leading **data frame library** in Python.
+A real strength of pandas appears to be its expressiveness, which allows a user to explore data with succinct code.
+To show this, I will adapt an example from @hilpisch2019.
+The following code reads data from a GitHub page ...
+
+```{python}
+import pandas as pd
+
+url = ("https://raw.githubusercontent.com/yhilpisch/"
+       "py4fi2nd/refs/heads/master/source/"
+       "tr_eikon_eod_data.csv")
+       
+ticker_list = ["AAPL.O", "MSFT.O", "INTC.O", "AMZN.O", "GS.N"]
+       
+data = (pd
+    .read_csv(url, index_col=0, parse_dates=True)
+    [ticker_list]
+)
+```
+
+... and then one line of code generates @fig-original.
+
+```{python}
+#| label: fig-original
+#| fig-cap: "Stock prices for five firms: Original"
+data.plot(figsize=(8, 8), subplots=True);
+```
+
+Looking at the code, it seems that pandas has magically intuited that the data set comprises a number of time series, so a call to the `.plot()` method of the `pd.DataFrame` generates a plot and `subplots=True` makes a subplot for each series.
+Of course, it wasn't some special instinct for the meaning of data that allowed pandas to do this.
+Rather, by having dates in the first column of the CSV and then telling pandas to use that column to generate the `Index` for the `pd.DataFrame`, we get the data in the following form:
+
+```{python}
+data.head()
+```
+
+As can be seen, `Date` is different from the other "columns" of the data frame;
+in a sense, it's not a column at all, but the index for the data frame:
+
+```{python}
+data.index
+```
+
+Having the data in this form allows us to access the data with succinct code.
+We can use `.loc[]` to select by date ...
+
+```{python}
+data.loc['2010-01-08']
+```
+
+... and `[]` to select by column.
+
+```{python}
+data['AAPL.O']
+```
+
+An important operation for financial time series is **resampling** [@hilpisch2019, p. 215].
+For example, we could transform the daily data in `data` into weekly data with one line:
+
+```{python}
+data.resample('W').last().head()
+```
+
+Similarly with monthly data ...
+
+```{python}
+data.resample('ME').last().head()
+```
+
+These examples demonstrate the expressiveness of pandas, especially with financial time series data.
+This facility is less surprising once you realize that pandas began life when Wes McKinney was working at AQR Capital Management.
+
+However, I think there is a danger of overestimating the facility of working with pandas from such examples.
+My experience is that data sets rarely come in a form that allows one to use a `DatetimeIndex` with series identifiers as the columns.
+
+Many data sets have a wider range of data types (one of the reasons for creating pandas in the first place) and data are often provided in a form that needs work to get to something like `data` above.
+
+For example, many researchers, including academics, generally get stock prices and returns for US firms from CRSP.
+According to its website, "the Center for Research in Security Prices, LLC (CRSP) maintains the most comprehensive collection of security price, return, and volume data for the NYSE, AMEX and NASDAQ stock markets."
+(See [Chapter 7](https://iangow.github.io/far_book/identifiers.html#the-crsp-database) of @gow2024empirical for more on CRSP.)
+Academic researchers generally get CRSP data through Wharton Research Data Services, more commonly referred to as WRDS (pronounced "words").
+
+So a question might be: What do we need to do to get CRSP data into the form above?
+Can I use SAS?
+
+The answer to the second question is "yes" and the rest of the note provides an answer to the first question.
+
+# Generating @fig-original using SAS
+
+I put the SAS code shown in @lst-sas and @lst-sas-2 in a file `dsf_to_pd.sas` and I can load it as follows.
+
+```{python}
+from pathlib import Path
+
+sas_code = Path("dsf_to_pd.sas").read_text(encoding="utf-8")
+```
+
+I will use `sas_to_pandas()` from `wrds2pg` to run the SAS code on the WRDS server.
+
+```{python}
+from wrds2pg import sas_to_pandas
+```
+
+The first step is to look up tickers and link them to the security identifier used by CRSP (`permno`).
+The tickers found in the data provided by Hilpisch above include suffixes that indicate the exchange the stocks traded on.
+
+An important detail about tickers is that they get reused over time.
+So a ticker match with a `permno` may have a range of dates over which it is valid.
+I'm going to assume that the tickers in @hilpisch2019 were valid on the last date observed in his data set and look for the PERMNO match valid on that date.
+This part is performed using `PROC SQL` to create `tickers` from `crsp.stocknames`.
+
+Having obtained the `permno` data, I can use this to get the relevant return data from `crsp.dsf`.
+
+Again I use `PROC SQL` to get stock prices (`prc`) and returns both with (`ret`) and without (`retx`) dividends and other distributions from `crsp.dsf` and store these in `dsf_sub`, which is sorted by `ticker` and `date`.
+It turns out that the price series used by @hilpisch2019 did not include the effects of distributions, so I use `retx` in the analysis below.
+
+The next step is to recreate, as best we can, the price series used in @hilpisch2019.
+My assumption is that the prices are adjusted for splits such that the adjusted price at the end of the series used by @hilpisch2019 equals the unadjusted price on that date (i.e., what should be in `prc`).
+I then recreate preceding adjusted prices in each time series by working back from the ending price using returns (and I confirmed by inspecting the data in @hilpisch2019 that `retx` is the appropriate return measure).
+
+The first data set is `dsf_g`, which cumulates `(1 + retx)` by `ticker` as the variable `growth`.
+Then `lastvals` grabs the last values for each `ticker` and stores these as `prc_last` and `growth_last`.
+
+One way to interpret part of the SAS below that creates `dsf_adj` is, taking one stock at a time, that `growth_last` is the cumulative returns for each stock over the whole time series and the adjusted price for each date is the final price (`prc_last`) multiplied by the cumulative returns to date (`growth`) divided by `growth_last`.
+
+The final step of the SAS code dumps the contents of `dsf_adj` to CSV so it can be read into pandas.
+Note that the dates do not get parsed by the current version of `sas_to_pandas()`, so we will have to do that ourselves in pandas below.
+
+```{python}
+%%ptime
+dsf_adj = sas_to_pandas(sas_code)
+```
+
+Once we have a `pd.DataFrame`, we convert `date` to a `datetime64[ns]` and set the index using the resulting column.
+
+```{python}
+%%ptime
+dsf_adj["date"] = pd.to_datetime(dsf_adj["date"], format="%Y%m%d")
+```
+
+Next, we `.pivot()` the data (in the earlier note we did this using polars or Ibis).
+
+```{python}
+%%ptime
+data_alt = (dsf_adj
+    .pivot(index="date", columns="ticker", values="prc_adj")
+)
+```
+
+It turns out that the index in the original data frame is filled out with empty rows on public holidays, likely because the original data included commodities and exchange rates that traded on those dates and we omitted those data here.
+Having the dates in the index actually makes the plot look better, so I effectively add them to the index of `data_alt` by using `.reindex(data.index)`.
+
+```{python}
+%%ptime
+data_alt = data_alt.reindex(data.index)
+```
+
+```{python}
+#| label: fig-ibis
+#| fig-cap: "Stock prices for five firms: Using SAS and `wrds2pg`"
+data_alt.plot(figsize=(8, 8), subplots=True);
+```
+
+```{python}
+#| output: asis
+#| echo: false
+lines = sas_code.rstrip().splitlines()
+cut = 32
+
+part1 = "\n".join(lines[:cut])
+part2 = "\n".join(lines[cut:])
+
+print(
+    "::: {#lst-sas}\n\n"
+    "```sas\n"
+    f"{part1}\n"
+    "```\n\n"
+    "SAS code found in `dsf_to_pd.sas` (Part 1)\n\n"
+    ":::\n"
+)
+```
+```{python}
+#| output: asis
+#| echo: false
+print(
+    "::: {#lst-sas-2}\n\n"
+    "```sas\n"
+    f"{part2}\n"
+    "```\n\n"
+    "SAS code found in `dsf_to_pd.sas` (Part 2)\n\n"
+    ":::\n"
+)
+```
+
+\newpage
+
+## References {-}
