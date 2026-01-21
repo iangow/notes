@@ -1,0 +1,365 @@
+---
+title: "Some benchmarks with `comp.g_secd`"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2026-01-21
+date-format: "D MMMM YYYY"
+number-sections: true
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    include-in-header:
+      text: |
+        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
+        \addtokomafont{disposition}{\rmfamily}
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+    syntax-definitions:
+      - sas.xml
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+In this note, I use a simple query to benchmark performance of various approaches to accessing data in `comp.g_secd`.
+Many international researchers will know that `comp.g_secd` holds daily security-level data for non-US firms covered by Compustat Global.
+It is the global version of the North America daily security file, `comp.secd`, and, I guess, the closest analogue of `crsp.dsf` for finance and accounting researchers studying non-US firms.
+
+I use this data set to do some benchmarking.
+I find that a query using `comp.g_secd` that takes 6 minutes using SAS on the WRDS servers, takes about 1 minute using the WRDS PostgreSQL server and about 0.2 seconds using a local parquet file.
+The parquet file occupies less than 4 GB on my hard drive, which compares with about 145 GB for the SAS file on the WRDS server.
+While creating the parquet file takes 45 minutes, this may be a reasonable trade-off for a researcher who is analysing `comp.g_secd` frequently and does not need the very latest iteration of `comp.g_secd` for research purposes. 
+
+:::{.callout-tip text-align="left"}
+In writing this note, I used the R packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "dbplyr", "farr", "RPostgres")` within R to install all the packages you need to run the code in this note.]
+I also used Python for portions of the code.
+This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R and Python.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/g_secd.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/g_secd.pdf).
+
+```{r}
+#| warning: false
+library(DBI)
+library(tidyverse)
+library(farr)
+```
+
+:::
+
+# A little about WRDS data
+
+In the beginning was the ... SAS data.
+Well, not really.
+Surely databases such as CRSP and Compustat that have powered research in accounting and finance since the [beginning of time](https://youtu.be/tRSaz5TIyno?t=500) predate SAS and WRDS.
+But since long before I entered a business PhD program, WRDS has been the preeminent provider of data to academic researchers and SAS was long the form in which WRDS provided data.
+
+In 2011, I created a predecessor of my `wrds2pg` Python package to create a PostgreSQL database containing WRDS data.^[My original code was in Perl, but by [2015](https://github.com/iangow/wrds_pg/commit/9a7b27331a7f47bd7ab279dae28199e3daea0183) I had Python code to do the same job, and by [2019](https://github.com/iangow/wrds2pg/commit/641f85ac527c6844f31cb5c7991d25db26551c01) there was an installable Python package, created with the help of [Jingyu Zhang](https://github.com/jingyujzhang).
+Early on, I considered SQLite and MySQL as well as PostgreSQL, but I decided on PostgreSQL because of its rich type system, powerful SQL, and support for server programming (though I ended up not using the last one much).
+Though I had zero expertise, it seems that I somehow made the right choice.
+I was also an early adopter of RStudio in 2010 or 2011.]
+The `wrds2pg` package has developed over time, but almost nothing has changed since 2023.^[The only recent change was I recently exposed the (previously internal) `sas_to_pandas()` function that I used in [my recent note](https://raw.githubusercontent.com/iangow/notes/main/sas_to_pd.pdf) on SAS and pandas.]
+
+By early 2017, WRDS offered its own PostgreSQL database.
+Early on the data in the WRDS PostgreSQL database was not complete and it seemed to have been created from the SAS data files, but generally was of lower quality than what I had in my database (e.g., `wrds2pg` did a better job with inference of data types and handled non-Latin characters better).
+But today it is unclear whether the SAS data or the PostgreSQL data are the "canonical" version of the data; they can probably both be considered canonical data sources.
+
+Working in R with data in databases such as PostgreSQL has been greatly facilitated by [the `dbplyr` Tidyverse package](https://dbplyr.tidyverse.org).
+I don't recall exactly when I started using `dbplyr`, but I have email exchanges with Hadley Wickham about backend functionality for PostgreSQL as far back as 2015 and I can barely remember the days when I didn't have it.
+I would say that `dbplyr` is what made the code approach used in @gow2024empirical feasible, even if [some critical pieces](https://raw.githubusercontent.com/iangow/notes/main/dbplyr-news.pdf) fell into place after work on the book began.
+Today, packages such as Ibis mean that a similar approach could be taken with Python.^[Trying to do @gow2024empirical using pandas and SQL would be painful and slow.]
+
+In late 2023, I added functionality to `wrds2pg` that allows SAS files to be turned into parquet files.
+The parquet file format is provided by Apache Arrow, "a software development platform for building high performance applications that process and transport large data sets."^[See the Apache Arrow website at <https://arrow.apache.org/overview/>.]
+The parquet format offers much of the versatility of CSV files, while also allowing for a rich system of data types and random access to data.
+As seen in [Chapter 23](https://iangow.github.io/far_book/glms.html) of @gow2024empirical, parquet files can be combined with DuckDB to provide a lightweight, high-performance alternative to PostgreSQL
+
+Also in late 2023, I created [the `db2pq` Python library](https://pypi.org/project/db2pq/) to create parquet files directly from a PostgreSQL database.
+Around the same time, I updated the [online version](https://iangow.github.io/far_book/) of @gow2024empirical to include a parquet variant of the code and I used this approach when teaching courses based on the book in 2024.
+While the `db2pq` package has a mere 29 commits on [GitHub] at the time of writing, it has seen more recent development than the `wrds2pg` package.^[A lot of early work involved using poorly documented libraries to keep the memory impact to a minimum and to facilitate the `wrds_update_pq()` conditional-update functionality.]
+
+So in this note, I will compare three alternative approaches to `comp.g_secd`: SAS data (using SAS), PostgreSQL data (using R), and parquet data (using R).^[Note that the "using R" part is relatively unimportant. For example, it would be easy to do everything with essentially identical performance using Python.]
+
+With that short detour into the history of WRDS data and so on out of the way, I now return to the topic of `comp.g_secd` and I focus initially on the "original" SAS data.
+
+# Exploration of `comp.g_secd` (SAS data)
+
+While researchers looking for security returns for US-listed firms data can use CRSP's `crsp.dsf`, CRSP does not cover non-US firms.
+Fortunately, `comp.g_secd` provides high-quality data and (importantly) merging with Compustat fundamental data (i.e., `comp.g_funda`) is facilitated by the shared identifiers across these tables (i.e., `gvkey` and `iid`).
+
+The fields on `comp.g_secd` include its security identifiers.
+The firm identifier is `gvkey` and the issue identifier---crucial for firms with multiple share classes or listings---is `iid`.
+As I will confirm below, the natural **primary key** for  `comp.g_secd` is `(gvkey, iid, datadate)`.
+
+There are two files on the WRDS server for `comp.g_secd`: `g_secd.sas7bdat` (144.8 GB) and `g_secd.sas7bndx` (23.1 GB).^[If you look at @lst-contents-1, you may notice "135GB"; this is incorrect and should be "135 GiB" (a GiB is a "binary" unit in which  1 GiB = $2^{30}$ = 1,073,741,824 bytes).]
+The `g_secd.sas7bdat` file is the SAS data file that will be familiar to users of SAS.
+But even SAS users may be unfamiliar with `g_secd.sas7bndx`, which is the index file.
+Index files have much the same role for SAS data files as indexes do for tables in SQL databases, such as the WRDS PostgreSQL database that I will discuss in a moment.
+
+If a SAS user copies `g_secd.sas7bdat` onto her computer *without* the index, then query performance is likely to be degraded in many cases.
+We can inspect the indexes that WRDS has created using the `PROC CONTENTS` procedure from SAS.
+If you have my package `wrds2pg` installed, then `proc_contents()` provides a convenient way to access this procedure in Python:^[Note that the following Python code use the environment variable `WRDS_ID`. Call `proc_contents("g_secd", "comp", wrds_id="your_wrds_id")` if you don't have this set.]
+
+```{python}
+#| eval: false
+from wrds2pg import proc_contents
+proc_contents("g_secd", "comp")
+```
+
+The output from the Python code above is shown in Listings -@lst-contents-1, -@lst-contents-2, and -@lst-contents-3 at the end of this document.
+The information on the indexes is provided at the bottom of @lst-contents-3, where you can see that there are five indexes.
+Four indexes relate to single fields: `isin`, `sedol`, `exchg`, and `fic`.
+Each of these indexes improves performance of queries that focus on particular values of the associated variable.
+The fifth index is on `gvkey` and `datadate` and allows one to quickly zero in on particular combinations of those variables, as would be the case if merging with a subset of `comp.g_funda` for which `gvkey` and `datadate` is a primary key.^[For example, analogues of `funda_mod` as described in [Chapter 6](https://iangow.github.io/far_book/fin-state.html) of @gow2024empirical.]
+
+## The benchmark query
+
+Now that we understand a little about `comp.g_secd` and its SAS manifestation, I will introduce my benchmark query.
+The idea of the benchmark is that it is somewhat representative of the kinds of things a researcher might want to do with `comp.g_secd` without being overly complicated.
+Additionally, the benchmark should require actually looking at a significant part of the data (in this case *all* records) and, to keep it interesting, it should not be able to use a short cut of simply looking at an index.^[Whether queries can use such shortcuts obviously depends on the specifics of the available indexes (in this case, there is no index to use for `curcdd`), but also on whether the backend system will use them for the query.]
+
+The SAS version of my benchmark query simply counts the number of rows associated with each value of `curcdd`, which @lst-contents-2 tells us represents "ISO Currency Code - Daily":
+
+```{python}
+#| output: asis
+#| echo: false
+from pathlib import Path
+
+sas_code = Path("g_secd.sas").read_text(encoding="utf-8")
+
+lines = sas_code.rstrip()
+
+print(
+    "```sas\n"
+    f"{sas_code}\n"
+    "```\n\n"
+)
+```
+
+I put this SAS code into a file `qsas dsf_to_pd.sas` in my home directory on the WRDS server and ran `qsas g_secd.sas`.
+Inspecting `g_secd.log` a few minutes later, I see `The SAS System used: real time 6:08.66`.
+So SAS needs more than 5 minutes to run this query.
+And here is a sample of the output in `g_secd.lst`:
+
+```{python}
+#| output: asis
+#| echo: false
+from pathlib import Path
+
+sas_output = Path("g_secd.lst").read_text(encoding="utf-8")
+
+lines = [line.rstrip() for line in sas_output.splitlines()[:13]]
+
+lines = '\n'.join(lines)
+
+print(
+    "```sas\n"
+    f"{lines}\n"
+    "```\n\n"
+)
+```
+
+
+# Using the WRDS PostgreSQL server
+
+Now, let's do the same query using the WRDS PostgreSQL server.
+I have my WRDS ID in the `WRDS_ID` environment variable and I have my password stored in `~/.pgpass`, so I can use PostgreSQL-related environment variables to point R to the WRDS server.
+
+```{r}
+Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
+           PGPORT = 9737L,
+           PGUSER = Sys.getenv("WRDS_ID"),
+           PGDATABASE = "wrds")
+```
+
+Now, two lines of code suffice to set up a connection to `comp.g_secd` on the WRDS PostgreSQL server.
+
+```{r}
+db <- dbConnect(RPostgres::Postgres())
+
+g_secd <- tbl(db, Id(schema = "comp", table = "g_secd"))
+```
+
+With `dbplyr`, we can write the query as follows.^[Note that `system_time()` comes from the `farr` package.]
+
+```{r}
+#| cache: true
+g_secd |>
+  count(curcdd) |>
+  arrange(desc(n)) |>
+  collect() |>
+  system_time()
+```
+
+We see two things here.
+First, the output is slightly different from that above, suggesting that the SAS data are slightly newer (higher numbers) than the PostgreSQL data.
+I will return to this point below.
+
+Second, the PostgreSQL server delivers the query about six times faster than SAS does.
+
+# Using parquet data
+
+Now, I do it again using parquet data.
+The first step is to update (or get the data) using the following two lines of Python code.
+Again, this code relies on `WRDS_ID` and `DATA_DIR` environment variables.
+I specify `archive=True` to keep a copy of any existing `g_secd.parquet` file I have.
+
+```{python}
+#| cache: true
+from db2pq import wrds_update_pq
+wrds_update_pq("g_secd", "comp", archive=True)
+```
+
+When I did this update earlier today, it took a bit over 45 minutes on my computer.
+But, as can be seen above, `wrds_update_pq()` will not fetch new data if the data are up to date.
+
+However, WRDS updates Compustat data every day.
+As this may not be an update you'd want to be running every day, the daily updates might be "more bug than feature" for many researchers.
+
+Now, two lines of code suffice to set up a connection to a DuckDB database pointing to the `comp.g_secd` parquet file on my hard drive.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+
+g_secd <- load_parquet(db, table = "g_secd", schema = "comp")
+```
+
+Now, we can run exactly the same query as we did for the WRDS PostgreSQL server.
+
+```{r}
+g_secd |>
+  count(curcdd) |>
+  arrange(desc(n)) |>
+  collect() |>
+  system_time()
+```
+
+Wow!
+So *once we have the data in parquet form*, the query is blazingly fast.
+Something taking over 6 minutes on the SAS "supercomputers" takes about 0.2 seconds on my consumer-grade Mac mini.
+
+Note that the results match the output from the PostgreSQL server exactly, because we updated the data before running the query.
+
+I now make a little Python function to get information about the size of the parquet file that has been created.
+
+```{python}
+from pathlib import Path
+import os
+
+def file_size(path) -> str:
+    n_bytes = path.stat().st_size
+    for unit in ["B", "KB", "MB", "GB", "TB", "PB"]:
+        if n_bytes < 1024:
+            return f"{n_bytes:.1f} {unit}"
+        n_bytes /= 1024
+    return f"{n_bytes:.1f} EB"
+```
+
+Now, I run this function on the parquet file created by `wrds_update_pq()`.
+
+```{python}
+data_dir = Path(os.environ["DATA_DIR"]).expanduser()
+path = data_dir / "comp" / "g_secd.parquet"
+file_size(path)
+```
+
+So the 57.71 GB PostgreSQL table is reduced to under 4 GB as a parquet file.^[Note that the PostgreSQL server, like SAS, also has one or more indexes, which occupy an additional 15.75 GB.]
+This is much more manageable!
+
+Returning to the mismatch between the output from the SAS query and the PostgreSQL query, we can inspect the "last modified" data for the parquet file, which are taken from the table comments on the PostgreSQL server.
+
+```{python}
+from pathlib import Path
+from db2pq import get_modified_pq
+import os
+
+def get_modified(table, schema, *, 
+                 data_dir=None, archive=False):
+  if data_dir is None:
+      data_dir = Path(os.environ["DATA_DIR"]).expanduser()
+  
+  if archive:
+      files = list((data_dir / schema / "archive")
+                   .glob(f"{table}_*.parquet"))
+      return [get_modified_pq(file) for file in files]
+  else:
+      path = data_dir / schema / f"{table}.parquet"
+      return get_modified_pq(path) 
+```
+
+Running this function on the main file tells us that the PostgreSQL table was updated yesterday, explaining why we see the difference from the WRDS SAS output above:
+
+```{python}
+get_modified("g_secd", "comp")
+```
+
+We can run the function with `archive=True` to see what we have in the archive:
+
+```{python}
+get_modified("g_secd", "comp", archive=True)
+```
+
+The one archived file I have has an update string taken from the SAS file existing on the WRDS server when that update occurred.^[A recent update to `db2pq` means that the "last updated" string comes from the comments appended to the PostgreSQL table.]
+
+## References {-}
+
+```{python}
+#| echo: false
+#| cache: false
+#| output: asis
+from wrds2pg import proc_contents
+content_lines = proc_contents("g_secd", "comp")
+content_lines = [line.replace("\n", "")[:80] 
+                   for line in content_lines]
+
+cut = 40
+cut2 = 80
+
+part1 = "\n".join(content_lines[:cut])
+part2 = "\n".join(content_lines[cut:cut2])
+part3 = "\n".join(content_lines[cut2:])
+
+print(
+    "::: {#lst-contents-1}\n\n"
+    "```sas\n"
+    f"{part1}\n"
+    "```\n\n"
+    "Output from `PROC CONTENTS` with `comp.g_secd` (Part 1)\n\n"
+    ":::\n"
+)
+```
+
+```{python}
+#| output: asis
+#| echo: false
+#| cache: false
+print(
+    "::: {#lst-contents-2}\n\n"
+    "```sas\n"
+    f"{part2}\n"
+    "```\n\n"
+    "Output from `PROC CONTENTS` with `comp.g_secd` (Part 2)\n\n"
+    ":::\n"
+)
+```
+
+```{python}
+#| output: asis
+#| echo: false
+#| cache: false
+print(
+    "::: {#lst-contents-3}\n\n"
+    "```sas\n"
+    f"{part3}\n"
+    "```\n\n"
+    "Output from `PROC CONTENTS` with `comp.g_secd` (Part 3)\n\n"
+    ":::\n"
+)
+```
+
