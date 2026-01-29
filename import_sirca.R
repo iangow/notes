@@ -9,7 +9,9 @@ if (!dir.exists(pq_dir)) dir.create(pq_dir)
 si_au_ref_names_csv <- file.path(csv_dir, "si_au_ref_names.csv.gz")
 
 si_au_ref_names <-
-  read_csv(si_au_ref_names_csv, show_col_types = FALSE) |>
+  read_csv(si_au_ref_names_csv,
+           guess_max = Inf,
+           show_col_types = FALSE) |>
   mutate(across(c(SeniorSecurity, ListDate_DaysSince, DelistDate_DaysSince,
                   RecordCount, GICSIndustry, SIRCAIndustryClassCode,
                   SIRCASectorCode), as.integer),
