@@ -1,7 +1,7 @@
 ---
 title: "Data curation and the data science workflow"
 author: 
-  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+  - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
 date: 2025-09-11
@@ -784,7 +784,7 @@ si_au_prc_daily_pq <- file.path(pq_dir, "si_au_prc_daily.parquet")
 ```
 
 Using a process similar to that above, one can identify those columns needing special handling in the import process.
-Note that I specify `guess_max = 1e6` because the default value for `guess_max` reads too few rows to infer the types of some variables that are most `NA`.
+Note that I specify `guess_max = 1e6` because the default value for `guess_max` reads too few rows to infer the types of some variables that are mostly `NA`.
 
 ```{r}
 #| eval: true
@@ -856,6 +856,7 @@ The following code creates a DuckDB connection, then uses that connection to rea
 This is an order of magnitude faster than the `read_csv()` code above, yet seems to make no demands on RAM.
 
 ```{r}
+#| label: si_au_prc_daily
 db <- dbConnect(duckdb::duckdb())
 
 si_au_prc_daily <-
@@ -865,8 +866,8 @@ si_au_prc_daily <-
                              'dayssince': 'INTEGER',
                              'weekday': 'INTEGER',
                              'monthend': 'BOOLEAN',
-                             'seniorsecurity': 'INTEGER'})"),
-      name = "si_au_prc_daily") |>
+                             'seniorsecurity': 'INTEGER'})")) |>
+  compute() |>
   select(-date) |>
   rename(date = dateymd) |>
   export_parquet(file = si_au_prc_daily_pq) |>
@@ -911,11 +912,14 @@ I organize the code above (e.g., removed redundate elements) and placed it in a 
 With the raw data in `RAW_DATA_DIR` and the necessary packages installed, I can create parquet data files by simply running the following code:^[Note that I set `DATA_DIR`  to a different directory to avoid overwriting the files I just created and creating problems with Dropbox having to sync new files before it's even uploaded old ones.]
 
 ```{r}
+#| cache: true
+source_url <- str_c("https://raw.githubusercontent.com/",
+                    "iangow/notes/main/import_sirca.R")
+
 Sys.setenv(RAW_DATA_DIR = "~/Dropbox/raw_data")
 t <- tempdir()
 Sys.setenv(DATA_DIR = t)
-source("https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R") |>
-  system.time()
+source(source_url) |> system.time()
 ```
 
 # The service-level agreement revisited

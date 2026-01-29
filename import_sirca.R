@@ -60,8 +60,7 @@ si_au_prc_daily <-
                              'dayssince': 'INTEGER',
                              'weekday': 'INTEGER',
                              'monthend': 'BOOLEAN',
-                             'seniorsecurity': 'INTEGER'})"),
-      name = "si_au_prc_daily") |>
+                             'seniorsecurity': 'INTEGER'})")) |>
   select(-date) |>
   rename(date = dateymd) |>
   export_parquet(file = si_au_prc_daily_pq)
