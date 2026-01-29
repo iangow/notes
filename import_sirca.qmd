@@ -32,12 +32,12 @@ As such, I argue that a more effective division of labour might result from bett
 
 The goal of this note is to outline an extended version of the data science model "whole game" proposed in [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
 The original "whole game" comprises three steps.
-It starts with an *Import-and-tidy* process (this comprises *import* and *tidy*), then an *Understand* process (this involves iteration between *transform*, *visualize*, and *model* steps), followed by a *Communicate* process.^[The terms "process" and "step" are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original "whole game" model has just a single step after the *Understand* process and I upgrade that single step to a process.]
+It starts with an *Import-and-tidy* process (this comprises *import* and *tidy* steps), then an *Understand* process (this involves iteration between *transform*, *visualize*, and *model* steps), followed by a *Communicate* process.^[The terms "process" and "step" are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original "whole game" model has just a single step after the *Understand* process and I upgrade that single step to a process.]
 
-My extension of the "whole game"---depicted in @fig-whole-game below---adds a *persist* step to the  *Import-and-tidy* process and re-labels this process as *Curate*.
+My extension of the "whole game"---depicted in @fig-whole-game below---gives the name *Curate* to the original *Import-and-tidy* process and adds a *persist* step to it.
 As a complement to the new *persist* step, I also add a *load* step to the *Understand* process.
-As will be seen this, *load* step will not generally be an elaborate one.
-The inclusion of a separate *load* step serves more to better delineate the distinction between the *Curate* process and the *Understand* process.
+As will we see, this *load* step will not generally be an elaborate one, but 
+its inclusion serves to better delineate the boundary between the *Curate* and *Understand* processes.
 
 ```{r}
 #| label: fig-whole-game 
@@ -46,7 +46,7 @@ The inclusion of a separate *load* step serves more to better delineate the dist
 #| fig-cap: |
 #|   A representation of the data science workflow
 #| fig-alt: |
-#|   A diagram displaying the data science workfow.
+#|   A diagram displaying the data science workflow.
 
 knitr::include_graphics("images/data-science.png", dpi = 270)
 ```
@@ -54,10 +54,10 @@ knitr::include_graphics("images/data-science.png", dpi = 270)
 In this note, I focus on the data curation (*Curate*) process.
 My rationale for separating *Curate* from *Understand* is that I believe it clarifies certain best practices in the curation of data.
 In particular, I see a lot of merit in applying the notion of a service-level agreement to delineating roles and responsibilities in the preparation and analysis of data.
-As will be seen, my conception of *Curate* will encompass some tasks that are included in the *transform* step (part of the *Understand* process) in [R for Data Science](https://r4ds.hadley.nz/transform).
+As discussed below, my conception of *Curate* encompasses some tasks that are included in the *transform* step (part of the *Understand* process) in [R for Data Science](https://r4ds.hadley.nz/transform).
 The current version of this note uses daily data on Australian stock prices as an application.
 
-While I will argue that even the sole analyst who will perform all three processes can benefit from thinking about *Curate* separate from *Understand*, it is perhaps easiest to conceive of the *Curate* and *Understand* processes as involving different individuals or organizational units of the "whole game" of a data analysis workflow.^[The authors of *R for Data Science* call the "whole game" a process, but I've already used that term to describe the next level down. So I choose *workflow* to denote the whole shebang here.]
+While even a sole analyst who performs all three processes can benefit from thinking about *Curate* as a separate process from *Understand*, it is perhaps easiest to conceive of *Curate* and *Understand* as involving different individuals or organizational units of the "whole game" of a data analysis workflow.^[The authors of *R for Data Science* call the "whole game" a process, but I've already used that term to describe the next level down. So I choose *workflow* to denote the whole shebang here.]
 
 Inevitably, the distinction between *tidy* and *transform* can be difficult to draw.
 Nonetheless, I think it is useful to think of some "transform" steps as part of the process of data curation.^[I think it is interesting that *R for Data Science* places its part on [*transform*](https://r4ds.hadley.nz/transform) *before* its part on [*import*](https://r4ds.hadley.nz/import).]
@@ -68,9 +68,9 @@ The source code for this note is available [here](https://raw.githubusercontent.
 
 # Possible data curation scenarios
 
-In a *university* a "data lab" might be responsible for curating data sets for research and teaching, with researchers and students serving as the clients.
-Given the significance of data in a lot of research conducted in universities, my experience is that teams that might perform this role steadfastly refuse to do so.
-As a result, almost all data curation is performed by researchers themselves, often at great cost and with little expertise.^[Within business schools, my sense is that Chicago offers the best data curation support to faculty.
+In a *university*, a "data lab" might be responsible for curating datasets for research and teaching, with researchers and students serving as the clients.
+Notwithstanding the significance of data in a lot of research conducted in universities, my experience in business schools is that, even when they exist, teams that might perform this role often refuse to do so.
+As a result, almost all data curation is performed by researchers themselves, often at great cost and with little expertise.^[Within business schools, my sense is that Chicago offers faculty the best data curation support.
 While much of this occurs in a fairly decentralized fashion through the employment of [research professionals](https://www.chicagobooth.edu/faculty/research-staff) who work closely with one or two faculty members, Chicago Booth also provides excellent research computing infrastructure, such as provisioning PostgreSQL databases for faculty use.]
 
 In principle, *information vendors* are in the business of data curation.
@@ -91,7 +91,7 @@ I suspect that some of the principles I outline here will be useful in all of th
 # The service-level agreement
 
 It is perhaps helpful to think of dividing the data science workflow into processes with different teams being responsible for the different processes.
-From this perspective, the *Curate* team manufactures data that are delivered the *Understand* team.^[By "manufacture" I merely mean to connote some notion of a production process, not some idea of [untoward processes for producing data](https://datacolada.org/117).]
+From this perspective, the *Curate* team manufactures data that are delivered to the *Understand* team.^[By "manufacture" I merely mean to connote some notion of a production process, not some idea of [untoward processes for producing data](https://datacolada.org/117).]
 While I won't discuss transfer pricing (i.e., how much the  *Understand* team needs to pay the *Curate* team for the data), we might consider the analogy of a [service-level agreement](https://en.wikipedia.org/wiki/Service-level_agreement) between the two teams.
 
 One template for a service-level agreement would specify that data from a particular source will be delivered to the *Understand* team with the following conditions:
@@ -107,7 +107,7 @@ One template for a service-level agreement would specify that data from a partic
 
 ## Storage format
 
-In principle, the storage format should fairly minor detail determined by the needs of the *Understand* team.
+In principle, the storage format should be a fairly minor detail determined by the needs of the *Understand* team.
 For example, if the *Understand* team works in Stata or Excel, then perhaps they will want the data in some kind of Stata format or as Excel files.
 However, I think it can be appropriate to push back on notions that data will be delivered in form that involves downgrading the data or otherwise compromises the process in a way that may ultimately add to the cost and complexity of the task for the *Curate* team.
 For example, "please send the final data as an Excel file attachment as a reply email" might be a request to be resisted because the process of converting to Excel can entail the degradation of data (e.g., time stamps or encoding of text).^[I discuss some of the issues with Excel as a storage format below.]
@@ -122,12 +122,12 @@ One virtue of this approach is that the data might be curated using, say, Python
 
 I included the word "pragmatic" because I think it's not necessary in most cases to get particularly fussy about [database normalization](https://en.wikipedia.org/wiki/Database_normalization).
 That said, it's probably bad practice to succumb to requests for One Big Table that the *Understand* team might make.
-It is reasonable to impose some obligation to merge tables that are naturally different tables on the client *Understand* team.
+It is reasonable to impose some obligation to merge naturally distinct tables on the client *Understand* team.
 
 ## Primary keys
 
 The *Curate* team should communicate the primary key of each table to the *Understand* team.^[Sometimes there will be more than one primary key for a table.]
-A primary key of a table will be a set of variables that can be used to uniquely identify a row in that table.
+A table's primary key is a set of variables that can be used to uniquely identify each row in that table.
 In general a primary key will have no missing values.
 Part of data curation will be confirming that a proposed primary key is in fact a valid primary key.
 
@@ -149,11 +149,11 @@ For example, a logical type should be checked to ensure that it only takes two v
 
 ## No manual steps
 
-When data vendors are providing well-curated data sets, much about the curation process will be obscure to the user.
+When data vendors are providing well-curated datasets, much about the curation process will be obscure to the user.
 This makes some sense, as the data curation process has elements of trade secrets.
 But often data will be supplied by vendors in an imperfect state and significant data curation will be performed by the *Curate* team working for or within the same organization as the *Understand* team.
 
-Focusing on the case where the data curation process transforms an existing data set---say, one purchased from an outside vendor---into a curated data set in sense used here, there are a few ground rules regarding manual steps.
+Focusing on the case where the data curation process transforms an existing dataset---say, one purchased from an outside vendor---into a curated dataset in sense used here, there are a few ground rules regarding manual steps.
 
 First, *the original data files should not be modified in any way*.
 If data are supplied as CSV files, then merely opening them in Excel and saving them can mutilate the original data.^[An example where this could happen is provided in @tip-friends.]
@@ -161,15 +161,15 @@ I have encountered people whose idea of data curation extended to opening the or
 This approach leads to a completely unreproducible set of data files, which is problematic not only in a world in which reproducibility is starting to be expected, but also when a new version of the data will be supplied by the vendor in the future.
 
 Second, any manual steps should be extensively documented and applied in a transparent automated fashion.
-For example, if a data set on financial statement items of US firms contains errors that can be corrected by reviewing original SEC filings, then any corrections should be clearly documented in separate files with links to the original filings and explanations.
+For example, if a dataset on financial statement items of US firms contains errors that can be corrected by reviewing original SEC filings, then any corrections should be clearly documented in separate files with links to the original filings and explanations.
 And the corrections should be implemented through code, not manual steps.^[Best practices here could be the subject of a separate note, as there are a lot of subtleties and my experience is that people often have bad habits here.]
-For example, there should be code that imports the original data and the corrections and applies the latter to the former to create the final data set.
+For example, there should be code that imports the original data and the corrections and applies the latter to the former to create the final dataset.
 
 ## Documentation 
 
 The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise.
-Often that need will arise when the vendor provides an updated data set.
-Perhaps the best way to understand what I have in mind here is through a case study and I provide on in @sec-case.
+Often that need will arise when the vendor provides an updated dataset.
+Perhaps the best way to understand what I have in mind here is through a case study and I provide one in @sec-case.
 
 ## Update process
  
@@ -183,9 +183,9 @@ If major changes do subsequently occur, it likely makes sense for the analyst ha
 ## Data version control
 
 @Welch:2019aa argues that, to ensure that results can be reproduced, "the author should keep a private copy of the full data set with which the results were obtained."
-This imposes a significant cost on the *Understand* team to maintain archives of data sets that may run to several gigabytes or more and it would seem much more efficient for these obligations to reside with the parties with the relevant expertise.
+This imposes a significant cost on the *Understand* team to maintain archives of datasets that may run to several gigabytes or more and it would seem much more efficient for these obligations to reside with the parties with the relevant expertise.
 
-Unfortunately, even when data vendors provide curated data sets, they generally provide little in the way of version control.
+Unfortunately, even when data vendors provide curated datasets, they generally provide little in the way of version control.
 For example, there is no evidence that Wharton Research Data Services (WRDS), perhaps the largest data vendor in academic business research, provides any version control for its datasets, even though it should have much greater expertise for doing this than the users of its services.
 
 Nonetheless, some notion of version control of data probably has a place in data curation, even if this is little more than archiving of various versions of data supplied to research teams.
@@ -235,7 +235,7 @@ knit_print_alt <- function(x, ...) {
 ```
 
 ```{comment}
-1. Importing the *specific details* of the data sets comprised by the SIRCA ASX EOD library.
+1. Importing the *specific details* of the datasets comprised by the SIRCA ASX EOD library.
 2. Illustrating *general principles* for importing data using the SIRCA ASX EOD library as a case study.
 ```
 
@@ -519,7 +519,7 @@ si_au_ref_names |>
 At this point, we have two versions of the variables related to listing dates (`ListDate_YMD` and `ListDate`) and to delisting dates (`DelistDate_YMD` and `DelistDate`) and perhaps it makes sense to keep just one of each.
 If the values in each of the pair is the same as the other, then there's no reason to keep both.
 
-Looking at `ListDate_YMD` and `ListDate` are always equal and we could drop either one and keep the other.
+Looking at `ListDate_YMD` and `ListDate`, we see that they are always equal and we could drop either one and keep the other.
 
 ```{r}
 si_au_ref_names |>
@@ -530,7 +530,7 @@ si_au_ref_names |>
   filter(ListDate_YMD != ListDate)
 ```
 
-But there is one instance where `DeistDate_YMD` and `DelistDate` differ.
+But there is one instance where `DelistDate_YMD` and `DelistDate` differ.
 
 ```{r}
 si_au_ref_names |>
@@ -590,7 +590,7 @@ si_au_ref_names <-
 Before considering possible primary keys, we first determine if there are any duplicate rows.
 When there are duplicate rows, no possible combination of columns will work as a primary key.
 
-The following function returns any rows that are duplicated in a data set.
+The following function returns any rows that are duplicated in a dataset.
 
 ```{r}
 get_dupes <- function(df, count_var = "count") {
@@ -600,7 +600,7 @@ get_dupes <- function(df, count_var = "count") {
 }
 ```
 
-Applying this function to `si_au_ref_names`, we see that we have one row that appears twice in the data set.
+Applying this function to `si_au_ref_names`, we see that we have one row that appears twice in the dataset.
 
 
 ```{r}
@@ -831,7 +831,7 @@ si_au_prc_daily |>
   count(dateymd)
 ```
 
-So in saving to parquet, I keep `dateymd`, but rename it to `date` for consistency across data sets.
+So in saving to parquet, I keep `dateymd`, but rename it to `date` for consistency across datasets.
 
 ```{r}
 #| cache: true
@@ -844,7 +844,7 @@ si_au_prc_daily |>
   system.time()
 ```
 
-One issue with the code above is that it is quite slow and requires the full data set to be loaded in RAM.
+One issue with the code above is that it is quite slow and requires the full dataset to be loaded in RAM.
 Given that `si_au_prc_daily` occupies `r round(lobstr::obj_size(si_au_prc_daily) / 1e9, 2)` GB of RAM when loaded, this can be a problem if you have modest computing resources.
 
 An alternative approach would be to use DuckDB's facility for reading CSV files and writing to parquet files.
@@ -917,7 +917,7 @@ dbDisconnect(db)
 
 ## The final script
 
-I organize the code above (e.g., removed redundate elements) and placed it in a script [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R).
+I organized the code above (e.g., removed redundant elements) and placed it in a script [here](https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R).
 With the raw data in `RAW_DATA_DIR` and the necessary packages installed, I can create parquet data files by simply running the following code:^[Note that I set `DATA_DIR`  to a different directory to avoid overwriting the files I just created and creating problems with Dropbox having to sync new files before it's even uploaded old ones.]
 
 ```{r}
@@ -996,7 +996,7 @@ So long as the SIRCA data remain unchanged, the fix will continue to work.
 
 A important principle here is that the code for processing the data is documentation in its own right.
 Beyond that the document you are reading now is a form of documentation.
-If the goal of this document were to provide details explaining the process used to produce the final data sets, then it might make sense to edit this document to reflect that different purpose, but in many ways I hope this document already acts as good documentation.
+If the goal of this document were to provide details explaining the process used to produce the final datasets, then it might make sense to edit this document to reflect that different purpose, but in many ways I hope this document already acts as good documentation.
 
 ## Update process
 
@@ -1009,4 +1009,4 @@ It may make sense to document the update process as part of performing it the fi
 I achieve a modest level of data version control by using Dropbox, which offers the ability to restore previous versions of data files.
 As discussed earlier, version control of data is a knotty problem.
 
-# References {-}
+## References {-}
