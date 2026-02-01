@@ -53,6 +53,18 @@ In effect, I will act as a self-appointed, single-person, unpaid *Curate* team a
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.qmd) and the latest PDF version is available [here](https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.pdf).
 
+First, in R install the `pak` package using `install.packages("pak")`.
+Then, use `pak` to install my package using `pak::pak("iangow/ffiec.pq")`.
+
+```{r}
+#| message: false
+library(ffiec.pq)
+library(tidyverse)
+library(farr)
+library(dbplyr)
+library(DBI)
+```
+
 # Call Reports
 
 According to [its website](https://www.ffiec.gov/about/mission), the Federal Financial Institutions Examination Council (FFIEC) "is an interagency body ... focused on promoting consistency in examination activities [related to United States financial institutions].
@@ -80,7 +92,7 @@ Collation of the data into a single repository using this approach seems unfeasi
 
 Regardless of the availability of paid curation services, in this note I will imagine that such sources either do not exist or are unavailable to my hypothetical *Understand* clients and illustrate how one can curate Call Reports data from the FFIEC source.
 
-## Getting the raw data
+## Getting the raw data {#sec-raw-data}
 
 The FFIEC [Bulk Data Download site] provides the Call Report data in two forms.
 The first is as zipped tab-delimited data files, one for each quarter.
@@ -156,8 +168,7 @@ Parquet files provide a format optimized for data analysis, with a rich type sys
 More details on the parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of @Wickham:2023aa and every code example in @Gow_2024 can be executed against Parquet data files created using my `db2pq` Python library as described in Appendix E of that book.
 
 The easiest way to run the code I used to process the data is to install the `ffiec.pq` R package I have made available on GitHub.
-First, in R install the `pak` package using `install.packages("pak")`.
-Then, use `pak` to install my package using `pak::pak("iangow/ffiec.pq")`.
+
 
 The easiest way to run the package is to set the locations for the downloaded raw data files from above and for the processed data using the environment variables `RAW_DATA_DIR` and `DATA_DIR`, respectively.
 
@@ -182,22 +193,18 @@ This takes a bit over three minutes for me:
 
 ```{r}
 #| cache: true
-#| output: false
-library(ffiec.pq)
-system.time(results <- ffiec_process())
+#| output: true
+results <- ffiec_process() |> system_time()
+```
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+results <- load_parquet(db, "ffiec_process_data", "ffiec") |> collect()
 ```
 
 So what have we just done?
 Some answers come from inspection of the data frame `results` returned by the `ffiec_process()`.
-
-```{r}
-#| message: false
-library(ffiec.pq)
-library(tidyverse)
-library(farr)
-library(dbplyr)
-library(DBI)
-```
 
 ```{r}
 results
@@ -225,9 +232,14 @@ Most of the files are listed as having `type` equal to `"schedule"` and the rest
 The latter files represent the ["Panel of Reporters" (POR) data](https://cdr.ffiec.gov/CDR/public/cdrhelp/Panel%20Of%20Reporters.htm) and they provides details on the financial institutions filing in the respective quarter. **TODO:** Need to mention that the data are quarterly.
 
 ```{r}
+#| eval: false
 db <- dbConnect(duckdb::duckdb())
+```
 
-results <- load_parquet(db, "ffiec_process_data", "ffiec")
+```{r}
+results <- 
+  load_parquet(db, "ffiec_process_data", "ffiec") |>
+  system_time()
 ```
 
 ```{r}
@@ -260,7 +272,8 @@ rc_20250930 <- load_parquet(db, "rc_20250930", "ffiec")
 bs_data <-
   rc_20250930 |> 
   mutate(total_assets = coalesce(RCFD2170, RCON2170)) |>
-  select(IDRSSD, date, total_assets)
+  select(IDRSSD, date, total_assets) |>
+  system_time()
 ```
 
 Let's say we're interested in the top 10 banks by total assets on this date.
@@ -271,7 +284,8 @@ top_5 <-
   bs_data |> 
   window_order(desc(total_assets)) |>
   mutate(ta_rank = row_number()) |> 
-  filter(ta_rank <= 5)
+  filter(ta_rank <= 5) |>
+  system_time()
 
 top_5 |> collect()
 ```
@@ -288,7 +302,8 @@ top_5_names <-
   arrange(ta_rank) |>
   select(IDRSSD, financial_institution_name, ta_rank) |>
   rename(bank = financial_institution_name) |>
-  compute()
+  compute() |>
+  system_time()
 
 top_5_names |> collect()
 ```
@@ -309,7 +324,7 @@ But, while that appears to work, we will quickly run into trouble because the it
 Fortunately, we can use the function `ffiec_scan_pqs()` to combine all schedules into a single table that we can use easily.
 
 ```{r}
-rc <- ffiec_scan_pqs(db, schedule = "rc")
+rc <- ffiec_scan_pqs(db, schedule = "rc") |> system_time()
 ```
 ```{r}
 bs_panel_data <-
@@ -317,7 +332,8 @@ bs_panel_data <-
   mutate(total_assets = coalesce(RCFD2170, RCON2170)) |>
   select(IDRSSD, date, total_assets) |>
   inner_join(top_5_names, join_by(IDRSSD)) |>
-  collect()
+  collect() |>
+  system_time()
 ```
 
 ```{r}
@@ -334,6 +350,150 @@ bs_panel_data |>
 
 
 # The boring details
+
+## Reading the data
+
+Each quarter's zip file (`zipfile`) actually contains dozens of text files (`.txt`) in TSV ("tab-separated values") form.
+The TSV is a close relative of the CSV ("comma-separated values") and the principles applicable to one form apply to the other.
+
+I have seen code that just imports from these individual files (what I call `inner_file`) in some location on the user's hard drive.
+This approach is predicated on the user having downloaded the zip files and unzipped them.
+While we have downloaded all the zip files---assuming you followed the steps outlined in @sec-raw-data---I don't want to be polluting my hard drive with thousands of `.txt` files that I won't use after reading them once.
+
+Instead, R allows me to do simply say 
+
+```{r}
+#| eval: false
+con <- unz(zipfile, inner_file)
+```
+
+The resulting `con` object is a temporary read-only connection to a single text file (`inner_file`) stored inside the zip file `zipfile`.
+The object allows R to stream the file's contents directly from the zip archive, line by line, without extracting it.
+Given `con`, the core function used to read the data into R has the following basic form, where `read_tsv()` comes from the `readr` library, part of the Tidyverse.
+
+```{r}
+#| eval: false
+df <- read_tsv(
+  con,
+  col_names = cols,
+  col_types = colspec,
+  skip = skip,
+  quote = "",
+  na = c("", "CONF"),
+  progress = FALSE,
+  show_col_types = FALSE
+)
+```
+
+### Handling embedded newlines and tabs
+
+Experienced uses of the `readr` library might wince a little at the `quote = ""` argument above.
+What this means is that the data are not quoted.
+
+@Wickham:2023aa [p. 101] points out that "sometimes strings in a CSV file contain commas. 
+To prevent them from causing problems, they need to be surrounded by a quoting character, like `"` or `'`. 
+By default, `read_csv()` assumes that the quoting character will be `"`."
+
+Adapting this to our context and expanding it slightly, I would say: "sometimes strings in a TSV file contain tabs (`\t`) and newline characters (`\n`).^[Tabs and newlines are what are sometimes called **invisibles** because there presence is not apparent from viewing their usual representation as text (for example, a tab might look the same as a series of spaces).
+The `\t` and `\n` representations are quite standard ways of making these characters visible to humans.]
+To prevent them from causing problems, they need to be surrounded by a quoting character, like `"` or `'`."
+While this is a true statement, the TSV files provided on the FFIEC Bulk Data website are *not* quoted, which means that tabs and newlines characters **embedded** in strings *will* cause problems.
+
+The approach taken by the `ffiec.pq` package is to attempt to read the data using a call like that above, which I term the "fast path" (in part because it is indeed fast).
+Before making that call, the code has already inspected the first row of the file to determine the column names (stored in `cols`) and used those column names to look up the appropriate type for each column (stored in `colspecs`).
+Any anomaly caused by embedded newlines or embedded tabs will almost certainly cause this first `read_tsv()` call to fail.
+But if there are no issues, then we pretty much have the data as we want them and can return `df` to the calling function.^[In practice, there's a little clean-up to be done before returning `df`, as I will explain shortly.]
+Fortunately, over 95% of files can be read successfully on the "fast path".
+
+It turns out that if the "fast path" read fails, the most likely culprit is **embedded newlines**.
+Let's say the table we're trying to read has seven columns and  the text field that is the fourth field in the file contains, in some row of the data, an embedded newline, because the data submitted by the reporting financial institution contained `\n` in that field.
+Because `read_tsv()` processes the data line by line and lines are "delimited" by newline characters (`\n`), it will see the problematic line as terminating part way through the fourth column and, because `cols` tells `read_tsv()` to expect seven columns, `read_tsv()` will issue a warning.
+
+When a warning occurs on the "fast path", the read function in `ffiec.pq` moves to what I call (unimaginatively) the "slow path".
+A "feature" (it turns out) of the TSV files provided on the FFIEC Bulk Data website is that each line ends with not just `\n`, but `\t\n`.
+This means we can assume that any `\n` not preceded by `\t` is an embedded newline, not a line-terminating endline.^[Unfortunately, the `read_tsv()` function does not allow use to specify an alternative to the default for line-terminating characters.]
+So I can read the data into the variable `txt` using `readLines()` and use a regular expression to replace embedded newlines with an alternative character.
+The alternative I use is a space and I use the `gsub()` function to achieve this: `gsub("(?<!\\t)\\n", " ", txt, perl = TRUE)`
+The regular expression here is `(?<!\\t)\\n` is equivalent to `(?<!\t)\n` in Perl or `r"(?<!\t)\n"` in Python.^[There are extra backslashes in the R version to specify that the backslashes represent backslashes to be passed along to `gsub()`, not special characters to be interpreted by R itself.]
+In words, the regular expression literally means "any newline character that is not immediately preceded by a tab" and the `gsub()` function will replace such characters with spaces (`" "`) because that is the second argument to `gsub()`.
+
+This fix addresses almost all the problematic files.
+"Almost all" means "all but two".
+The issue with the remaining two files is (as you might have guessed) **embedded tabs**.
+Unfortunately, there's no easy "identify the embedded tabs and replace them" fix, because there's no easy way to distinguish embedded tabs from delimiting tabs.
+However, we can detect the presence of embedded tabs because there will one too many tabs in any affected row.
+
+For one of the two "bad" files, there is only one text field, so once we detect the presence of the embedded tab, we can assume that the extra tab belongs in that field: Problem solved.
+For the other "bad" file, there are several text fields and, while there is just one bad row, we cannot be sure which text field has the embedded tab.
+The `ffiec.pq` package just assumes that the embedded tab belongs in the last field and moves on.
+This means that the textual data for one row (i.e., one financial institution) for one schedule for one quarter cannot be guaranteed to be completely correct.^[This is not a completely insoluble problem in that we could inspect the XBRL data to determine the correct form of the data in this case. This is "above my pay grade" in this setting. (I'm not being paid to do this!)]
+Such is life.
+
+Even without addressing the issue, given that only two files are affected, it's possible to measure the "damage" created by embedded tabs.
+
+Let's look at the earlier file, which turns out to affect the Schedule RIE data for The Traders National Bank (`IDRSSD` of `490937`) for June 2004.^[Note that it would be somewhat faster to use `rie <- load_parquet(db, "rie_20040630", "ffiec")`, but this code doesn't take too long to run.]
+Traders National Bank in Tennessee was "Tullahoma's second oldest bank", until changing its name to Wellworth Bank (seemingly after some mergers), and it listed total assets of \$117,335,000 in the affected Call Report.
+
+Let's look at the textual data we have in our Parquet files for this case:^[Only the textual data will have embedded tabs and, because such data is arranged after numerical data, only text data will be affected by embedded tabs.]
+
+```{r}
+rie <- ffiec_scan_pqs(db, schedule = "rie", schema = "ffiec") 
+
+rie |> 
+  filter(IDRSSD == "490937", date == "2004-06-30") |> 
+  select(IDRSSD, starts_with("TEXT")) |> 
+  pivot_longer(!IDRSSD) |>
+  filter(!is.na(value)) |>
+  collect() |>
+  system_time()
+```
+
+We can compare this with what we see in the Call Report in @fig-old-bad, where we see that the value of `TEXT4468` should be something like `"Courier, Audit Tax, Deff Comp, Other\tns Exp, Bus Dev, P"`.
+The embedded tab has split this into `"Courier, Audit Tax, Deff Comp, Other"` for `TEXT4468` and `"ns Exp, Bus Dev, P"` for `TEXT4469`, which should be `NA`.
+If the values for `TEXT4468`and `TEXT4469` for Traders National Bank in June 2004 are important to your analysis, you could  fix this "by hand" easily enough.
+
+```{r}
+#| label: fig-old-bad
+#| echo: false
+#| out.width: NULL
+#| fig-cap: |
+#|   Extract from June 2004 Call Report for The Traders National Bank
+#| fig-alt: |
+#|   Extract from June 2004 Call Report for The Traders National Bank shows the correct textual values as discussed in the text.
+
+knitr::include_graphics("images/cr_490937.pdf")
+```
+
+Looking at the later file, there were embedded tabs in two rows of Schedule NARR for December 2022.
+I compared the values in the Parquet file with those in the Call Reports for the two affected banks and the values in the Parquet file match perfectly.^[See [here](https://github.com/iangow/ffiec.pq/issues/3) for the gory details.
+Interestingly, the WRDS Call Report data have the [same issue](https://gist.github.com/iangow/809e67527c41dd54872f155b67f6c442) with the earlier case and have incorrect data for one of the banks in the latter case.
+This seems to confirm that WRDS uses the TSV data itself in creating its Call Report data sets.]
+Because Schedule NARR ("Optional Narrative Statement Concerning the Amounts Reported in the Consolidated Reports of Condition and Income") has just one text column (`TEXT6980`), the fix employed by the `ffiec.pq` package will work without issues.^[Recall that the "fix" assumes that embedded tab belongs in last available text column.]
+
+### Handling missing-value sentinels
+
+Users familiar with both `readr` and Call Report data might also have noticed the use of `na = c("", "CONF")` in the call to `read_tsv()` above.
+The default value for this function is `na = c("", "NA")` means that empty values and the characters `NA` are treated as missing values.
+As I saw no evidence that the export process for FFIEC Bulk Data files used `"NA"` to mark `NA` values, I elected not to treat `"NA"` as `NA`.
+However, a wrinkle is that the reporting firms some times populate text fields---but not numerical fields---with the value `"NA"`.^[If `"NA"` appeared in a numeric field, my code would report an error. As I detected no errors in importing the data, I know there are no such values.]
+While the most sensible interpretation of such values is as `NA`, without further investigation it is difficult to be sure that `"NA"` is the canonical form in which firms reported `NA` values rather than `"N/A"` or `"Not applicable"` or some other variant.
+
+This approach seems validated by the fact that I see the value `"NR"` in text fields of PDF versions of Call Reports and these values show up as empty values in the TSV files, suggesting that `"NR"`, not `"NA"` is the FFIEC's canonical way of representing `NA` values in these files, while `"NA"` is literally the text value `"NA"`, albeit perhaps one intended *by the reporting firm* to convey the idea of `NA`.
+Users of the FFIEC data created by the `ffiec.pq` package who wish to use textual data should be alert to the possibility that values in those fields may be intended by the reporting firm to convey the idea of `NA`, even if they are not treated as such by the FFIEC's process for creating the TSV files.
+
+The other value in the `na` argument used above is `"CONF"`, which denotes that the the reported value is confidential and therefore not publicly disclosed.
+Ideally, we might distinguish between `NA`, meaning "not reported by the firm to the FFIEC" or "not applicable to this firm" or things like that, from `"CONF"`, meaning the FFIEC has the value, but we do not.
+Unfortunately, the value `"CONF"` often appears in numeric fields and there is no simple way to ask `read_tsv()` to record the idea that "this value is confidential", so I just read these in as `NA`.^[This is the kind of situation where SAS's approach to coding missing values would be helpful.]
+
+I say "no simple way" because there are probably workarounds that allow `"CONF"` to be distinguished from true `NA`s.
+For example, I could have chosen to have `read_tsv()` read all numeric fields as character fields and then convert the value `CONF` in such fields to a **sentinel value** such as `Inf` (R's way of saying "infinity" or $\infty$).^[In a sense, this would be doing the opposite of what the Python package pandas did in treating `np.NaN` as the way of expressing what later became `pd.NA`; I'd be using `Inf` to distinguish different kinds of missing values.]
+This would not be terribly difficult, but would have the unfortunate effect of surprising users of the data who (understandably) didn't read the manual and starting finding that the mean values of some fields are `Inf`.
+Perhaps the best way to address this would allow the user of `ffiec.pq` to *choose* that behaviour as an option, but I did not implement this feature at this time.
+
+In addition to these missing values, I discovered in working with the data that the FFIEC often used specific values as **sentinel values** for `NA`.
+For example, `"0"` is used for some fields, while `"00000000"` is used to mark dates as missing, and `"12/31/9999 12:00:00 AM"` is used for timestamps.
+I recoded such sentinel values as `NA` in each case.
+
 
 
 # The service-level agreement
@@ -405,30 +565,48 @@ But often data will be supplied by vendors in an imperfect state and significant
 
 Focusing on the case where the data curation process transforms an existing data set---say, one purchased from an outside vendor---into a curated data set in sense used here, there are a few ground rules regarding manual steps.
 
-First, *the original data files should not be modified in any way*.
-If data are supplied as CSV files, then merely opening them in Excel and saving them can mutilate the original data.^[An example where this could happen is provided in @tip-friends.]
-I have encountered people whose idea of data curation extended to opening the original files, saving them as Excel files, and then proceeding to manually edit those files.
-This approach leads to a completely unreproducible set of data files, which is problematic not only in a world in which reproducibility is starting to be expected, but also when a new version of the data will be supplied by the vendor in the future.
-
-Second, any manual steps should be extensively documented and applied in a transparent automated fashion.
-For example, if a data set on financial statement items of US firms contains errors that can be corrected by reviewing original SEC filings, then any corrections should be clearly documented in separate files with links to the original filings and explanations.
-And the corrections should be implemented through code, not manual steps.^[Best practices here could be the subject of a separate note, as there are a lot of subtleties and my experience is that people often have bad habits here.]
-For example, there should be code that imports the original data and the corrections and applies the latter to the former to create the final data set.
+"First, *the original data files should not be modified in any way*."
+Correct.
+I don't even touch the files after downloading them.
+I do make some corrections to the `item_name` variable in the `ffiec_items` package, but these "manual steps [are] extensively documented and applied in a transparent, automated fashion."
+The code for these steps can be found on [the GitHub page](https://github.com/iangow/ffiec.pq/blob/main/data-raw/ffiec_dict.R) for the `ffiec.pq` package.
 
 ## Documentation 
 
-The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise.
-Often that need will arise when the vendor provides an updated data set.
-Perhaps the best way to understand what I have in mind here is through a case study and I provide on in @sec-case.
+"The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise."
+I regardin having a package that does the work satisfies this requirement.
 
 ## Update process
  
-Part of the rationale for having a well-documented process with no manual steps is that it greatly facilitates updating the data when the data vendor or other data source provides updated data.
-In some cases, updating the data will entail little more than downloading the new raw data and running a pre-existing script on those data.
-In other cases, the data may change in significant ways, such as addition of new variables, renaming of existing ones, or reorganization of data into different tables.
+If a new zip file appears on the FFIEC Bulk Data website, you can download it using the process outlined in @sec-raw-data.
+Just changing the `[:4]` to `[0]` and the script downloads the latest file.
 
-As future changes may be difficult to predict, the analyst might be able to do little more than describe the anticipated update process if no major changes occur.
-If major changes do subsequently occur, it likely makes sense for the analyst handling the update to extensively document the changes needed to process the new data, especially if earlier versions of the data remain relevant (e.g., they have been used in published research).
+Then run
+
+```{r}
+#| message: false
+library(ffiec.pq)
+library(tidyverse)
+library(farr)
+library(dbplyr)
+library(DBI)
+```
+
+```{r}
+#| cache: true
+#| eval: false
+#| output: false
+library(ffiec.pq)
+zipfiles <- ffiec_list_zips()
+
+results <-
+  zipfiles |>
+  filter(date == max(date)) |>
+  select(zipfile) |>
+  pull() |>
+  ffiec_process() |>
+  system_time()
+```
 
 ## Data version control
 
@@ -461,17 +639,6 @@ Assuming that the client is a group of colleagues at an institution with access 
 
 ## Primary keys
 
-@tbl-asx-eod-keys provides a summary of our analysis above of primary keys.
-
-
-| Table               | Primary key                            |
-|---------------------|---------------------------------------:|
-| `si_au_ref_names`   | `gcode`, `securityticker`, `listdate`  |
-| `si_au_prc_daily`   | `gcode`, `date`, `seniorsecurity`      |
-| `si_au_retn_mkt`    | `date`                                 |
-| `si_au_ref_trddays` | `date`                                 |
-
-: SIRCA ASX EOD price collection: Primary keys {#tbl-asx-eod-keys}
 
 
 ## Good database principles
