@@ -528,11 +528,19 @@ The *Understand* team could be given access data from a particular source organi
 Accessing the data in this form is easy for any modern software package.
 One virtue of this approach is that the data might be curated using, say, Python even though the client will analyse it using, say, Stata.^[One project I worked on involved Python code analysing text and putting results in a PostgreSQL database and a couple of lines of code were sufficient for a co-author in a different city to load these data into Stata.]
 
+I chose to use parquet files for our output.
+@tbl-pq-files provides some data on the parquet files we have produced for our hypothetical client (the *Understand* team).
+Assuming that the client is a group of colleagues at an institution with access to SIRCA, we (the *Curate* team) might just send a link to the Dropbox folder where we have stored the parquet files.
+
 ## Good database principles
 
 I included the word "pragmatic" because I think it's not necessary in most cases to get particularly fussy about [database normalization](https://en.wikipedia.org/wiki/Database_normalization).
 That said, it's probably bad practice to succumb to requests for One Big Table that the *Understand* team might make.
 It is reasonable to impose some obligation to merge tables that are naturally different tables on the client *Understand* team.
+
+In general, I think one wants to be fairly conservative in considering database principles with a data library.
+If the data are workable and make sense in the form they come in, then it may make most sense to keep them in that form.
+
 
 ## Primary keys
 
@@ -574,7 +582,10 @@ The code for these steps can be found on [the GitHub page](https://github.com/ia
 ## Documentation 
 
 "The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise."
-I regardin having a package that does the work satisfies this requirement.
+I regard having a package that does the work satisfies this requirement.
+
+A important principle here is that the code for processing the data is documentation in its own right.
+Beyond that the document you are reading now is a form of documentation, as it the documentation in the `ffiec.pq` package.
 
 ## Update process
  
@@ -625,55 +636,6 @@ One principle is that the process of importing and tidying data is best handled 
 @fig-whole-game, which comes from  has "import" feeding "tidy" feeding an iterative process grouped together under "understand".
 In this note, I will focus on the steps proceeding the "understand" processes, but I will tweak the arrow from "tidy" to "understand" by adding "persist" and "load" processes, which I will explain below.
 ```
-
-# The service-level agreement revisited
-
-I now return to our service-level agreement (SLA) to take stock of where we are after the above.
-Given that much of the focus above was on data types, I do not revisit that here and instead focus on those elements of the SLA that I did not address above.
-
-## Storage format
-
-We have chosen to use parquet files for our output.
-@tbl-pq-files provides some data on the parquet files we have produced for our hypothetical client (the *Understand* team).
-Assuming that the client is a group of colleagues at an institution with access to SIRCA, we (the *Curate* team) might just send a link to the Dropbox folder where we have stored the parquet files.
-
-## Primary keys
-
-
-
-## Good database principles
-
-In general, I think one wants to be fairly conservative in considering database principles with a data library.
-If the data are workable and make sense in the form they come in, then it may make most sense to keep them in that form.
-
-The SIRCA ASX EOD data are organized into four tables with easy-to-understand primary keys and a fairly natural structure.
-At some level, the two primary tables are `si_au_ref_names` and `si_au_prc_daily`.^[It seems possible that `si_au_retn_mkt` and  `si_au_ref_trddays` are generated from `si_au_prc_daily`.]
-These two tables are naturally distinct, with one about companies and the other about daily security returns.
-
-While there might be merit in splitting `si_au_prc_daily` into separate tables to reduce its size, it is actually quite manageable in its current form.
-
-## No manual steps
-
-There are no manual steps in creating the parquet files except for the initial download of the CSV files from SIRCA.
-While some data vendors allow users to download files using scripts (e.g., the scripts I have [here](https://github.com/iangow/wrds_pg/tree/master/crsp) for WRDS), this does not appear to be an option for SIRCA.
-But once the data have been downloaded, the subsequent steps are automatic.
-
-While some of the checks and data-cleaning had manual elements (e.g., identifying the near-duplicate with `Gcode=="rgwb1"` in `si_au_ref_names`), the resulting code implements the fix in an automated fashion.
-So long as the SIRCA data remain unchanged, the fix will continue to work.
-
-## Documentation
-
-A important principle here is that the code for processing the data is documentation in its own right.
-Beyond that the document you are reading now is a form of documentation.
-If the goal of this document were to provide details explaining the process used to produce the final data sets, then it might make sense to edit this document to reflect that different purpose, but in many ways I hope this document already acts as good documentation.
-
-## Update process
-
-In some ways, the update process is straightforward: when new CSV files become available, download them into `RAW_DATA_DIR` and run the script.
-However, it would probably be necessary to retrace some of the steps above to ensure that no data issues have crept in (e.g., duplicated keys). 
-It may make sense to document the update process as part of performing it the first time.
-
-## Data version control
 
 I achieve a modest level of data version control by using Dropbox, which offers the ability to restore previous versions of data files.
 As discussed earlier, version control of data is a knotty problem.
