@@ -1,7 +1,7 @@
 ---
 title: "Working with date and times"
 author: Ian D. Gow
-date: 2024-08-13
+date: 2026-02-02
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -12,16 +12,26 @@ format:
       - left=2cm
       - right=2cm
     papersize: a4
+    filters:
+      - abstract.lua
+    include-in-header: preamble.tex
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
+csl: jfe.csl
 ---
 
-As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* will be published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press later in 2024 and will remain free online after publication.]
+::: {.abstract}
+The purpose of this note is address the topic of temporal data (dates and times) in more detail than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science* [@Wickham:2023aa] and to provide a hands-on application of working with them.
+The application I work with is based on the SEC submissions data I discussed in [another recent note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf).
+I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
+:::
+
+As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@gow2024empirical] is to provide a pathway to mastery of the contents of @Wickham:2023aa.^[@gow2024empirical was published in print form by CRC Press in December 2024 and remains free online.]
 That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times.
 [One recent note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) covered hierarchical data and a forthcoming note will address spreadsheets.
 
-The purpose of this note is address the gap regarding dates and times in more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science*.
+The purpose of this note is address the gap regarding dates and times in more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of @Wickham:2023aa.
 The application I work with is based on the SEC submissions data I discussed in [another recent note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf).
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 
@@ -45,13 +55,13 @@ library(scales)
 ```
 # Dates and times: The basics
 
-[Chapter 17](https://r4ds.hadley.nz/datetimes) of *R for Data Science* identifies three data types related to dates and times:
+[Chapter 17](https://r4ds.hadley.nz/datetimes) of @Wickham:2023aa identifies three data types related to dates and times:
 
  - **dates** are specified as a year, month, and day
  - **times** identify times within a day
  - **date-times** combine dates and times into a single data type
  
-Like *R for Data Science*, I concentrate on dates and date-times.^[It it pointed out in that R does not have a native class for storing times [@Wickham:2023aa, p.296].]
+Like *R for Data Science*, I concentrate on dates and date-times.^[It is pointed out in that R does not have a native class for storing times [@Wickham:2023aa, p.296].]
 
 ## Dates
 
@@ -64,7 +74,7 @@ Converting string representations of dates to dates is an important element of t
 We might also encounter dates in data sets from other programs, such as SAS, Stata, or Excel.
 Functions such as `read_sas()`, `read_stata()`, and `read_excel()` will generally detect and convert dates.
 Otherwise exporting data from those programs to text with dates represented in an unambiguous text format is perhaps the best approach.
-For example, in my `wrds2pg` Python package, I apply SAS code that uses `format=YYMMDD10.` to represent dates using the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format discussed in [*R for Data Science*](https://r4ds.hadley.nz/datetimes#during-import) before exporting to CSV using SAS's `PROC EXPORT` command.
+For example, in my `wrds2pg` Python package, I apply SAS code that uses `format=YYMMDD10.` to represent dates using the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format discussed in [*R for Data Science*](https://r4ds.hadley.nz/datetimes#during-import) before exporting to CSV using SAS's `PROC EXPORT` command.^[After rummaging through the depths of the SAS documentation, I [landed on](https://github.com/iangow/wrds2pg/blob/565fce4afdee526830b2d5c92aadf20b35cf575b/wrds2pg/wrds2pg.py#L340-L341) `format=E8601DT19.` as the way to represent date-times being exported by SAS.]
 
 Dates are generally transferred without any issues from databases such as DuckDB or PostgreSQL to R or vice versa.
 Once properly encoded as type `Date`, dates do not present particular difficulties in R in many contexts.
@@ -525,13 +535,13 @@ Note that I do not compute the table `filing_times`, as doing so is unnecessary 
 ```{r}
 filing_times <- 
   filings |>
-  mutate(year = year(acceptancedatetime),
-         hour = as.integer(hour(acceptancedatetime)),
-         minute = as.integer(minute(acceptancedatetime)),
-         second = second(acceptancedatetime),
+  mutate(year = year(acceptanceDateTime),
+         hour = as.integer(hour(acceptanceDateTime)),
+         minute = as.integer(minute(acceptanceDateTime)),
+         second = second(acceptanceDateTime),
          acceptance_time = make_timestamptz(2000L, 1L, 1L, 
                                             hour, minute, second)) |>
-  select(cik, year, accessionnumber, acceptancedatetime, acceptance_time)
+  select(cik, year, accessionNumber, acceptanceDateTime, acceptance_time)
 ```
 
 The code for creating `earnings_filings` is unchanged from above apart from using lower-case column names, as PostgreSQL offers the same `regexp_split_to_table()` function that we used in DuckDB.
@@ -542,7 +552,7 @@ earnings_filings <-
   inner_join(tickers, by = "cik") |>
   mutate(item = regexp_split_to_table(items, ",")) |>
   filter(form == "8-K", item == "2.02") |>
-  select(cik, ticker, filingdate, acceptancedatetime, item)
+  select(cik, ticker, filingDate, acceptanceDateTime, item)
 ```
 
 The code creating `sample_merged` differs slightly (apart from using lower-case column names) because `start_date - acceptancedatetime` results in a column of type `interval` in PostgreSQL that R is unable to interpret easily.
@@ -551,8 +561,8 @@ To address this, I use the `date_part('epoch', x)` function to convert it to the
 ```{r}
 sample_merged <-
   earnings_filings |>
-  inner_join(sample_calls, join_by(ticker, filingdate)) |>
-  mutate(time_diff = date_part('epoch', start_date - acceptancedatetime)) |>
+  inner_join(sample_calls, join_by(ticker, filingDate)) |>
+  mutate(time_diff = date_part('epoch', start_date - acceptanceDateTime)) |>
   collect() |>
   system_time()
 ```
