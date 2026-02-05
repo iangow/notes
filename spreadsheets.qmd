@@ -1,28 +1,32 @@
 ---
 title: "Data collection (with spreadsheets)"
 author: Ian D. Gow
-date: 2025-01-06
+date: 2026-02-05
 date-format: "D MMMM YYYY"
 number-sections: true
 format:
   html:
     colorlinks: true
   pdf: 
-    include-in-header:
-      text: |
-        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
-        \usepackage{fontspec}
-        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
     colorlinks: true
     geometry:
       - left=2cm
       - right=2cm
     papersize: a4
+    filters:
+      - abstract.lua
+    include-in-header: preamble.tex
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
 csl: jfe.csl
 ---
+
+::: {.abstract}
+This note also completes the three-part series of notes written to address gaps in the coverage of @gow2024empirical relative to @Wickham:2023aa.^[My aim with these notes is not to replace existing resources such as @Wickham:2023aa, but to build on them with applied examples using richer data sets.]
+Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
+As discussed in a [post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* was published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press in 2024 and remains free online at <https://iangow.github.io/far_book>.]
+:::
 
 In writing about data science there is a definite tendency to emphasize the "sexy" aspects, such as machine learning algorithms or fancy statistics.
 This is the case even though it seems to be widely understood that a lot of the critical work involves unsexy tasks related to the organization of data.
@@ -73,7 +77,12 @@ library(dbplyr)
 #| include: false
 library(tinytable)
 library(kableExtra)
-gs4_auth(email = "iandgow@gmail.com")
+if (interactive()) {
+  gs4_auth(email = "iandgow@gmail.com")
+} else {
+  # relies on an existing cached token
+  gs4_auth(email = "iandgow@gmail.com", cache = gargle::gargle_oauth_cache())
+}
 ```
 
 # Spreadsheets and data science
@@ -647,7 +656,6 @@ top_match_problems <-
 ```
 
 Looking at @tbl-top-match-problems, we see that there are multiple `firm_id` values for some values of `expertName` even when we have deemed a match to be valid.^[Note that further research was required to determine that the match of "Marcum Asia CPAs LLP" with "Friedman LLP" is valid; there was a name change that occurred in 2022.]
-
 
 ```{r}
 #| echo: false
