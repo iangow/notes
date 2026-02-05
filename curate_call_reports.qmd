@@ -91,6 +91,8 @@ In other words, some curation of the data is required.
 
 Several commercial data providers of the FFIEC data in a curated form, but accessing those requires an institutional or individual subscription.
 It appears that the Federal Reserve Bank of Chicago provided a curated data set on its [website](https://www.chicagofed.org/banking/financial-institution-reports/commercial-bank-data), but no longer does so.
+WRDS provides Call Report data extracted from the same sources I used as part of its basic subscription.
+Of course, no commercial providers of the data provide the source code used to transform the raw data into the form they deliver it in.
 
 Other services provide "API wrappers" that allow users to access the data via the FFIEC API, but this approach is best suited to real-time feeds of small amounts of data.
 Collation of the data into a single repository using this approach seems unfeasible.
@@ -102,7 +104,7 @@ Regardless of the availability of paid curation services, in this note I will im
 The FFIEC [Bulk Data Download site] provides the Call Report data in two forms.
 The first is as zipped tab-delimited data files, one for each quarter.
 The second is as zipped XBRL data files, one for each quarter.
-At the time of writing, getting the complete data archive amounts to point-and-clicking to download each of the 99 files for each format.
+At the time of writing, the standard approach to getting the complete data archive amounts to point-and-clicking to download each of the 99 files for each format.
 
 The FFIEC data sets are not as amenable to automated downloading as those offered by other government agencies such as the SEC (see my earlier [note on XBRL data](https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf)), the PCAOB (see my [note on Form AP data](https://github.com/iangow/notes/blob/main/form_ap_names.pdf)), or even the Federal Reserve itself (I used data from the [MDRM site](https://www.federalreserve.gov/apps/mdrm/) in preparing this note).
 However, a group of individuals has contributed the Python package `ffiec_data_collector` that we can use to collect the data.^[I discovered this package after writing most of this note. In my case, I pointed-and-clicked to get many of the files and [Martien Lubberink](https://people.wgtn.ac.nz/martien.lubberink) of Victoria University of Wellington kindly provided the rest.]
@@ -246,25 +248,75 @@ results |>
   count(repairs)
 ```
 
+# Using the data
+
 ## Using the data with R
 
 So what have we just done?
-In a nutshell, we have processed each of the 99 zip files into six files.
+In a nutshell, we have processed each of the 99 zip files into seven files.
+
+### "Panel of Reporters" (POR) data
 
 The first file is the ["Panel of Reporters" (POR) table](https://cdr.ffiec.gov/CDR/public/cdrhelp/Panel%20Of%20Reporters.htm), which provides details on the financial institutions filing in the respective quarter.
 We can use the `pq_file` argument to `ffiec_scan_pqs()` to load a single file into DuckDB.
 
 ```{r}
 por_20250930 <- ffiec_scan_pqs(db, pq_file="por_20250930.parquet")
-por_20250930
+por_20250930 |>
+  select(IDRSSD, financial_institution_name, everything()) |>
+  head() |>
+  collect()
+
+por_20250930 |> count() |> collect()
 ```
 
 But more often, it will be more convenient to just read all files in one step:
 
 ```{r}
 por <- ffiec_scan_pqs(db, "por")
-por
+por |>
+  select(IDRSSD, financial_institution_name, everything()) |>
+  head() |>
+  collect() 
+
+por |> count() |> collect()
 ```
+
+
+### Item-schedules data
+
+The second data set is `ffiec_schedules`.
+The zip files provided by the FFIEC Bulk Data site comprise several TSV files organized into "schedules" corresponding the particular forms on which the data are submitted by filers.
+While the `ffiec.pq` package reorganizes the data by data type, information about the original source files for the data are retained in `ffiec_schedules`.
+
+```{r}
+ffiec_schedules <- ffiec_scan_pqs(db, "ffiec_schedules")
+ffiec_schedules |> head(10) |> collect()
+```
+
+Focusing on one item, `RIAD4230`, we can see from the output below that this item was provided on both Schedule RI (`ri`) and Schedule RI-BII (`ribii`) from `2001-03-31` until `2018-12-31`, but since then has only been provided on Schedule RI-BII.
+
+```{r}
+ffiec_schedules |> 
+  filter(item == "RIAD4230") |>
+  mutate(schedule = unnest(schedule)) |>
+  group_by(item, schedule) |>
+  summarize(min_date = min(date, na.rm = TRUE),
+            max_date = max(date, na.rm = TRUE),
+            .groups = "drop") |>
+  collect()
+```
+
+The next question might be: What is `RIAD4230`?
+We can get the answer from `ffiec_items`, a data set included with the `ffiec.pq` package:
+
+```{r}
+ffiec_items |> filter(item == "RIAD4230")
+```
+
+Schedule RI is the income statement and "Provision for loan and lease losses" is an expense we would expect to see there for a financial institution. 
+Schedule RI-BII is "Charge-offs and Recoveries on Loans and Leases" and provides detail on loan charge-offs and recoveries, broken out by loan category, for the reporting period.
+As part of processing the data, the `ffiec.pq` package confirms that the value for any given item for a specific `IDRSSD` and `date` is the same across schedules for *all* items in the data.
 
 Each of the other five files represents data from the schedules for that quarter for a particular data type, as shown in @tbl-types
 
@@ -307,17 +359,8 @@ ffiec_float <- ffiec_scan_pqs(db, "ffiec_float")
 ffiec_float |> head() |> collect()
 ```
 
-From the output above, we see that item `RIAD4230` appears on both Schedule RI (`ri`) and Schedule RI-BII (`ribii`).
-The first question might be: What is `RIAD4230`?
-We can get the answer from `ffiec_items`:
 
-```{r}
-ffiec_items |> filter(item == "RIAD4230")
-```
 
-Schedule RI is the income statement and "Provision for loan and lease losses" is an expense we would expect to see there for a financial institution. 
-Schedule RI-BII is "Charge-offs and Recoveries on Loans and Leases" and provides detail on loan charge-offs and recoveries, broken out by loan category, for the reporting period.
-As part of processing the data, the `ffiec.pq` package confirms that the value for any given item for a specific `IDRSSD` and `date` is the same across schedules for *all* items in the data.
 
 ### Integer data items
 
@@ -347,12 +390,11 @@ ffiec_int |>
 
 ### Date data items
 
+Surprisingly for a database with financial statement elements, there are very few data items related to dates in the Call Report data.
 
 ```{r}
 ffiec_date <- ffiec_scan_pqs(db, "ffiec_date")
 ```
-
-Surprisingly, there are very few data items related to dates in the Call Report data.
 
 ```{r}
 ffiec_date |> 
@@ -365,6 +407,7 @@ ffiec_date |>
   count(item, item_name) |>
   collect()
 ```
+
 We can't quite see all of `item_name` for the first row above, so let's use `strwrap()` to fit it on the page:
 
 ```{r}
@@ -375,7 +418,36 @@ ffiec_items |>
   strwrap(width = 78)
 ```
 
+Note that `date` is a value I inferred from the file names of the zip files I processed.
+A question might be whether `RCON9999` has the same value as `date`.
+
+```{r}
+ffiec_date |>
+  filter(item == "RCON9999") |>
+  count(same_date = value == date) |>
+  collect()
+```
+
+```{r}
+ffiec_date |>
+  filter(item == "RCON9999") |>
+  filter(value != date) |>
+  collect()
+```
+Look at the data in the POR table, it seems that this firm misreported in that it providing something about when it filed the data rather than the financial reporting period-end.
+
+```{r}
+por |> 
+  filter(IDRSSD == 3345168, date == "2006-03-31") |> 
+  select(last_date_time_submission_updated_on) |>
+  collect()
+```
+
+
 ### Boolean data items
+
+Boolean data items are `TRUE` or `FALSE`.
+There are 42 such items in the Call Report data:
 
 ```{r}
 ffiec_items |>
@@ -383,58 +455,106 @@ ffiec_items |>
   select(item, item_name)
 ```
 
+I don't know what it means for an entity's "world wide web site" to be "interactive", but it is easy to find out how many banks have such sites:
+
 ```{r}
 ffiec_bool <- ffiec_scan_pqs(db, "ffiec_bool")
 
 ffiec_bool |>
+  filter(item == "RCFD4088") |>
   count(value) |>
   collect()
 ```
 
 ### String data items
 
-```{r}
-ffiec_str <-
-  ffiec_scan_pqs(db, "ffiec_str") 
+There are `r ffiec_items |> filter(data_type == "String") |> count() |> pull()` string (text) items in the FFIEC Call Report database.
 
-ffiec_str |>
-  inner_join(ffiec_items, by = join_by(item), copy = TRUE) |>
-  count(mnemonic, sort = TRUE) |>
-  collect()
+```{r}
+ffiec_items |>
+  filter(data_type == "String") |>
+  select(item, item_name)
 ```
 
-### Schedules data
-
-The final set of tables contain information abot th
-
-One field that warrants explanation is `schedule`, which is the list of schedules from which the data item in question was taken.
-As some values appear on multiple schedules even in a given quarter, `schedule` may contain more than one item.
+As can be seen, most of the text items are reported on Schedule ENT ("Changes in Equity Capital").
 
 ```{r}
-ffiec_schedules <- ffiec_scan_pqs(db, "ffiec_schedules")
+ffiec_str <- ffiec_scan_pqs(db, "ffiec_str") 
 
-ffiec_schedules |>
-  mutate(n_schedules = length(schedule)) |>
-  filter(n_schedules > 1) |>
+ffiec_str |>
+  inner_join(ffiec_schedules) |>
   mutate(schedule = unnest(schedule)) |>
-  collect(n = 10)
+  group_by(schedule) |>
+  summarize(n = n(), 
+            min_date = min(date, na.rm = TRUE),
+            max_date = max(date, na.rm = TRUE),
+            .groups = "drop") |>
+  arrange(desc(n)) |>
+  collect() 
+```
+But these are mostly basic information such as names and locations.
+
+```{r}
+ffiec_str |>
+  inner_join(ffiec_schedules) |>
+  mutate(schedule = unnest(schedule)) |>
+  filter(schedule == "ent") |>
+  inner_join(ffiec_items, by = "item", copy = TRUE) |>
+  count(item, item_name, sort = TRUE) |>
+  collect()
+```
+We can look a few of the most popular text items that do *not* appear on Schedule ENT:
+
+```{r}
+ffiec_str |>
+  inner_join(ffiec_schedules) |>
+  filter(!list_contains(schedule, "ent")) |>
+  mutate(schedule = unnest(schedule)) |>
+  inner_join(ffiec_items, by = "item", copy = TRUE) |>
+  count(item, item_name, schedule, sort = TRUE) |>
+  head(10) |>
+  collect()
 ```
 
 ## A small example
 
 If we were experts in Call Report data, we might know that domestic total assets is reported as item `RCFD2170` (on Schedule RC) for banks reporting on a consolidated basis and as item `RCON2170` for banks reporting on an unconsolidated basis.
-We can make a balance sheet table using the following code.
+
+```{r}
+ffiec_items |> filter(item %in% c("RCFD2170", "RCON2170"))
+```
+
+We can make a small balance sheet table using the following code.
 
 ```{r}
 bs_data <-
   ffiec_float |> 
-  ffiec_pivot(items = c("RCFD2170", "RCON2170")) |>
-  mutate(total_assets = coalesce(RCFD2170, RCON2170)) |>
+  ffiec_pivot(items = c("RCFD2170", "RCON2170",
+                        "RCFD2948", "RCON2948",
+                        "RCFD3210", "RCON3210",
+                        "RCFD3300", "RCON3300")) |>
+  mutate(total_assets = coalesce(RCFD2170, RCON2170),
+         total_liabilities = coalesce(RCFD2948, RCON2948),
+         equity = coalesce(RCFD3210, RCON3210),
+         total_eq_pref_liab = coalesce(RCFD3300, RCON3300)) |>
+  mutate(eq_liab = total_liabilities + equity) |>
+  compute() |>
   system_time()
 ```
 
 ```{r}
-bs_data |> head() |> collect()
+bs_data |> 
+  select(-starts_with("RC")) |>
+  head() |> 
+  collect()
+
+bs_data |>
+  select(-starts_with("RC"), -total_liabilities) |>
+  filter(eq_liab != total_assets) |>
+  mutate(implied_pref = total_assets - eq_liab) |>
+  arrange(desc(implied_pref)) |>
+  head() |>
+  collect()
 ```
 
 ```{r}
@@ -518,8 +638,99 @@ bs_panel_data |>
 
 ### Working with timestamps
 
-Working with dates and times (**temporal data**) can be a lot more complicated than in generally appreciated.
-Broadly speaking we might think of temporal data as referring to points in time or *instants* or to time spans, which include durations, periods, and intervals.^[See @Wickham:2023aa, p. 311-315, for discussion of time spans.] 
+Working with dates and times (**temporal data**) can be a lot more complicated than is generally appreciated.
+Broadly speaking we might think of temporal data as referring to points in time, or *instants*, or to *time spans*, which include durations, periods, and intervals.^[See @Wickham:2023aa, p. 311-315, for discussion of time spans.]
+An instant will typically have a degree of precision associated with it, such as nanoseconds, seconds, minutes, hours, or days.
+If I say that "I started to eat lunch at 12:16 pm on 23 October 2025", I probably mean "I started somewhere between 12:16:00.0000 and 12:16:59.9999"; in other words, I am implicitly using minute precision (already pretty odd when talking about lunch).
+If I say, "I received the parcel you sent on 26 October 2025", then I am probably using day precision.
+
+In both cases, I am probably implicitly using a time zone.
+Most people refers to instants using local times, so if I'm in Boston, I probably mean times in the time zone known in precise settings as `America/New_York`.
+So the first probably means (translated into R code):
+
+```{r}
+t <- as.POSIXct("2025-10-23 12:16:00", tz = "America/New_York")
+```
+
+Note that `t` is actually stored internally as a UTC-based number, with the time zone kept only as metadata.
+
+```{r}
+format(t, tz = "UTC")
+```
+
+Converting a minute-precision instant in local time to UTC seems straightforward enough.
+But a date-precision "instant" in local time is more complicated.
+Some parts of `"2026-10-23"` as reckoned from `"America/New_York"` are actually `"2026-10-23"` in UTC.
+So when I say "26 October 2025", I probably do not mean "midnight on 26 October 2025 in `America/New_York`", but that's how R will interpret it:
+
+```{r}
+t2 <- as.POSIXct("2026-10-23", tz = "America/New_York")
+format(t2, tz = "UTC")
+```
+
+Now that we (kind of) understand instants, there are probably two ways to use instants.
+The way is as a precise "moment in time".
+
+For example, according to Wikipedia, Flight 11 crashed into the North Tower the World Trade Center at 8:46 am local time and Flight 175 crashed into the South Tower at 9:03 am.
+
+```{r}
+wtc1 <- as.POSIXct("2001-09-11 08:46:40 ", tz = "America/New_York")
+wtc2 <- as.POSIXct("2001-09-11 09:03:00 ", tz = "America/New_York")
+```
+
+```{r}
+wtc1
+```
+
+At that time, I was at home in Medford, Massachusetts and barely awake.
+My wife and I had returned from a trip to Australia and Korea in the early hours of the previous day.
+We were students and didn't have early classes that day.
+Some time before `wtc2`, my father called from Australia (`Australia/Sydney`) and suggested we turn the television on.
+My recollection is that he news coverage between `wtc1` and `wtc2` reflected a state of confusion about what had happened that changed once `wtc2` happened.
+
+My point is that if I asked my father where he was when `wtc1` occurred, he would likely give his location based on where he was at 10:46 pm in his local time.
+
+```{r}
+format(wtc1, tz = "Australia/Sydney")
+```
+
+For someone in New Zealand, "9/11" didn't happen on the eleventh of September, but on the twelfth.
+
+```{r}
+format(wtc1, tz = "Pacific/Auckland")
+```
+
+So probably the best (most "universal") way to express this "moment in time" is using UTC:
+
+```{r}
+format(wtc1, tz = "UTC")
+```
+
+For most research purposes, we're likely to be interest in instants as universally understood points in time.
+Partly reflecting this, the Parquet form stores everything with a time zone as a moment determined with reference to UTC.
+Another reason that Parquet does this is because timestamps expressed relative to UTC do not require tables of data telling it what the offsets for all the timezones are for all times.
+Avoiding having to store all that information probably sealed the deal for UTC-only, time zone--aware timestamps as the choice for Parquet.
+
+In fact, even R doesn't store time zone information in vectors with mixed time zones:
+
+```{r}
+wtc1s <- c(as.POSIXct("2001-09-11 08:46:40 ", tz = "America/New_York"),
+           as.POSIXct("2001-09-12 00:46:40", tz = "Pacific/Auckland"),
+           as.POSIXct("2001-09-11 22:46:40", tz = "Australia/Sydney"),
+           as.POSIXct("2001-09-11 12:46:40", tz = "UTC"))
+wtc1s
+```
+
+Internally these are stored as "seconds since the **epoch** (i.e., `1970-01-01 00:00:00 UTC`)".
+
+```{r}
+unclass(wtc1s)
+```
+
+But "moments in time" are probably not the only kind of instant we might be interested in.
+Another kind of instant is "time of day" 
+
+
 
 ```{r}
 #| label: fig-time-zone
@@ -570,6 +781,7 @@ tz <- "America/New_York"
 
 db <- dbConnect(duckdb::duckdb(), timezone_out = tz)
 
+rs <- dbExecute(db, "INSTALL icu")
 rs <- dbExecute(db, "LOAD icu")
 rs <- dbExecute(db, str_glue("SET TimeZone TO '{tz}'"))
 
@@ -789,6 +1001,8 @@ plt.show();
 
 # The boring details
 
+Now that I have explaing 
+
 ## Reading the data
 
 Each quarter's zip file (`zipfile`) actually contains dozens of text files (`.txt`) in TSV ("tab-separated values") form.
@@ -931,17 +1145,9 @@ In addition to these missing values, I discovered in working with the data that 
 For example, `"0"` is used for some fields, while `"00000000"` is used to mark dates as missing, and `"12/31/9999 12:00:00 AM"` is used for timestamps.
 I recoded such sentinel values as `NA` in each case.
 
-
-
 # The service-level agreement
 
-**Nothing from here up has been updated from original note**
-
-It is perhaps helpful to think of dividing the data science workflow into processes with different teams being responsible for the different processes.
-From this perspective, the *Curate* team manufactures data that are delivered the *Understand* team.
-While I won't discuss transfer pricing (i.e., how much the  *Understand* team needs to pay the *Curate* team for the data), we might consider the analogy of a [service-level agreement](https://en.wikipedia.org/wiki/Service-level_agreement) between the two teams.
-
-One template for a service-level agreement would specify that data from a particular source will be delivered to the *Understand* team with the following conditions:
+@Gow:2026aa suggested a pro forma service-level agreement covering the deliverables from the *Curate* team with the following elements:
 
 1. The data will be presented as a set of tables in a modern storage format.
 2. The division into tables will adhere to a pragmatic version of good database principles. 
@@ -964,18 +1170,14 @@ One storage format that I have used in the past would deliver data as tables in 
 The *Understand* team could be given access data from a particular source organized as a **schema** in a database.
 Accessing the data in this form is easy for any modern software package.
 One virtue of this approach is that the data might be curated using, say, Python even though the client will analyse it using, say, Stata.^[One project I worked on involved Python code analysing text and putting results in a PostgreSQL database and a couple of lines of code were sufficient for a co-author in a different city to load these data into Stata.]
-
-I chose to use parquet files for `ffiec.pq`.
+I chose to use Parquet files for `ffiec.pq`, in part because I don't have a PostgreSQL server to put the data into and share with you.
+But Parquet files offer high performance, are space-efficient, and can be used with any modern data analysis tool.
 
 ## Good database principles
 
-I included the word "pragmatic" because I think it's not necessary in most cases to get particularly fussy about [database normalization](https://en.wikipedia.org/wiki/Database_normalization).
-That said, it's probably bad practice to succumb to requests for One Big Table that the *Understand* team might make.
-It is reasonable to impose some obligation to merge tables that are naturally different tables on the client *Understand* team.
-
-In general, I think one wants to be fairly conservative in considering database principles with a data package.
-If the data are workable and make sense in the form they come in, then it may make most sense to keep them in that form.
-
+While I argued that one does not want to get "particularly fussy about database normalization", if anything I may have pushed this further than some users might like.
+However, with `ffieq_pivot()`, it is relatively easy (and not too costly) to get the data into a "wide" form if that is preferred.
+The legacy version of Call Reports data offers by WRDS went to the other extreme with a "One Big Table" approach, which meant that this data set never moved to PostgreSQL because of limits there.^[A rule of thumb might be that, if you cannot store your fairly standard data in PostgreSQL, then perhaps you need to revisit the structure of the data.]
 
 ## Primary keys
 
@@ -984,16 +1186,43 @@ A primary key of a table will be a set of variables that can be used to uniquely
 In general a primary key will have no missing values.
 Part of data curation will be confirming that a proposed primary key is in fact a valid primary key."
 
-For all of the schedules, `IDRSSD` and `date` combine to make a valid primary key.
-To facilitate checking this, I include the function `ffiec_check_pq_keys()`, which checks that a proposed primary key valid for the table formed by combining the associated files for all quarters for a specified `schedule`.
-I first apply to it the Schedule RC table (`schedule = "rc"`):
 
+```{r}
+#| echo: false
+#| cache: true
+schedule <- c("por", "ffiec_float", "ffiec_int", 
+              "ffiec_str", "ffiec_bool", "ffiec_date",
+              "ffiec_schedules")
+pkeys <- list(c("IDRSSD", "date"),
+              c("IDRSSD", "date", "item"),
+              c("IDRSSD", "date", "item"),
+              c("IDRSSD", "date", "item"),
+              c("IDRSSD", "date", "item"),
+              c("IDRSSD", "date", "item"),
+              c("item", "date"))
 
-We can see that `c("IDRSSD", "date")` is a valid primary key for Schedule RC because there are no rows in `null_violations` and no rows in `pk_violations` (checks for uniqueness) and `ok` is `TRUE`.
+pkey_checks <- 
+  tibble(schedule, pkeys) |> 
+  mutate(check = map2(schedule, pkeys, 
+                             \(x, y) ffiec_check_pq_keys(db, x, y))) |>
+  mutate(check = map_lgl(check, \(x) all(x$ok))) 
+```
 
-We can use `ffiec_list_pqs()` to identify all schedules and pass that to `ffiec_check_pq_keys()`:
+```{r}
+#| label: tbl-pkey
+#| tbl-cap: Primary key checks
+#| echo: false
+pkey_checks |>
+  mutate(schedule = paste0("`", schedule, "`"),
+         pkeys = purrr::map(pkeys, \(x) paste0("`", x, "`", collapse = ", "))) |>
+  rename(`Schedule` = schedule, `Primary key` = pkeys,
+         `Check` = check) |>
+  knitr::kable()
+```
 
-As can be seen, `IDRSSD` and `date` form a primary key for all schedules (including the POR data).
+Valid primary keys for each schedule are shown in @tbl-pkey.
+To checking these, I used the function `ffiec_check_pq_keys()`, which checks the validity of a proposed primary key for a schedule.
+That every column except `value` forms part of the primary key is what allows us to use `ffiec_pivot()` to create unique values in the resulting "wide" tables.
 
 ## Data types
 
@@ -1034,7 +1263,7 @@ Beyond that the document you are reading now is a form of documentation, as is t
 If a new zip file appears on the FFIEC Bulk Data website, you can download it using the process outlined in @sec-raw-data.
 Just changing the `[:4]` to `[0]` and the script downloads the latest file.
 
-Then run the following code and the data will be updated.
+Then run the following code and the data will be updated:
 
 ```{r}
 #| cache: true
@@ -1051,18 +1280,18 @@ results <-
 results |> count(date, ok)
 ```
 
-
-
-
 ## Data version control
 
 @Welch:2019aa argues that, to ensure that results can be reproduced, "the author should keep a private copy of the full data set with which the results were obtained."
 This imposes a significant cost on the *Understand* team to maintain archives of data sets that may run to several gigabytes or more and it would seem much more efficient for these obligations to reside with the parties with the relevant expertise.
 Data version control is a knotty problem and one that even some large data providers don't appear to have solutions for.
 
-Given that I am delivering the Call Report data not as the data files, but as an R package along with instructions for obtaining the zip files from the FFIEC Bulk Data website.
+I am delivering the Call Report data not as the data files, but as an R package along with instructions for obtaining the zip files from the FFIEC Bulk Data website.
+So I cannot be said to be providing any degress of version control of data.
 That said, if a user retains the downloaded zip files, the application of the `ffiec.pq` functions to process these into Parquet files should provide a high degree of reproducibility of the data for individual researcher.^[Note that a researcher might need to use a specific version of the `ffiec.pq` package to achieve full reproducibility, but the `pak` package allows for that.]
 
-For my own purposes, I achieve a modest level of data version control by using Dropbox, which offers the ability to restore previous versions of data files.
+For my own purposes, I achieve a *modest* level of data version control by using Dropbox, which offers the ability to restore some previous versions of data files.
+
+# The future of data curation
 
 # References {-}
