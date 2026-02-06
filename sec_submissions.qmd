@@ -1,7 +1,7 @@
 ---
 title: "Working with JSON data: The case of SEC submissions data"
 author: Ian D. Gow
-date: 2026-02-03
+date: 2026-02-02
 date-format: "D MMMM YYYY"
 format:
   html:
@@ -12,6 +12,9 @@ format:
       - left=2.5cm
       - right=2.5cm
     papersize: a4
+    filters:
+      - abstract.lua
+    include-in-header: preamble.tex
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
@@ -25,7 +28,7 @@ Finally, I introduce what I call a **batch-processing paradigm**, which is a gen
 :::
 
 One of the goals of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@gow2024empirical] is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz) [@Wickham:2023aa].
-That is, by working through *Empirical Research in Accounting: Tools and Methods* (along with the occasional detour to *R for Data Science*) the reader will achieve a level of proficiency at or above that provided by studying *R for Data Science*.^[*Empirical Research in Accounting: Tools and Methods* was published in print form by CRC Press in December 2024, but remains free online.]
+That is, by working through @gow2024empirical (along with the occasional detour to @Wickham:2023aa), the reader will achieve a level of proficiency at or above that provided by studying *R for Data Science*.^[@gow2024empirical was published in print form by CRC Press in December 2024, but remains free online.]
 
 While @gow2024empirical does cover most of the content of @Wickham:2023aa, a few gaps remain: spreadsheets, dates and times, and hierarchical data are three notable ones.
 The omission of [spreadsheets](https://r4ds.hadley.nz/spreadsheets) is not accidental given our focus on academic research applications.^[Explaining my views on the (limited) role of spreadsheets in research probably requires a separate note, but a good starting point is @Broman:2018aa.]
@@ -646,14 +649,18 @@ process_companies <- function(ciks, dest_table = "companies",
   companies <-
     company_data |>
     select(-any_of(c("tickers", "exchanges", 
-                     "addresses", "ownerOrg")))
+                     "addresses", "ownerOrg"))) |>
+    mutate(across(any_of(c("country", "stateOrCountry", "countryCode")), 
+                  as.character))
   
   addresses <-
     company_data |> 
     select(cik, addresses) |> 
     unnest_longer(addresses, indices_to = "address_type") |> 
     unnest_wider(addresses) |>
-    select(cik, address_type, everything())
+    select(cik, address_type, everything()) |>
+    mutate(across(any_of(c("country", "stateOrCountry", "countryCode")), 
+                  as.character))
   
   tickers <-
     company_data |> 
@@ -686,7 +693,8 @@ cik_sample |>
   system.time()
 ```
 
-Second, the filing-level data. The `process_filings()` function is relatively straightforward because just one table is produced by this code.
+Second, the filing-level data.
+The `process_filings()` function is relatively straightforward because just one table is produced by this code.
 
 ```{r}
 process_filings <- function(ciks, dest_table = "filings",
@@ -752,6 +760,7 @@ The basic idea of `get_ciks()` is quite simple: The `ciks` table (the universe o
 Finally, `get_ciks()` returns a sample of `n_ciks` CIKs.
 
 ```{r}
+#| label: get_ciks
 get_ciks <- function(n_ciks = 100, dest_table = "companies",
                            dbdir = db_path) {
   db <- dbConnect(duckdb::duckdb(), dbdir = dbdir, read_only = TRUE)
@@ -841,11 +850,11 @@ Here step (2) will involve `population |> anti_join(processed)` and if steps (2)
 ## Exporting the data to Parquet format
 
 Finally, we export the four tables we have created as Parquet files.
-The Parquet format is described in *R for Data Science* [@Wickham:2023aa, p. 393] as "an open standards-based format widely used by big data systems."
+The Parquet format is described in @Wickham:2023aa [p. 393] as "an open standards-based format widely used by big data systems."
 Parquet files provide a format optimized for data analysis, with a rich type system.
-More details on the Parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of @Wickham:2023aa and a guide to creating a Parquet data repository are provided [here](https://iangow.github.io/far_book/parquet-wrds.html).
+More details on the Parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of @Wickham:2023aa and a guide to creating a Parquet data repository is provided in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of @gow2024empirical.
 
-For reasons discussed [here](https://iangow.github.io/far_book/parquet-wrds.html#converting-wrds-data-to-parquet), I use the environment variable `DATA_DIR` to identify the location in which I will store the data.
+For reasons discussed in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of @gow2024empirical, I use the environment variable `DATA_DIR` to identify the location in which I will store the data.
 If you do not have `DATA_DIR` set, you can easily set it using a command like this:^[Change the directory to an appropriate location on your own computer.]
 
 ```{r}
