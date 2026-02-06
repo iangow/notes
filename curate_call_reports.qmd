@@ -4,7 +4,7 @@ author:
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2026-02-04
+date: 2026-02-07
 number-sections: true
 date-format: "D MMMM YYYY"
 format:
@@ -22,11 +22,14 @@ bibliography: papers.bib
 csl: jfe.csl
 ---
 
-I recently [@Gow:2026aa] proposed an extended version of model of the data science "whole game" of in [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
-In @Gow:2026aa, I used Australian stock price data to illustrate the data curation process and, in this note, I use "Call Report" data for United States banks as an additional illustration of my proposed extension.
+I recently [@Gow:2026aa] proposed an extension to the data science "whole game" of [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
+In @Gow:2026aa, I used Australian stock price data to illustrate the data curation process and, in this note, I use US bank "Call Report" data as a second illustration.
+In effect, I provide complete instructions for building a high-performance data library covering all Call Reports data provided by the FFIEC Bulk Data website that can be construction in less than ten minutes on fast hardware (or a couple of hours on an older machine).
+I also give a few brief demonstrations of how to use the curated data, with examples for both R and Python.
+I conclude by discussing challenges encountered during processing and offering some observations about AI and data curation.
 
 My extension of the data science "whole game"---depicted in @fig-whole-game below---adds a *persist* step to the original version, groups it with *import* and *tidy* into a single process, which I call *Curate*.
-As a complement to the new *persist* step, I also add a *load* step to the *Understand* process.^[As will be seen this, *load* step will not generally be an elaborate one.
+As a complement to the new *persist* step, I also add a *load* step to the *Understand* process.^[As will be seen this, this *load* step will not generally be an elaborate one.
 The inclusion of a separate *load* step serves more to better delineate the distinction between the *Curate* process and the *Understand* process.]
 
 ```{r}
@@ -36,14 +39,14 @@ The inclusion of a separate *load* step serves more to better delineate the dist
 #| fig-cap: |
 #|   A representation of the data science workflow
 #| fig-alt: |
-#|   A diagram displaying the data science workfow.
+#|   A diagram displaying the data science workflow.
 
 knitr::include_graphics("images/data-science.png", dpi = 270)
 ```
 
 In this note, as in @Gow:2026aa, I focus on the data curation (*Curate*) process.
-My rationale for separating *Curate* from *Understand* is that I believe it clarifies certain best practices in the curation of data.
-In @Gow:2026aa, I used the notion of a service-level agreement to delineate how the two processes can be delineated.
+My rationale for separating *Curate* from *Understand* is that I believe that thinking about these separately clarifies certain best practices in the curation of data.
+In @Gow:2026aa, I used the notion of a service-level agreement to explain how the two processes can be delineated.
 My conception of *Curate* [@Gow:2026aa] encompasses some tasks that are included in the *transform* step (part of the *Understand* process) of @Wickham:2023aa.
 
 While I will argue that even the sole analyst who will perform all three processes can benefit from thinking about *Curate* separate from *Understand*, it is perhaps easiest to conceive of the *Curate* and *Understand* processes as involving different individuals or organizational units of the "whole game" of a data analysis workflow.
@@ -54,11 +57,11 @@ In effect, I will act as a self-appointed, single-person, unpaid *Curate* team a
 This note was written and rendered with [Quarto](https://quarto.org) using [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.qmd) and the latest PDF version is available [here](https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.pdf).
 
-In writing the R portions of this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "farr", "DBI", "duckdb", "dbplyr")` within R to install all the packages other than `ffiec.pq` that you will need to run the R code in this note.]
+In writing the R portions of this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "farr", "DBI", "duckdb", "pak", dbplyr")` within R to install all the packages other than `ffiec.pq` that you will need to run the R code in this note.]
 
 I have not submitted `ffiec.pq` to CRAN.
-First, in R install the `pak` package using `install.packages("pak")`.
-Then, use `pak` to install my package using `pak::pak("iangow/ffiec.pq")`.
+To install `ffiec.pq`, first install the `pak` package using `install.packages("pak")`.^[I already included `pak` in the command in the footnote to the previous paragraph.]
+Then, use `pak` to install `ffiec.pq` by typing `pak::pak("iangow/ffiec.pq")` in the R console.
 
 ```{r}
 #| message: false
@@ -68,14 +71,18 @@ library(farr)
 library(dbplyr)
 library(DBI)
 ```
+
+For the Python portion of this note, I believe that you need `polars`, `pandas`, and `ffiec_data_collector` (if you use Python to get the zip files).
+In generating some plots, I use `seaborn` and `matplotlib`, but I don't include the associated code for reasons of space.
+So `pip install polars pandas ffiec_data_collector` probably suffices.
 :::
 
 # Call Reports
 
-According to [its website](https://www.ffiec.gov/about/mission), the Federal Financial Institutions Examination Council (FFIEC) "is an interagency body ... focused on promoting consistency in examination activities [related to United States financial institutions].
+According to [its website](https://www.ffiec.gov/about/mission), the Federal Financial Institutions Examination Council (FFIEC) "is an interagency body ... focused on promoting consistency in examination activities [related to United States financial institutions]."
 The FFIEC "does not regulate financial institutions [and its] jurisdiction is limited to prescribing uniform principles, standards, and report forms for the federal examination of financial institutions and making recommendations to promote uniformity in the supervision of financial institutions."
 
-One of the services provide by the FFEIC is its "Central Data Repository's Public Data Distribution web site.
+One of the services provided by the FFIEC is its "Central Data Repository's Public Data Distribution website.
 Through [this site](https://cdr.ffiec.gov/public/ManageFacsimiles.aspx) you can obtain Reports of Condition and Income (Call Reports) for most FDIC-insured institutions. 
 The information available on this site is updated to reflect the most recent data for both prior and current periods. 
 The earliest data provided is from March 31, 2001."
@@ -89,22 +96,22 @@ These data are reported at the level of the individual bank."
 While raw data are offered by the FFIEC, some work is required to arrange the data into a form amenable to further analysis.
 In other words, some curation of the data is required.
 
-Several commercial data providers of the FFIEC data in a curated form, but accessing those requires an institutional or individual subscription.
-It appears that the Federal Reserve Bank of Chicago provided a curated data set on its [website](https://www.chicagofed.org/banking/financial-institution-reports/commercial-bank-data), but no longer does so.
+Several commercial data providers offer the FFIEC data in a curated form, but accessing those requires an institutional or individual subscription.
+It appears that the Federal Reserve Bank of Chicago once provided a curated data set on its [website](https://www.chicagofed.org/banking/financial-institution-reports/commercial-bank-data), but no longer does so.
 WRDS provides Call Report data extracted from the same sources I used as part of its basic subscription.
 Of course, no commercial providers of the data provide the source code used to transform the raw data into the form they deliver it in.
 
 Other services provide "API wrappers" that allow users to access the data via the FFIEC API, but this approach is best suited to real-time feeds of small amounts of data.
-Collation of the data into a single repository using this approach seems unfeasible.
+Collation of the data into a single local, comprehensive repository using this approach seems impractical given the scale of the data.
 
 Regardless of the availability of paid curation services, in this note I will imagine that such sources either do not exist or are unavailable to my hypothetical *Understand* clients and illustrate how one can curate Call Reports data from the FFIEC source.
 
 ## Getting the raw data {#sec-raw-data}
 
-The FFIEC [Bulk Data Download site] provides the Call Report data in two forms.
+The FFIEC [Bulk Data Download site](https://cdr.ffiec.gov/public/pws/downloadbulkdata.aspx) provides the Call Report data in two forms.
 The first is as zipped tab-delimited data files, one for each quarter.
 The second is as zipped XBRL data files, one for each quarter.
-At the time of writing, the standard approach to getting the complete data archive amounts to point-and-clicking to download each of the 99 files for each format.
+At the time of writing, the standard approach to getting the complete data archive amounts to pointing and clicking to download each of the roughly 100 files for each format.^[At the time of writing, there are 99 files, but each quarter will bring a new file to be processed.]
 
 The FFIEC data sets are not as amenable to automated downloading as those offered by other government agencies such as the SEC (see my earlier [note on XBRL data](https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf)), the PCAOB (see my [note on Form AP data](https://github.com/iangow/notes/blob/main/form_ap_names.pdf)), or even the Federal Reserve itself (I used data from the [MDRM site](https://www.federalreserve.gov/apps/mdrm/) in preparing this note).
 However, a group of individuals has contributed the Python package `ffiec_data_collector` that we can use to collect the data.^[I discovered this package after writing most of this note. In my case, I pointed-and-clicked to get many of the files and [Martien Lubberink](https://people.wgtn.ac.nz/martien.lubberink) of Victoria University of Wellington kindly provided the rest.]
@@ -116,7 +123,7 @@ For some data sets, this approach to organization facilitates switching code fro
 I will adopt that approach for the purposes of this note.
 
 As the location of my "raw data" repository is found in the the environment variable `RAW_DATA_DIR`, I can identify that location in Python easily.
-The following code specifies the download directory as the directory `ffiec` within my raw data repository.^[I recommend that readers follow a similar approach if following along with note, as it makes subsequent steps easier to implement. A reader can simply specify `os.environ['RAW_DATA_DIR'] = "/Users/igow/Dropbox/raw_data"`, substituting a location where the data should go on his or her computer.]
+The following code specifies the download directory as the directory `ffiec` within my raw data repository.^[I recommend that readers follow a similar approach if following along with this note, as it makes subsequent steps easier to implement. A reader can simply specify `os.environ['RAW_DATA_DIR'] = "/Users/igow/Dropbox/raw_data"`, substituting a location where the data should go on his or her computer.]
 
 ```{python}
 import os
@@ -170,8 +177,8 @@ Note that the downloaded files occupy about 800 MB of disk space, so make sure y
 
 While this note does not use the XBRL files, you can download them using `ffiec_data_collector` by simply replacing `TSV` with `XBRL` in the code above.
 These zip files are larger than the TSV zip files, occupying about 6 GB of disk space.
-The `ffiec.pq` package does offer some rudimentary ability to process these files, but working with these is slow.
-To illustrate I just process one XBRL zip file.
+The `ffiec.pq` package does offer some rudimentary ability to process these files, but working with them is slow.
+To illustrate I process just one XBRL zip file.
 
 ```{r}
 #| cache: true
@@ -181,14 +188,14 @@ ffiec_process_xbrls(zipfiles$zipfile[1]) |> system_time()
 
 ## Processing the data
 
-With the raw data files in hand, the next task it to process these into files useful for analysis.
+With the raw data files in hand, the next task is to process these into files useful for analysis.
 For reasons I will discuss below, I will process the data into Parquet files.
 The Parquet format is described in *R for Data Science* [@Wickham:2023aa, p. 393] as "an open standards-based format widely used by big data systems."
 Parquet files provide a format optimized for data analysis, with a rich type system.
-More details on the parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of @Wickham:2023aa and every code example in @Gow_2024 can be executed against Parquet data files created using my `db2pq` Python package as described in Appendix E of that book.
+More details on the Parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of @Wickham:2023aa and every code example in @Gow_2024 can be executed against Parquet data files created using my `db2pq` Python package as described in Appendix E of that book.
 
 The easiest way to run the code I used to process the data is to install the `ffiec.pq` R package I have made available on GitHub.
-And the easiest way to run the package is to set the locations for the downloaded raw data files from above and for the processed data using the environment variables `RAW_DATA_DIR` and `DATA_DIR`, respectively.
+And the easiest way to use the package is to set the locations for the downloaded raw data files from above and for the processed data using the environment variables `RAW_DATA_DIR` and `DATA_DIR`, respectively.
 By default, the `ffiec.pq` package assumes that the raw data files can be found in a directory `ffiec` that is a subdirectory of `RAW_DATA_DIR`.
 Also, the `ffiec.pq` package will place the processed data it creates in a directory `ffiec` that is a subdirectory of `DATA_DIR`.
 
@@ -208,8 +215,10 @@ Sys.setenv(RAW_DATA_DIR="/Users/igow/Dropbox/raw_data")
 Sys.setenv(DATA_DIR="/Users/igow/Dropbox/pq_data")
 ```
 
-Having set these environment variables, I can load my package and run a single command `ffiec_process()` without any arguments to process *all* the raw data files.
-This takes four or five minutes for me:^[Note I am using the argument `use_multicore = TRUE`, which gives me about a five-time improvement in performance.]
+Having set these environment variables, I can load my package and run a single command `ffiec_process()` without any arguments to process *all* the raw data files.^[Note I am using the argument `use_multicore = TRUE`, which gives me about a five-time improvement in performance, but you will see different results depending on your system.
+You might test the code on a few files before running the whole thing.
+The `ffiec_process()` can accept a list of fully qualified paths to zipfiles, which can be created with the help of `ffiec_list_zips()`.]
+This takes about five minutes to run (for me):
 
 ```{r}
 #| cache: true
@@ -222,6 +231,7 @@ results <- ffiec_process(use_multicore = TRUE) |> system_time()
 #| include: false
 db <- dbConnect(duckdb::duckdb())
 results <- load_parquet(db, "ffiec_process_data", "ffiec") |> collect()
+DBI::dbDisconnect(db)
 ```
 
 Note that, behind the scenes, the `ffiec_process()` extracts the data in two phases.
@@ -238,8 +248,8 @@ We can easily confirm that all rows have `ok` equal to `TRUE`:
 results |> count(ok)
 ```
 
-The results table also includes the field `repairs` that we can inspect to determine if any "repairs" were made to the data as it was processed.
-As can be seen, a minority of the `r dim(results)[1]` files needed repairs.
+The results table also includes the field `repairs` that we can inspect to determine if any "repairs" were made to the data as it was processed in the first phase.
+As can be seen, a minority of the `r dim(results)[1]` first-phase files needed repairs.
 I discuss these repairs in more detail in @sec-repairs.
 
 ```{r}
@@ -252,13 +262,20 @@ results |>
 
 ## Using the data with R
 
-So what have we just done?
-In a nutshell, we have processed each of the 99 zip files into seven files.
+So what has the `ffiec.pq` package just done?
+In a nutshell, it have processed each of the nearly 100 zip files into seven Parquet files, and I discuss these in turn.
 
 ### "Panel of Reporters" (POR) data
 
 The first file is the ["Panel of Reporters" (POR) table](https://cdr.ffiec.gov/CDR/public/cdrhelp/Panel%20Of%20Reporters.htm), which provides details on the financial institutions filing in the respective quarter.
-We can use the `pq_file` argument to `ffiec_scan_pqs()` to load a single file into DuckDB.
+
+To access the data using the `ffiec.pq` functions, we just need to create a connection to an in-memory DuckDB database, which is a simple one-liner.
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+```
+
+From there we have the option to load a single Parquet file using the `pq_file` argument of the `ffiec_scan_pqs()` function:^[Note that nothing is being "loaded" into RAM, the file is merely being scanned by DuckDB.]
 
 ```{r}
 por_20250930 <- ffiec_scan_pqs(db, pq_file="por_20250930.parquet")
@@ -270,7 +287,7 @@ por_20250930 |>
 por_20250930 |> count() |> collect()
 ```
 
-But more often, it will be more convenient to just read all files in one step:
+But it will generally be more convenient to just read all files in one step, which we can do like this.
 
 ```{r}
 por <- ffiec_scan_pqs(db, "por")
@@ -282,15 +299,20 @@ por |>
 por |> count() |> collect()
 ```
 
-
 ### Item-schedules data
 
 The second data set is `ffiec_schedules`.
 The zip files provided by the FFIEC Bulk Data site comprise several TSV files organized into "schedules" corresponding the particular forms on which the data are submitted by filers.
 While the `ffiec.pq` package reorganizes the data by data type, information about the original source files for the data are retained in `ffiec_schedules`.
+We can load this using the following code:
 
 ```{r}
 ffiec_schedules <- ffiec_scan_pqs(db, "ffiec_schedules")
+```
+
+And here are the first 10 rows of this data set.
+
+```{r}
 ffiec_schedules |> head(10) |> collect()
 ```
 
@@ -318,17 +340,17 @@ Schedule RI is the income statement and "Provision for loan and lease losses" is
 Schedule RI-BII is "Charge-offs and Recoveries on Loans and Leases" and provides detail on loan charge-offs and recoveries, broken out by loan category, for the reporting period.
 As part of processing the data, the `ffiec.pq` package confirms that the value for any given item for a specific `IDRSSD` and `date` is the same across schedules for *all* items in the data.
 
-Each of the other five files represents data from the schedules for that quarter for a particular data type, as shown in @tbl-types
+Each of the other five files represents data from the schedules for that quarter for a particular data type, as shown in @tbl-types:
 
-| Key   | Arrow type |
-|------:|------------|
-| float | Float64    |
-| int   | Int32      |
-| str   | Utf8       |
-| date  | Date32     |
-| bool  | Boolean    |
+| Key   | Arrow type | Access code |
+|------:|------------|-------------|
+| float | Float64    | `ffiec_scan_pqs(db, "ffiec_float")` |
+| int   | Int32      | `ffiec_scan_pqs(db, "ffiec_int")` |
+| str   | Utf8       | `ffiec_scan_pqs(db, "ffiec_str")` |
+| date  | Date32     | `ffiec_scan_pqs(db, "ffiec_date")` |
+| bool  | Boolean    | `ffiec_scan_pqs(db, "ffiec_bool")` |
 
-: Table keys to Arrow types {#tbl-types}
+: Table keys, arrow types, and access code {#tbl-types}
 
 We can use the data set `ffiec_items` to find out where a variable is located, based on its Arrow type.
 
@@ -342,395 +364,111 @@ As might be expected, most variables have type `Float64` and will be found in th
 ffiec_items |> count(data_type, sort = TRUE)
 ```
 
-### Floating-point data items
-
-We can access the data in `ffiec_float` files using `ffiec_scan_pqs()`.
-We can append a date in `yyyymmdd` form to load the file for just one quarter.
-
-```{r}
-ffiec_float_20250930 <- 
-  ffiec_scan_pqs(db, pq_file = "ffiec_float_20250930.parquet")
-```
-
-But more often, we might just specify `ffiec_float`, so to scan all data in one step.
-
-```{r}
-ffiec_float <- ffiec_scan_pqs(db, "ffiec_float")
-ffiec_float |> head() |> collect()
-```
-
-
-
-
-### Integer data items
-
-As can be seen by inspecting `ffiec_items`, most items with `data_type` of `Int32` are counts of some kind, such as "number of loans" or "number of accounts":
-
-```{r}
-ffiec_items |> 
-  filter(data_type == "Int32") |>
-  select(item, item_name)
-```
-
-
-```{r}
-ffiec_int <- ffiec_scan_pqs(db, "ffiec_int")
-```
-
-If we want to add data from `ffiec_items` to tables from Parquet files, we need to copy the `ffiec_items`, a local data frame, to our DuckDB database.
-We can do this using the `copy = TRUE` argument when joining tables.
-
-```{r}
-ffiec_int |>
-  inner_join(ffiec_items, copy = TRUE) |>
-  select(IDRSSD, date, item, value, item_name) |>
-  head() |>
-  collect()
-```
-
-### Date data items
-
-Surprisingly for a database with financial statement elements, there are very few data items related to dates in the Call Report data.
-
-```{r}
-ffiec_date <- ffiec_scan_pqs(db, "ffiec_date")
-```
-
-```{r}
-ffiec_date |> 
-  count(item)
-```
-
-```{r}
-ffiec_date |> 
-  inner_join(ffiec_items, by = "item", copy = TRUE) |>
-  count(item, item_name) |>
-  collect()
-```
-
-We can't quite see all of `item_name` for the first row above, so let's use `strwrap()` to fit it on the page:
-
-```{r}
-ffiec_items |>
-  filter(item == "RIAD9106") |>
-  select(item_name) |>
-  pull() |>
-  strwrap(width = 78)
-```
-
-Note that `date` is a value I inferred from the file names of the zip files I processed.
-A question might be whether `RCON9999` has the same value as `date`.
-
-```{r}
-ffiec_date |>
-  filter(item == "RCON9999") |>
-  count(same_date = value == date) |>
-  collect()
-```
-
-```{r}
-ffiec_date |>
-  filter(item == "RCON9999") |>
-  filter(value != date) |>
-  collect()
-```
-Look at the data in the POR table, it seems that this firm misreported in that it providing something about when it filed the data rather than the financial reporting period-end.
-
-```{r}
-por |> 
-  filter(IDRSSD == 3345168, date == "2006-03-31") |> 
-  select(last_date_time_submission_updated_on) |>
-  collect()
-```
-
-
-### Boolean data items
-
-Boolean data items are `TRUE` or `FALSE`.
-There are 42 such items in the Call Report data:
-
-```{r}
-ffiec_items |>
-  filter(data_type == "Boolean") |>
-  select(item, item_name)
-```
-
-I don't know what it means for an entity's "world wide web site" to be "interactive", but it is easy to find out how many banks have such sites:
-
-```{r}
-ffiec_bool <- ffiec_scan_pqs(db, "ffiec_bool")
-
-ffiec_bool |>
-  filter(item == "RCFD4088") |>
-  count(value) |>
-  collect()
-```
-
-### String data items
-
-There are `r ffiec_items |> filter(data_type == "String") |> count() |> pull()` string (text) items in the FFIEC Call Report database.
-
-```{r}
-ffiec_items |>
-  filter(data_type == "String") |>
-  select(item, item_name)
-```
-
-As can be seen, most of the text items are reported on Schedule ENT ("Changes in Equity Capital").
-
-```{r}
-ffiec_str <- ffiec_scan_pqs(db, "ffiec_str") 
-
-ffiec_str |>
-  inner_join(ffiec_schedules) |>
-  mutate(schedule = unnest(schedule)) |>
-  group_by(schedule) |>
-  summarize(n = n(), 
-            min_date = min(date, na.rm = TRUE),
-            max_date = max(date, na.rm = TRUE),
-            .groups = "drop") |>
-  arrange(desc(n)) |>
-  collect() 
-```
-But these are mostly basic information such as names and locations.
-
-```{r}
-ffiec_str |>
-  inner_join(ffiec_schedules) |>
-  mutate(schedule = unnest(schedule)) |>
-  filter(schedule == "ent") |>
-  inner_join(ffiec_items, by = "item", copy = TRUE) |>
-  count(item, item_name, sort = TRUE) |>
-  collect()
-```
-We can look a few of the most popular text items that do *not* appear on Schedule ENT:
-
-```{r}
-ffiec_str |>
-  inner_join(ffiec_schedules) |>
-  filter(!list_contains(schedule, "ent")) |>
-  mutate(schedule = unnest(schedule)) |>
-  inner_join(ffiec_items, by = "item", copy = TRUE) |>
-  count(item, item_name, schedule, sort = TRUE) |>
-  head(10) |>
-  collect()
-```
-
-## A small example
+### Example 1: Do bank balance sheets balance?
 
 If we were experts in Call Report data, we might know that domestic total assets is reported as item `RCFD2170` (on Schedule RC) for banks reporting on a consolidated basis and as item `RCON2170` for banks reporting on an unconsolidated basis.
+We might also know about `RCFD2948` and `RCFD3210` and so on.
+But we don't need to be experts to see what these items relate to:
 
 ```{r}
-ffiec_items |> filter(item %in% c("RCFD2170", "RCON2170"))
+bs_items <- c("RCFD2170", "RCON2170",
+              "RCFD2948", "RCON2948",
+              "RCFD3210", "RCON3210",
+              "RCFD3000", "RCON3000")
+
+ffiec_items |> filter(item %in% bs_items)
 ```
 
-We can make a small balance sheet table using the following code.
+The output above suggests we can make a "top level" balance sheet table using these items.
+The following code uses the DuckDB instance we created above (`db`) and the code provided in @tbl-types, to create `ffiec_float`, a "lazy" data table.
+Here "lazy" is a good thing, as it means we have access to all the data without having to load anything into RAM.
+As a result, this operation takes almost no time.
+
+```{r}
+ffiec_float <- ffiec_scan_pqs(db, "ffiec_float") |> system_time()
+
+ffiec_float
+```
+
+As can be seen, the data in `ffiec_float` are in a **long** format, with each item for each bank for each period being a single row.
+
+I then `filter()` to get data on just the items in `bs_items` and then use the the convenience function `ffiec_pivot()` from the `ffiec.pq` package to turn the data into a more customary **wide** form.
+I then use `coalesce()` to get the consolidated items (`RCFD`) where available and the unconsolidated items (`RCON`) otherwise.
+Because I `compute()` this table (i.e., actually calculate the values for each row and column), this step takes a relatively long time, but not too long given that the underlying data files are in the order of tens of gigabytes if loaded in RAM.^[Parquet files are compressed, so they use less space on disk than they do when they are loaded into RAM.]
 
 ```{r}
 bs_data <-
   ffiec_float |> 
-  ffiec_pivot(items = c("RCFD2170", "RCON2170",
-                        "RCFD2948", "RCON2948",
-                        "RCFD3210", "RCON3210",
-                        "RCFD3300", "RCON3300")) |>
+  ffiec_pivot(items = bs_items) |>
   mutate(total_assets = coalesce(RCFD2170, RCON2170),
          total_liabilities = coalesce(RCFD2948, RCON2948),
          equity = coalesce(RCFD3210, RCON3210),
-         total_eq_pref_liab = coalesce(RCFD3300, RCON3300)) |>
-  mutate(eq_liab = total_liabilities + equity) |>
+         nci = coalesce(RCFD3000, RCON3000)) |>
+  mutate(eq_liab = total_liabilities + equity + nci) |>
   compute() |>
   system_time()
 ```
 
-```{r}
-bs_data |> 
-  select(-starts_with("RC")) |>
-  head() |> 
-  collect()
+So, do balance sheets balance?
+Well, not always.^[Note that `collect()` here actually brings the data into R; `compute()` merely materializes the data as a table in the DuckDB database.]
 
+```{r}
 bs_data |>
-  select(-starts_with("RC"), -total_liabilities) |>
-  filter(eq_liab != total_assets) |>
-  mutate(implied_pref = total_assets - eq_liab) |>
-  arrange(desc(implied_pref)) |>
-  head() |>
+  count(bs_balance = eq_liab == total_assets) |>
   collect()
 ```
 
-```{r}
-bs_data |> 
-  filter(is.na(RCON2170), !is.na(RCFD2170)) |>
-  head() |> 
-  collect()
-```
+What's going on?
+Well, one possibility is simply rounding error.
+So in the following code, I set `imbalance_flag` to `TRUE` only if the gap is more than `1` (these are in thousands of USD).
 
 ```{r}
-bs_data |> 
-  filter(!is.na(RCON2170), !is.na(RCFD2170)) |>
-  head() |> 
-  collect()
-```
-
-```{r}
-bs_data |> 
-  filter(!is.na(RCON2170), !is.na(RCFD2170)) |>
-  filter(RCFD2170 < RCFD2170) |>
-  collect()
-```
-
-Let's say we're interested in the top 10 banks by total assets on this date.
-This is easy enough to produce.
-
-```{r}
-top_5 <-
-  bs_data |> 
-  filter(date == "2025-09-30") |>
-  window_order(desc(total_assets)) |>
-  mutate(ta_rank = row_number()) |> 
-  filter(ta_rank <= 5) |>
-  select(IDRSSD, date, total_assets, ta_rank) |>
-  compute() |>
-  system_time()
- 
-top_5 |> collect()
-```
-
-However, it's hard for us to know who these banks if we haven't committed the table of `IDRSSD` values to memory.
-Fortunately, we can get the information we need from `por`.
-
-```{r}
-top_5_names <-
-  top_5 |>
-  inner_join(por |> 
-               select(IDRSSD, date, financial_institution_name),
-             join_by(IDRSSD, date)) |>
-  arrange(ta_rank) |>
-  select(IDRSSD, financial_institution_name, ta_rank) |>
-  rename(bank = financial_institution_name) |>
-  compute() |>
-  system_time()
-
-top_5_names |> collect()
-```
-
-```{r}
-bs_panel_data <-
+balanced <-
   bs_data |>
-  select(IDRSSD, date, total_assets) |>
-  inner_join(top_5_names, join_by(IDRSSD)) |>
-  collect() |>
-  system_time()
+  mutate(imbalance = total_assets - eq_liab,
+         imbalance_flag = abs(total_assets - eq_liab) > 1) |>
+  select(-starts_with("RC"), -total_liabilities) |>
+  collect()
 ```
+
+This helps a lot.
+Now it seems that balance sheets *usually* balance, but not always.
 
 ```{r}
-#| label: fig-top-5
-#| fig-cap: "Total assets for top 5 banks: R version"
-#| fig-width: 8
-#| fig-height: 5
-#| echo: false
-bs_panel_data |>
-  filter(date >= "2020-01-01") |>
-  ggplot(aes(x = date, y = total_assets, colour = bank)) +
-  geom_line() +
-  theme(legend.position = "bottom") +
-  guides(colour = guide_legend(nrow = 3))
+balanced |>
+  count(imbalance_flag)
 ```
 
-### Working with timestamps
+The vast majority of apparent imbalances are small ...
+
+```{r}
+balanced |>
+  filter(imbalance_flag) |>
+  select(IDRSSD, date, total_assets, imbalance) |>
+  arrange(desc(imbalance))
+```
+
+... and they're all at least twenty years ago.
+
+```{r}
+balanced |>
+  filter(imbalance_flag) |>
+  select(IDRSSD, date, total_assets, imbalance) |>
+  arrange(desc(date))
+```
+
+### Example 2: When do banks submit their Call Reports?
 
 Working with dates and times (**temporal data**) can be a lot more complicated than is generally appreciated.
 Broadly speaking we might think of temporal data as referring to points in time, or *instants*, or to *time spans*, which include durations, periods, and intervals.^[See @Wickham:2023aa, p. 311-315, for discussion of time spans.]
-An instant will typically have a degree of precision associated with it, such as nanoseconds, seconds, minutes, hours, or days.
-If I say that "I started to eat lunch at 12:16 pm on 23 October 2025", I probably mean "I started somewhere between 12:16:00.0000 and 12:16:59.9999"; in other words, I am implicitly using minute precision (already pretty odd when talking about lunch).
-If I say, "I received the parcel you sent on 26 October 2025", then I am probably using day precision.
+Instants might refer to *moments in time* (e.g., in UTC) or as *times of day* (in local time).
 
-In both cases, I am probably implicitly using a time zone.
-Most people refers to instants using local times, so if I'm in Boston, I probably mean times in the time zone known in precise settings as `America/New_York`.
-So the first probably means (translated into R code):
+Suppose I were interested in understanding the times of day at which financial institutions submit their Call Reports.
+It seems that financial institutions file Call Reports with their primary federal regulator through the FFIEC's Central Data Repository.
+So I am going to use the `America/New_York` time zone as the relevant local time zone for this analysis, as the FFIEC is based in Washington, DC.
 
-```{r}
-t <- as.POSIXct("2025-10-23 12:16:00", tz = "America/New_York")
-```
-
-Note that `t` is actually stored internally as a UTC-based number, with the time zone kept only as metadata.
-
-```{r}
-format(t, tz = "UTC")
-```
-
-Converting a minute-precision instant in local time to UTC seems straightforward enough.
-But a date-precision "instant" in local time is more complicated.
-Some parts of `"2026-10-23"` as reckoned from `"America/New_York"` are actually `"2026-10-23"` in UTC.
-So when I say "26 October 2025", I probably do not mean "midnight on 26 October 2025 in `America/New_York`", but that's how R will interpret it:
-
-```{r}
-t2 <- as.POSIXct("2026-10-23", tz = "America/New_York")
-format(t2, tz = "UTC")
-```
-
-Now that we (kind of) understand instants, there are probably two ways to use instants.
-The way is as a precise "moment in time".
-
-For example, according to Wikipedia, Flight 11 crashed into the North Tower the World Trade Center at 8:46 am local time and Flight 175 crashed into the South Tower at 9:03 am.
-
-```{r}
-wtc1 <- as.POSIXct("2001-09-11 08:46:40 ", tz = "America/New_York")
-wtc2 <- as.POSIXct("2001-09-11 09:03:00 ", tz = "America/New_York")
-```
-
-```{r}
-wtc1
-```
-
-At that time, I was at home in Medford, Massachusetts and barely awake.
-My wife and I had returned from a trip to Australia and Korea in the early hours of the previous day.
-We were students and didn't have early classes that day.
-Some time before `wtc2`, my father called from Australia (`Australia/Sydney`) and suggested we turn the television on.
-My recollection is that he news coverage between `wtc1` and `wtc2` reflected a state of confusion about what had happened that changed once `wtc2` happened.
-
-My point is that if I asked my father where he was when `wtc1` occurred, he would likely give his location based on where he was at 10:46 pm in his local time.
-
-```{r}
-format(wtc1, tz = "Australia/Sydney")
-```
-
-For someone in New Zealand, "9/11" didn't happen on the eleventh of September, but on the twelfth.
-
-```{r}
-format(wtc1, tz = "Pacific/Auckland")
-```
-
-So probably the best (most "universal") way to express this "moment in time" is using UTC:
-
-```{r}
-format(wtc1, tz = "UTC")
-```
-
-For most research purposes, we're likely to be interest in instants as universally understood points in time.
-Partly reflecting this, the Parquet form stores everything with a time zone as a moment determined with reference to UTC.
-Another reason that Parquet does this is because timestamps expressed relative to UTC do not require tables of data telling it what the offsets for all the timezones are for all times.
-Avoiding having to store all that information probably sealed the deal for UTC-only, time zone--aware timestamps as the choice for Parquet.
-
-In fact, even R doesn't store time zone information in vectors with mixed time zones:
-
-```{r}
-wtc1s <- c(as.POSIXct("2001-09-11 08:46:40 ", tz = "America/New_York"),
-           as.POSIXct("2001-09-12 00:46:40", tz = "Pacific/Auckland"),
-           as.POSIXct("2001-09-11 22:46:40", tz = "Australia/Sydney"),
-           as.POSIXct("2001-09-11 12:46:40", tz = "UTC"))
-wtc1s
-```
-
-Internally these are stored as "seconds since the **epoch** (i.e., `1970-01-01 00:00:00 UTC`)".
-
-```{r}
-unclass(wtc1s)
-```
-
-But "moments in time" are probably not the only kind of instant we might be interested in.
-Another kind of instant is "time of day" 
-
-
+To illustrate some subtleties of working with time zones, I will set my computer to a different time zone from that applicable to where I am: `Australia/Sydney`, as seen in @fig-time-zone.^[I am writing this from the Boston area, so it would be insufficiently confusing if I did not make this change to my settings.
+In effect, I want to ensure that the code works for someone in a different time zone.]
 
 ```{r}
 #| label: fig-time-zone
@@ -745,15 +483,16 @@ Another kind of instant is "time of day"
 knitr::include_graphics("images/time_zone.png")
 ```
 
+Now, R sees my time zone as `Australia/Sydney`:
 
 ```{r}
 Sys.timezone()
 ```
 
-
-
-
-`"2026-01-13T10:13:21"`
+If we look at the underlying zip file for `2025-09-30`, you will see that `last_date_time_submission_updated_on` for the bank with `IDRSSD` of `37` is `"2026-01-13T10:13:21"`.
+In creating the `ffiec.pq` package, I assumed that this is a timestamp in `America/New_York` time.
+ 
+How does that show up when I look at the processed data in R using DuckDB?
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
@@ -771,20 +510,39 @@ por_default <-
 dbDisconnect(db)
 
 por_default
-
 por_default$dttm[1]
 ```
 
+By default, R/DuckDB is showing this to me as UTC.
+This is fine, but I want to analyse this as a local time.
+Here is how I can achieve this.
+First, I set the R variable `tz` to `"America/New_York"`.
 
 ```{r}
 tz <- "America/New_York"
+```
 
+Second, I connect to DuckDB anew, but I tell it I want it to use `"America/New_York"` as the time zone of output.
+But it's important to note that this is just a "presentation layer" and doesn't change how the database itself "thinks about" timestamps.
+
+```{r}
 db <- dbConnect(duckdb::duckdb(), timezone_out = tz)
+```
 
+Third, I make DuckDB a "time zone wizard" but installing and loading the `icu` extension.
+This extension enables region-dependent collations and time zones.
+The `icu` extension is probably not installed and enabled by default because it is large and not all applications need these features.
+This allows me to set the DuckDB server's time zone to `America/New_York`.
+
+```{r}
 rs <- dbExecute(db, "INSTALL icu")
 rs <- dbExecute(db, "LOAD icu")
 rs <- dbExecute(db, str_glue("SET TimeZone TO '{tz}'"))
+```
 
+Then I run the query from above again.
+
+```{r}
 por <- ffiec_scan_pqs(db, "por")
 por_ny <-
   por |> 
@@ -795,10 +553,16 @@ por_ny <-
   collect()
 
 por_ny
-
 por_ny$dttm[1]
 ```
 
+Now, we see that everything is in `America/New_York` local time, including the way the server sees the data (`dttm_text`) and how it's presented to the R user.
+
+Now that we have things working in local time, I will make a couple of plots of submission times.
+To show times on a single scale, I use the fudge of making them all times on a given day, which I somewhat arbitrarily choose to be `2025-01-01`.^[I say somewhat arbitrarily because you probably don't want to choose a day that is missing an hour due to shift from `EST` to `EDT`.]
+
+In the first plot---@fig-times-west---I present submission times divided by whether banks are located in "western states" or not.
+It does seem that western banks file later.
 
 ```{r}
 western_states <- c("HI", "WA", "CA", "AK", "OR", "NV")
@@ -839,6 +603,11 @@ plot_data |>
   theme(legend.position = "bottom")
 ```
 
+In the second plot---@fig-times-tz---I present submission times divided by whether `America/New_York` is on  Eastern Daylight Time (EDT) or Eastern Standard Time (EST).
+Looking at the plot, it seems that submission times have a similar distribution across the two time zones, suggesting that banks do not follow UTC, in which case there should be a difference in distributions for EDT and EST.
+
+One can definitely see a "lunch hour" and the submissions appear more likely to involve someone clicking a "Submit" button in some software package rather than IT setting up some overnight automated submission.
+
 ```{r}
 #| label: fig-times-tz
 #| fig-cap: Submission times by year and US/Eastern time zone
@@ -861,11 +630,24 @@ plot_data |>
 
 ## Using the data with Python
 
+### Example 3: Plotting trends in total assets for the biggest banks
+
+Lest you think that, because `ffiec.pq` is an R package, the processed data are of no interest to others, I now provide some basic analysis using Python.
+For this, I am going to use the Polars package rather than pandas.
+
+While pandas is the dominant data frame library in Python, it would struggle to work with Parquet data on the scale of what `ffiec.pq` has produced, even though it's a fairly modest amount of data.
+Loading 50-100 GB of data into RAM is not fun for most people's computer set-ups.
+Even if you have RAM in the hundreds of GBs, not loading it will save you time.
+
+As we shall see, Polars does fine with the data and, if anything, is noticeably faster than DuckDB (using `dplyr`) for the queries I use in this note.
+
 ```{python}
 from pathlib import Path
 import polars as pl
 import os
 ```
+
+Because there is no `ffiec.pq` package for Python, I mimic the `ffiec_scan_pqs()` function using the following code.
 
 ```{python}
 def ffiec_scan_pqs(schedule=None, *, 
@@ -886,31 +668,68 @@ def ffiec_scan_pqs(schedule=None, *,
     return pl.concat([pl.scan_parquet(f) for f in files])
 ```
 
+Now I can "load" the data much as I did with R.
+
 ```{python}
 ffiec_float = ffiec_scan_pqs("ffiec_float")
 por = ffiec_scan_pqs(schedule="por")
 ```
 
-```{python}
-cols = ["RCFD2170", "RCON2170"]
+While I am going to focus on total assets in this analysis, I show the parallels between the R code and the Polars code by collecting data on the same items.
+I don't need `ffiec_pivot()` with Polars because the built-in `.pivot()` method does everything I need.
+Polars is even faster than R/DuckDB.
 
+```{python}
+import time
+
+bs_items = ["RCFD2170", "RCON2170",
+              "RCFD2948", "RCON2948",
+              "RCFD3210", "RCON3210",
+              "RCFD3000", "RCON3000"]
+start = time.perf_counter()
 bs_data = (
     ffiec_float
-    .filter(pl.col("item").is_in(cols))
+    .filter(pl.col("item").is_in(bs_items))
     .pivot(
         on = "item",
-        on_columns = cols,
+        on_columns = bs_items,
         index = ["IDRSSD", "date"],
         values = "value")
     .with_columns(
-        total_assets = pl.coalesce(pl.col("RCFD2170"), pl.col("RCON2170"))
+        total_assets = pl.coalesce(pl.col("RCFD2170"), pl.col("RCON2170")),
+        total_liabs = pl.coalesce(pl.col("RCFD2948"), pl.col("RCON2948")),
+        equity = pl.coalesce(pl.col("RCFD3210"), pl.col("RCON3210")),
+        nci = pl.coalesce(pl.col("RCFD3000"), pl.col("RCON3000")),
     )
+    .with_columns(
+        eq_liab = pl.col("total_liabs") + pl.col("equity") + pl.col("nci")
+    )
+    .collect()
 )
+end = time.perf_counter()
+elapsed = end - start
+print(f'Time taken: {elapsed:.6f} seconds')
+```
+
+We can peek at the data.
+So Polars has processed GBs of data and created a table with over 600,000 rows in well under a second.
+Don't try this at home ... if you're using pandas.
+
+Note that `ffiec_float` is a `pl.LazyFrame`, but `.collect()` creates a non-lazy `pl.DataFrame`.
+
+```{python}
+#| include: false
+pl.Config.set_tbl_cols(7)
 ```
 
 ```{python}
-bs_data.head(5).collect()
+import polars.selectors as cs
+
+bs_data.select(cs.exclude("^(RCON|RCFD).*$"))
 ```
+
+I identify the top 5 banks by assets on `2025-09-30`.
+Because I will want to merge this with information on `por`, which is a lazy data frame (`pl.LazyFrame`), I make it `top_5` "lazy" by appending `.lazy()` at the end.
 
 ```{python}
 top_5 = (
@@ -919,8 +738,11 @@ top_5 = (
     .sort("total_assets", descending=True)
     .with_row_index("ta_rank", offset=1)
     .filter(pl.col("ta_rank") <= 5)
+    .lazy()
 )
 ```
+
+I then grab the names of the banks from `por`.
 
 ```{python}
 top_5_names = (
@@ -933,21 +755,32 @@ top_5_names = (
     .sort("ta_rank")
     .select(["IDRSSD", "financial_institution_name", "ta_rank"])
     .rename({"financial_institution_name": "bank"})
+    .collect()
 )
 ```
+
+```{python}
+top_5_names
+```
+I can combine the names with `bs_data` using `.join()`.
 
 ```{python}
 bs_panel_data = bs_data.join(top_5_names, on="IDRSSD", how="inner")
 ```
 
+Users of pandas who are unfamiliar might be impressed by the performance of Polars, but wonder how they can fit it into their workflows.
+Of course, it is easy enough to call `.to_pandas()` and create a pandas `pd.DataFrame`:
+
 ```{python}
 pdf = (
     bs_panel_data
     .filter(pl.col("date") >= pl.date(2020, 1, 1))
-    .collect()
     .to_pandas()
 )
 ```
+
+This means a pandas user can use all the familiar tools used for plotting or statistical analysis.
+Because the names are a little long for plotting purposes, I use a little dictionary to replace them.
 
 ```{python}
 bank_names = {
@@ -961,9 +794,11 @@ bank_names = {
 pdf["bank"] = pdf["IDRSSD"].map(bank_names)
 ```
 
+And then I use Seaborn and Matplotlib to make a small (but uninspiring) plot.
+
 ```{python}
 #| label: fig-top-5-py
-#| fig-cap: "Total assets for top 5 banks: Python version"
+#| fig-cap: "Total assets for top 5 banks"
 #| fig-width: 8
 #| fig-height: 5
 #| echo: false
@@ -1001,7 +836,8 @@ plt.show();
 
 # The boring details
 
-Now that I have explaing 
+Now that I have explained how you can use the curated data, I will spend a little time explaining the data curation process.
+I focus on the more challenging aspects and probably don't fail to deliver on the description "boring" in this section.
 
 ## Reading the data
 
@@ -1012,7 +848,7 @@ I have seen code that just imports from these individual files (what I call `inn
 This approach is predicated on the user having downloaded the zip files and unzipped them.
 While we have downloaded all the zip files---assuming you followed the steps outlined in @sec-raw-data---I don't want to be polluting my hard drive (or yours) with thousands of `.txt` files that won't be used after reading them once.
 
-Instead, R allows me to do simply say:
+Instead, R allows me to simply say:
 
 ```{r}
 #| eval: false
@@ -1039,14 +875,13 @@ df <- read_tsv(
 
 ### Handling embedded newlines and tabs {#sec-repairs}
 
-Experienced uses of the `readr` package might wince a little at the `quote = ""` argument above.
+Experienced users of the `readr` package might wince a little at the `quote = ""` argument above.
 What this means is that the data are not quoted.
-
 @Wickham:2023aa [p. 101] points out that "sometimes strings in a CSV file contain commas. 
 To prevent them from causing problems, they need to be surrounded by a quoting character, like `"` or `'`. 
 By default, `read_csv()` assumes that the quoting character will be `"`."
 
-Adapting this to our context and expanding it slightly, I would say: "sometimes strings in a TSV file contain tabs (`\t`) and newline characters (`\n`).^[Tabs and newlines are what are sometimes called **invisibles** because there presence is not apparent from viewing their usual representation as text (for example, a tab might look the same as a series of spaces).
+Adapting this to our context and expanding it slightly, I would say: "sometimes strings in a TSV file contain tabs (`\t`) and newline characters (`\n`).^[Tabs and newlines are what are sometimes called **invisibles** because their presence is not apparent from viewing their usual representation as text (for example, a tab might look the same as a series of spaces).
 The `\t` and `\n` representations are quite standard ways of making these characters visible to humans.]
 To prevent them from causing problems, they need to be surrounded by a quoting character, like `"` or `'`."
 While this is a true statement, the TSV files provided on the FFIEC Bulk Data website are *not* quoted, which means that tabs and newlines characters **embedded** in strings *will* cause problems.
@@ -1063,7 +898,8 @@ Because `read_tsv()` processes the data line by line and lines are "delimited" b
 
 When a warning occurs on the "fast path", the read function in `ffiec.pq` moves to what I call (unimaginatively) the "slow path".
 A "feature" (it turns out) of the TSV files provided on the FFIEC Bulk Data website is that each line ends with not just `\n`, but `\t\n`.
-This means we can assume that any `\n` not preceded by `\t` is an embedded newline, not a line-terminating endline.^[Unfortunately, the `read_tsv()` function does not allow use to specify an alternative to the default for line-terminating characters.]
+This means we can assume that any `\n` not preceded by `\t` is an embedded newline, not a line-terminating endline.^[Unfortunately, the `read_tsv()` function does not allow us to specify an alternative to the default for line-terminating characters.
+It seems that other R and Python packages also do not offer this option.]
 So I can read the data into the variable `txt` using `readLines()` and use a regular expression to replace embedded newlines with an alternative character.
 The alternative I use is a space and I use the `gsub()` function to achieve this: `gsub("(?<!\\t)\\n", " ", txt, perl = TRUE)`
 The regular expression here is `(?<!\\t)\\n` is equivalent to `(?<!\t)\n` in Perl or `r"(?<!\t)\n"` in Python.^[There are extra backslashes in the R version to specify that the backslashes represent backslashes to be passed along to `gsub()`, not special characters to be interpreted by R itself.]
@@ -1073,7 +909,7 @@ This fix addresses almost all the problematic files.
 "Almost all" means "all but two".
 The issue with the remaining two files is (as you might have guessed) **embedded tabs**.
 Unfortunately, there's no easy "identify the embedded tabs and replace them" fix, because there's no easy way to distinguish embedded tabs from delimiting tabs.
-However, we can detect the presence of embedded tabs because there will one too many tabs in any affected row.
+However, we can detect the presence of embedded tabs in an affected from the existence of too many tabs in that row.
 
 For one of the two "bad" files, there is only one text field, so once we detect the presence of the embedded tab, we can assume that the extra tab belongs in that field: Problem solved.
 For the other "bad" file, there are several text fields and, while there is just one bad row, we cannot be sure which text field has the embedded tab.
@@ -1142,7 +978,7 @@ This would not be terribly difficult, but would have the unfortunate effect of s
 Perhaps the best way to address this would allow the user of `ffiec.pq` to *choose* that behaviour as an option, but I did not implement this feature at this time.
 
 In addition to these missing values, I discovered in working with the data that the FFIEC often used specific values as **sentinel values** for `NA`.
-For example, `"0"` is used for some fields, while `"00000000"` is used to mark dates as missing, and `"12/31/9999 12:00:00 AM"` is used for timestamps.
+For example, `"0"` is used for some fields, while `"00000000"` is used to mark dates as missing, and `"12/31/9999 12:00:00 AM"` is used for timestamps.^[Note that this timestamp sentinel appears in the "MDRM" data from the Federal Reserve that I used to construct `ffiec_items`, not in the FFIEC data sets themselves.]
 I recoded such sentinel values as `NA` in each case.
 
 # The service-level agreement
@@ -1157,6 +993,8 @@ I recoded such sentinel values as `NA` in each case.
 6. A process for updating the curated data will be established.
 7. The entire process will be documented in some way.
 8. Some process for version control of data will be maintained.
+
+So in this section, I do an evaluation (perhaps biased) of how well `ffiec.pq` meets the requirements of these elements.
 
 ## Storage format
 
@@ -1176,8 +1014,8 @@ But Parquet files offer high performance, are space-efficient, and can be used w
 ## Good database principles
 
 While I argued that one does not want to get "particularly fussy about database normalization", if anything I may have pushed this further than some users might like.
-However, with `ffieq_pivot()`, it is relatively easy (and not too costly) to get the data into a "wide" form if that is preferred.
-The legacy version of Call Reports data offers by WRDS went to the other extreme with a "One Big Table" approach, which meant that this data set never moved to PostgreSQL because of limits there.^[A rule of thumb might be that, if you cannot store your fairly standard data in PostgreSQL, then perhaps you need to revisit the structure of the data.]
+However, with `ffiec_pivot()`, it is relatively easy (and not too costly) to get the data into a "wide" form if that is preferred.
+The legacy version of Call Reports data offered by WRDS went to the other extreme with a "One Big Table" approach, which meant that this data set never moved to PostgreSQL because of limits there.^[A rule of thumb might be that, if you cannot store your fairly standard data in PostgreSQL, then perhaps you need to revisit the structure of the data.]
 
 ## Primary keys
 
@@ -1246,14 +1084,14 @@ Focusing on the case where the data curation process transforms an existing data
 
 "First, *the original data files should not be modified in any way*."
 Correct.
-The `ffiec.pq` package does not modify the the FFIEC Bulk Data files after downloading them.
+The `ffiec.pq` package does not modify the FFIEC Bulk Data files after downloading them.
 I do make some corrections to the `item_name` variable in the `ffiec_items` package, but these "manual steps [are] extensively documented and applied in a transparent, automated fashion."
 The code for these steps can be found on [the GitHub page](https://github.com/iangow/ffiec.pq/blob/main/data-raw/ffiec_dict.R) for the `ffiec.pq` package.
 
 ## Documentation 
 
 "The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise."
-I regard that the `ffiec.pq` package do all the work of processing the data satisfies this requirement.
+I regard that having the `ffiec.pq` package do all the work of processing the data satisfies this requirement.
 
 A important idea here is that the code for processing the data is documentation in its own right.
 Beyond that the document you are reading now is a form of documentation, as is the documentation in the `ffiec.pq` package.
@@ -1287,11 +1125,26 @@ This imposes a significant cost on the *Understand* team to maintain archives of
 Data version control is a knotty problem and one that even some large data providers don't appear to have solutions for.
 
 I am delivering the Call Report data not as the data files, but as an R package along with instructions for obtaining the zip files from the FFIEC Bulk Data website.
-So I cannot be said to be providing any degress of version control of data.
-That said, if a user retains the downloaded zip files, the application of the `ffiec.pq` functions to process these into Parquet files should provide a high degree of reproducibility of the data for individual researcher.^[Note that a researcher might need to use a specific version of the `ffiec.pq` package to achieve full reproducibility, but the `pak` package allows for that.]
+So I cannot be said to be providing much version control of data here.
+That said, if a user retains the downloaded zip files, the application of the `ffiec.pq` functions to process these into Parquet files should provide a high degree of reproducibility of the data for an individual researcher.^[Note that a researcher might need to use a specific version of the `ffiec.pq` package to achieve full reproducibility, but the `pak` package allows for that.]
 
 For my own purposes, I achieve a *modest* level of data version control by using Dropbox, which offers the ability to restore some previous versions of data files.
 
 # The future of data curation
+
+Data science seems to be in a strange state at the moment.
+On the one hand, things must be a little depressing.
+Many data scientists must be wondering about their future in a world in which AI can handle many tasks formerly done by people.
+On the other hand, data science has come leaps and bounds in the last fifteen years or so [pandas doesn't even rate a mention in @janert2010data] and things like Polars, and Arrow, and DuckDB, not to mention things like the Tidyverse are truly exciting developments.
+
+My sense from working on this data curation task is that humans will continue to be essential for data curation for the foreseeable future.
+In fact, the value of data curation might have gone up, as AI increase the population of people whose modest coding skills no longer prevent them from trying their hand at data analysis.
+
+While I used OpenAI's ChatGPT 5.2 on this project, there were some "open the pod-bay doors, please, HAL" moments along the way.
+The one-line `txt2 <- gsub("(?<!\\t)\\n", " ", txt, perl = TRUE)` fix was deemed "unsafe" and ChatGPT even passive-aggressively suggested that "I think you want to use `txt`, not `txt2` in `read_tsv()`" at one point.
+I think ChatGPT did not understand that this code is not being put into a production system in which users load random zip files at all hours of the day.
+In effect, I have the population of zip files and, because of how I wrote the code, any errors in reading would've have just stopped the code.
+Using that one-liner allowed me to delete 700 lines of sloppy AI code.
+That said, I'm not sure I would have attempted this task if AI weren't along for the ride.
 
 # References {-}
