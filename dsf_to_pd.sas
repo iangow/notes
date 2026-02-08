@@ -5,7 +5,7 @@ proc sql;
   create table tickers as
   select permno, ticker
   from crsp.stocknames as s
-  where ticker in ('AAPL','MSFT','INTC','AMZN','GS') and
+  where ticker in ('AAPL', 'MSFT', 'INTC', 'AMZN', 'GS') and
     &end_date between namedt and nameenddt;
 quit;
 
