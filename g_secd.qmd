@@ -36,9 +36,9 @@ Many international researchers will know that `comp.g_secd` holds daily security
 It is the global version of the North America daily security file, `comp.secd`, and, I guess, the closest analogue of `crsp.dsf` for finance and accounting researchers studying non-US firms.
 
 I use this data set to do some benchmarking.
-I find that a query using `comp.g_secd` that takes 6 minutes using SAS on the WRDS servers, takes about 1 minute using the WRDS PostgreSQL server and about 0.2 seconds using a local parquet file.
-The parquet file occupies less than 4 GB on my hard drive, which compares with about 145 GB for the SAS file on the WRDS server.
-While creating the parquet file takes 45 minutes, this may be a reasonable trade-off for a researcher who is analysing `comp.g_secd` frequently and does not need the very latest iteration of `comp.g_secd` for research purposes. 
+I find that a query using `comp.g_secd` that takes 6 minutes using SAS on the WRDS servers, takes about 1 minute using the WRDS PostgreSQL server and about 0.2 seconds using a local Parquet file.
+The Parquet file occupies less than 4 GB on my hard drive, which compares with about 145 GB for the SAS file on the WRDS server.
+While creating the Parquet file takes 45 minutes, this may be a reasonable trade-off for a researcher who is analysing `comp.g_secd` frequently and does not need the very latest iteration of `comp.g_secd` for research purposes. 
 
 :::{.callout-tip text-align="left"}
 In writing this note, I used the R packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "dbplyr", "farr", "RPostgres")` within R to install all the packages you need to run the code in this note.]
@@ -85,16 +85,16 @@ I don't recall exactly when I started using `dbplyr`, but I have email exchanges
 I would say that `dbplyr` is what made the code approach used in @gow2024empirical feasible, even if [some critical pieces](https://raw.githubusercontent.com/iangow/notes/main/dbplyr-news.pdf) fell into place after work on the book began.
 Today, packages such as Ibis mean that a similar approach could be taken with Python.^[Trying to do @gow2024empirical using pandas and SQL would be painful and slow.]
 
-In late 2023, I added functionality to `wrds2pg` that allows SAS files to be turned into parquet files.
-The parquet file format is provided by Apache Arrow, "a software development platform for building high performance applications that process and transport large data sets."^[See the Apache Arrow website at <https://arrow.apache.org/overview/>.]
-The parquet format offers much of the versatility of CSV files, while also allowing for a rich system of data types and random access to data.
-As seen in [Chapter 23](https://iangow.github.io/far_book/glms.html) of @gow2024empirical, parquet files can be combined with DuckDB to provide a lightweight, high-performance alternative to PostgreSQL
+In late 2023, I added functionality to `wrds2pg` that allows SAS files to be turned into Parquet files.
+The Parquet file format is provided by Apache Arrow, "a software development platform for building high performance applications that process and transport large data sets."^[See the Apache Arrow website at <https://arrow.apache.org/overview/>.]
+The Parquet format offers much of the versatility of CSV files, while also allowing for a rich system of data types and random access to data.
+As seen in [Chapter 23](https://iangow.github.io/far_book/glms.html) of @gow2024empirical, Parquet files can be combined with DuckDB to provide a lightweight, high-performance alternative to PostgreSQL
 
-Also in late 2023, I created [the `db2pq` Python library](https://pypi.org/project/db2pq/) to create parquet files directly from a PostgreSQL database.
-Around the same time, I updated the [online version](https://iangow.github.io/far_book/) of @gow2024empirical to include a parquet variant of the code and I used this approach when teaching courses based on the book in 2024.
+Also in late 2023, I created [the `db2pq` Python library](https://pypi.org/project/db2pq/) to create Parquet files directly from a PostgreSQL database.
+Around the same time, I updated the [online version](https://iangow.github.io/far_book/) of @gow2024empirical to include a Parquet variant of the code and I used this approach when teaching courses based on the book in 2024.
 While the `db2pq` package has a mere 29 commits on [GitHub] at the time of writing, it has seen more recent development than the `wrds2pg` package.^[A lot of early work involved using poorly documented libraries to keep the memory impact to a minimum and to facilitate the `wrds_update_pq()` conditional-update functionality.]
 
-So in this note, I will compare three alternative approaches to `comp.g_secd`: SAS data (using SAS), PostgreSQL data (using R), and parquet data (using R).^[Note that the "using R" part is relatively unimportant. For example, it would be easy to do everything with essentially identical performance using Python.]
+So in this note, I will compare three alternative approaches to `comp.g_secd`: SAS data (using SAS), PostgreSQL data (using R), and Parquet data (using R).^[Note that the "using R" part is relatively unimportant. For example, it would be easy to do everything with essentially identical performance using Python.]
 
 With that short detour into the history of WRDS data and so on out of the way, I now return to the topic of `comp.g_secd` and I focus initially on the "original" SAS data.
 
@@ -213,9 +213,9 @@ I will return to this point below.
 
 Second, the PostgreSQL server delivers the query about six times faster than SAS does.
 
-# Using parquet data
+# Using Parquet data
 
-Now, I do it again using parquet data.
+Now, I do it again using Parquet data.
 The first step is to update (or get the data) using the following two lines of Python code.
 Again, this code relies on `WRDS_ID` and `DATA_DIR` environment variables.
 I specify `archive=True` to keep a copy of any existing `g_secd.parquet` file I have.
@@ -232,7 +232,7 @@ But, as can be seen above, `wrds_update_pq()` will not fetch new data if the dat
 However, WRDS updates Compustat data every day.
 As this may not be an update you'd want to be running every day, the daily updates might be "more bug than feature" for many researchers.
 
-Now, two lines of code suffice to set up a connection to a DuckDB database pointing to the `comp.g_secd` parquet file on my hard drive.
+Now, two lines of code suffice to set up a connection to a DuckDB database pointing to the `comp.g_secd` Parquet file on my hard drive.
 
 ```{r}
 db <- dbConnect(duckdb::duckdb())
@@ -251,12 +251,12 @@ g_secd |>
 ```
 
 Wow!
-So *once we have the data in parquet form*, the query is blazingly fast.
+So *once we have the data in Parquet form*, the query is blazingly fast.
 Something taking over 6 minutes on the SAS "supercomputers" takes about 0.2 seconds on my consumer-grade Mac mini.
 
 Note that the results match the output from the PostgreSQL server exactly, because we updated the data before running the query.
 
-I now make a little Python function to get information about the size of the parquet file that has been created.
+I now make a little Python function to get information about the size of the Parquet file that has been created.
 
 ```{python}
 from pathlib import Path
@@ -271,7 +271,7 @@ def file_size(path) -> str:
     return f"{n_bytes:.1f} EB"
 ```
 
-Now, I run this function on the parquet file created by `wrds_update_pq()`.
+Now, I run this function on the Parquet file created by `wrds_update_pq()`.
 
 ```{python}
 data_dir = Path(os.environ["DATA_DIR"]).expanduser()
@@ -279,10 +279,10 @@ path = data_dir / "comp" / "g_secd.parquet"
 file_size(path)
 ```
 
-So the 57.71 GB PostgreSQL table is reduced to under 4 GB as a parquet file.^[Note that the PostgreSQL server, like SAS, also has one or more indexes, which occupy an additional 15.75 GB.]
+So the 57.71 GB PostgreSQL table is reduced to under 4 GB as a Parquet file.^[Note that the PostgreSQL server, like SAS, also has one or more indexes, which occupy an additional 15.75 GB.]
 This is much more manageable!
 
-Returning to the mismatch between the output from the SAS query and the PostgreSQL query, we can inspect the "last modified" data for the parquet file, which are taken from the table comments on the PostgreSQL server.
+Returning to the mismatch between the output from the SAS query and the PostgreSQL query, we can inspect the "last modified" data for the Parquet file, which are taken from the table comments on the PostgreSQL server.
 
 ```{python}
 from pathlib import Path
@@ -328,7 +328,7 @@ content_lines = proc_contents("g_secd", "comp")
 content_lines = [line.replace("\n", "")[:80] 
                    for line in content_lines]
 
-cut = 40
+cut = 39
 cut2 = 80
 
 part1 = "\n".join(content_lines[:cut])
