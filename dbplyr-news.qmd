@@ -6,6 +6,7 @@ author:
     email: iandgow@gmail.com
 date: 2025-12-17
 number-sections: true
+format-links: false
 format:
   html:
     default
@@ -184,7 +185,7 @@ retail_sales <- get_data(db,
 The SQL version of the query provided in *SQL for Data Analysis* is as follows: 
 
 ```{sql}
-#| connection: db
+--| connection: db
 SELECT sales_month,
   avg(sales) OVER w AS moving_avg,
   count(sales) OVER w AS records_count
@@ -249,7 +250,7 @@ year_ends <-
 Finally, I add a minor tweak to original query by adding an enumerated data type that ensures the tables are ordered meaningfully.^[This data type is similar to **factors** in R, a topic covered in [Chapter 2](https://iangow.github.io/far_book/r-intro.html#data-visualization) of *Empirical Research in Accounting: Tools and Methods*.]
 
 ```{sql}
-#| connection: db
+--| connection: db
 CREATE TYPE band AS ENUM ('1 to 4', '5 to 10', '11 to 20', '21+')
 ```
 
@@ -258,7 +259,7 @@ I discuss the merits of CTEs (and of using `dbplyr` to write SQL) [here](https:/
 As can be seen, because of how we defined the `band` data type, it is meaningful to sort by `tenure` (check what happens if you omit the casting of `tenure` to type `band` using `::band`).
 
 ```{sql}
-#| connection: db
+--| connection: db
 WITH term_dates AS (
   SELECT DISTINCT a.id_bioguide, b.date
   FROM legislators_terms a

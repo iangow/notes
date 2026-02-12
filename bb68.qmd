@@ -1,33 +1,4 @@
----
-title: "Ball and Brown (1968)"
-id: sec-bb68
-engine: jupyter
-jupyter: python3
-author: 
-  - name: Ian D. Gow
-    orcid: 0000-0002-6243-8409
-    email: iandgow@gmail.com
-date: 2025-12-13
-number-sections: true
-format:
-  html:
-    default
-  pdf: 
-    include-in-header:
-      text: |
-        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
-        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
-        \addtokomafont{disposition}{\rmfamily}
-        \newcommand{\indexc}[1]{\index{#1@\texttt{#1}}}
-    colorlinks: true
-    geometry:
-      - left=2cm
-      - right=2cm
-    papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
-bibliography: papers.bib
----
+# Ball and Brown (1968) {#sec-bb68}
 
 In this and the following chapter, we cover the first two winners of the Seminal Contributions to Accounting Literature Award: @Ball:1968ub and @Beaver:1968vf.^[The list of winners can be found at <https://go.unimelb.edu.au/yzw8>.]
 
@@ -54,36 +25,18 @@ A largely normative, theoretical emphasis has been replaced by a positive, empir
 This chapter uses @Ball:2019wu as a kind of reading guide to @Ball:1968ub before considering a replication of @Ball:1968ub styled on that provided by @Nichols:2004tb.
 
 :::{.callout-tip text-align="left"}
-This note is a Python version of [Chapter 11](https://iangow.github.io/far_book/bb68.html) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
-This note uses the packages listed below and relies on the existence of a local data repository of parquet files for WRDS data.
-Such a repository can be created using the script found in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq-pg) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
-This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R and, to some extent, Python.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/bb68.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/bb68.pdf).
+The code in this chapter uses the packages listed below.
+Because we use several packages from the Tidyverse, we save time by using `library(tidyverse)` to load them in one go.
+For instructions on how to set up your computer to use the code found in this book, see @sec-install.
+Quarto templates for the exercises below are available on [GitHub](https://github.com/iangow/far_templates/blob/main/README.md).
 :::
 
-```{python}
-#| eval: false
-! pip install 'ibis-framework[duckdb]' pandas requests plotnine
-```
-
-```{python}
-import ibis
-from ibis import _
-import ibis.selectors as s
-
-import pandas as pd
-import requests
-import zipfile
-from io import BytesIO, StringIO
-import re
-import os
-from plotnine import ggplot, aes, geom_line, theme_bw, theme
-```
-
-```{python}
-#| echo: false
-ibis.options.interactive = True
-ibis.options.repr.show_types = False
+```{r}
+#| message: false
+library(tidyverse)
+library(DBI)
+library(farr)
+library(dbplyr)     # window_order()
 ```
 
 ## Principal results of @Ball:1968ub
@@ -126,7 +79,7 @@ However, the annual income report does not rate highly as a timely medium, since
 The third principal result is shown in Table 5, where we see that the income surprise is correlated with the API to a statistically significant extent in each month up to two months after the earnings announcement.^[There are some months where this does not hold, but the statement is broadly true.]
 
 This result, which later become known as **post-earnings announcement drift** (or simply **PEAD**), was troubling to @Ball:1968ub, who argue that some of it may be explained by  "peak-ahead" in the measure of market income and transaction costs causing delays in trade. \index{Post-earnings announcement drift (PEAD)}
-We study PEAD more closely in Chapter 14.
+We study PEAD more closely in @sec-pead.
 
 ### Discussion questions
 
@@ -136,7 +89,7 @@ Do you find the paper to be persuasive?
 2. What do you notice about the references in @Ball:1968ub [pp. 177-178]?
 
 3. Given that "the most fundamental result" of @Ball:1968ub relates to an association or correlation, is it correct to say that the paper provides no evidence on causal linkages?
-Does this also mean that @Ball:1968ub is a "merely" descriptive paper according to the taxonomy of research papers outlined in Chapter 4?
+Does this also mean that @Ball:1968ub is a "merely" descriptive paper according to the taxonomy of research papers outlined in @sec-causal-inf?
 How might the results of @Ball:1968ub be represented in a causal diagram assuming that accounting information is meaningful and markets are efficient?
 Would an alternative causal diagram be assumed by a critic who viewed accounting information as meaningless? \index{Causal diagrams}
 
@@ -189,25 +142,22 @@ We get earnings and returns data from Compustat and CRSP, respectively.
 \indexc{crsp.dsedist} \indexc{crsp.msi} \indexc{crsp.msf} \indexc{crsp.stocknames} \indexc{crsp.ccmxpf\_lnkhist}
 \indexc{comp.funda} \indexc{comp.fundq} 
 
-```{python}
-#| label: connect-pg-db
-#| eval: false
-db = ibis.duckdb.connect()
-wrds_id = os.getenv("WRDS_ID")
-uri = f"postgresql://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
-db.raw_sql("INSTALL postgres;")
-db.raw_sql("LOAD postgres;")
-db.raw_sql(f"ATTACH '{uri}' AS pg (TYPE POSTGRES);")
-```
+```{r}
+#| label: db
+#| eval: true
+db <- dbConnect(RPostgres::Postgres(), 
+                bigint = "integer", 
+                check_interrupts = TRUE)
 
-```{python}
-#| eval: false
-msf = db.table("msf", database="pg.crsp")
-msi = db.table("msi", database="pg.crsp")
-ccmxpf_lnkhist = db.table("ccmxpf_lnkhist", database="pg.crsp")
-stocknames = db.table("stocknames", database="pg.crsp")
-funda = db.table("funda", database="pg.comp")
-fundq = db.table("fundq", database="pg.comp")
+msf <- tbl(db, Id(schema = "crsp", table = "msf"))
+msi <- tbl(db, Id(schema = "crsp", table = "msi"))
+ccmxpf_lnkhist <- tbl(db, Id(schema = "crsp", 
+                             table = "ccmxpf_lnkhist"))
+stocknames <- tbl(db, Id(schema = "crsp", 
+                         table = "stocknames"))
+
+funda <- tbl(db, Id(schema = "comp", table = "funda"))
+fundq <- tbl(db, Id(schema = "comp", table = "fundq"))
 ```
 
 :::
@@ -218,52 +168,38 @@ fundq = db.table("fundq", database="pg.comp")
 
 #### PostgreSQL
 
-```{python}
-#| label: connect-pg-db
-#| eval: true
-db = ibis.duckdb.connect()
-wrds_id = os.getenv("WRDS_ID")
-uri = f"postgresql://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
-# uri = f"postgresql://igow@localhost:5432/igow"
-db.raw_sql("INSTALL postgres;")
-db.raw_sql("LOAD postgres;")
-db.raw_sql(f"ATTACH '{uri}' AS pg (TYPE POSTGRES);")
-```
+```{r}
+#| eval: false
+db <- dbConnect(RPostgres::Postgres(), 
+                bigint = "integer", 
+                check_interrupts = TRUE)
 
-```{python}
-#| eval: true
-msf = db.table("msf", database="pg.crsp")
-msi = db.table("msi", database="pg.crsp")
-ccmxpf_lnkhist = db.table("ccmxpf_lnkhist", database="pg.crsp")
-stocknames = db.table("stocknames", database="pg.crsp")
-funda = db.table("funda", database="pg.comp")
-fundq = db.table("fundq", database="pg.comp")
+msf <- tbl(db, Id(schema = "crsp", table = "msf"))
+msi <- tbl(db, Id(schema = "crsp", table = "msi"))
+ccmxpf_lnkhist <- tbl(db, Id(schema = "crsp", 
+                             table = "ccmxpf_lnkhist"))
+stocknames <- tbl(db, Id(schema = "crsp", 
+                         table = "stocknames"))
+
+funda <- tbl(db, Id(schema = "comp", table = "funda"))
+fundq <- tbl(db, Id(schema = "comp", table = "fundq"))
 ```
 
 #### parquet
 
-```{python}
+```{r}
 #| eval: false
-#| include: true
-def load_parquet(con, table, schema, data_dir=None):
-    if not data_dir:
-        data_dir =  os.path.expanduser(os.environ["DATA_DIR"])
-    
-    pq_file = pq_dir = os.path.join(data_dir, schema, table + ".parquet")
-    return con.read_parquet(pq_file)
-```
+db <- dbConnect(duckdb::duckdb())
 
-```{python}
-#| eval: false
-db = ibis.duckdb.connect()
+msf <- load_parquet(db, schema = "crsp", table = "msf")
+msi <- load_parquet(db, schema = "crsp", table = "msi")
+ccmxpf_lnkhist <- load_parquet(db, schema = "crsp", 
+                               table = "ccmxpf_lnkhist")
+stocknames <- load_parquet(db, schema = "crsp", 
+                               table = "stocknames")
 
-msi = load_parquet(db, "msi", "crsp")
-msf = load_parquet(db, "msf", "crsp")
-ccmxpf_lnkhist = load_parquet(db, "ccmxpf_lnkhist", "crsp")
-stocknames = load_parquet(db, "stocknames", "crsp")
-
-funda = load_parquet(db, "funda", "comp")
-fundq = load_parquet(db, "fundq", "comp")
+funda <- load_parquet(db, schema = "comp", table = "funda")
+fundq <- load_parquet(db, schema = "comp", table = "fundq")
 ```
 
 :::
@@ -277,143 +213,127 @@ Fortunately, as discussed in @Ball:2019wu, quarterly Compustat (`comp.fundq`) ha
 Like @Ball:1968ub, we are only interested in fourth quarters and firms with 31 December year-ends.
 Because we will need to line up these dates with data from monthly CRSP (`crsp.msf`), we create an `annc_month` variable.
 
-```{python}
+```{r}
 #| label: annc_events
-annc_events = (
-    fundq
-    .filter(
-        _.indfmt == "INDL", _.datafmt == "STD",
-        _.consol == "C", _.popsrc == "D",
-        _.fqtr == 4, _.fyr == 12, _.rdq.notnull()
-    )
-    .select("gvkey", "datadate", "rdq")
-    .mutate(annc_month = fundq.rdq.truncate("month"))
-)
+annc_events <-
+  fundq |>
+  filter(indfmt == "INDL", datafmt == "STD",
+         consol == "C", popsrc == "D") |>
+  filter(fqtr == 4, fyr == 12, !is.na(rdq)) |>
+  select(gvkey, datadate, rdq) |>
+  mutate(annc_month = as.Date(floor_date(rdq, unit = "month"))) 
 ```
 
 To compile returns for months $t-11$ through $t+6$ for each earnings announcement date ($t$) (as @Ball:1968ub and @Nichols:2004tb do), we will need the `date` values on CRSP associated with each of those months.
 We will create a table `td_link` that will provide the link between announcement events in `annc_events` and dates on CRSP's monthly stock file (`crsp.msf`).
 
 The first step is to create a table (`crsp_dates`) that orders the dates on monthly CRSP and assigns each month a corresponding "trading date" value (`td`), which is 1 for the first month, 2 for the second month, and so on.
-Because the `date` values on `crsp.msf` line up with the `date` values on `crsp.msi`, we can use the latter (much smaller) table.
+Because the `date` values on `crsp.msf` line up with the `date` values on `crsp.msi`, we can use the latter (much smaller) table. 
 
-```{python}
+\indexc{window\_order()} \indexc{floor\_date()} \indexc{row\_number()}
+```{r}
 #| label: crsp_dates
-crsp_dates = (
-    msi
-    .select("date")
-    .mutate(
-        td = ibis.row_number().over(order_by="date"),
-        month = _.date.truncate("month")))
+crsp_dates <-
+  msi |>
+  select(date) |>
+  window_order(date) |>
+  mutate(td = row_number()) |>
+  mutate(month = as.Date(floor_date(date, unit = "month"))) 
 
-print(crsp_dates.head(10).execute())
+crsp_dates |> collect(n = 10)
 ```
 
 We want to construct a table that allows us to link earnings announcements (`annc_events`) with returns from `crsp.msf`
 Because we are only interested in months where returns are available, we can obtain the set of potential announcement months from `crsp_dates`.
 The table `annc_months` has each value of `annc_month` and its corresponding `annc_td` from `crsp_dates`, along with the boundaries of the window that contains all values of `td` within the range $(t - 11, t+ 6)$, where $t$ is the announcement month.
 
-```{python}
-#| label: annc_months
-annc_months = (
-    crsp_dates
-    .select(
-        _.month.name("annc_month"),
-        _.td.name("annc_td"))
-    .mutate(start_td = _.annc_td - 11,
-            end_td = _.annc_td + 6))
+```{r}
+annc_months <-
+  crsp_dates |>
+  select(month, td) |> 
+  rename(annc_month = month, annc_td = td) |>
+  mutate(start_td = annc_td - 11L,
+         end_td = annc_td + 6L)
+
+annc_months |> collect(n = 10)
 ```
 
 We can then join `annc_months` with `crsp_dates` to create the table `td_link`.
-
-```{python}
+\indexc{join\_by()}
+```{r}
 #| label: td_link
-td_link = (
-    crsp_dates
-    .inner_join(annc_months,
-          (crsp_dates.td >= annc_months.start_td)
-        & (crsp_dates.td <= annc_months.end_td))
-    .mutate(rel_td = crsp_dates.td - annc_months.annc_td)
-    .select("annc_month", "rel_td", "date")
-)
+td_link <-
+  crsp_dates |>
+  inner_join(annc_months, join_by(between(td, start_td, end_td))) |>
+  mutate(rel_td = td - annc_td) |>
+  select(annc_month, rel_td, date)
 ```
 
 Here are the data for one `annc_month`:
-
-```{python}
-with pd.option_context("display.max_rows", None):
-    print(td_link
-          .filter(_.annc_month == "2001-04-01")
-          .execute())
+\indexc{collect()}
+```{r}
+td_link |> 
+  filter(annc_month == "2001-04-01") |> 
+  collect() |> 
+  print(n = Inf)
 ```
 
-We use `ccm_link` (as used in Chapter 7) to connect earnings announcement dates on Compustat with returns from CRSP.
+We use `ccm_link` (as used in @sec-ident) to connect earnings announcement dates on Compustat with returns from CRSP.
 
-```{python}
+```{r}
 #| label: ccm_link
-ccm_link = (
-    ccmxpf_lnkhist
-    .filter(_.linktype.isin(["LC", "LU", "LS"]))
-    .filter(_.linkprim.isin(["C", "P"]))
-    .mutate(
-        permno = _.lpermno,
-        linkenddt = _.linkenddt.fill_null(_.linkenddt.max()))
-    .select("gvkey", "permno", "linkdt", "linkenddt"))
+ccm_link <-
+  ccmxpf_lnkhist |>
+  filter(linktype %in% c("LC", "LU", "LS"),
+         linkprim %in% c("C", "P")) |>
+  rename(permno = lpermno) |>
+  mutate(linkenddt = coalesce(linkenddt, max(linkenddt, na.rm = TRUE))) |>
+  select(gvkey, permno, linkdt, linkenddt) 
 ```
 
 @Nichols:2004tb focus on firms listed on NYSE, AMEX, and NASDAQ, which correspond to firms with `exchcd` values of 1, 2, and 3, respectively.
 The value of `exchcd` for each firm at each point in time is found on `crsp.stocknames`.
 Following @Nichols:2004tb, we get data on fiscal years from 1988 to 2002 [-@Nichols:2004tb, p. 270].
-
-```{python}
+\indexc{collect()}
+```{r}
 #| label: rets_all
 #| cache: false
-rets_all = (
-    annc_events
-    .inner_join(td_link, "annc_month")
-    .inner_join(ccm_link, ["gvkey"])
-    .filter(
-          (_.annc_month >= ccm_link.linkdt)
-        & (_.annc_month <= ccm_link.linkenddt))
-    .join(msf,
-        (_.permno == msf.permno) & (_.date == msf.date))
-    .inner_join(
-       stocknames
-       .filter(stocknames.exchcd.isin([1, 2, 3]))
-       .select("permno", "namedt", "nameenddt"), 
-          (_.permno == stocknames.permno)
-        & (_.date >= stocknames.namedt)
-        & (_.date <= stocknames.nameenddt),
-    )
-    .select("gvkey", "datadate", "rel_td", "permno", "date", "ret")
-    .filter(_.datadate.year().between(1987, 2002))
-)
+rets_all <-
+  annc_events |> 
+  inner_join(td_link, by = "annc_month") |>
+  inner_join(ccm_link, by = "gvkey") |>
+  filter(annc_month >= linkdt, annc_month <= linkenddt) |>
+  inner_join(msf, by = c("permno", "date")) |>
+  collect() |>
+  inner_join(
+    stocknames |> 
+      filter(exchcd %in% c(1, 2, 3)) |>
+      collect(), 
+    join_by(permno, between(date, namedt, nameenddt))) |>
+  select(gvkey, datadate, rel_td, permno, date, ret) |>
+  filter(between(year(datadate), 1987L, 2002L))
 ```
 
 To keep things straightforward, we focus on firms that have returns for each month in the $(t - 11, t+ 6)$ window and the table `full_panel` identifies these firms.
 
-```{python}
+```{r}
 #| label: full_panel
 #| cache: false
-rets_counts = (
-    rets_all
-    .group_by("gvkey", "datadate")
-    .aggregate(n_obs = _.ret.count())
-)
-
-max_n_obs = rets_counts.n_obs.max()
-
-full_panel = (
-    rets_counts
-    .filter(rets_counts.n_obs == max_n_obs)
-    .select("gvkey", "datadate"))
+full_panel <-
+  rets_all |> 
+  group_by(gvkey, datadate) |> 
+  mutate(n_obs = n()) |> 
+  ungroup() |> 
+  filter(n_obs == max(n_obs)) |>
+  select(gvkey, datadate)
 ```
 
-```{python}
+```{r}
 #| label: rets
-#| cache: false
-rets = (rets_all
-        .inner_join(full_panel, ["gvkey", "datadate"]))
+#| dependson: full_panel, rets_all
+rets <-
+  rets_all |>
+  semi_join(full_panel, by = c("gvkey", "datadate")) 
 ```
 
 Note that, unlike other early papers [e.g., @Beaver:1968vf; @Fama:1969wc], @Ball:1968ub do not exclude observations due to known confounding events.^[This issue seems related to that discussed on p.164, where @Ball:1968ub state "our prediction [is] that, or certain months around the report dates, the expected values of the $v_j$'s are nonzero."
@@ -428,201 +348,178 @@ The use of residuals from a market model addresses a concern about cross-section
 @Ball:1968ub note that about $10\%$ of returns are due to industry factors, but conclude that the likely impact of this on inference is likely to be small.
 
 In contrast, @Nichols:2004tb use **size-adjusted returns** as their measure of abnormal returns. \index{Returns!size-adjusted}
-To calculate size-adjusted returns, we get two kinds of data from the [website of Ken French](http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) (as seen in Chapter 9).
+To calculate size-adjusted returns, we get two kinds of data from the [website of Ken French](http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) (as seen in @sec-web-data).
 
 First, we get data on size-decile returns.
 Ken French's website supplies a comma-delimited text file containing monthly and annual data for value-weighted and equal-weighted portfolio returns.
 
-```{python}
-def url_to_lines(url: str) -> pd.DataFrame:
-    # Download zip
-    resp = requests.get(url)
-    resp.raise_for_status()
-
-    # Read inner text file
-    with zipfile.ZipFile(BytesIO(resp.content)) as zf:
-        inner_name = zf.namelist()[0]
-        raw = zf.read(inner_name).decode("latin1")
-        lines = raw.splitlines()
-
-    return lines
+\indexc{str\_c()}
+```{r}
+t <- "Portfolios_Formed_on_ME_CSV.zip"
+url <- str_c("http://mba.tuck.dartmouth.edu",
+             "/pages/faculty/ken.french/ftp/",
+             "Portfolios_Formed_on_ME_CSV.zip")
+if (!file.exists(t)) download.file(url, t)
 ```
 
-```{python}
-url = ("https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
-       "Portfolios_Formed_on_ME_CSV.zip")
 
-lines = url_to_lines(url)
-```
+```{r}
+#| include: false
+# Determine breakpoints (lines) for different tables
+temp <- read_lines(t)
+vw_start <- str_which(temp, "^\\s+.*Value Weight.*Monthly")
+vw_end <-  str_which(temp, "^\\s+.*Equal Weight.*Monthly")
 
-```{python}
-#| label: find-panels
-#| echo: false
-def str_which(x, pattern):
-    matching_lines = [i for i, s in enumerate(lines) if re.search(pattern, s)]
-    return min(matching_lines)
-
-vw_start = str_which(lines, r"^\s+.*Value Weight.*Monthly") + 1
-vw_end = str_which(lines, r"^\s+.*Equal Weight.*Monthly") - 2
-
-ew_start = str_which(lines, r"^\s+.*Equal Weight.*Monthly") + 1
-ew_end = str_which(lines, r"^\s+Value Weight.*Annual") - 2
+ew_start <- str_which(temp, "^\\s+.*Equal Weight.*Monthly")
+ew_end <- str_which(temp, "^\\s+Value Weight.*Annual")
 ```
 
 From inspection of the downloaded text file, we observe that there are several data sets in this file. 
 We want monthly returns and will extract both value-weighted and equal-weighted data.
-We see that the equal-weighted returns begin after a row starting with text "`{python} lines[ew_start - 1].strip()`" and end two rows before a row starting with text "`{python} lines[ew_end + 2].strip()`".
+We see that the equal-weighted returns begin with a row starting with text ``r str_trim(temp[ew_start])`` and end a few rows before a row starting with text ``r str_trim(temp[ew_end])``.
 
-```{python}
-#| eval: false
-#| echo: true
-def str_which(x, pattern):
-    matching_lines = [i for i, s in enumerate(lines) if re.search(pattern, s)]
-    return min(matching_lines)
+\indexc{read\_lines()} \indexc{str\_which()}
+```{r}
+#| label: size_rets_raw
+# Determine breakpoints (lines) for different tables
+temp <- read_lines(t)
+vw_start <- str_which(temp, "^\\s+.*Value Weight.*Monthly")
+vw_end <-  str_which(temp, "^\\s+.*Equal Weight.*Monthly") - 4
 
-vw_start = str_which(lines, r"^\s+.*Value Weight.*Monthly") + 1
-vw_end = str_which(lines, r"^\s+.*Equal Weight.*Monthly") - 2
-
-ew_start = str_which(lines, r"^\s+.*Equal Weight.*Monthly") + 1
-ew_end = str_which(lines, r"^\s+Value Weight.*Annual") - 2
+ew_start <- str_which(temp, "^\\s+.*Equal Weight.*Monthly")
+ew_end <- str_which(temp, "^\\s+Value Weight.*Annual") - 4
 ```
 
-```{python}
-def lines_to_df(start, end, header = 'infer'):
-    block = "\n".join(lines[start:end])
-    df_raw = pd.read_csv(StringIO(block), na_values="-99.99",
-                         header=header)
-    df_raw = df_raw.rename(columns={df_raw.columns[0]: "date"})
-    return df_raw
+Having identified these separating rows, we can use the following function to read in the data set and organize the associated data tables appropriately.
+Note that `NA` values are represented as `-99.99` in the text files and that the dates have a form `yyyymm` that we convert to dates of form `yyyy-mm-01`, which we call `month`.
 
-def read_data(start, end):
-    
-    # Do minimal preprocessing with pandas
-    df_raw = lines_to_df(start, end)
+While the original data come in a "wide" format with returns at every fifth percentile, we rearrange the data into a "long" format, retain only the deciles (i.e., every tenth percentile), and rename the decile labels from `Lo 10`, `2-Dec`, ..., `9-Dec`, and `Hi 10` to `1`, `2`, ..., `9`, and `10`.
 
-    # Move data to Ibis for remaining processing
-    t = (ibis.memtable(df_raw)
-        .mutate(month = (_.date.cast("string") + "01")
-                          .as_date("%Y%m%d"))
-        .pivot_longer(
-            ~s.cols("month"),
-            names_to = "quantile",
-            values_to = "ret")
-        .mutate(
-            ret = _.ret / 100.0,
-            decile=ibis.cases(
-                (_.quantile == "Hi 10", "10"),
-                (_.quantile == "Lo 10", "1"),
-                (_.quantile.contains("-Dec"), 
-                    _.quantile.replace("-Dec", "")),
-                else_=ibis.null()).cast("int"))
-        .filter(_.decile.notnull())
-        .select("month", "ret", "decile")
-        .order_by(["month", "decile"]))
+\indexc{pivot\_longer()} \indexc{read\_csv()} \indexc{ymd()} \indexc{case\_when()} \indexc{str\_replace\_all()}
+```{r}
+#| label: read_data
+#| cache: false
+read_data <- function(start, end) {
 
-    return t
+  Sys.setenv(VROOM_CONNECTION_SIZE = 500000)
+  
+  fix_names <- function(names) {
+    str_replace_all(names, "^$", "date")
+  }
+
+  read_csv(t, skip = start, n_max = end - start,
+           na = "-99.99",
+           name_repair = fix_names,
+           show_col_types = FALSE) |>
+    mutate(month = ymd(str_c(date, "01"))) |>
+    select(-date) |>
+    pivot_longer(names_to = "quantile",
+                 values_to = "ret",
+                 cols = -month) |>
+    mutate(ret = ret / 100,
+           decile = case_when(quantile == "Hi 10" ~ "10",
+                              quantile == "Lo 10" ~ "1",
+                              str_detect(quantile, "-Dec") ~
+                                sub("-Dec", "", quantile)),
+           decile = as.integer(decile)) |>
+    filter(!is.na(decile)) |>
+    select(-quantile)
+}
 ```
 
-```{python}
-#| eval: true
-vw_rets = read_data(vw_start, vw_end)
-ew_rets = read_data(ew_start, ew_end)
+Now we can apply this function to extract the relevant data, which we combine into a single data frame `size_rets`.
 
-size_rets = (
-    ew_rets
-    .select("month", "decile", _.ret.name("ew_ret"))
-    .inner_join(
-        vw_rets
-        .select("month", "decile", _.ret.name("vw_ret")),
-        ["month", "decile"])
-    .order_by(["month", "decile"])
-)
+```{r}
+#| label: size_rets
+#| dependson: read_data 
+#| cache: false
+vw_rets <- 
+  read_data(vw_start, vw_end) |>
+  rename(vw_ret = ret)
 
-print(size_rets.head(10).execute())
+ew_rets <- 
+  read_data(ew_start, ew_end) |>
+  rename(ew_ret = ret)
+
+size_rets <-
+  ew_rets |>
+  inner_join(vw_rets, by = c("month", "decile")) |>
+  select(month, decile, everything())
+
+size_rets
 ```
 
-The second set of data we need to get from Ken French's website is data on the cut-offs we will use in assigning firms to decile portfolios in calculating size-adjusted returns:
+The second set of data we need to get from Ken French's website is data on the cutoffs we will use in assigning firms to decile portfolios in calculating size-adjusted returns:
 
-```{python}
-url_bp = ("https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
-          "ME_Breakpoints_CSV.zip")
-
-lines = url_to_lines(url_bp)
+```{r}
+#| include: true
+t <- "ME_Breakpoints_CSV.zip"
+url <- str_c("http://mba.tuck.dartmouth.edu",
+             "/pages/faculty/ken.french/ftp/",
+             "ME_Breakpoints_CSV.zip")
+if (!file.exists(t)) download.file(url, t)
+temp <- read_lines(t)
 ```
 
-Again the original data come in a "wide" format with cut-offs at every fifth percentile, so again we rearrange the data into a "long" format, retain only the deciles (i.e., every tenth percentile), and rename the decile labels from `p10`, `p20`, ..., `p90`, and `p100`, to `1`, `2`, ..., `9`, and `10`.^[Unlike the data set on returns above, there are no column labels in this data set and we are making those ourselves here.]
+Again the original data come in a "wide" format with cutoffs at every fifth percentile, so again we rearrange the data into a "long" format, retain only the deciles (i.e., every tenth percentile), and rename the decile labels from `p10`, `p20`, ..., `p90`, and `p100`, to `1`, `2`, ..., `9`, and `10`.^[Unlike the data set on returns above, there are no column labels in this data set and we are making those ourselves here.]
+Also, we are only interested in the cutoffs for December in each year and use `filter()` to retain only these.
 
-```{python}
+\indexc{pivot\_longer()} \indexc{str\_which()}
+```{r}
 #| label: me_breakpoints
 #| cache: false
-me_last = str_which(lines, r"^Copyright") - 1
-
-df_raw = lines_to_df(1, me_last, header=0)
-df_raw.columns = ["month", "n"] + ["p" + str(i)
-                     for i in range(5, 101, 5)]
-
-me_breakpoints_raw = (
-    ibis.memtable(df_raw)
-    .mutate(month = (_.month.cast("string") + "01")
-                      .as_date("%Y%m%d"))
-    .select(s.all() & ~s.endswith("5") & ~s.cols("n"))
-    .pivot_longer(
-        ~s.cols("month"),
-        names_to = "decile",
-        values_to = "cutoff")
-    .mutate(decile = _.decile
-        .re_replace(r"^p(.*)0$", r"\1").cast("int"))
-    .select("month", "decile", "cutoff")
-    .order_by(["month", "decile"])
-)
+me_breakpoints_raw <- 
+  read_csv(t, skip = 2, 
+           col_names = c("month", "n",
+                         str_c("p", seq(from = 5, to = 100, by = 5))),
+           col_types = "c",
+           n_max = str_which(temp, "^Copyright") - 4) |>
+  mutate(month = ymd(str_c(month, "01"))) |>
+  select(-ends_with("5"), -n) |>
+  pivot_longer(cols = - month,
+               names_to = "decile",
+               values_to = "cutoff") |>
+  mutate(decile = str_replace(decile, "^p(.*)0$", "\\1")) |>
+  mutate(decile = as.integer(decile)) 
 ```
 
 Finally, we organize the data to facilitate their use in joining with other data.
 Specifically, we create variables for the range of values covered by each decile (from `me_min` to `me_max`).
-We specify the minimum value for the first decile as zero and the maximum value for the tenth decile to infinity (`inf`).
+We specify the minimum value for the first decile as zero and the maximum value for the tenth decile to infinity (`Inf`).
 
-```{python}
-w = ibis.window(group_by=_.month, order_by=_.decile)
-
-me_breakpoints = (
-    me_breakpoints_raw
-    .mutate(
-        me_min=ibis.coalesce(_.cutoff.lag().over(w), 0),
-        me_max=_.cutoff)
-    .mutate(me_max=ibis.ifelse(_.decile == 10, float("inf"), _.me_max))
-    .drop("cutoff")
-    .order_by(["month", "decile"])
-)
+```{r}
+me_breakpoints <-
+  me_breakpoints_raw |>
+  group_by(month) |> 
+  arrange(decile) |> 
+  mutate(me_min = coalesce(lag(cutoff), 0), me_max = cutoff) |> 
+  mutate(me_max = if_else(decile == 10, Inf, me_max)) |>
+  select(-cutoff) |>
+  ungroup() |>
+  arrange(month, decile) 
 ```
 
 To assign stocks to size deciles, we collect data on market capitalization from `crsp.msf`.
-Also, we are only interested in the cut-offs for December in each year and use `filter()` to retain only these.
-
-```{python}
-#| label: me_values
-me_values = (
-    msf
-    .mutate(
-        mktcap = _.prc.abs() * _.shrout / 1000,
-        month = _.date.truncate("month"))
-    .select("permno", "date", "mktcap", "month")
-    .filter(_.month.month() == 12)
-)
+\indexc{collect()}
+```{r}
+me_values <- 
+  msf |> 
+  mutate(mktcap = abs(prc) * shrout / 1000) |> 
+  select(permno, date, mktcap) |>
+  mutate(month = as.Date(floor_date(date, unit = "month"))) |>
+  filter(month(month) == 12) |>
+  collect()
 ```
 
-We can compare market capitalization for each firm-year with the cut-offs in `me_breakpoints` to obtain its decile assignment.
-
-```{python}
-#| label: me_deciles
-me_decile_assignments = (
-    me_values
-    .inner_join(me_breakpoints,
-        [_.month == me_breakpoints.month,
-         _.mktcap >= me_breakpoints.me_min,
-         _.mktcap < me_breakpoints.me_max])
-    .mutate(year=(_.date.year() + 1).cast("int"))
-    .select("permno", "year", "decile")
-)
+We can compare market capitalization for each firm-year with the cutoffs in `me_breakpoints` to obtain its decile assignment.
+\indexc{join\_by()}
+```{r}
+me_decile_assignments <-
+  me_values |>
+  inner_join(me_breakpoints, 
+             join_by(month, mktcap >= me_min, mktcap < me_max)) |>
+  mutate(year = as.integer(year(date)) + 1L) |>
+  select(permno, year, decile) 
 ```
 
 ### Earnings news variables
@@ -638,65 +535,50 @@ So the expectation is conditional with respect to a rather peculiar information 
 In effect, the question is whether, given information about the market's earnings and market returns, information about accounting earnings helps predict the unexpected portion of earnings.
 In any case, the main results (see the famous Figure 1) are robust to the choice of the expectations model.
 
-```{python}
-#| label: news
-#| cache: false
-w_gvkey = ibis.window(group_by=[funda.gvkey], order_by=[funda.datadate])
-w_date_earn = ibis.window(group_by=_.datadate, order_by=_.earn_chg)
-w_date_cfo = ibis.window(group_by=_.datadate, order_by=_.cfo_chg)
+<!-- Not much discussion is included on the choice of EPS or net income, and run tests using both in any case. -->
 
-news = (
-    funda
-    .filter(_.indfmt == "INDL", _.datafmt == "STD",
-            _.consol == "C", _.popsrc == "D",
-            _.fyr == 12)
-    .mutate(
-        lag_ibc=_.ibc.lag().over(w_gvkey),
-        lag_oancf=_.oancf.lag().over(w_gvkey),
-        lag_at=_.at.lag().over(w_gvkey),
-        lag_fyear=_.fyear.lag().over(w_gvkey))
-    .filter(_.fyear.between(1987, 2002),
-            _.lag_fyear + 1 == _.fyear)
-    .mutate(earn_chg = ibis.ifelse(_.lag_at > 0,
-              (_.ibc - _.lag_ibc) / _.lag_at, ibis.null()),
-        cfo_chg = ibis.ifelse(_.lag_at > 0,
-              (_.oancf - _.lag_oancf) / _.lag_at, ibis.null()))
-    .select("gvkey", "datadate", "earn_chg", "cfo_chg")
-    .mutate(
-        earn_gn = _.earn_chg > 0,
-        cfo_gn = _.cfo_chg > 0)
-    .filter(_.cfo_gn.notnull(), _.earn_gn.notnull())
-    .mutate(
-        earn_decile = ibis.ntile(10).over(w_date_earn),
-        cfo_decile = ibis.ntile(10).over(w_date_cfo)
-    )
-)
+\indexc{window\_order()} \indexc{ntile()} \indexc{collect()}
+```{r}
+news <-
+  funda |>
+  filter(indfmt == "INDL", datafmt == "STD",
+         consol == "C", popsrc == "D") |>
+  filter(fyr == 12) |>
+  group_by(gvkey) |>
+  window_order(datadate) |>
+  mutate(lag_ibc = lag(ibc),
+         lag_oancf = lag(oancf),
+         lag_at = lag(at),
+         lag_fyear = lag(fyear)) |>
+  ungroup() |>
+  filter(between(fyear, 1987, 2002),
+         lag_fyear + 1 == fyear) |>
+  mutate(earn_chg = if_else(lag_at > 0, (ibc - lag_ibc) / lag_at, NA),
+         cfo_chg = if_else(lag_at > 0, (oancf - lag_oancf) / lag_at, NA),
+         earn_gn = earn_chg > 0,
+         cfo_gn = cfo_chg > 0) |>
+  filter(!is.na(cfo_gn), !is.na(earn_gn)) |>
+  select(gvkey, datadate, earn_chg, cfo_chg, earn_gn, cfo_gn) |>
+  group_by(datadate) |> 
+  mutate(earn_decile = ntile(earn_chg, 10),
+         cfo_decile = ntile(cfo_chg, 10)) |>
+  ungroup() |>
+  collect()
 ```
 
 ### Figure 1 of @Ball:1968ub
 
 We can now merge our data tables to create the data set we can use to make variants of Figure 1 of @Ball:1968ub.
 
-
-To prepare the data for our plot, we first need to accumulate returns over time for each firm.
-We then need to aggregate these returns by portfolio (here `earn_gn`) and relative trading date (`rel_td`).
-Following @Ball:1968ub, we calculate abnormal returns by subtracting market returns from the portfolio returns.
-Here we calculate measures using both equa l-weighted (`ew_ret`) and value-weighted (`vw_ret`) market returns.
-
-```{python}
-#| label: merged
-#| cache: false
-merged = (
-    news
-    .mutate(year = _.datadate.year())
-    .inner_join(rets, ["gvkey", "datadate"])
-    .inner_join(me_decile_assignments, ["permno", "year"])
-    .mutate(month = _.date.truncate("month"))
-    .inner_join(size_rets, ["decile", "month"])
-    .drop(["permno", "month"])
-)
-
-# merged = db.create_table("merged", merged_expr, overwrite=True)
+```{r}
+merged <- 
+  news |>
+  mutate(year = year(datadate)) |>
+  inner_join(rets, by = c("gvkey", "datadate")) |>
+  inner_join(me_decile_assignments, by = c("permno", "year")) |>
+  mutate(month = floor_date(date, unit = "month")) |>
+  inner_join(size_rets, by = c("decile", "month")) |>
+  select(-permno, -month)
 ```
 
 To prepare the data for our plot, we first need to accumulate returns over time for each firm.
@@ -704,73 +586,57 @@ We then need to aggregate these returns by portfolio (here `earn_gn`) and relati
 Following @Ball:1968ub, we calculate abnormal returns by subtracting market returns from the portfolio returns.
 Here we calculate measures using both equal-weighted (`ew_ret`) and value-weighted (`vw_ret`) market returns.
 
-```{python}
-#| label: plot_data
-# columns ending with "ret" in merged (e.g., ret, ew_ret, vw_ret)
-ret_cols = [c for c in merged.columns if c.endswith("ret")]
-
-w = ibis.window(group_by=[_.gvkey, _.datadate], order_by=_.rel_td)
-
-def cumprod1p(x):
-    # cumprod(1 + x) = exp(cumsum(log(1 + x)))
-    return (1 + x).ln().cumsum().over(w).exp().cast("float64")
-
-plot_data = (
-    merged
-    .filter(_.ret.notnull())
-    .mutate(**{c: cumprod1p(_[c]) for c in ret_cols})
-    .group_by([_.rel_td, _.earn_gn])
-    .aggregate(**{c: _[c].mean() for c in ret_cols})
-    .mutate(
-        aret_ew=_.ret - _.ew_ret,
-        aret_vw=_.ret - _.vw_ret)
-    .order_by(["earn_gn", "rel_td"])
-    .mutate(
-    **{
-        "Earnings news": ibis.ifelse(_.earn_gn, "Good", "Bad")
-    })
-    .execute()
-)
+\indexc{across()} \index{Anonymous functions} 
+```{r}
+plot_data <-
+  merged |> 
+  filter(!is.na(ret)) |>
+  group_by(gvkey, datadate) |>
+  arrange(rel_td) |>
+  mutate(across(ends_with("ret"),
+                \(x) cumprod(1 + x))) |>
+  group_by(rel_td, earn_gn) |> 
+  summarize(across(ends_with("ret"), 
+                   \(x) mean(x, na.rm = TRUE)),
+            .groups = "drop") |>
+  mutate(aret_ew = ret - ew_ret, aret_vw = ret - vw_ret)
 ```
 
 Figure 1 of @Ball:1968ub confirms that a picture is worth a thousand words.
 We produce our analogue of Figure 1 in @fig-bb-1.
 
-```{python}
+\indexc{geom\_line()} \index{if\_else()}
+```{r}
 #| label: fig-bb-1
-#| fig-cap: "Replication of Figure 1 of Ball and Brown (1968)."
-#| fig-alt: "Cumulative abnormal returns for good vs bad earnings news around annual earnings announcements."
-(ggplot(plot_data,
-        aes("rel_td", "aret_ew", 
-            linetype="Earnings news", group="Earnings news"))
-    + geom_line()
-    + theme_bw()
-    + theme(legend_position="bottom"))
+#| fig-cap: Replication of Figure 1 of @Ball:1968ub
+#| fig-alt: "Plot of cumulative abnormal returns from month -11 to month +6 for two earnings portfolios formed based on the sign of earnings news at announcement (month 0). Plot shows consistent positive returns for the good news portfolio up to month 0 and consistent negative returns for the bad news portfolio up to month 0. There are signs that the two lines continue to diverge even after month 0."
+plot_data |>
+  mutate(`Earnings news` = if_else(earn_gn, "Good", "Bad")) |>
+  ggplot(aes(x = rel_td, y = aret_ew, linetype = `Earnings news`)) +
+  geom_line() +
+  theme(legend.position = "bottom")
 ```
 
 ### Exercises
 
-```{python}
+```{r}
 #| include: false
-#| eval: true
-max_cutoff = (me_breakpoints_raw
-    .filter(_.month == "2020-12-01", _.decile == 10)
-    .select("cutoff")
-    .aggregate(x=_.cutoff.mean())
-    .execute())
-
-max_cutoff = float(max_cutoff.iloc[0, 0])
+max_cutoff <-
+  me_breakpoints_raw |> 
+  filter(month == "2020-12-01", decile == 10) |>
+  select(cutoff) |>
+  pull()
 ```
 
-1. From the data below, we see that the upper bound for the tenth decile is about `{python} f"US${max_cutoff/1000:.3g}"` billion.
-How can we reconcile this with the existence of firms with market capitalizations over US\$1 trillion?
-*Bonus*: Using data from `crsp.msf`, identify the firm whose market capitalization was `{python} f"US${max_cutoff/1000:.3g}"` billion in December 2020?
+1. From the data below, we see that the upper bound for the tenth decile is about `r str_c("US$", prettyNum(max_cutoff/1000, digits = 3))` billion.
+How can we reconcile this with the existence of firms with market capitalizations over US$1 trillion?
+*Bonus*: Using data from `crsp.msf`, identify the firm whose market capitalization was `r str_c("US$", prettyNum(max_cutoff/1000, digits = 3))` billion in December 2020?
 (*Hint*: For the bonus question, you can add a `filter()` to code in the template to obtain the answer.
 Why do we need to group by `permco`, not `permno`, to find the answer?)
 
-```{python}
-#| eval: true
-print(me_breakpoints_raw.filter(_.month == "2020-12-01").execute())
+```{r}
+me_breakpoints_raw |> 
+  filter(month == "2020-12-01")
 ```
 
 2. To keep things straightforward, we focused on firms that have returns for each month in the $(t - 11, t+ 6)$ window.
@@ -802,4 +668,7 @@ Note that you will only be interested in rows at $t = 0$ (e.g., `filter(rel_td =
 8. Using the data on *NI* and *AI* from above, create a plot of $AI/NI$ like that in Figure 2 of @Ball:2019wu.
 Do you observe similar results to those shown in Figure 2 of @Ball:2019wu?
 
-## References {-}
+```{r}
+#| include: false
+dbDisconnect(db)
+```
