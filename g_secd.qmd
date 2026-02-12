@@ -10,6 +10,8 @@ number-sections: true
 format:
   html:
     colorlinks: true
+    syntax-definitions:
+      - sas.xml
   pdf: 
     include-in-header:
       text: |
@@ -53,11 +55,19 @@ library(farr)
 
 :::
 
+```{r}
+#| label: setup
+#| include: false
+Sys.setenv(RETICULATE_PYTHON = "notes_py/bin/python")
+library(reticulate)
+py_config()
+```
+
 # A little about WRDS data
 
 In the beginning was the ... SAS data.
 Well, not really.
-Surely databases such as CRSP and Compustat that have powered research in accounting and finance since the [beginning of time](https://youtu.be/tRSaz5TIyno?t=500) predate SAS and WRDS.
+Surely the databases such as CRSP and Compustat that have powered research in accounting and finance since the [beginning of time](https://youtu.be/tRSaz5TIyno?t=500) predate SAS and WRDS.
 But since long before I entered a business PhD program, WRDS has been the preeminent provider of data to academic researchers and SAS was long the form in which WRDS provided data.
 
 In 2011, I created a predecessor of my `wrds2pg` Python package to create a PostgreSQL database containing WRDS data.^[My original code was in Perl, but by [2015](https://github.com/iangow/wrds_pg/commit/9a7b27331a7f47bd7ab279dae28199e3daea0183) I had Python code to do the same job, and by [2019](https://github.com/iangow/wrds2pg/commit/641f85ac527c6844f31cb5c7991d25db26551c01) there was an installable Python package, created with the help of [Jingyu Zhang](https://github.com/jingyujzhang).
