@@ -1,0 +1,116 @@
+---
+title: "Data management ideas for researchers"
+author: Ian D. Gow
+date: 2026-02-13
+date-format: "D MMMM YYYY"
+number-sections: true
+format-links: false
+pdf: 
+  colorlinks: true
+  geometry:
+    - left=2cm
+    - right=2cm
+  papersize: a4
+  filters:
+    - abstract.lua
+  include-in-header: preamble.tex
+  mainfont: TeX Gyre Pagella
+  mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+::: {.abstract}
+My sense is that data management is a challenge for researchers.
+In an academic context, some fields may receive greater institutional support than others.
+My experience in business schools was that there was very little support for data curation and management.
+:::
+
+# Introduction
+
+My sense is that data management is a challenge for researchers.
+In an academic context, some fields may receive greater institutional support than others.
+My experience in business schools was that there was very little support for data curation and management.
+While data curation is often inextricably linked with data management, in this note I assume that we are working with curated data and just need to "manage" it in some way.
+
+# Data management principles
+
+## Caveats
+
+At the outset, I should note some limitations to my discussion here.
+
+First, this note does not data at the scale of multiple terabytes.
+Researchers working with data at the scale that one starts thinking about Spark clusters and immense cloud storage will not find any answers here.
+That said, I think the approaches I cover here scale up to a "low terabyte" scale, at least for aggregate data.
+
+Second, with very few exceptions, I have not really dealt with data with confidentiality issues.
+Readers dealing with sensitive data would need to overlay the necessary safeguards and protocols associated onto the discussion I provide here.
+
+
+
+##  Some concepts in data management
+
+### Scope
+
+Many datasets are **project-specific** datasets, meaning that only have use within a single project (e.g., paper).
+Examples of project-specific would include experimental data generated in a particular study.
+
+Other datasets are **general-purpose** datasets, meaning that they contain data that might be relevant to many studies.
+Classic examples in a business-school context would be the [US stock price files](https://iangow.github.io/far_book/identifiers.html#the-crsp-database) offered by the Center for Research in Security Prices, LLC (CRSP) or [financial statement data](https://iangow.github.io/far_book/fin-state.html#financial-statement-data) provided by Compustat, or economic time-series data provided by various statistical offices around the world.
+
+Other datasets are **project-level** datasets, meaning that the particular data sets are somehow frozen for a particular project, even though the nature of the data otherwise puts them in the category of general-purpose datasets.
+For example, I might want to fix on a particular version of `comp.g_funda`, Compustat's global dataset for annual financial statements for my project, even though this dataset has relevance beyond a specific project.^[As academic researchers generally get Compustat data through Wharton Research Data Services (WRDS), I refer to this dataset using the nomenclature used by WRDS. Here "global" means "not the United States".]
+
+There are two reasons for having project-level that I can think of.
+The first reason arises in the context of reproducibility.
+If I have published a paper, then the replication package for that paper should ideally contain the data used to produce the exact results in the paper.
+For this purpose, if the paper used `comp.g_funda` data, then the ideal replication package would include the precise *project-level* version of that data set used to produce the paper.
+Of course, in reality, one cannot simply post the project-level version of `comp.g_funda` as part of a public replication package.
+Nonetheless, the authors themselves should have a project-level version of the dataset that *they* retain.
+This much aligns with the views of @Welch:2019aa, who suggests that "the author should keep a private copy of the full data set with which the results were obtained."
+
+The second reason is related to the first, but in some ways opposite in spirit.
+Some authors do not want their results to be upset by updates to any of datasets used to produce them.
+While I have never really subscribed to this rationale, I have experienced this attitude, even if perhaps undeclared.
+I recall being on a research team where I was responsible for supplying a curated data set of significant scale and complexity.
+Unfortunately, my understanding of variable scoping in Perl meant that about 2% of the data were simply corrupted and I had to fix this.
+At my end, I wanted to manage the data as a general-purpose data set, but my co-author wanted to stick to the earlier project-level data, errors be damned.^[From some discussions I've had, it seems that authors are unduly worried about reviewers querying any change in any number in any table.
+I do not understand why "because I updated Compustat" wouldn't an response to "why did the coefficients change?" query, but I guess many authors put a high priority on triggering as few questions as possible in an very imperfect review process.
+Another reason for this stance is that many researchers have a very manual research process, so changing an input data set means changing many other things, including re-typing the coefficients in the Word document containing the paper or reexporting the data to Excel to make the plots.]
+
+### Version control
+
+Version control is a thorny issue with data.
+As far as I know there is no equivalent of Git for datasets.
+While I am sure that version control of data is a big issue in many contexts (e.g., data for regulated bodies), many data providers, even commercial vendors, often do a poor job of version control.
+
+Most data sources will provide the current version of any given dataset and nothing else.
+For example, there is no way to get the version of
+
+# Things to avoid
+
+## Storage formats
+
+# Things to do
+
+## Use modern storage formats
+
+## Think about timestamps
+
+## Back up your data
+
+
+## Modification of raw data files
+
+While I did state at the outset that my focus was on curated data, the reality is that there raw data will often form part of the archive.
+For example, if I wanted a good
+
+## The WRDS web query
+
+
+
+
+
+
+
+
