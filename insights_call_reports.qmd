@@ -1,0 +1,370 @@
+---
+title: "Getting insights from data: Call Reports"
+author: 
+  - name: Ian D. Gow
+    orcid: 0000-0002-6243-8409
+    email: iandgow@gmail.com
+date: 2026-02-07
+number-sections: true
+date-format: "D MMMM YYYY"
+format-links: false
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    colorlinks: true
+  pdf:
+    colorlinks: true
+    geometry:
+    - left=2.5cm
+    - right=2.5cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+---
+
+I recently [@Gow:2026aa] proposed an extension to the data science "whole game" of [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
+In @Gow:2026aa, I used Australian stock price data to illustrate the data curation process and, in this note, I use US bank "Call Report" data as a second illustration.
+In effect, I provide complete instructions for building a high-performance data library covering all Call Reports data provided by the FFIEC Bulk Data website that can be constructed in less than ten minutes on fast hardware (or a couple of hours on an older machine).
+I also give a few brief demonstrations of how to use the curated data, with examples for both R and Python.
+I conclude by discussing challenges encountered during processing and offering some observations about AI and data curation.
+
+My extension of the data science "whole game"---depicted in @fig-whole-game below---adds a *persist* step to the original version, groups it with *import* and *tidy* into a single process, which I call *Curate*.
+As a complement to the new *persist* step, I also add a *load* step to the *Understand* process.^[As will be seen this, this *load* step will not generally be an elaborate one.
+The inclusion of a separate *load* step serves more to better delineate the distinction between the *Curate* process and the *Understand* process.]
+
+```{r}
+#| label: fig-whole-game 
+#| echo: false
+#| out.width: NULL
+#| fig-cap: |
+#|   A representation of the data science workflow
+#| fig-alt: |
+#|   A diagram displaying the data science workflow.
+
+knitr::include_graphics("images/data-science.png", dpi = 270)
+```
+
+:::{.callout-tip text-align="left"}
+This note was written and rendered with [Quarto](https://quarto.org) using [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.qmd) and the latest PDF version is available [here](https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.pdf).
+
+In writing the R portions of this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "farr", "DBI", "duckdb", "pak", dbplyr")` within R to install all the packages other than `ffiec.pq` that you will need to run the R code in this note.]
+
+I have not submitted `ffiec.pq` to CRAN.
+To install `ffiec.pq`, first install the `pak` package using `install.packages("pak")`.^[I already included `pak` in the command in the footnote to the previous paragraph.]
+Then, use `pak` to install `ffiec.pq` by typing `pak::pak("iangow/ffiec.pq")` in the R console.
+
+```{r}
+#| message: false
+library(ffiec.pq)
+library(tidyverse)
+library(farr)
+library(dbplyr)
+library(DBI)
+```
+
+For the Python portion of this note, I believe that you need `polars`, `pandas`, and `ffiec_data_collector` (if you use Python to get the zip files).
+In generating some plots, I use `seaborn` and `matplotlib`, but I don't include the associated code for reasons of space.
+So `pip install polars pandas ffiec_data_collector` probably suffices.
+:::
+
+```{r}
+db <- dbConnect(duckdb::duckdb())
+```
+
+```{r}
+por <- ffiec_scan_pqs(db, "por")
+por |>
+  filter(IDRSSD == 802866) |>
+  rename(last_sub = last_date_time_submission_updated_on) |>
+  select(IDRSSD, financial_institution_name, date,last_sub) |>
+  mutate(sub_gap = sql("(last_sub::timestamp - date::timestamp)")) |>
+  mutate(sub_gap = epoch(sub_gap) / (60 * 60 * 24)) |>
+  arrange(desc(date)) |>
+  head() |>
+  collect() 
+```
+
+```{r}
+ffiec_float <- ffiec_scan_pqs(db, "ffiec_float")
+```
+
+```{r}
+figure1_items <- c(
+  # Core Figure 1 (Schedule RC)
+  "RCFD0081", "RCON0081",             # Cash and non-interest-bearing balances
+  "RCFD0071", "RCON0071",             # Interest-bearing balances
+  "RCFD2170", "RCON2170",             # Total assets
+  "RCFD2200", "RCON2200", "RCFN2200", # Total deposits
+  "RCFD2122", "RCON2122",             # Total loans & leases, net
+  "RCFD1754", "RCON1754",             # Total securities
+  "RCFD3190", "RCON3190",             # Total borrowed money
+  "RCFD3210", "RCON3210",             # Total bank equity capital
+  "RCFD2948", "RCON2948",             # Total liabilities
+  "RCFDG105", "RCONG105",             # Total equity (including NCI)
+
+  # Uninsured deposits (RC-O)
+  "RCFD5597", "RCON5597",             # Estimated uninsured deposits
+  "RCFDF049", "RCONF049",
+  "RCFDF0519", "RCONF049",
+
+  # Securities (mostly RC-B memo items)
+  "RCFDJJ34", "RCONJJ34",             # HTM securities: balance sheet
+  "RCFDJ465", "RCONJ465",             # HTM securities: amortized cost
+  "RCFD1771", "RCON1771",             # HTM securities: fair value
+  "RCFD1773", "RCON1773",             # AFS securities: fair value
+  "RCFD1772", "RCON1772",             # AFS securities: amortized cost
+  "RCFDJA22", "RCONJA22"              # Equity securities
+)
+```
+
+The following pulls together all the data on the items above.
+
+```{r}
+bs_data <-
+  ffiec_float |> 
+  ffiec_pivot(items = figure1_items) |>
+  compute() |>
+  system_time()
+```
+
+Note that `bs_data` has data on all banks for all quarters, even though we will only look at SVB here.
+
+```{r}
+bs_data |> count() |> collect()
+```
+
+The following code prepares the data underlying Figure 1.
+
+```{r}
+figure1_all_data <-
+  bs_data |> 
+  mutate(cash = 
+           coalesce(RCFD0081, RCON0081) + 
+           coalesce(RCFD0071, RCON0071),
+         securities =
+           coalesce(RCFDJJ34, RCONJJ34) +
+           coalesce(RCFD1773, RCON1773) +
+           coalesce(RCFDJA22, RCONJA22),
+         loans = 
+           coalesce(RCFD2122, RCON2122),
+         assets = 
+           coalesce(RCFD2170, RCON2170),
+         other_assets = assets - cash - securities - loans,
+         deposits = 
+           coalesce(RCFD2200, RCON2200) + RCFN2200,
+         liabilities = 
+           coalesce(RCFD2948, RCON2948),
+         other_liabilities = liabilities - deposits,
+         htm_gains = 
+           coalesce(RCFD1771, RCON1771) -
+           coalesce(RCFD1754, RCON1754),
+         afs_gains = 
+           coalesce(RCFD1773, RCON1773) -
+           coalesce(RCFD1772, RCON1772),
+         equity = 
+           coalesce(RCFDG105, RCONG105),
+         mtom_metrick = htm_gains + afs_gains,
+         mtom_correct = htm_gains,
+         equity_mtom_metrick = equity + mtom_metrick,
+         equity_mtom = equity + mtom_correct,
+         liab_eq = liabilities + equity,
+         ) |>
+  select(IDRSSD, date, 
+         cash, securities, loans, other_assets, assets,
+         deposits, other_liabilities, liabilities, 
+         mtom_metrick, mtom_correct,
+         equity, liab_eq,
+         equity_mtom_metrick, equity_mtom)
+```
+
+```{r}
+figure1_data <-
+  figure1_all_data |>
+  filter(IDRSSD == 802866,
+         date %in% c("2019-12-31", "2022-12-31"))
+```
+
+```{r}
+#| include: false
+order_levels <- c(
+  "cash",
+  "securities",
+  "loans",
+  "other_assets",
+  "assets",
+  "deposits",
+  "other_liabilities",
+  "liabilities",
+  "equity",
+  "liab_eq",
+  "mtom_metrick",
+  "mtom_correct",
+  "equity_mtom_metrick",
+  "equity_mtom"
+)
+
+nice_labels <- c(
+  cash = "Cash",
+  securities = "Securities",
+  loans = "Loans",
+  other_assets = "Other assets",
+  assets = "Total assets",
+  deposits = "Deposits",
+  other_liabilities = "Other liabilities",
+  liabilities = "Liabilities",
+  equity = "Equity",
+  liab_eq = "Total liabilities & equity",
+  mtom_metrick = "Mark-to-market (Metrick)",
+  mtom_correct = "Mark-to-market (correct)",
+  equity_mtom_metrick = "Equity (Metrick MTM)",
+  equity_mtom = "Equity (correct MTM)"
+)
+
+figure_1_clean <-
+  figure1_data |>
+  pivot_longer(cols = -c(IDRSSD, date)) |>
+  mutate(lhs = name %in% c("cash", "securities", "loans", "other_assets",
+                           "assets"),
+         rhs = name %in% c("deposits", "other_liabilities", "liabilities", 
+                           "equity", "liab_eq",
+                           "equity_mtom_metrick", "equity_mtom")) |>
+  collect() |>
+  mutate(name = factor(name, levels = order_levels)) |>
+  mutate(
+    name = recode(name, !!!nice_labels)
+  ) 
+```
+
+
+
+::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+#| echo: false
+#| message: false
+library(dplyr)
+library(kableExtra)
+
+figure_1_clean |>
+  filter(date == "2019-12-31", lhs) |>
+  mutate(value = value / 1e6) |>
+  select(name, value) |>
+  arrange(name) |>
+  mutate(value = scales::number(value, accuracy = 1)) %>%
+  knitr::kable(
+    caption = "Assets (2019-12-31)",
+    col.names = c("Item", "Value ($B)"),
+    align = c("l", "r")
+  ) %>%
+  kable_styling(full_width = FALSE, position = "left")
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+#| echo: false
+#| message: false
+figure_1_clean |>
+  filter(date == "2019-12-31", rhs) |>
+  mutate(value = value / 1e6) |>
+  select(name, value) |>
+  arrange(name) |>
+  mutate(value = scales::number(value, accuracy = 1)) %>%
+  knitr::kable(
+    caption = "Liabilities and Equity (2019-12-31)",
+    col.names = c("Item", "Value ($B)"),
+    align = c("l", "r")
+  ) %>%
+  kable_styling(full_width = FALSE, position = "left")
+```
+
+:::
+  
+:::
+
+
+::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+#| echo: false
+#| message: false
+
+figure_1_clean |>
+  filter(date == "2022-12-31", lhs) |>
+  mutate(value = value / 1e6) |>
+  select(name, value) |>
+  arrange(name) |>
+  mutate(value = scales::number(value, accuracy = 1)) %>%
+  knitr::kable(
+    caption = "Assets (2022-12-31)",
+    col.names = c("Item", "Value ($B)"),
+    align = c("l", "r")
+  ) %>%
+  kable_styling(full_width = FALSE, position = "left")
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+#| echo: false
+#| message: false
+figure_1_clean |>
+  filter(date == "2022-12-31", rhs) |>
+  mutate(value = value / 1e6) |>
+  select(name, value) |>
+  arrange(name) |>
+  mutate(value = scales::number(value, accuracy = 1)) %>%
+  knitr::kable(
+    caption = "Liabilities and Equity (2022-12-31)",
+    col.names = c("Item", "Value ($B)"),
+    align = c("l", "r")
+  ) %>%
+  kable_styling(full_width = FALSE, position = "left")
+```
+
+:::
+  
+:::
+
+
+p. 142: "For securities held by Silicon Valley Bank, most of which were purchased when interest rates were much lower in 2020 and 2021, the rise in long-term rates caused a reduction in mark-to-market value of about \$17 billion, with this newly mark-to-market value shown in red as \$103 billion."
+
+p. 134: "At $213 billion in assets, First Republic was even larger than SVB, thus leapfrogging to become the 'new' second-largest bank failure ever in the United States."
+
+p. 143: By this measure, Silicon Valley Bank was already insolvent by December 31, 2022, as shown in the bottom panel of Figure 1, with negative \$3 billion in equity. 
+
+p. 144: "Two large banks were particularly hard-hit by deposit outflows that same Friday, March 10: Signature Bank, with \$110 billion in assets, had about \$10 billion in outflows, and First Republic Bank, with \$213 billion in assets, had about \$25 billion in outflows."
+
+p. 147: "There are many good references that explain the details of these capital rules; for present purposes, the basic equity-to-assets ratio will suffice.
+At 7 percent, the ratio at Silicon Valley Bank at the end of 2019 was below the 9.66 percent average for insured banks in the United States, but still above the acceptable minimum of 4 percent."
+
+```{r}
+figure1_all_data |> 
+  filter(IDRSSD == 802866, date == "2019-12-31") |>
+  mutate(eq_ratio = equity / assets) |> 
+  select(IDRSSD, date, eq_ratio)
+```
+
+
+```{r}
+bs_data |>
+  select(IDRSSD, date, RCFD5597, RCON5597 ,RCFD2200, RCON2200) |>
+  mutate(perc_unins = 
+           coalesce(RCFD5597, RCON5597) / 
+           coalesce(RCFD2200, RCON2200)) |>
+  # select(IDRSSD, date, perc_unins) |>
+  # count(perc_unins == 1) |>
+  filter(is.na(perc_unins), date >= "2019-01-01")
+
+```
