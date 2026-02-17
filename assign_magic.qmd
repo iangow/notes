@@ -1,0 +1,220 @@
+---
+title: "Explaining some `.assign()` idioms."
+author: Ian D. Gow
+date: 2026-02-07
+date-format: "D MMMM YYYY"
+number-sections: true
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: papers.bib
+csl: jfe.csl
+engine: jupyter
+jupyter: notes_py
+---
+
+Users of pandas will know about the `.assign` method of the pandas DataFrame.
+
+```{python}
+import pandas as pd
+```
+
+I borrow the toy example data frame from [pandas documentation](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.assign.html), which is `df` below.
+
+```{python}
+df = pd.DataFrame({"temp_c": [17.0, 25.0]}, 
+                  index=["Portland", "Berkeley"])
+df
+```
+
+The documentation tells us that the return value of the method is "a new DataFrame with the new columns in addition to all the existing columns."^[Existing columns that are re-assigned will be overwritten.]
+We can see this here:
+
+```{python}
+df.assign(state=["WA", "CA"])
+```
+
+Note that the original DataFrame is unchanged.
+
+```{python}
+df
+```
+However, if we assign the value returned by `.assign()` to the variable associated with the original DataFrame, it will be practically as if we had modified that DataFrame. 
+
+```{python}
+df = df.assign(state=["WA", "CA"])
+```
+
+Looking at the [pandas documentation](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.assign.html) for the `.assign()` method, we see that its signature is `.assign(**kwargs)`.
+This tells use that `.assign()` only takes keyword arguments.
+In the example above, the keyword was `state`.
+
+A more "traditional" approach might be the assignment to a Series as in the following.^[A good proxy for the "traditional" might be "Python for Data Analysis", written by the creator of pandas. The [third edition](https://wesmckinney.com/book/) of that book appears to contain not a single instance of `.assign()`.]
+
+```{python}
+df["state"] = ["WA", "CA"]
+df
+```
+
+The documentation tells us that "if the values [passed to `.assign()`] are not callable, (e.g. a Series, scalar, or array), they are simply assigned."
+This is precisely the behaviour we see above: the value is a list (`["WA", "CA"]`) and this is assigned to `temp_f` in the returned DataFrame.
+
+But it is probably more common for the arguments to be a callable, such as in the following example, where an anonymous function (or lambda) is given as the value of the keyword `temp_f`.
+
+```{python}
+df.assign(temp_f=lambda x: x.temp_c * 9 / 5 + 32)
+```
+
+According to the documentation, "if the values are callable, they are computed on the DataFrame and assigned to the new columns", precisely the behaviour we see above.^[Another point made by the documentation is that "the callable must not change input DataFrame (though pandas doesn’t check it)."
+This is fairly cryptic remark is perhaps alluding to the (seemingly) historical mutability of DataFrames.
+I struggled, but was unable to contrive an example of actually violating this behaviour.]
+
+Even this could be accomplished with the "traditional" approach:
+
+```{python}
+df["temp_f"] = df["temp_c"] * 9 / 5 + 32
+df
+```
+
+So why depart from the "traditional" approach?
+One reason is that `.assign()` fits nicely into the "method pipeline" approach that seems to have gained currency with data analysts in recent years.
+
+```{python}
+df = (
+    pd.DataFrame({"temp_c": [17.0, 25.0]}, 
+                  index=["Portland", "Berkeley"])
+    .assign(temp_f=lambda x: x.temp_c * 9 / 5 + 32)
+    .assign(temp_k=lambda x: (x.temp_f - 32) * 5 / 9 + 273.15)
+)
+df
+```
+
+```{python}
+raw_data = {"city": ["Portland", "Berkeley"],
+                   "temp_c": ["17", "25"],
+                   "area_land": ["345.73 sq km", "27.02 sq km"],
+                   "area_water": ["29.82 sq km", "18.71 sq km"],
+                   "area_total": ["375.55 sq km", "45.73 sq km"],
+                   "pop": ["652,503", "124,321"]}
+
+df = pd.DataFrame(raw_data)
+df
+```
+
+```{python}
+df = (
+    pd.DataFrame(raw_data)
+    .assign(
+      temp_c=lambda d: pd.to_numeric(d["temp_c"], errors="raise"),
+      area_land=lambda d: pd.to_numeric(d["area_land"]
+                          .str.replace(" sq km", "", regex=False), errors="raise"),
+      area_water=lambda d: pd.to_numeric(d["area_water"]
+                          .str.replace(" sq km", "", regex=False), errors="raise"),
+      area_total=lambda d: pd.to_numeric(d["area_total"]
+                          .str.replace(" sq km", "", regex=False), errors="raise"),
+      pop=lambda d: pd.to_numeric(d["pop"]
+                          .str.replace(",", "", regex=False), errors="raise"),
+    )
+)
+df
+```
+
+Ew!
+That's some ugly code.
+
+```{python}
+def parse_area(s: pd.Series) -> pd.Series:
+    return pd.to_numeric(
+        s.str.replace(" sq km", "", regex=False),
+        errors="raise",
+    )
+
+def parse_pop(s: pd.Series) -> pd.Series:
+    return pd.to_numeric(
+        s.str.replace(",", "", regex=False),
+        errors="raise",
+    )                       
+```
+
+```{python}
+df = (
+    pd.DataFrame(raw_data)
+    .assign(
+        temp_c=lambda d: pd.to_numeric(d["temp_c"], errors="raise"),
+        area_land=lambda d: parse_area(d["area_land"]),
+        area_water=lambda d: parse_area(d["area_water"]),
+        area_total=lambda d: parse_area(d["area_total"]),
+        pop=lambda d: parse_pop(d["pop"]),
+    )
+)
+df
+```
+
+```{python}
+area_cols = ["area_land", "area_water", "area_total"]
+
+df = (
+    pd.DataFrame(raw_data)
+    .assign(
+        temp_c=lambda d: pd.to_numeric(d["temp_c"], errors="raise"),
+        pop=lambda d: parse_pop(d["pop"]),
+        **{c: (lambda d, c=c: parse_area(d[c]))
+           for c in area_cols}
+    )
+)
+df
+```
+  
+```{r}
+#| message: false
+library(tidyverse)
+```
+
+```{r}
+raw_data <- list(
+  city = c("Portland", "Berkeley"),
+  temp = c("17C", "25C"),
+  area_land  = c("345.73 sq km", "27.02 sq km"),
+  area_water = c("29.82 sq km", "18.71 sq km"),
+  area_total = c("375.55 sq km", "45.73 sq km"),
+  pop = c("652,503", "124,321")
+)
+
+df <- 
+  raw_data |>
+  as_tibble() |>
+  mutate(across(-city, parse_number))
+
+df
+```
+
+```{python}
+def parse_number(s: pd.Series) -> pd.Series:
+    return (
+        s.astype("string")
+         .str.replace(r"[^\d\.\-]+", "", regex=True)
+         .pipe(pd.to_numeric, errors="coerce")
+    )
+```
+
+```{python}
+df = (
+    pd.DataFrame(raw_data)
+    .pipe(lambda d: d.assign(**{c: parse_number(d[c])
+                                for c in d.columns if c != "city"})
+    )
+    .rename({"temp": "temp_c"})
+    .assign(temp_f=lambda x: x.temp_c * 9 / 5 + 32)
+    .assign(temp_k=lambda x: (x.temp_f - 32) * 5 / 9 + 273.15)
+)
+
+df
+```
