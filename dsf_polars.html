@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-01-20">
+
+<title>The best of both worlds: Using modern data frame libraries to create pandas data – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#sec-pandas" id="toc-sec-pandas" class="nav-link" data-scroll-target="#sec-pandas"><span class="header-section-number">2</span> Expressive pandas</a></li>
+  <li><a href="#generating-fig-original-using-polars" id="toc-generating-fig-original-using-polars" class="nav-link" data-scroll-target="#generating-fig-original-using-polars"><span class="header-section-number">3</span> Generating Figure&nbsp;1 using polars</a>
+  <ul class="collapse">
+  <li><a href="#sec-ibis" id="toc-sec-ibis" class="nav-link" data-scroll-target="#sec-ibis"><span class="header-section-number">3.1</span> Generating Figure&nbsp;1 using Ibis and DuckDB</a></li>
+  <li><a href="#sec-wrds" id="toc-sec-wrds" class="nav-link" data-scroll-target="#sec-wrds"><span class="header-section-number">3.2</span> Generating Figure&nbsp;1 using Ibis and WRDS PostgreSQL</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">The best of both worlds: Using modern data frame libraries to create pandas data</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">20 January 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>A strong point of pandas is its expressiveness. Its API allows users to explore data using succinct and (generally) intuitive code. However, some of this expressiveness relies on data being in forms (for example, with dates ready to serve as an index) that often differ from the data we have, and pandas can struggle to manipulate the data into those forms, especially with larger data sets.</p>
+<p>A number of modern data frame libraries have emerged that address weaknesses of pandas. In this note, I use polars and Ibis to show how one can use these libraries to get the data into a form in which pandas can shine.</p>
+<p>While the underlying data would occupy over 10 GB in memory, the polars variant below runs in about half a second. This approach may have particular appeal to pandas experts because the code is likely more familiar to experienced analysts of data frames.</p>
+<p>I consider two Ibis alternatives. The first uses the same underlying parquet files used in the polars variant, but perhaps takes even less time than polars does. The second tweaks just a small portion of the earlier Ibis code to source the underlying data directly from the WRDS PostgreSQL database. Even so, it takes less than a second to run.</p>
+<p>So we get the best of both worlds. We can use modern, lazy libraries to perform the heavy data manipulation, and then hand off a compact result to pandas for exploration and visualization.</p>
+<div class="callout callout-style-default callout-tip callout-titled" data-text-align="left">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This note uses several Python packages and parts of it rely on the existence of a local data repository of parquet files for WRDS data of the kind described in <a href="https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq-pg">Appendix E</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a>. The following command (run in the terminal on your computer) installs the packages you need.</p>
+<div id="93101aee" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install <span class="st">'ibis-framework[duckdb, postgres]'</span> pandas polars db2pq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The code assumes you have set the environment variables <code>DATA_DIR</code> and <code>WRDS_ID</code> to point to the location of the parquet repository on your computer and your WRDS ID, respectively.</p>
+<p>The necessary files for the parquet repository for this note can be created using the <code>db2pq</code> package using the following code. Note that <code>wrds_update_pq("dsf", "crsp")</code> will take about 12 minutes with a fast connection to WRDS, but only runs if the file on your computer is not current with the data on the WRDS server.</p>
+<div id="51ff77aa" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"dsf"</span>, <span class="st">"crsp"</span>)  </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"stocknames"</span>, <span class="st">"crsp"</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>crsp.dsf already up to date.
+crsp.stocknames already up to date.</code></pre>
+</div>
+</div>
+<p>This note was written using <a href="https://quarto.org">Quarto</a>. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/dsf_polars.qmd">here</a> and the latest version of this PDF is <a href="https://raw.githubusercontent.com/iangow/notes/main/dsf_polars.pdf">here</a>.</p>
+</div>
+</div>
+</section>
+<section id="sec-pandas" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Expressive pandas</h1>
+<p>Since 2012, pandas has become the leading <strong>data frame library</strong> in Python. A real strength of pandas appears to be its expressiveness, which allows a user to explore data with succinct code. To show this, I will adapt an example from <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span>. The following code reads data from a GitHub page …</p>
+<div id="ad213262" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> (<span class="st">"https://raw.githubusercontent.com/yhilpisch/"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>       <span class="st">"py4fi2nd/refs/heads/master/source/"</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>       <span class="st">"tr_eikon_eod_data.csv"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>       </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>ticker_list <span class="op">=</span> [<span class="st">"AAPL.O"</span>, <span class="st">"MSFT.O"</span>, <span class="st">"INTC.O"</span>, <span class="st">"AMZN.O"</span>, <span class="st">"GS.N"</span>]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>       </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> (pd</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    .read_csv(url, index_col<span class="op">=</span><span class="dv">0</span>, parse_dates<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    [ticker_list]</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>… and then one line of code generates <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<div id="cell-fig-original" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data.plot(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>), subplots<span class="op">=</span><span class="va">True</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="fig-original" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="dsf_polars_files/figure-html/fig-original-output-1.png" width="658" height="655" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Stock prices for five firms: Original
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Looking at the code, it seems that pandas has magically intuited that the data set comprises a number of time series, so a call to the <code>.plot()</code> method of the <code>pd.DataFrame</code> generates a plot and <code>subplots=True</code> makes a subplot for each series. Of course, it wasn’t some special instinct for the meaning of data that allowed pandas to do this. Rather, by having dates in the first column of the CSV and then telling pandas to use that column to generate the <code>Index</code> for the <code>pd.DataFrame</code>, we get the data in the following form:</p>
+<div id="6b5743e1" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">AAPL.O</th>
+<th data-quarto-table-cell-role="th">MSFT.O</th>
+<th data-quarto-table-cell-role="th">INTC.O</th>
+<th data-quarto-table-cell-role="th">AMZN.O</th>
+<th data-quarto-table-cell-role="th">GS.N</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Date</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-01-01</th>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2010-01-04</th>
+<td>30.572827</td>
+<td>30.950</td>
+<td>20.88</td>
+<td>133.90</td>
+<td>173.08</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-01-05</th>
+<td>30.625684</td>
+<td>30.960</td>
+<td>20.87</td>
+<td>134.69</td>
+<td>176.14</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2010-01-06</th>
+<td>30.138541</td>
+<td>30.770</td>
+<td>20.80</td>
+<td>132.25</td>
+<td>174.26</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-01-07</th>
+<td>30.082827</td>
+<td>30.452</td>
+<td>20.60</td>
+<td>130.00</td>
+<td>177.67</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>As can be seen, <code>Date</code> is different from the other “columns” of the data frame; in a sense, it’s not a column at all, but the index for the data frame:</p>
+<div id="f22f2a5c" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data.index</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<pre><code>DatetimeIndex(['2010-01-01', '2010-01-04', '2010-01-05', '2010-01-06',
+               '2010-01-07', '2010-01-08', '2010-01-11', '2010-01-12',
+               '2010-01-13', '2010-01-14',
+               ...
+               '2018-06-18', '2018-06-19', '2018-06-20', '2018-06-21',
+               '2018-06-22', '2018-06-25', '2018-06-26', '2018-06-27',
+               '2018-06-28', '2018-06-29'],
+              dtype='datetime64[ns]', name='Date', length=2216, freq=None)</code></pre>
+</div>
+</div>
+<p>Having the data in this form allows us to access the data with succinct code. We can use <code>.loc[]</code> to select by date …</p>
+<div id="aae5cc3a" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data.loc[<span class="st">'2010-01-08'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre><code>AAPL.O     30.282827
+MSFT.O     30.660000
+INTC.O     20.830000
+AMZN.O    133.520000
+GS.N      174.310000
+Name: 2010-01-08 00:00:00, dtype: float64</code></pre>
+</div>
+</div>
+<p>… and <code>[]</code> to select by column.</p>
+<div id="c38d0dc3" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data[<span class="st">'AAPL.O'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<pre><code>Date
+2010-01-01           NaN
+2010-01-04     30.572827
+2010-01-05     30.625684
+2010-01-06     30.138541
+2010-01-07     30.082827
+                 ...    
+2018-06-25    182.170000
+2018-06-26    184.430000
+2018-06-27    184.160000
+2018-06-28    185.500000
+2018-06-29    185.110000
+Name: AAPL.O, Length: 2216, dtype: float64</code></pre>
+</div>
+</div>
+<p>An important operation for financial time series is <strong>resampling</strong> <span class="citation" data-cites="hilpisch2019">(<a href="#ref-hilpisch2019" role="doc-biblioref">Hilpisch, 2019, p. 215</a>)</span>. For example, we could transform the daily data in <code>data</code> into weekly data with one line:</p>
+<div id="09d26ec4" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>data.resample(<span class="st">'W'</span>).last().head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">AAPL.O</th>
+<th data-quarto-table-cell-role="th">MSFT.O</th>
+<th data-quarto-table-cell-role="th">INTC.O</th>
+<th data-quarto-table-cell-role="th">AMZN.O</th>
+<th data-quarto-table-cell-role="th">GS.N</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Date</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-01-03</th>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2010-01-10</th>
+<td>30.282827</td>
+<td>30.66</td>
+<td>20.83</td>
+<td>133.52</td>
+<td>174.31</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-01-17</th>
+<td>29.418542</td>
+<td>30.86</td>
+<td>20.80</td>
+<td>127.14</td>
+<td>165.21</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2010-01-24</th>
+<td>28.249972</td>
+<td>28.96</td>
+<td>19.91</td>
+<td>121.43</td>
+<td>154.12</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-01-31</th>
+<td>27.437544</td>
+<td>28.18</td>
+<td>19.40</td>
+<td>125.41</td>
+<td>148.72</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Similarly with monthly data …</p>
+<div id="e202c035" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>data.resample(<span class="st">'ME'</span>).last().head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">AAPL.O</th>
+<th data-quarto-table-cell-role="th">MSFT.O</th>
+<th data-quarto-table-cell-role="th">INTC.O</th>
+<th data-quarto-table-cell-role="th">AMZN.O</th>
+<th data-quarto-table-cell-role="th">GS.N</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Date</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-01-31</th>
+<td>27.437544</td>
+<td>28.1800</td>
+<td>19.40</td>
+<td>125.41</td>
+<td>148.72</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2010-02-28</th>
+<td>29.231399</td>
+<td>28.6700</td>
+<td>20.53</td>
+<td>118.40</td>
+<td>156.35</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-03-31</th>
+<td>33.571395</td>
+<td>29.2875</td>
+<td>22.29</td>
+<td>135.77</td>
+<td>170.63</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2010-04-30</th>
+<td>37.298534</td>
+<td>30.5350</td>
+<td>22.84</td>
+<td>137.10</td>
+<td>145.20</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2010-05-31</th>
+<td>36.697106</td>
+<td>25.8000</td>
+<td>21.42</td>
+<td>125.46</td>
+<td>144.26</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>These examples demonstrate the expressiveness of pandas, especially with financial time series data. This facility is less surprising once you realize that pandas began life when Wes McKinney was working at AQR Capital Management.</p>
+<p>However, I think there is a danger of overestimating the facility of working with pandas from such examples. My experience is that data sets rarely come in a form that allows one to use a <code>DatetimeIndex</code> with series identifiers as the columns.</p>
+<p>Many data sets have a wider range of data types (one of the reasons for creating pandas in the first place) and data are often provided in a form that needs work to get to something like <code>data</code> above.</p>
+<p>For example, many researchers, including academics, generally get stock prices and returns for US firms from CRSP. According to its website, “the Center for Research in Security Prices, LLC (CRSP) maintains the most comprehensive collection of security price, return, and volume data for the NYSE, AMEX and NASDAQ stock markets.” (See <a href="https://iangow.github.io/far_book/identifiers.html#the-crsp-database">Chapter 7</a> of <span class="citation" data-cites="gow2024empirical">Gow and Ding (<a href="#ref-gow2024empirical" role="doc-biblioref">2024</a>)</span> for more on CRSP.) Academic researchers generally get CRSP data through Wharton Research Data Services, more commonly referred to as WRDS (pronounced “words”).</p>
+<p>So a question might be: What do we need to do to get CRSP data into the form above? And can pandas do it for us? The rest of this note provides an answer to these two questions.</p>
+<p>I will start with the second question, to which the answer is simply “no” (or at least “not easily”). The data we will need are found in two tables <code>crsp.stocknames</code> and <code>crsp.dsf</code>. The latter of these is about 2 GB on disk in parquet format, but would be larger in RAM, or in the SAS and PostgreSQL formats that WRDS provides.</p>
+<p>One approach to using pandas with these data sets might seem to be to run SQL against the WRDS PostgreSQL database. But that’s not using pandas, so much as using SQL to do most of the heavy lifting. That doesn’t count in my book.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>What I have in mind for the second question is “can I go from <code>dsf.parquet</code> to the <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a> using pandas (and fairly normal hardware)?” No! I would say you get stuck with the very first step, which would be something like <code>dfs = pd.read_parquet("dsf.parquet")</code>. I tried it and my computer pretty much melted … to the extent that I had to reach under the machine and press the little-used “off” button.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+</section>
+<section id="generating-fig-original-using-polars" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Generating <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a> using polars</h1>
+<p>In recent years, Python data frame libraries such as Dask and polars have emerged as alternatives to pandas. There are also what might be called <strong>framework libraries</strong>, such as Ibis, that can work with other libraries (such as DuckDB) and systems (such as PostgreSQL) to produce much or all of the functionality of data frame libraries.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> In fact, Ibis can work with polars too. Whereas data frame libraries typically define both a data structure and an execution model, framework libraries often define an abstraction layer that can target multiple backends.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<p>These newer data frame libraries likely emerged in part to address perceived weaknesses in pandas, such as its eager, in-memory approach to data analysis.</p>
+<p>So I will move back to the first question and, to answer it, I will first try out the polars library to see whether it can help me create a pandas data set that I can use to reproduce <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a>. For the purposes of this note, I’m going to use the parquet data repository that I set up along the lines described in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <span class="citation" data-cites="gow2024empirical">Gow and Ding (<a href="#ref-gow2024empirical" role="doc-biblioref">2024</a>)</span>. To facilitate this, I create the following <code>load_parquet()</code> function to allow polars to access data in my repository.</p>
+<div id="bb3af94b" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_parquet(table, schema, <span class="op">*</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>table<span class="sc">}</span><span class="ss">.parquet"</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> pl.scan_parquet(path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Because <code>pl.scan_parquet()</code> does not immediately load data into memory, it returns almost instantly.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<div id="37fd05a8" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>dsf <span class="op">=</span> load_parquet(<span class="st">"dsf"</span>, <span class="st">"crsp"</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>stocknames <span class="op">=</span> load_parquet(<span class="st">"stocknames"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 2.57 ms</p>
+</div>
+</div>
+<p>The next step is to look up tickers and link them to the security identifier used by CRSP (<code>permno</code>). The tickers found in the data provided by Hilpisch above include suffixes that indicate the exchange the stocks traded on. I use a simple regular expression to strip off these suffixes.</p>
+<div id="ab6fc0dc" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>clean_tickers <span class="op">=</span> [re.sub(<span class="vs">r"</span><span class="ch">\.</span><span class="pp">[A-Z]</span><span class="op">+</span><span class="dv">$</span><span class="vs">"</span>, <span class="st">""</span>, t) <span class="cf">for</span> t <span class="kw">in</span> ticker_list]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>An important detail about tickers is that they get reused over time. So a ticker match with a <code>permno</code> may have a range of dates over which it is valid. I’m going to assume that the tickers in <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span> were valid on the last date observed in his data set and look for the PERMNO match valid on that date.</p>
+<div id="0410739e" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="op">=</span> pl.lit(data.index.<span class="bu">max</span>())</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>tickers <span class="op">=</span> (</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    stocknames</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"ticker"</span>).is_in(clean_tickers))</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(end_date.is_between(pl.col(<span class="st">"namedt"</span>), pl.col(<span class="st">"nameenddt"</span>)))</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"permno"</span>, <span class="st">"ticker"</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 24.29 ms</p>
+</div>
+</div>
+<p>Note that we could append <code>.unique()</code> to only select distinct rows if our code could produce duplicates. Or we could append <code>.unique(subset=["permno"])</code> to keep only one row for each <code>permno</code>.</p>
+<p>The following code checks that each <code>permno</code> appears in a single row of <code>tickers</code>. If not Python’s <code>assert</code> statement will trigger an error.</p>
+<div id="0c233891" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    tickers</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"permno"</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    .agg(pl.<span class="bu">len</span>().alias(<span class="st">"n_rows"</span>))</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    .select((pl.col(<span class="st">"n_rows"</span>) <span class="op">&lt;=</span> <span class="dv">1</span>).<span class="bu">all</span>())</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    .item()</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Having obtained the <code>permno</code> data, I can use this to get the relevant return data from <code>crsp.dsf</code>. Note that <code>.collect()</code> is the point at which the <strong>lazy data frames</strong> (<code>pl.LazyFrame</code> objects) created by <code>pl.scan_parquet()</code> are <strong>materialized</strong> as data frames (<code>pl.DataFrame</code> objects). So this step takes a (relatively!) long time.</p>
+<p>Note also that I get stock prices (<code>prc</code>) and returns both with (<code>ret</code>) and without (<code>retx</code>) dividends and other distributions. It turns out that the price series used by <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span> did not include the effects of distributions, so I will use <code>retx</code> in my analysis below.</p>
+<div id="c9461471" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> pl.lit(data.index.<span class="bu">min</span>())</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>dsf_sub <span class="op">=</span> (dsf</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    .join(tickers, on<span class="op">=</span><span class="st">"permno"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>).is_between(start_date, end_date))</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"ticker"</span>, <span class="st">"date"</span>, <span class="st">"prc"</span>, <span class="st">"ret"</span>, <span class="st">"retx"</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col([<span class="st">"prc"</span>, <span class="st">"ret"</span>, <span class="st">"retx"</span>]).cast(pl.Float64))</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 1.519 s</p>
+</div>
+</div>
+<p>An important step in the code above is the conversion of prices and returns to floating-point data types, as they are stored in the WRDS PostgreSQL database as <code>NUMERIC</code> type. For example, <code>prc</code> is stored as <code>NUMERIC(11, 5)</code>, which means a numeric type with a total of 11 digits and 5 digits after the decimal place. The return variables (<code>ret</code> and <code>retx</code>) are stored as <code>NUMERIC(10, 6)</code>. The <code>db2pq</code> library I used to create the parquet files from the WRDS PostgreSQL data uses the <code>pyarrow</code> library to determine the best type to match the PostgreSQL type.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> The code below confirms that the PostgreSQL types are effectively retained in the parquet files I am loading with polars.</p>
+<div id="d249b01a" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(dsf</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    .head(<span class="dv">5</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"permno"</span>, <span class="st">"date"</span>, <span class="st">"prc"</span>, <span class="st">"ret"</span>, <span class="st">"retx"</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    .collect())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>shape: (5, 5)
+┌────────┬────────────┬───────────────┬───────────────┬───────────────┐
+│ permno ┆ date       ┆ prc           ┆ ret           ┆ retx          │
+│ ---    ┆ ---        ┆ ---           ┆ ---           ┆ ---           │
+│ i32    ┆ date       ┆ decimal[11,5] ┆ decimal[10,6] ┆ decimal[10,6] │
+╞════════╪════════════╪═══════════════╪═══════════════╪═══════════════╡
+│ 10000  ┆ 1986-01-07 ┆ -2.56250      ┆ null          ┆ null          │
+│ 10000  ┆ 1986-01-08 ┆ -2.50000      ┆ -0.024390     ┆ -0.024390     │
+│ 10000  ┆ 1986-01-09 ┆ -2.50000      ┆ 0.000000      ┆ 0.000000      │
+│ 10000  ┆ 1986-01-10 ┆ -2.50000      ┆ 0.000000      ┆ 0.000000      │
+│ 10000  ┆ 1986-01-13 ┆ -2.62500      ┆ 0.050000      ┆ 0.050000      │
+└────────┴────────────┴───────────────┴───────────────┴───────────────┘</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 5.89 ms</p>
+</div>
+</div>
+<p>The next step is to recreate, as best we can, the price series used in <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span>. My assumption is that the prices are adjusted for splits such that the adjusted price at the end of the series used by <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span> equals the unadjusted price on that date (i.e., what should be in <code>prc</code>). I then recreate preceding adjusted prices in each time series by working back from the ending price using returns (and I confirmed by inspecting the data in <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span> that <code>retx</code> is the appropriate return measure). One way to interpret the code below is that taking one stock at a time, <code>growth_last</code> is the cumulative returns for each stock over the whole time series and the adjusted price for each date is the final price (<code>prc_last</code>) multiplied by the cumulative returns to date (<code>growth</code>) divided by <code>growth_last</code>.</p>
+<p>Note that the syntax here is pretty “pandas”-like in the sense that we sort the data and then apply <code>cum_prod()</code> to <code>(1 + retx)</code>. The concatenation of three <code>.with_columns()</code> methods calls is needed to allow polars to refer to results from previous calls in each call.</p>
+<div id="b545a98a" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>dsf_adj <span class="op">=</span> (</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    dsf_sub</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    .sort([<span class="st">"ticker"</span>, <span class="st">"date"</span>])</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        growth<span class="op">=</span>(<span class="fl">1.0</span> <span class="op">+</span> pl.col(<span class="st">"retx"</span>)).cum_prod().over(<span class="st">"ticker"</span>)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>        prc_last<span class="op">=</span>pl.col(<span class="st">"prc"</span>).last().over(<span class="st">"ticker"</span>),</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>        growth_last<span class="op">=</span>pl.col(<span class="st">"growth"</span>).last().over(<span class="st">"ticker"</span>),</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>        prc<span class="op">=</span>pl.col(<span class="st">"prc_last"</span>) <span class="op">*</span> pl.col(<span class="st">"growth"</span>) <span class="op">/</span> </span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>                pl.col(<span class="st">"growth_last"</span>)</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    .drop([<span class="st">"growth"</span>, <span class="st">"prc_last"</span>, <span class="st">"growth_last"</span>])</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 11.39 ms</p>
+</div>
+</div>
+<p>The final step is to <code>.pivot()</code> the <code>pl.DataFrame</code> into the “wide” form we’re looking for to match the <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span> data, then convert to pandas with <code>.to_pandas()</code>. Once we have a <code>pd.DataFrame</code>, we can set the index using the date column.</p>
+<div id="0c227fe1" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> (dsf_adj</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    .pivot(</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>        index<span class="op">=</span><span class="st">"date"</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span><span class="st">"ticker"</span>,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>        values<span class="op">=</span><span class="st">"prc"</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    .to_pandas()</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    .set_index(<span class="st">"date"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 11.52 ms</p>
+</div>
+</div>
+<p>It turns out that the index in the original data frame is filled out with empty rows on public holidays, likely because the original data included commodities and exchange rates that traded on those dates and we omitted those data here. Having the dates in the index actually makes the plot look better, so I effectively add them to the index of <code>data_alt</code> by using <code>.reindex(data.index)</code>.</p>
+<div id="a203b575" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> data_alt.reindex(data.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 0.91 ms</p>
+</div>
+</div>
+<p>Now we have the data in the right pandas form with a date index, we can return to the “expressive pandas” we saw in <a href="#sec-pandas" class="quarto-xref">Section&nbsp;2</a>. For the purposes of this note, I focus on the simple <code>.plot()</code> method call to generate <a href="#fig-crsp" class="quarto-xref">Figure&nbsp;2</a>.</p>
+<div id="cell-fig-crsp" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>data_alt.plot(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>), subplots<span class="op">=</span><span class="va">True</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="fig-crsp" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crsp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="dsf_polars_files/figure-html/fig-crsp-output-1.png" width="658" height="655" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crsp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Stock prices for five firms: Using CRSP and polars
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Comparing <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a> and <a href="#fig-crsp" class="quarto-xref">Figure&nbsp;2</a>, it seems we have successfully re-created the original data from CRSP data.</p>
+<section id="sec-ibis" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="sec-ibis"><span class="header-section-number">3.1</span> Generating <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a> using Ibis and DuckDB</h2>
+<p>An alternative to using polars would be to use Ibis and its default backend, DuckDB.</p>
+<p>I import Ibis and the <code>_</code> placeholder, as the latter facilitates more succinct code. I also turn on interactive mode to make it easier to inspect the data in tables if I need to do so.</p>
+<div id="c6c4b9a6" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> ibis</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> ibis <span class="im">import</span> _</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>ibis.options.interactive <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I next make a <code>load_parquet_ibis()</code> function that I can use to load data from my parquet repository.</p>
+<div id="92768c47" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_parquet_ibis(con, table, schema, <span class="op">*</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>        data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>table<span class="sc">}</span><span class="ss">.parquet"</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># register the parquet file as an Ibis table</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> con.read_parquet(<span class="bu">str</span>(path), table_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>schema<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>table<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The short time taken to “load” the data below suggests that, analogous to the results of <code>pl.scan_parquet()</code>, the tables created here are lazy Ibis expressions rather than materialized data frames.</p>
+<div id="ceda7c13" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>con <span class="op">=</span> ibis.duckdb.<span class="ex">connect</span>()</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>dsf <span class="op">=</span> load_parquet_ibis(con, <span class="st">"dsf"</span>, <span class="st">"crsp"</span>)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>stocknames <span class="op">=</span> load_parquet_ibis(con, <span class="st">"stocknames"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 89.60 ms</p>
+</div>
+</div>
+<p>A lot of the remaining code is a largely a straightforward translation of the polars code into Ibis equivalents. We start by creating <code>tickers</code>.</p>
+<div id="af4f7989" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="op">=</span> ibis.literal(data.index.<span class="bu">max</span>())</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>tickers <span class="op">=</span> (</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    stocknames</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.ticker.isin(clean_tickers))</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((_.namedt <span class="op">&lt;=</span> end_date) <span class="op">&amp;</span> (end_date <span class="op">&lt;=</span> _.nameenddt))</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"permno"</span>, <span class="st">"ticker"</span>)</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 1.60 ms</p>
+</div>
+</div>
+<p>Then the Ibis version of <code>dsf_sub</code> from above.</p>
+<div id="5346d17a" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> ibis.literal(data.index.<span class="bu">min</span>())</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>num_cols <span class="op">=</span> [<span class="st">"prc"</span>, <span class="st">"ret"</span>, <span class="st">"retx"</span>]</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>dsf_sub <span class="op">=</span> (</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    dsf</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    .inner_join(tickers, predicates<span class="op">=</span>[dsf.permno <span class="op">==</span> tickers.permno])</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.date.between(start_date, end_date))</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"ticker"</span>, <span class="st">"date"</span>, <span class="op">*</span>num_cols)</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    .mutate(<span class="op">**</span>{c: <span class="bu">getattr</span>(_, c).cast(<span class="st">"float64"</span>) <span class="cf">for</span> c <span class="kw">in</span> num_cols})</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 2.05 ms</p>
+</div>
+</div>
+<p>Note that I am using some Python tricks here. First, <code>*num_cols</code> unpacks the list <code>num_cols</code> into positional arguments. So, <code>.select("ticker", "date", *num_cols)</code> is equivalent to <code>.select("ticker", "date", "prc", "ret", "retx")</code>.</p>
+<p>Second, <code>**</code> unpacks a dictionary into keyword arguments. So <code>.mutate(**{c: getattr(_, c).cast("float64") for c in num_cols})</code> unpacks into the following:</p>
+<div id="e784a244" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"prc"</span>: _.prc.cast(<span class="st">"float64"</span>),</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ret"</span>: _.ret.cast(<span class="st">"float64"</span>),</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"retx"</span>: _.retx.cast(<span class="st">"float64"</span>),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>And finally, the equivalent of <code>dsf_adj</code>. Here I am using <strong>window functions</strong>, which are well-supported by DuckDB. Originally, I had attempted to use Ibis with a polars backend, but the polars backend does not support window functions with Ibis. It is not clear to me whether this is an inherent limitation of polars, or is simply a gap in the implementation of the polars backend for Ibis that may be addressed in future versions.</p>
+<p>The code here seems pretty transparent (once you understand the <code>prc = prc_last * growth / growth_last</code> logic discussed above).</p>
+<div id="6f120a2d" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="co"># window for cumulative calculations (up to current row)</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> ibis.window(group_by<span class="op">=</span>_.ticker, order_by<span class="op">=</span>_.date)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cumprod1p(x):</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># cumprod(1 + x) = exp(cumsum(log(1 + x)))</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="dv">1</span> <span class="op">+</span> x).ln().cumsum().over(w).exp().cast(<span class="st">"float64"</span>)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>dsf_adj <span class="op">=</span> (</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    dsf_sub</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    .mutate(growth <span class="op">=</span> cumprod1p(_.retx))</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    .mutate(</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>        prc_last    <span class="op">=</span> _.prc.last().over(w),</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>        growth_last <span class="op">=</span> _.growth.last().over(w),</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>    .mutate(prc <span class="op">=</span> _.prc_last <span class="op">*</span> _.growth <span class="op">/</span> _.growth_last)</span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>    .drop(<span class="st">"growth"</span>, <span class="st">"prc_last"</span>, <span class="st">"growth_last"</span>)</span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 2.14 ms</p>
+</div>
+</div>
+<p>And the final step is very similar to what we saw with polars. We simply <code>pivot_wider()</code>, sort by <code>date</code> (important for the pandas index) and then <code>execute()</code> to create a pandas date frame, which we can apply <code>.set_index("date")</code> to just like above. Note that <code>pivot_wider()</code> is translated into a group-by aggregate query in SQL. If we don’t specify <code>values_agg="max"</code>, it seems that <code>values_agg="first"</code> by default. This works with DuckDB, which has a <code>first()</code> <a href="https://duckdb.org/docs/stable/sql/functions/aggregates#firstarg">aggregate</a>, but will not work with PostgreSQL, which <a href="https://www.postgresql.org/docs/18/functions-aggregate.html">does not</a>. Because there should be just one <code>prc</code> for each <code>(date, ticker)</code> combination, the use of <code>max()</code> should not affect the output.</p>
+<div id="9ff54e59" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> (</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    dsf_adj</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"date"</span>, <span class="st">"ticker"</span>, <span class="st">"prc"</span>)  </span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    .pivot_wider(</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>        names_from<span class="op">=</span><span class="st">"ticker"</span>,</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>        values_from<span class="op">=</span><span class="st">"prc"</span>,</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>        values_agg<span class="op">=</span><span class="st">"max"</span>, </span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    .order_by(<span class="st">"date"</span>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    .execute()</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>    .set_index(<span class="st">"date"</span>)</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 158.16 ms</p>
+</div>
+</div>
+<p>As before, we <code>.reindex()</code> to make the plot look better.</p>
+<div id="41e37f73" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> data_alt.reindex(data.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 0.59 ms</p>
+</div>
+</div>
+<p>And the resulting plot in <a href="#fig-ibis" class="quarto-xref">Figure&nbsp;3</a> suggests that again we have successfully recreated the pandas data frame seen in <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span>.</p>
+<div id="cell-fig-ibis" class="cell" data-execution_count="32">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>data_alt.plot(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>), subplots<span class="op">=</span><span class="va">True</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="fig-ibis" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ibis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="dsf_polars_files/figure-html/fig-ibis-output-1.png" width="658" height="651" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ibis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Stock prices for five firms: Using CRSP, Ibis and DuckDB
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-wrds" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="sec-wrds"><span class="header-section-number">3.2</span> Generating <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a> using Ibis and WRDS PostgreSQL</h2>
+<p>Now that we have Ibis code, it is a trivial matter to replace the DuckDB backend with a PostgreSQL backend using the WRDS PostgreSQL database. I have my WRDS ID in the environment variable <code>WRDS_ID</code>. Only the first chunk of code below is changed from the Ibis-with-DuckDB version in <a href="#sec-ibis" class="quarto-xref">Section&nbsp;3.1</a>. This first chunk takes a (relatively!) long time to run because Ibis needs to connect to the WRDS database and query it for metadata about the two tables it is using.</p>
+<p>Looking at <a href="#fig-ibis-pg" class="quarto-xref">Figure&nbsp;4</a>, it seems that this code also effectively reproduces the data frame created by the pandas code in <a href="#sec-pandas" class="quarto-xref">Section&nbsp;2</a>.</p>
+<div id="eeadaefb" class="cell" data-execution_count="33">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>wrds_id <span class="op">=</span> os.environ[<span class="st">'WRDS_ID'</span>]</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>con <span class="op">=</span> ibis.postgres.<span class="ex">connect</span>(</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    host<span class="op">=</span><span class="st">'wrds-pgdata.wharton.upenn.edu'</span>,</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    database<span class="op">=</span><span class="st">'wrds'</span>,</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    user<span class="op">=</span>wrds_id,</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>    port<span class="op">=</span><span class="dv">9737</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>dsf <span class="op">=</span> con.table(<span class="st">'dsf'</span>, database<span class="op">=</span><span class="st">'crsp'</span>)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>stocknames <span class="op">=</span> con.table(<span class="st">'stocknames'</span>, database<span class="op">=</span><span class="st">'crsp'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 1.042 s</p>
+</div>
+</div>
+<p>The remaining code is identical to that above for Ibis.</p>
+<div id="b5b9a6b6" class="cell" data-execution_count="34">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="op">=</span> ibis.literal(data.index.<span class="bu">max</span>())</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>tickers <span class="op">=</span> (</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    stocknames</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.ticker.isin(clean_tickers))</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((_.namedt <span class="op">&lt;=</span> end_date) <span class="op">&amp;</span> (end_date <span class="op">&lt;=</span> _.nameenddt))</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"permno"</span>, <span class="st">"ticker"</span>)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 1.82 ms</p>
+</div>
+</div>
+<div id="0df565e7" class="cell" data-execution_count="35">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> ibis.literal(data.index.<span class="bu">min</span>())</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>num_cols <span class="op">=</span> [<span class="st">"prc"</span>, <span class="st">"ret"</span>, <span class="st">"retx"</span>]</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>dsf_sub <span class="op">=</span> (</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    dsf</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    .inner_join(tickers, predicates<span class="op">=</span>[dsf.permno <span class="op">==</span> tickers.permno])</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.date.between(start_date, end_date))</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"ticker"</span>, <span class="st">"date"</span>, <span class="op">*</span>num_cols)</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>    .mutate(<span class="op">**</span>{c: <span class="bu">getattr</span>(_, c).cast(<span class="st">"float64"</span>) <span class="cf">for</span> c <span class="kw">in</span> num_cols})</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 2.76 ms</p>
+</div>
+</div>
+<div id="fe1382c4" class="cell" data-execution_count="36">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="co"># window for cumulative calculations (up to current row)</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> ibis.window(group_by<span class="op">=</span>_.ticker, order_by<span class="op">=</span>_.date)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cumprod1p(x):</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># cumprod(1 + x) = exp(cumsum(log(1 + x)))</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="dv">1</span> <span class="op">+</span> x).ln().cumsum().over(w).exp().cast(<span class="st">"float64"</span>)</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>dsf_adj <span class="op">=</span> (</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>    dsf_sub</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>    .mutate(growth <span class="op">=</span> cumprod1p(_.retx))</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>    .mutate(</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>        prc_last    <span class="op">=</span> _.prc.last().over(w),</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>        growth_last <span class="op">=</span> _.growth.last().over(w),</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>    .mutate(prc <span class="op">=</span> _.prc_last <span class="op">*</span> _.growth <span class="op">/</span> _.growth_last)</span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>    .drop(<span class="st">"growth"</span>, <span class="st">"prc_last"</span>, <span class="st">"growth_last"</span>)</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 3.90 ms</p>
+</div>
+</div>
+<p>The next chunk takes a little longer than the same code chunk took in <a href="#sec-ibis" class="quarto-xref">Section&nbsp;3.1</a>, because the data need to be transported from the WRDS PostgreSQL server to my computer.</p>
+<div id="6c2ebf18" class="cell" data-execution_count="37">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> (</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    dsf_adj</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"date"</span>, <span class="st">"ticker"</span>, <span class="st">"prc"</span>)  </span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    .pivot_wider(</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>        names_from<span class="op">=</span><span class="st">"ticker"</span>,</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>        values_from<span class="op">=</span><span class="st">"prc"</span>,</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>        values_agg<span class="op">=</span><span class="st">"max"</span>,   </span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    .order_by(<span class="st">"date"</span>)</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    .execute()</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>    .set_index(<span class="st">"date"</span>)</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 764.84 ms</p>
+</div>
+</div>
+<div id="bd7922b6" class="cell" data-execution_count="38">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> data_alt.reindex(data.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Wall time:</strong> 0.74 ms</p>
+</div>
+</div>
+<div id="cell-fig-ibis-pg" class="cell" data-execution_count="39">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>data_alt.plot(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>), subplots<span class="op">=</span><span class="va">True</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="fig-ibis-pg" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ibis-pg-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="dsf_polars_files/figure-html/fig-ibis-pg-output-1.png" width="658" height="651" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ibis-pg-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Stock prices for five firms: Using CRSP, Ibis and PostgreSQL
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="references" class="level2 unnumbered">
+
+
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-gow2024empirical" class="csl-entry" role="listitem">
+Gow, I.D., Ding, T., 2024. Empirical research in accounting: Tools and methods. Chapman &amp; Hall/CRC, London, UK. <a href="https://doi.org/10.1201/9781003456230">https://doi.org/10.1201/9781003456230</a>
+</div>
+<div id="ref-hilpisch2019" class="csl-entry" role="listitem">
+Hilpisch, Y.J., 2019. Python for finance: Mastering data‐driven finance, 2nd ed. O’Reilly Media, Sebastopol, CA.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Though in <a href="#sec-wrds" class="quarto-xref">Section&nbsp;3.2</a>, I effectively run SQL against the WRDS PostgreSQL database, but using the Ibis library to generate the SQL.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>This was on an M4 Pro Mac mini with 24 GB of RAM.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>The term “framework libraries” is one I made up. If you go to the Ibis website <a href="https://ibis-project.org" class="uri">https://ibis-project.org</a>, Ibis is described as “an open source dataframe library that works with any data system”. But Ibis relies on some other system to provide the <strong>execution engine</strong>, which it calls the <em>backend</em>. Most data frame libraries provide their own execution engines.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Note, some of these data frame libraries are not limited to Python. For example, the polars documentation states that polars “is written in Rust, and available for Python, R and NodeJS [sic].” <a href="https://docs.pola.rs" class="uri">https://docs.pola.rs</a><a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Note that I use a little custom “cell magic” <code>%%ptime</code> to produce execution times in a way that prints nicely in the PDF output. See the <a href="https://raw.githubusercontent.com/iangow/notes/main/dsf_polars.qmd">source code</a> for this document for details.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>See the <a href="https://github.com/iangow/db2pq/blob/6b1e7f3ab38421c916f0f4aecb89d093c7888518/db2pq/db2pq.py#L1039C1-L1045C35">source code</a> for details.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-02-07">
+
+<title>Data curation: The case of Call Reports – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#call-reports" id="toc-call-reports" class="nav-link active" data-scroll-target="#call-reports"><span class="header-section-number">1</span> Call Reports</a>
+  <ul class="collapse">
+  <li><a href="#sec-raw-data" id="toc-sec-raw-data" class="nav-link" data-scroll-target="#sec-raw-data"><span class="header-section-number">1.1</span> Getting the raw data</a>
+  <ul class="collapse">
+  <li><a href="#xbrl-files" id="toc-xbrl-files" class="nav-link" data-scroll-target="#xbrl-files"><span class="header-section-number">1.1.1</span> XBRL files</a></li>
+  </ul></li>
+  <li><a href="#processing-the-data" id="toc-processing-the-data" class="nav-link" data-scroll-target="#processing-the-data"><span class="header-section-number">1.2</span> Processing the data</a></li>
+  </ul></li>
+  <li><a href="#using-the-data" id="toc-using-the-data" class="nav-link" data-scroll-target="#using-the-data"><span class="header-section-number">2</span> Using the data</a>
+  <ul class="collapse">
+  <li><a href="#using-the-data-with-r" id="toc-using-the-data-with-r" class="nav-link" data-scroll-target="#using-the-data-with-r"><span class="header-section-number">2.1</span> Using the data with R</a>
+  <ul class="collapse">
+  <li><a href="#panel-of-reporters-por-data" id="toc-panel-of-reporters-por-data" class="nav-link" data-scroll-target="#panel-of-reporters-por-data"><span class="header-section-number">2.1.1</span> “Panel of Reporters” (POR) data</a></li>
+  <li><a href="#item-schedules-data" id="toc-item-schedules-data" class="nav-link" data-scroll-target="#item-schedules-data"><span class="header-section-number">2.1.2</span> Item-schedules data</a></li>
+  <li><a href="#example-1-do-bank-balance-sheets-balance" id="toc-example-1-do-bank-balance-sheets-balance" class="nav-link" data-scroll-target="#example-1-do-bank-balance-sheets-balance"><span class="header-section-number">2.1.3</span> Example 1: Do bank balance sheets balance?</a></li>
+  <li><a href="#example-2-when-do-banks-submit-their-call-reports" id="toc-example-2-when-do-banks-submit-their-call-reports" class="nav-link" data-scroll-target="#example-2-when-do-banks-submit-their-call-reports"><span class="header-section-number">2.1.4</span> Example 2: When do banks submit their Call Reports?</a></li>
+  </ul></li>
+  <li><a href="#using-the-data-with-python" id="toc-using-the-data-with-python" class="nav-link" data-scroll-target="#using-the-data-with-python"><span class="header-section-number">2.2</span> Using the data with Python</a>
+  <ul class="collapse">
+  <li><a href="#example-3-plotting-trends-in-total-assets-for-the-biggest-banks" id="toc-example-3-plotting-trends-in-total-assets-for-the-biggest-banks" class="nav-link" data-scroll-target="#example-3-plotting-trends-in-total-assets-for-the-biggest-banks"><span class="header-section-number">2.2.1</span> Example 3: Plotting trends in total assets for the biggest banks</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#the-boring-details" id="toc-the-boring-details" class="nav-link" data-scroll-target="#the-boring-details"><span class="header-section-number">3</span> The boring details</a>
+  <ul class="collapse">
+  <li><a href="#reading-the-data" id="toc-reading-the-data" class="nav-link" data-scroll-target="#reading-the-data"><span class="header-section-number">3.1</span> Reading the data</a>
+  <ul class="collapse">
+  <li><a href="#sec-repairs" id="toc-sec-repairs" class="nav-link" data-scroll-target="#sec-repairs"><span class="header-section-number">3.1.1</span> Handling embedded newlines and tabs</a></li>
+  <li><a href="#handling-missing-value-sentinels" id="toc-handling-missing-value-sentinels" class="nav-link" data-scroll-target="#handling-missing-value-sentinels"><span class="header-section-number">3.1.2</span> Handling missing-value sentinels</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#the-service-level-agreement" id="toc-the-service-level-agreement" class="nav-link" data-scroll-target="#the-service-level-agreement"><span class="header-section-number">4</span> The service-level agreement</a>
+  <ul class="collapse">
+  <li><a href="#storage-format" id="toc-storage-format" class="nav-link" data-scroll-target="#storage-format"><span class="header-section-number">4.1</span> Storage format</a></li>
+  <li><a href="#good-database-principles" id="toc-good-database-principles" class="nav-link" data-scroll-target="#good-database-principles"><span class="header-section-number">4.2</span> Good database principles</a></li>
+  <li><a href="#primary-keys" id="toc-primary-keys" class="nav-link" data-scroll-target="#primary-keys"><span class="header-section-number">4.3</span> Primary keys</a></li>
+  <li><a href="#data-types" id="toc-data-types" class="nav-link" data-scroll-target="#data-types"><span class="header-section-number">4.4</span> Data types</a></li>
+  <li><a href="#no-manual-steps" id="toc-no-manual-steps" class="nav-link" data-scroll-target="#no-manual-steps"><span class="header-section-number">4.5</span> No manual steps</a></li>
+  <li><a href="#documentation" id="toc-documentation" class="nav-link" data-scroll-target="#documentation"><span class="header-section-number">4.6</span> Documentation</a></li>
+  <li><a href="#update-process" id="toc-update-process" class="nav-link" data-scroll-target="#update-process"><span class="header-section-number">4.7</span> Update process</a></li>
+  <li><a href="#data-version-control" id="toc-data-version-control" class="nav-link" data-scroll-target="#data-version-control"><span class="header-section-number">4.8</span> Data version control</a></li>
+  </ul></li>
+  <li><a href="#the-future-of-data-curation" id="toc-the-future-of-data-curation" class="nav-link" data-scroll-target="#the-future-of-data-curation"><span class="header-section-number">5</span> The future of data curation</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data curation: The case of Call Reports</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow <a href="mailto:iandgow@gmail.com" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/0000-0002-6243-8409" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">7 February 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>I recently <span class="citation" data-cites="Gow:2026aa">(<a href="#ref-Gow:2026aa" role="doc-biblioref">Gow, 2026</a>)</span> proposed an extension to the data science “whole game” of <a href="https://r4ds.hadley.nz/whole-game">R for Data Science</a> <span class="citation" data-cites="Wickham:2023aa">(<a href="#ref-Wickham:2023aa" role="doc-biblioref">Wickham et al., 2023</a>)</span>. In <span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span>, I used Australian stock price data to illustrate the data curation process and, in this note, I use US bank “Call Report” data as a second illustration. In effect, I provide complete instructions for building a high-performance data library covering all Call Reports data provided by the FFIEC Bulk Data website that can be constructed in less than ten minutes on fast hardware (or a couple of hours on an older machine). I also give a few brief demonstrations of how to use the curated data, with examples for both R and Python. I conclude by discussing challenges encountered during processing and offering some observations about AI and data curation.</p>
+<p>My extension of the data science “whole game”—depicted in <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a> below—adds a <em>persist</em> step to the original version, groups it with <em>import</em> and <em>tidy</em> into a single process, which I call <em>Curate</em>. As a complement to the new <em>persist</em> step, I also add a <em>load</em> step to the <em>Understand</em> process.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-whole-game" class="quarto-float quarto-figure quarto-figure-center anchored" alt="A diagram displaying the data science workflow.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-whole-game-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/data-science.png" class="img-fluid figure-img" alt="A diagram displaying the data science workflow." width="598">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-whole-game-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: A representation of the data science workflow
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>In this note, as in <span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span>, I focus on the data curation (<em>Curate</em>) process. My rationale for separating <em>Curate</em> from <em>Understand</em> is that I believe that thinking about these separately clarifies certain best practices in the curation of data. In <span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span>, I used the notion of a service-level agreement to explain how the two processes can be delineated. My conception of <em>Curate</em> <span class="citation" data-cites="Gow:2026aa">(<a href="#ref-Gow:2026aa" role="doc-biblioref">Gow, 2026</a>)</span> encompasses some tasks that are included in the <em>transform</em> step (part of the <em>Understand</em> process) of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>.</p>
+<p>While I will argue that even the sole analyst who will perform all three processes can benefit from thinking about <em>Curate</em> separate from <em>Understand</em>, it is perhaps easiest to conceive of the <em>Curate</em> and <em>Understand</em> processes as involving different individuals or organizational units of the “whole game” of a data analysis workflow. In <span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span>, I used the idea of a service-level agreement to delineate the division of responsibilities between the <em>Curate</em> and <em>Understand</em> teams. In effect, I will act as a self-appointed, single-person, unpaid <em>Curate</em> team and I imagine potential users of call report data as my <em>Understand</em> clients.</p>
+<div class="callout callout-style-default callout-tip callout-titled" data-text-align="left">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This note was written and rendered with <a href="https://quarto.org">Quarto</a> using <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.qmd">here</a> and the latest PDF version is available <a href="https://raw.githubusercontent.com/iangow/notes/main/curate_call_reports.pdf">here</a>.</p>
+<p>In writing the R portions of this note, I used the packages listed below.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>I have not submitted <code>ffiec.pq</code> to CRAN. To install <code>ffiec.pq</code>, first install the <code>pak</code> package using <code>install.packages("pak")</code>.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> Then, use <code>pak</code> to install <code>ffiec.pq</code> by typing <code>pak::pak("iangow/ffiec.pq")</code> in the R console.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ffiec.pq)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(farr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dbplyr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>For the Python portion of this note, I believe that you need <code>polars</code>, <code>pandas</code>, and <code>ffiec_data_collector</code> (if you use Python to get the zip files). In generating some plots, I use <code>seaborn</code> and <code>matplotlib</code>, but I don’t include the associated code for reasons of space. So <code>pip install polars pandas ffiec_data_collector</code> probably suffices.</p>
+</div>
+</div>
+<section id="call-reports" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Call Reports</h1>
+<p>According to <a href="https://www.ffiec.gov/about/mission">its website</a>, the Federal Financial Institutions Examination Council (FFIEC) “is an interagency body … focused on promoting consistency in examination activities [related to United States financial institutions].” The FFIEC “does not regulate financial institutions [and its] jurisdiction is limited to prescribing uniform principles, standards, and report forms for the federal examination of financial institutions and making recommendations to promote uniformity in the supervision of financial institutions.”</p>
+<p>One of the services provided by the FFIEC is its “Central Data Repository’s Public Data Distribution website. Through <a href="https://cdr.ffiec.gov/public/ManageFacsimiles.aspx">this site</a> you can obtain Reports of Condition and Income (Call Reports) for most FDIC-insured institutions. The information available on this site is updated to reflect the most recent data for both prior and current periods. The earliest data provided is from March 31, 2001.”</p>
+<p>Many academic studies use Call Report data. For example, <span class="citation" data-cites="kashyap2002banks">Kashyap et al. (<a href="#ref-kashyap2002banks" role="doc-biblioref">2002, p. 52</a>)</span> states “our data come from the ‘Call Reports,’ the regulatory filings that all commercial banks having insured deposits submit each quarter. The Call Reports include detailed information on the composition of bank balance sheets and some additional data on off-balance-sheet items. These data are reported at the level of the individual bank.”</p>
+<p>While raw data are offered by the FFIEC, some work is required to arrange the data into a form amenable to further analysis. In other words, some curation of the data is required.</p>
+<p>Several commercial data providers offer the FFIEC data in a curated form, but accessing those requires an institutional or individual subscription. It appears that the Federal Reserve Bank of Chicago once provided a curated data set on its <a href="https://www.chicagofed.org/banking/financial-institution-reports/commercial-bank-data">website</a>, but no longer does so. WRDS provides Call Report data extracted from the same sources I used as part of its basic subscription. Of course, no commercial providers of the data provide the source code used to transform the raw data into the form they deliver it in.</p>
+<p>Other services provide “API wrappers” that allow users to access the data via the FFIEC API, but this approach is best suited to real-time feeds of small amounts of data. Collation of the data into a single local, comprehensive repository using this approach seems impractical given the scale of the data.</p>
+<p>Regardless of the availability of paid curation services, in this note I will imagine that such sources either do not exist or are unavailable to my hypothetical <em>Understand</em> clients and illustrate how one can curate Call Reports data from the FFIEC source.</p>
+<section id="sec-raw-data" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="sec-raw-data"><span class="header-section-number">1.1</span> Getting the raw data</h2>
+<p>The FFIEC <a href="https://cdr.ffiec.gov/public/pws/downloadbulkdata.aspx">Bulk Data Download site</a> provides the Call Report data in two forms. The first is as zipped tab-delimited data files, one for each quarter. The second is as zipped XBRL data files, one for each quarter. At the time of writing, the standard approach to getting the complete data archive amounts to pointing and clicking to download each of the roughly 100 files for each format.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<p>The FFIEC data sets are not as amenable to automated downloading as those offered by other government agencies such as the SEC (see my earlier <a href="https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf">note on XBRL data</a>), the PCAOB (see my <a href="https://github.com/iangow/notes/blob/main/form_ap_names.pdf">note on Form AP data</a>), or even the Federal Reserve itself (I used data from the <a href="https://www.federalreserve.gov/apps/mdrm/">MDRM site</a> in preparing this note). However, a group of individuals has contributed the Python package <code>ffiec_data_collector</code> that we can use to collect the data.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>To install this Python package, you first need to <a href="https://www.python.org/downloads/">install Python</a> and then install the <code>ffiec_data_collector</code> using a command like <code>pip install ffiec_data_collector</code>.</p>
+<p>As discussed in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <span class="citation" data-cites="Gow_2024">Gow and Ding (<a href="#ref-Gow_2024" role="doc-biblioref">2024</a>)</span>, I organize my raw and processed data in a repository comprising a single parent directory and several sub-directories corresponding to various data sources and projects. For some data sets, this approach to organization facilitates switching code from using (say) data sources provided by Wharton Research Data Services (WRDS) to using local data in my data repository. I will adopt that approach for the purposes of this note.</p>
+<p>As the location of my “raw data” repository is found in the the environment variable <code>RAW_DATA_DIR</code>, I can identify that location in Python easily. The following code specifies the download directory as the directory <code>ffiec</code> within my raw data repository.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(os.environ[<span class="st">'RAW_DATA_DIR'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>/Users/igow/Dropbox/raw_data</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>download_dir <span class="op">=</span> Path(os.environ[<span class="st">'RAW_DATA_DIR'</span>]) <span class="op">/</span> <span class="st">"ffiec"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Having specified a location to put the downloaded files, it is a simple matter to adapt a script provided on the <a href="https://ffiec-data-collector.readthedocs.io/en/latest/getting_started.html#basic-usage">package website</a> to download the raw data files.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> ffiec_data_collector <span class="im">as</span> fdc</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>downloader <span class="op">=</span> fdc.FFIECDownloader(download_dir<span class="op">=</span>download_dir)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>periods <span class="op">=</span> downloader.select_product(fdc.Product.CALL_SINGLE)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> []</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> period <span class="kw">in</span> periods[:<span class="dv">4</span>]:</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Downloading </span><span class="sc">{</span>period<span class="sc">.</span>yyyymmdd<span class="sc">}</span><span class="ss">..."</span>, end<span class="op">=</span><span class="st">" "</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> downloader.download(</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        product<span class="op">=</span>fdc.Product.CALL_SINGLE,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        period<span class="op">=</span>period.yyyymmdd,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">format</span><span class="op">=</span>fdc.FileFormat.TSV</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    results.append(result)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> result.success:</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"✓ (</span><span class="sc">{</span>result<span class="sc">.</span>size_bytes<span class="sc">:,}</span><span class="ss"> bytes)"</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"✗ Failed: </span><span class="sc">{</span>result<span class="sc">.</span>error_message<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># IMPORTANT: Be respectful to government servers</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add delay between requests to avoid overloading the server</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    time.sleep(<span class="dv">1</span>)  <span class="co"># 1 second delay - adjust as needed</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Downloading 20251231... ✓ (6,402,952 bytes)
+Downloading 20250930... ✓ (5,687,172 bytes)
+Downloading 20250630... ✓ (6,231,175 bytes)
+Downloading 20250331... ✓ (5,704,772 bytes)</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>successful <span class="op">=</span> <span class="bu">sum</span>(<span class="dv">1</span> <span class="cf">for</span> r <span class="kw">in</span> results <span class="cf">if</span> r.success)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Completed: </span><span class="sc">{</span>successful<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span><span class="bu">len</span>(results)<span class="sc">}</span><span class="ss"> downloads"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Completed: 4/4 downloads</code></pre>
+</div>
+</div>
+<p>Note that the code above downloads just the most recent four files available on the site. Remove <code>[:4]</code> from the line <code>for period in periods[:4]:</code> to download <em>all</em> files. Note that the package website recommends using <code>time.sleep(5)</code> in place of <code>time.sleep(1)</code> to create a five-second delay and this may be a more appropriate choice if you are downloading all 99 files using this code. Note that the downloaded files occupy about 800 MB of disk space, so make sure you have that available if running this code.</p>
+<section id="xbrl-files" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" class="anchored" data-anchor-id="xbrl-files"><span class="header-section-number">1.1.1</span> XBRL files</h3>
+<p>While this note does not use the XBRL files, you can download them using <code>ffiec_data_collector</code> by simply replacing <code>TSV</code> with <code>XBRL</code> in the code above. These zip files are larger than the TSV zip files, occupying about 6 GB of disk space. The <code>ffiec.pq</code> package does offer some rudimentary ability to process these files, but working with them is slow. To illustrate I process just one XBRL zip file.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>zipfiles <span class="ot">&lt;-</span> <span class="fu">ffiec_list_zips</span>(<span class="at">type =</span> <span class="st">"xbrl"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ffiec_process_xbrls</span>(zipfiles<span class="sc">$</span>zipfile[<span class="dv">1</span>]) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+203.197  73.969 282.363 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 4
+  zipfile                               date_raw date       parquet             
+  &lt;chr&gt;                                 &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt;               
+1 FFIEC CDR Call Bulk XBRL 03312001.zip 20010331 2001-03-31 xbrl_20010331.parqu…</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="processing-the-data" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="processing-the-data"><span class="header-section-number">1.2</span> Processing the data</h2>
+<p>With the raw data files in hand, the next task is to process these into files useful for analysis. For reasons I will discuss below, I will process the data into Parquet files. The Parquet format is described in <em>R for Data Science</em> <span class="citation" data-cites="Wickham:2023aa">(<a href="#ref-Wickham:2023aa" role="doc-biblioref">Wickham et al., 2023, p. 393</a>)</span> as “an open standards-based format widely used by big data systems.” Parquet files provide a format optimized for data analysis, with a rich type system. More details on the Parquet format can be found in <a href="https://r4ds.hadley.nz/arrow">Chapter 22</a> of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> and every code example in <span class="citation" data-cites="Gow_2024">Gow and Ding (<a href="#ref-Gow_2024" role="doc-biblioref">2024</a>)</span> can be executed against Parquet data files created using my <code>db2pq</code> Python package as described in Appendix E of that book.</p>
+<p>The easiest way to run the code I used to process the data is to install the <code>ffiec.pq</code> R package I have made available on GitHub. And the easiest way to use the package is to set the locations for the downloaded raw data files from above and for the processed data using the environment variables <code>RAW_DATA_DIR</code> and <code>DATA_DIR</code>, respectively. By default, the <code>ffiec.pq</code> package assumes that the raw data files can be found in a directory <code>ffiec</code> that is a subdirectory of <code>RAW_DATA_DIR</code>. Also, the <code>ffiec.pq</code> package will place the processed data it creates in a directory <code>ffiec</code> that is a subdirectory of <code>DATA_DIR</code>.</p>
+<p>I already have these environment variables set:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.getenv</span>(<span class="st">"RAW_DATA_DIR"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "/Users/igow/Dropbox/raw_data"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "/Users/igow/Dropbox/pq_data"</code></pre>
+</div>
+</div>
+<p>But, even if I did not, I could set them within R using commands like the following. You should set <code>RAW_DATA_DIR</code> to match what you used above in Python and you should set <code>DATA_DIR</code> to point to the location where you want to put the processed files. The processed files will occupy about 3 GB of disk space, so make sure you have room for these there.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">RAW_DATA_DIR=</span><span class="st">"/Users/igow/Dropbox/raw_data"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">DATA_DIR=</span><span class="st">"/Users/igow/Dropbox/pq_data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Having set these environment variables, I can load my package and run a single command <code>ffiec_process()</code> without any arguments to process <em>all</em> the raw data files.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> This takes about five minutes to run (for me):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">ffiec_process</span>(<span class="at">use_multicore =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+ 11.834   7.562 319.009 </code></pre>
+</div>
+</div>
+<p>Note that, behind the scenes, the <code>ffiec_process()</code> extracts the data in two phases. In the first phase, it processes the data for each schedule for each quarter into Parquet file. This results in 3713 Parquet files. In the second phase, <code>ffiec_process()</code> proceeds to organize the data in the 3713 Parquet files by variable type to facilitate working with the data. Once the data have been organized, the 3713 schedule-and-quarter-specific Parquet files are discarded.</p>
+<p>The <code>results</code> table returned by the <code>ffiec_process()</code> function above reflects the outcome of the first phase, as that is when any problems arising from malformed data are expected to arise. If there were any issues in reading the data for a schedule in a quarter, then the variable <code>ok</code> for the corresponding row of <code>results</code> will be <code>FALSE</code>. We can easily confirm that all rows have <code>ok</code> equal to <code>TRUE</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> <span class="fu">count</span>(ok)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  ok        n
+  &lt;lgl&gt; &lt;int&gt;
+1 TRUE   3713</code></pre>
+</div>
+</div>
+<p>The results table also includes the field <code>repairs</code> that we can inspect to determine if any “repairs” were made to the data as it was processed in the first phase. As can be seen, a minority of the 3713 first-phase files needed repairs. I discuss these repairs in more detail in <a href="#sec-repairs" class="quarto-xref">Section&nbsp;3.1.1</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(repairs) <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(repairs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 2
+  repairs          n
+  &lt;chr&gt;        &lt;int&gt;
+1 newline-gsub   102
+2 tab-repair       2</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="using-the-data" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Using the data</h1>
+<section id="using-the-data-with-r" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="using-the-data-with-r"><span class="header-section-number">2.1</span> Using the data with R</h2>
+<p>So what has the <code>ffiec.pq</code> package just done? In a nutshell, it have processed each of the nearly 100 zip files into seven Parquet files, and I discuss these in turn.</p>
+<section id="panel-of-reporters-por-data" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="panel-of-reporters-por-data"><span class="header-section-number">2.1.1</span> “Panel of Reporters” (POR) data</h3>
+<p>The first file is the <a href="https://cdr.ffiec.gov/CDR/public/cdrhelp/Panel%20Of%20Reporters.htm">“Panel of Reporters” (POR) table</a>, which provides details on the financial institutions filing in the respective quarter.</p>
+<p>To access the data using the <code>ffiec.pq</code> functions, we just need to create a connection to an in-memory DuckDB database, which is a simple one-liner.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>From there we have the option to load a single Parquet file using the <code>pq_file</code> argument of the <code>ffiec_scan_pqs()</code> function:<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="at">pq_file=</span><span class="st">"por_20250930.parquet"</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="sc">|&gt;</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, financial_institution_name, <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 13
+  IDRSSD financial_institution_name    fdic_certificate_num…¹ occ_charter_number
+   &lt;int&gt; &lt;chr&gt;                         &lt;chr&gt;                  &lt;chr&gt;             
+1     37 BANK OF HANCOCK COUNTY        10057                  &lt;NA&gt;              
+2    242 FIRST COMMUNITY BANK XENIA-F… 3850                   &lt;NA&gt;              
+3    279 BROADSTREET BANK, SSB         28868                  &lt;NA&gt;              
+4    354 BISON STATE BANK              14083                  &lt;NA&gt;              
+5    457 LOWRY STATE BANK              10202                  &lt;NA&gt;              
+6    505 BALLSTON SPA NATIONAL BANK    6959                   1253              
+# ℹ abbreviated name: ¹​fdic_certificate_number
+# ℹ 9 more variables: ots_docket_number &lt;chr&gt;,
+#   primary_aba_routing_number &lt;chr&gt;, financial_institution_address &lt;chr&gt;,
+#   financial_institution_city &lt;chr&gt;, financial_institution_state &lt;chr&gt;,
+#   financial_institution_zip_code &lt;chr&gt;,
+#   financial_institution_filing_type &lt;chr&gt;,
+#   last_date_time_submission_updated_on &lt;dttm&gt;, date &lt;date&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="sc">|&gt;</span> <span class="fu">count</span>() <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 1
+      n
+  &lt;dbl&gt;
+1  4435</code></pre>
+</div>
+</div>
+<p>But it will generally be more convenient to just read all files in one step, which we can do like this.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>por <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, financial_institution_name, <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 13
+  IDRSSD financial_institution_name    fdic_certificate_num…¹ occ_charter_number
+   &lt;int&gt; &lt;chr&gt;                         &lt;chr&gt;                  &lt;chr&gt;             
+1     37 BANK OF HANCOCK COUNTY        10057                  &lt;NA&gt;              
+2    242 FIRST NATIONAL BANK OF XENIA… 3850                   12096             
+3    279 MINEOLA COMMUNITY BANK, SSB   28868                  &lt;NA&gt;              
+4    354 BISON STATE BANK              14083                  &lt;NA&gt;              
+5    439 PEOPLES BANK                  16498                  &lt;NA&gt;              
+6    457 LOWRY STATE BANK              10202                  &lt;NA&gt;              
+# ℹ abbreviated name: ¹​fdic_certificate_number
+# ℹ 9 more variables: ots_docket_number &lt;chr&gt;,
+#   primary_aba_routing_number &lt;chr&gt;, financial_institution_address &lt;chr&gt;,
+#   financial_institution_city &lt;chr&gt;, financial_institution_state &lt;chr&gt;,
+#   financial_institution_zip_code &lt;chr&gt;,
+#   financial_institution_filing_type &lt;chr&gt;,
+#   last_date_time_submission_updated_on &lt;dttm&gt;, date &lt;date&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>por <span class="sc">|&gt;</span> <span class="fu">count</span>() <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 1
+       n
+   &lt;dbl&gt;
+1 662363</code></pre>
+</div>
+</div>
+</section>
+<section id="item-schedules-data" class="level3" data-number="2.1.2">
+<h3 data-number="2.1.2" class="anchored" data-anchor-id="item-schedules-data"><span class="header-section-number">2.1.2</span> Item-schedules data</h3>
+<p>The second data set is <code>ffiec_schedules</code>. The zip files provided by the FFIEC Bulk Data site comprise several TSV files organized into “schedules” corresponding the particular forms on which the data are submitted by filers. While the <code>ffiec.pq</code> package reorganizes the data by data type, information about the original source files for the data are retained in <code>ffiec_schedules</code>. We can load this using the following code:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_schedules"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>And here are the first 10 rows of this data set.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 3
+   item     schedule  date      
+   &lt;chr&gt;    &lt;list&gt;    &lt;date&gt;    
+ 1 RCFD0010 &lt;chr [2]&gt; 2001-03-31
+ 2 RCFD0022 &lt;chr [1]&gt; 2001-03-31
+ 3 RCFD0071 &lt;chr [1]&gt; 2001-03-31
+ 4 RCFD0073 &lt;chr [1]&gt; 2001-03-31
+ 5 RCFD0074 &lt;chr [1]&gt; 2001-03-31
+ 6 RCFD0081 &lt;chr [1]&gt; 2001-03-31
+ 7 RCFD0083 &lt;chr [1]&gt; 2001-03-31
+ 8 RCFD0085 &lt;chr [1]&gt; 2001-03-31
+ 9 RCFD0090 &lt;chr [1]&gt; 2001-03-31
+10 RCFD0211 &lt;chr [1]&gt; 2001-03-31</code></pre>
+</div>
+</div>
+<p>Focusing on one item, <code>RIAD4230</code>, we can see from the output below that this item was provided on both Schedule RI (<code>ri</code>) and Schedule RI-BII (<code>ribii</code>) from <code>2001-03-31</code> until <code>2018-12-31</code>, but since then has only been provided on Schedule RI-BII.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="sc">|&gt;</span> </span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(item <span class="sc">==</span> <span class="st">"RIAD4230"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">schedule =</span> <span class="fu">unnest</span>(schedule)) <span class="sc">|&gt;</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(item, schedule) <span class="sc">|&gt;</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">min_date =</span> <span class="fu">min</span>(date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">max_date =</span> <span class="fu">max</span>(date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 4
+  item     schedule min_date   max_date  
+  &lt;chr&gt;    &lt;chr&gt;    &lt;date&gt;     &lt;date&gt;    
+1 RIAD4230 ribii    2001-03-31 2025-12-31
+2 RIAD4230 ri       2001-03-31 2018-12-31</code></pre>
+</div>
+</div>
+<p>The next question might be: What is <code>RIAD4230</code>? We can get the answer from <code>ffiec_items</code>, a data set included with the <code>ffiec.pq</code> package:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">filter</span>(item <span class="sc">==</span> <span class="st">"RIAD4230"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 5
+  item     mnemonic item_code item_name                           data_type
+  &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;                               &lt;chr&gt;    
+1 RIAD4230 RIAD     4230      Provision for loan and lease losses Float64  </code></pre>
+</div>
+</div>
+<p>Schedule RI is the income statement and “Provision for loan and lease losses” is an expense we would expect to see there for a financial institution. Schedule RI-BII is “Charge-offs and Recoveries on Loans and Leases” and provides detail on loan charge-offs and recoveries, broken out by loan category, for the reporting period. As part of processing the data, the <code>ffiec.pq</code> package confirms that the value for any given item for a specific <code>IDRSSD</code> and <code>date</code> is the same across schedules for <em>all</em> items in the data.</p>
+<p>Each of the other five files represents data from the schedules for that quarter for a particular data type, as shown in <a href="#tbl-types" class="quarto-xref">Table&nbsp;1</a>:</p>
+<div id="tbl-types" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Table keys, arrow types, and access code
+</figcaption>
+<div aria-describedby="tbl-types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Key</th>
+<th>Arrow type</th>
+<th>Access code</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">float</td>
+<td>Float64</td>
+<td><code>ffiec_scan_pqs(db, "ffiec_float")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">int</td>
+<td>Int32</td>
+<td><code>ffiec_scan_pqs(db, "ffiec_int")</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">str</td>
+<td>Utf8</td>
+<td><code>ffiec_scan_pqs(db, "ffiec_str")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">date</td>
+<td>Date32</td>
+<td><code>ffiec_scan_pqs(db, "ffiec_date")</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">bool</td>
+<td>Boolean</td>
+<td><code>ffiec_scan_pqs(db, "ffiec_bool")</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>We can use the data set <code>ffiec_items</code> to find out where a variable is located, based on its Arrow type.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>ffiec_items</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5,141 × 5
+   item     mnemonic item_code item_name                               data_type
+   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;                                   &lt;chr&gt;    
+ 1 RCFA2170 RCFA     2170      Total assets                            Float64  
+ 2 RCFA3128 RCFA     3128      Allocated transfer risk reserves        Float64  
+ 3 RCFA3792 RCFA     3792      Total qualifying capital allowable und… Float64  
+ 4 RCFA5310 RCFA     5310      General loan and lease valuation allow… Float64  
+ 5 RCFA5311 RCFA     5311      Tier 2 (supplementary) capital          Float64  
+ 6 RCFA7204 RCFA     7204      Tier 1 leverage capital ratio           Float64  
+ 7 RCFA7205 RCFA     7205      Total risk-based capital ratio          Float64  
+ 8 RCFA7206 RCFA     7206      Tier 1 risk-based capital ratio         Float64  
+ 9 RCFA8274 RCFA     8274      Tier 1 capital allowable under the ris… Float64  
+10 RCFAA223 RCFA     A223      Risk-weighted assets (net of allowance… Float64  
+# ℹ 5,131 more rows</code></pre>
+</div>
+</div>
+<p>As might be expected, most variables have type <code>Float64</code> and will be found in the <code>ffiec_float</code> tables.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">count</span>(data_type, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 2
+  data_type     n
+  &lt;chr&gt;     &lt;int&gt;
+1 Float64    4909
+2 Int32       115
+3 String       73
+4 Boolean      42
+5 Date32        2</code></pre>
+</div>
+</div>
+</section>
+<section id="example-1-do-bank-balance-sheets-balance" class="level3" data-number="2.1.3">
+<h3 data-number="2.1.3" class="anchored" data-anchor-id="example-1-do-bank-balance-sheets-balance"><span class="header-section-number">2.1.3</span> Example 1: Do bank balance sheets balance?</h3>
+<p>If we were experts in Call Report data, we might know that domestic total assets is reported as item <code>RCFD2170</code> (on Schedule RC) for banks reporting on a consolidated basis and as item <code>RCON2170</code> for banks reporting on an unconsolidated basis. We might also know about <code>RCFD2948</code> and <code>RCFD3210</code> and so on. But we don’t need to be experts to see what these items relate to:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>bs_items <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"RCFD2170"</span>, <span class="st">"RCON2170"</span>,</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD2948"</span>, <span class="st">"RCON2948"</span>,</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD3210"</span>, <span class="st">"RCON3210"</span>,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD3000"</span>, <span class="st">"RCON3000"</span>)</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">filter</span>(item <span class="sc">%in%</span> bs_items)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 8 × 5
+  item     mnemonic item_code item_name                                data_type
+  &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;                                    &lt;chr&gt;    
+1 RCFD2170 RCFD     2170      Total assets                             Float64  
+2 RCFD2948 RCFD     2948      Total liabilities and minority interest  Float64  
+3 RCFD3000 RCFD     3000      Minority interest in consolidated subsi… Float64  
+4 RCFD3210 RCFD     3210      Total equity capital                     Float64  
+5 RCON2170 RCON     2170      Total assets                             Float64  
+6 RCON2948 RCON     2948      Total liabilities and minority interest  Float64  
+7 RCON3000 RCON     3000      Minority interest in consolidated subsi… Float64  
+8 RCON3210 RCON     3210      Total equity capital                     Float64  </code></pre>
+</div>
+</div>
+<p>The output above suggests we can make a “top level” balance sheet table using these items. The following code uses the DuckDB instance we created above (<code>db</code>) and the code provided in <a href="#tbl-types" class="quarto-xref">Table&nbsp;1</a>, to create <code>ffiec_float</code>, a “lazy” data table. Here “lazy” is a good thing, as it means we have access to all the data without having to load anything into RAM. As a result, this operation takes almost no time.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_float"</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.044   0.017   0.020 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>ffiec_float</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A query:  ?? x 4
+# Database: DuckDB 1.4.4 [root@Darwin 25.4.0:R 4.5.2/:memory:]
+   IDRSSD date       item        value
+    &lt;int&gt; &lt;date&gt;     &lt;chr&gt;       &lt;dbl&gt;
+ 1     37 2001-03-31 RCON3562   0     
+ 2     37 2001-03-31 RCON7701   0     
+ 3     37 2001-03-31 RCON7702   0     
+ 4    242 2001-03-31 RCON3562 329     
+ 5    242 2001-03-31 RCON7701   0.08  
+ 6    242 2001-03-31 RCON7702   0.085 
+ 7    279 2001-03-31 RCON3562  27     
+ 8    279 2001-03-31 RCON7701   0.0745
+ 9    279 2001-03-31 RCON7702   0.08  
+10    354 2001-03-31 RCON3562   4     
+# ℹ more rows</code></pre>
+</div>
+</div>
+<p>As can be seen, the data in <code>ffiec_float</code> are in a <strong>long</strong> format, with each item for each bank for each period being a single row.</p>
+<p>I then <code>filter()</code> to get data on just the items in <code>bs_items</code> and then use the the convenience function <code>ffiec_pivot()</code> from the <code>ffiec.pq</code> package to turn the data into a more customary <strong>wide</strong> form. I then use <code>coalesce()</code> to get the consolidated items (<code>RCFD</code>) where available and the unconsolidated items (<code>RCON</code>) otherwise. Because I <code>compute()</code> this table (i.e., actually calculate the values for each row and column), this step takes a relatively long time, but not too long given that the underlying data files are in the order of tens of gigabytes if loaded in RAM.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>bs_data <span class="ot">&lt;-</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  ffiec_float <span class="sc">|&gt;</span> </span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_pivot</span>(<span class="at">items =</span> bs_items) <span class="sc">|&gt;</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_assets =</span> <span class="fu">coalesce</span>(RCFD2170, RCON2170),</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_liabilities =</span> <span class="fu">coalesce</span>(RCFD2948, RCON2948),</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">equity =</span> <span class="fu">coalesce</span>(RCFD3210, RCON3210),</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">nci =</span> <span class="fu">coalesce</span>(RCFD3000, RCON3000)) <span class="sc">|&gt;</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">eq_liab =</span> total_liabilities <span class="sc">+</span> equity <span class="sc">+</span> nci) <span class="sc">|&gt;</span></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>() <span class="sc">|&gt;</span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  6.467   1.130   1.270 </code></pre>
+</div>
+</div>
+<p>So, do balance sheets balance? Well, not always.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>bs_data <span class="sc">|&gt;</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(<span class="at">bs_balance =</span> eq_liab <span class="sc">==</span> total_assets) <span class="sc">|&gt;</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 2
+  bs_balance      n
+  &lt;lgl&gt;       &lt;dbl&gt;
+1 TRUE       640570
+2 FALSE       21793</code></pre>
+</div>
+</div>
+<p>What’s going on? Well, one possibility is simply rounding error. So in the following code, I set <code>imbalance_flag</code> to <code>TRUE</code> only if the gap is more than <code>1</code> (these are in thousands of USD).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="ot">&lt;-</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>  bs_data <span class="sc">|&gt;</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">imbalance =</span> total_assets <span class="sc">-</span> eq_liab,</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">imbalance_flag =</span> <span class="fu">abs</span>(total_assets <span class="sc">-</span> eq_liab) <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">"RC"</span>), <span class="sc">-</span>total_liabilities) <span class="sc">|&gt;</span></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This helps a lot. Now it seems that balance sheets <em>usually</em> balance, but not always.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(imbalance_flag)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 2
+  imbalance_flag      n
+  &lt;lgl&gt;           &lt;int&gt;
+1 FALSE          662164
+2 TRUE              199</code></pre>
+</div>
+</div>
+<p>The vast majority of apparent imbalances are small …</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(imbalance_flag) <span class="sc">|&gt;</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, total_assets, imbalance) <span class="sc">|&gt;</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(imbalance))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 199 × 4
+    IDRSSD date       total_assets imbalance
+     &lt;int&gt; &lt;date&gt;            &lt;dbl&gt;     &lt;dbl&gt;
+ 1 1362246 2002-06-30       278586      5334
+ 2  664653 2002-03-31        25490       224
+ 3 2821825 2001-03-31        55220        30
+ 4  178150 2004-03-31       103939        10
+ 5  545604 2001-06-30       246223        10
+ 6  842358 2002-06-30       202388        10
+ 7   83151 2003-12-31        97324        10
+ 8  293053 2002-03-31       314157        10
+ 9  146533 2004-06-30         8366        10
+10  647414 2002-12-31        83399        10
+# ℹ 189 more rows</code></pre>
+</div>
+</div>
+<p>… and they’re all at least twenty years ago.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(imbalance_flag) <span class="sc">|&gt;</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, total_assets, imbalance) <span class="sc">|&gt;</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(date))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 199 × 4
+    IDRSSD date       total_assets imbalance
+     &lt;int&gt; &lt;date&gt;            &lt;dbl&gt;     &lt;dbl&gt;
+ 1   20147 2005-06-30        48130       -10
+ 2   22954 2005-06-30        65027       -10
+ 3  773546 2005-06-30        97558         2
+ 4   33549 2005-06-30        43865         3
+ 5  475756 2005-06-30        68158         2
+ 6  131940 2005-06-30        27432         8
+ 7 3097243 2005-06-30        40939        10
+ 8  587574 2005-03-31         4705         2
+ 9  776752 2005-03-31        34680        -7
+10   42037 2005-03-31        60913         2
+# ℹ 189 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="example-2-when-do-banks-submit-their-call-reports" class="level3" data-number="2.1.4">
+<h3 data-number="2.1.4" class="anchored" data-anchor-id="example-2-when-do-banks-submit-their-call-reports"><span class="header-section-number">2.1.4</span> Example 2: When do banks submit their Call Reports?</h3>
+<p>Working with dates and times (<strong>temporal data</strong>) can be a lot more complicated than is generally appreciated. Broadly speaking we might think of temporal data as referring to points in time, or <em>instants</em>, or to <em>time spans</em>, which include durations, periods, and intervals.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a> Instants might refer to <em>moments in time</em> (e.g., in UTC) or as <em>times of day</em> (in local time).</p>
+<p>Suppose I were interested in understanding the times of day at which financial institutions submit their Call Reports. It seems that financial institutions file Call Reports with their primary federal regulator through the FFIEC’s Central Data Repository. So I am going to use the <code>America/New_York</code> time zone as the relevant local time zone for this analysis, as the FFIEC is based in Washington, DC.</p>
+<p>To illustrate some subtleties of working with time zones, I will set my computer to a different time zone from that applicable to where I am: <code>Australia/Sydney</code>, as seen in <a href="#fig-time-zone" class="quarto-xref">Figure&nbsp;2</a>.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-time-zone" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Figure showing that computer has been set to the time zone of Sydney, Australia.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-time-zone-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/time_zone.png" class="img-fluid figure-img" style="width:4in" alt="Figure showing that computer has been set to the time zone of Sydney, Australia.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-time-zone-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Setting my computer to a different time zone
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Now, R sees my time zone as <code>Australia/Sydney</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.timezone</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "America/New_York"</code></pre>
+</div>
+</div>
+<p>If we look at the underlying zip file for <code>2025-09-30</code>, you will see that <code>last_date_time_submission_updated_on</code> for the bank with <code>IDRSSD</code> of <code>37</code> is <code>"2026-01-13T10:13:21"</code>. In creating the <code>ffiec.pq</code> package, I assumed that this is a timestamp in <code>America/New_York</code> time.</p>
+<p>How does that show up when I look at the processed data in R using DuckDB?</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>por_default <span class="ot">&lt;-</span></span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="st">"2025-09-30"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dttm =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dttm_text =</span> <span class="fu">as.character</span>(dttm)) <span class="sc">|&gt;</span> </span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, dttm, dttm_text) <span class="sc">|&gt;</span> </span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(db)</span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a>por_default</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 4
+  IDRSSD date       dttm                dttm_text             
+   &lt;int&gt; &lt;date&gt;     &lt;dttm&gt;              &lt;chr&gt;                 
+1     37 2025-09-30 2026-01-13 15:13:21 2026-01-13 15:13:21+00</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>por_default<span class="sc">$</span>dttm[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2026-01-13 15:13:21 UTC"</code></pre>
+</div>
+</div>
+<p>By default, R/DuckDB is showing this to me as UTC. This is fine, but I want to analyse this as a local time. Here is how I can achieve this. First, I set the R variable <code>tz</code> to <code>"America/New_York"</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>tz <span class="ot">&lt;-</span> <span class="st">"America/New_York"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Second, I connect to DuckDB anew, but I tell it I want it to use <code>"America/New_York"</code> as the time zone of output. But it’s important to note that this is just a “presentation layer” and doesn’t change how the database itself “thinks about” timestamps.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>(), <span class="at">timezone_out =</span> tz)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Third, I make DuckDB a “time zone wizard” but installing and loading the <code>icu</code> extension. This extension enables region-dependent collations and time zones. The <code>icu</code> extension is probably not installed and enabled by default because it is large and not all applications need these features. This allows me to set the DuckDB server’s time zone to <code>America/New_York</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="st">"INSTALL icu"</span>)</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="st">"LOAD icu"</span>)</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="fu">str_glue</span>(<span class="st">"SET TimeZone TO '{tz}'"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Then I run the query from above again.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>por_ny <span class="ot">&lt;-</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="st">"2025-09-30"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dttm =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dttm_text =</span> <span class="fu">as.character</span>(dttm)) <span class="sc">|&gt;</span> </span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, dttm, dttm_text) <span class="sc">|&gt;</span></span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>por_ny</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 4
+  IDRSSD date       dttm                dttm_text             
+   &lt;int&gt; &lt;date&gt;     &lt;dttm&gt;              &lt;chr&gt;                 
+1     37 2025-09-30 2026-01-13 10:13:21 2026-01-13 10:13:21-05</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>por_ny<span class="sc">$</span>dttm[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2026-01-13 10:13:21 EST"</code></pre>
+</div>
+</div>
+<p>Now, we see that everything is in <code>America/New_York</code> local time, including the way the server sees the data (<code>dttm_text</code>) and how it’s presented to the R user.</p>
+<p>Now that we have things working in local time, I will make a couple of plots of submission times. To show times on a single scale, I use the fudge of making them all times on a given day, which I somewhat arbitrarily choose to be <code>2025-01-01</code>.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></p>
+<p>In the first plot—<a href="#fig-times-west" class="quarto-xref">Figure&nbsp;3</a>—I present submission times divided by whether banks are located in “western states” or not. It does seem that western banks file later.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>western_states <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"HI"</span>, <span class="st">"WA"</span>, <span class="st">"CA"</span>, <span class="st">"AK"</span>, <span class="st">"OR"</span>, <span class="st">"NV"</span>)</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">last_update =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">q4 =</span> <span class="fu">quarter</span>(date) <span class="sc">==</span> <span class="dv">4</span>,</span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">offset =</span> last_update <span class="sc">-</span> <span class="fu">sql</span>(<span class="st">"last_update AT TIME ZONE 'UTC'"</span>),</span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">offset =</span> <span class="fu">date_part</span>(<span class="st">"epoch"</span>, offset) <span class="sc">/</span> <span class="dv">3600</span>,</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">tzone =</span> <span class="fu">if_else</span>(offset <span class="sc">==</span> <span class="sc">-</span><span class="dv">4</span>, <span class="st">"EDT"</span>, <span class="st">"EST"</span>),</span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">west =</span> financial_institution_state <span class="sc">%in%</span> western_states,</span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">ref =</span> <span class="fu">sql</span>(<span class="fu">str_glue</span>(<span class="st">"TIMESTAMPTZ '2025-01-01 00:00:00 {tz}'"</span>)),</span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">sub_date =</span> <span class="fu">date_trunc</span>(<span class="st">'days'</span>, last_update)) <span class="sc">|&gt;</span></span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time_adj =</span> last_update <span class="sc">-</span> sub_date <span class="sc">+</span> ref) <span class="sc">|&gt;</span></span>
+<span id="cb73-15"><a href="#cb73-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, last_update, time_adj, west, q4, offset, tzone) <span class="sc">|&gt;</span></span>
+<span id="cb73-16"><a href="#cb73-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-times-west" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-times-west-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="curate_call_reports_files/figure-html/fig-times-west-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-times-west-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Submission times by year and region
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>In the second plot—<a href="#fig-times-tz" class="quarto-xref">Figure&nbsp;4</a>—I present submission times divided by whether <code>America/New_York</code> is on Eastern Daylight Time (EDT) or Eastern Standard Time (EST). Looking at the plot, it seems that submission times have a similar distribution across the two time zones, suggesting that banks do not follow UTC, in which case there should be a difference in distributions for EDT and EST.</p>
+<p>One can definitely see a “lunch hour” and the submissions appear more likely to involve someone clicking a “Submit” button in some software package rather than IT setting up some overnight automated submission.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-times-tz" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-times-tz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="curate_call_reports_files/figure-html/fig-times-tz-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-times-tz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Submission times by year and US/Eastern time zone
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="using-the-data-with-python" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="using-the-data-with-python"><span class="header-section-number">2.2</span> Using the data with Python</h2>
+<section id="example-3-plotting-trends-in-total-assets-for-the-biggest-banks" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="example-3-plotting-trends-in-total-assets-for-the-biggest-banks"><span class="header-section-number">2.2.1</span> Example 3: Plotting trends in total assets for the biggest banks</h3>
+<p>Lest you think that, because <code>ffiec.pq</code> is an R package, the processed data are of no interest to others, I now provide some basic analysis using Python. For this, I am going to use the Polars package rather than pandas.</p>
+<p>While pandas is the dominant data frame library in Python, it would struggle to work with Parquet data on the scale of what <code>ffiec.pq</code> has produced, even though it’s a fairly modest amount of data. Loading 50-100 GB of data into RAM is not fun for most people’s computer set-ups. Even if you have RAM in the hundreds of GBs, not loading it will save you time.</p>
+<p>As we shall see, Polars does fine with the data and, if anything, is noticeably faster than DuckDB (using <code>dplyr</code>) for the queries I use in this note.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Because there is no <code>ffiec.pq</code> package for Python, I mimic the <code>ffiec_scan_pqs()</code> function using the following code.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>, </span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>                   schema<span class="op">=</span><span class="st">"ffiec"</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>        data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="cf">if</span> schema <span class="cf">else</span> data_dir</span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> schedule <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"You must supply `schedule`."</span>)</span>
+<span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a>    files <span class="op">=</span> <span class="bu">list</span>(path.glob(<span class="ss">f"</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">_*.parquet"</span>))</span>
+<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> files:</span>
+<span id="cb75-12"><a href="#cb75-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">FileNotFoundError</span>(</span>
+<span id="cb75-13"><a href="#cb75-13" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"No Parquet files found for schedule '</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">' in </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb75-14"><a href="#cb75-14" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb75-15"><a href="#cb75-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb75-16"><a href="#cb75-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pl.concat([pl.scan_parquet(f) <span class="cf">for</span> f <span class="kw">in</span> files])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now I can “load” the data much as I did with R.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="op">=</span> ffiec_scan_pqs(<span class="st">"ffiec_float"</span>)</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>por <span class="op">=</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="st">"por"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>While I am going to focus on total assets in this analysis, I show the parallels between the R code and the Polars code by collecting data on the same items. I don’t need <code>ffiec_pivot()</code> with Polars because the built-in <code>.pivot()</code> method does everything I need. Polars is even faster than R/DuckDB.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>bs_items <span class="op">=</span> [<span class="st">"RCFD2170"</span>, <span class="st">"RCON2170"</span>,</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD2948"</span>, <span class="st">"RCON2948"</span>,</span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD3210"</span>, <span class="st">"RCON3210"</span>,</span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD3000"</span>, <span class="st">"RCON3000"</span>]</span>
+<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> time.perf_counter()</span>
+<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>bs_data <span class="op">=</span> (</span>
+<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a>    ffiec_float</span>
+<span id="cb77-10"><a href="#cb77-10" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"item"</span>).is_in(bs_items))</span>
+<span id="cb77-11"><a href="#cb77-11" aria-hidden="true" tabindex="-1"></a>    .pivot(</span>
+<span id="cb77-12"><a href="#cb77-12" aria-hidden="true" tabindex="-1"></a>        on <span class="op">=</span> <span class="st">"item"</span>,</span>
+<span id="cb77-13"><a href="#cb77-13" aria-hidden="true" tabindex="-1"></a>        on_columns <span class="op">=</span> bs_items,</span>
+<span id="cb77-14"><a href="#cb77-14" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span> [<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>],</span>
+<span id="cb77-15"><a href="#cb77-15" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> <span class="st">"value"</span>)</span>
+<span id="cb77-16"><a href="#cb77-16" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb77-17"><a href="#cb77-17" aria-hidden="true" tabindex="-1"></a>        total_assets <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD2170"</span>), pl.col(<span class="st">"RCON2170"</span>)),</span>
+<span id="cb77-18"><a href="#cb77-18" aria-hidden="true" tabindex="-1"></a>        total_liabs <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD2948"</span>), pl.col(<span class="st">"RCON2948"</span>)),</span>
+<span id="cb77-19"><a href="#cb77-19" aria-hidden="true" tabindex="-1"></a>        equity <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD3210"</span>), pl.col(<span class="st">"RCON3210"</span>)),</span>
+<span id="cb77-20"><a href="#cb77-20" aria-hidden="true" tabindex="-1"></a>        nci <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD3000"</span>), pl.col(<span class="st">"RCON3000"</span>)),</span>
+<span id="cb77-21"><a href="#cb77-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb77-22"><a href="#cb77-22" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb77-23"><a href="#cb77-23" aria-hidden="true" tabindex="-1"></a>        eq_liab <span class="op">=</span> pl.col(<span class="st">"total_liabs"</span>) <span class="op">+</span> pl.col(<span class="st">"equity"</span>) <span class="op">+</span> pl.col(<span class="st">"nci"</span>)</span>
+<span id="cb77-24"><a href="#cb77-24" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb77-25"><a href="#cb77-25" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb77-26"><a href="#cb77-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb77-27"><a href="#cb77-27" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> time.perf_counter()</span>
+<span id="cb77-28"><a href="#cb77-28" aria-hidden="true" tabindex="-1"></a>elapsed <span class="op">=</span> end <span class="op">-</span> start</span>
+<span id="cb77-29"><a href="#cb77-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time taken: </span><span class="sc">{</span>elapsed<span class="sc">:.6f}</span><span class="ss"> seconds'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time taken: 0.490260 seconds</code></pre>
+</div>
+</div>
+<p>We can peek at the data. So Polars has processed GBs of data and created a table with over 600,000 rows in well under a second. Don’t try this at home … if you’re using pandas.</p>
+<p>Note that <code>ffiec_float</code> is a <code>pl.LazyFrame</code>, but <code>.collect()</code> creates a non-lazy <code>pl.DataFrame</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars.selectors <span class="im">as</span> cs</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>bs_data.select(cs.exclude(<span class="st">"^(RCON|RCFD).*$"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (662_363, 7)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">IDRSSD</th>
+<th data-quarto-table-cell-role="th">date</th>
+<th data-quarto-table-cell-role="th">total_assets</th>
+<th data-quarto-table-cell-role="th">total_liabs</th>
+<th data-quarto-table-cell-role="th">equity</th>
+<th data-quarto-table-cell-role="th">nci</th>
+<th data-quarto-table-cell-role="th">eq_liab</th>
+</tr>
+<tr class="even">
+<td>i32</td>
+<td>date</td>
+<td>f64</td>
+<td>f64</td>
+<td>f64</td>
+<td>f64</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>26765</td>
+<td>2018-06-30</td>
+<td>527089.0</td>
+<td>471074.0</td>
+<td>56015.0</td>
+<td>0.0</td>
+<td>527089.0</td>
+</tr>
+<tr class="even">
+<td>196426</td>
+<td>2003-06-30</td>
+<td>189291.0</td>
+<td>175709.0</td>
+<td>13582.0</td>
+<td>0.0</td>
+<td>189291.0</td>
+</tr>
+<tr class="odd">
+<td>706030</td>
+<td>2006-12-31</td>
+<td>25995.0</td>
+<td>23019.0</td>
+<td>2976.0</td>
+<td>0.0</td>
+<td>25995.0</td>
+</tr>
+<tr class="even">
+<td>499752</td>
+<td>2008-03-31</td>
+<td>144488.0</td>
+<td>132113.0</td>
+<td>12375.0</td>
+<td>0.0</td>
+<td>144488.0</td>
+</tr>
+<tr class="odd">
+<td>2607412</td>
+<td>2005-12-31</td>
+<td>58433.0</td>
+<td>42370.0</td>
+<td>16063.0</td>
+<td>0.0</td>
+<td>58433.0</td>
+</tr>
+<tr class="even">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="odd">
+<td>370758</td>
+<td>2003-12-31</td>
+<td>11590.0</td>
+<td>10598.0</td>
+<td>992.0</td>
+<td>0.0</td>
+<td>11590.0</td>
+</tr>
+<tr class="even">
+<td>367244</td>
+<td>2012-03-31</td>
+<td>47086.0</td>
+<td>42012.0</td>
+<td>5074.0</td>
+<td>0.0</td>
+<td>47086.0</td>
+</tr>
+<tr class="odd">
+<td>521608</td>
+<td>2012-06-30</td>
+<td>171511.0</td>
+<td>157240.0</td>
+<td>14271.0</td>
+<td>0.0</td>
+<td>171511.0</td>
+</tr>
+<tr class="even">
+<td>442057</td>
+<td>2009-06-30</td>
+<td>8266.0</td>
+<td>6619.0</td>
+<td>1647.0</td>
+<td>0.0</td>
+<td>8266.0</td>
+</tr>
+<tr class="odd">
+<td>699105</td>
+<td>2022-12-31</td>
+<td>1.398628e6</td>
+<td>1.296711e6</td>
+<td>101917.0</td>
+<td>0.0</td>
+<td>1.398628e6</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>I identify the top 5 banks by assets on <code>2025-09-30</code>. Because I will want to merge this with information on <code>por</code>, which is a lazy data frame (<code>pl.LazyFrame</code>), I make it <code>top_5</code> “lazy” by appending <code>.lazy()</code> at the end.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>top_5 <span class="op">=</span> (</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>    bs_data</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>) <span class="op">==</span> pl.date(<span class="dv">2025</span>, <span class="dv">9</span>, <span class="dv">30</span>))</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"total_assets"</span>, descending<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>    .with_row_index(<span class="st">"ta_rank"</span>, offset<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"ta_rank"</span>) <span class="op">&lt;=</span> <span class="dv">5</span>)</span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>    .lazy()</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then grab the names of the banks from <code>por</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>top_5_names <span class="op">=</span> (</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    top_5</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>    .join(</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>        por.select([<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>, <span class="st">"financial_institution_name"</span>]),</span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span>[<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>],</span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>        how<span class="op">=</span><span class="st">"inner"</span>,</span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"ta_rank"</span>)</span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>    .select([<span class="st">"IDRSSD"</span>, <span class="st">"financial_institution_name"</span>, <span class="st">"ta_rank"</span>])</span>
+<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a>    .rename({<span class="st">"financial_institution_name"</span>: <span class="st">"bank"</span>})</span>
+<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>top_5_names</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 3)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">IDRSSD</th>
+<th data-quarto-table-cell-role="th">bank</th>
+<th data-quarto-table-cell-role="th">ta_rank</th>
+</tr>
+<tr class="even">
+<td>i32</td>
+<td>str</td>
+<td>u32</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>852218</td>
+<td>"JPMORGAN CHASE BANK, NATIONAL …</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>480228</td>
+<td>"BANK OF AMERICA, NATIONAL ASSO…</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td>476810</td>
+<td>"CITIBANK, N.A."</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td>451965</td>
+<td>"WELLS FARGO BANK, NATIONAL ASS…</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>504713</td>
+<td>"U.S. BANK NATIONAL ASSOCIATION"</td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>I can combine the names with <code>bs_data</code> using <code>.join()</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>bs_panel_data <span class="op">=</span> bs_data.join(top_5_names, on<span class="op">=</span><span class="st">"IDRSSD"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Users of pandas who are unfamiliar might be impressed by the performance of Polars, but wonder how they can fit it into their workflows. Of course, it is easy enough to call <code>.to_pandas()</code> and create a pandas <code>pd.DataFrame</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> (</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>    bs_panel_data</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>) <span class="op">&gt;=</span> pl.date(<span class="dv">2020</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>    .to_pandas()</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This means a pandas user can use all the familiar tools used for plotting or statistical analysis. Because the names are a little long for plotting purposes, I use a little dictionary to replace them.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>bank_names <span class="op">=</span> {</span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">476810</span>: <span class="st">"Citibank"</span>,</span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">504713</span>: <span class="st">"US Bank"</span>,</span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">852218</span>: <span class="st">"JPMorgan Chase"</span>,</span>
+<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">451965</span>: <span class="st">"Wells Fargo"</span>,</span>
+<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">480228</span>: <span class="st">"Bank of America"</span>,</span>
+<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb85-8"><a href="#cb85-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-9"><a href="#cb85-9" aria-hidden="true" tabindex="-1"></a>pdf[<span class="st">"bank"</span>] <span class="op">=</span> pdf[<span class="st">"IDRSSD"</span>].<span class="bu">map</span>(bank_names)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>And then I use Seaborn and Matplotlib to make a small (but uninspiring) plot.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-top-5-py" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-top-5-py-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="curate_call_reports_files/figure-html/fig-top-5-py-1.png" class="img-fluid figure-img" width="960">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-top-5-py-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Total assets for top 5 banks
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="the-boring-details" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The boring details</h1>
+<p>Now that I have explained how you can use the curated data, I will spend a little time explaining the data curation process. I focus on the more challenging aspects and probably don’t fail to deliver on the description “boring” in this section.</p>
+<section id="reading-the-data" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="reading-the-data"><span class="header-section-number">3.1</span> Reading the data</h2>
+<p>Each quarter’s zip file (<code>zipfile</code>) actually contains dozens of text files (<code>.txt</code>) in TSV (“tab-separated values”) form. The TSV is a close relative of the CSV (“comma-separated values”) and the principles applicable to one form apply to the other.</p>
+<p>I have seen code that just imports from these individual files (what I call <code>inner_file</code>) in some location on the user’s hard drive. This approach is predicated on the user having downloaded the zip files and unzipped them. While we have downloaded all the zip files—assuming you followed the steps outlined in <a href="#sec-raw-data" class="quarto-xref">Section&nbsp;1.1</a>—I don’t want to be polluting my hard drive (or yours) with thousands of <code>.txt</code> files that won’t be used after reading them once.</p>
+<p>Instead, R allows me to simply say:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">unz</span>(zipfile, inner_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The resulting <code>con</code> object is a temporary read-only connection to a single text file (<code>inner_file</code>) stored inside the zip file <code>zipfile</code>. The object allows R to stream the file’s contents directly from the zip archive, line by line, without extracting it. Given <code>con</code>, the core function used to read the data into R has the following basic form, where <code>read_tsv()</code> comes from the <code>readr</code> package, part of the Tidyverse:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(</span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  con,</span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_names =</span> cols,</span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> colspec,</span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">skip =</span> skip,</span>
+<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">quote =</span> <span class="st">""</span>,</span>
+<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"CONF"</span>),</span>
+<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">progress =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="sec-repairs" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="sec-repairs"><span class="header-section-number">3.1.1</span> Handling embedded newlines and tabs</h3>
+<p>Experienced users of the <code>readr</code> package might wince a little at the <code>quote = ""</code> argument above. What this means is that the data are not quoted. <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023, p. 101</a>)</span> points out that “sometimes strings in a CSV file contain commas. To prevent them from causing problems, they need to be surrounded by a quoting character, like <code>"</code> or <code>'</code>. By default, <code>read_csv()</code> assumes that the quoting character will be <code>"</code>.”</p>
+<p>Adapting this to our context and expanding it slightly, I would say: “sometimes strings in a TSV file contain tabs (<code>\t</code>) and newline characters (<code>\n</code>).<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a> To prevent them from causing problems, they need to be surrounded by a quoting character, like <code>"</code> or <code>'</code>.” While this is a true statement, the TSV files provided on the FFIEC Bulk Data website are <em>not</em> quoted, which means that tabs and newlines characters <strong>embedded</strong> in strings <em>will</em> cause problems.</p>
+<p>The approach taken by the <code>ffiec.pq</code> package is to attempt to read the data using a call like that above, which I term the “fast path” (in part because it is indeed fast). Before making that call, the code has already inspected the first row of the file to determine the column names (stored in <code>cols</code>) and used those column names to look up the appropriate type for each column (stored in <code>colspecs</code>). Any anomaly caused by embedded newlines or embedded tabs will almost certainly cause this first <code>read_tsv()</code> call to fail. But if there are no issues, then we pretty much have the data as we want them and can return <code>df</code> to the calling function.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a> Fortunately, over 95% of files can be read successfully on the “fast path”.</p>
+<p>It turns out that if the “fast path” read fails, the most likely culprit is <strong>embedded newlines</strong>. Let’s say the table we’re trying to read has seven columns and the text field that is the fourth field in the file contains, in some row of the data, an embedded newline, because the data submitted by the reporting financial institution contained <code>\n</code> in that field. Because <code>read_tsv()</code> processes the data line by line and lines are “delimited” by newline characters (<code>\n</code>), it will see the problematic line as terminating part way through the fourth column and, because <code>cols</code> tells <code>read_tsv()</code> to expect seven columns, <code>read_tsv()</code> will issue a warning.</p>
+<p>When a warning occurs on the “fast path”, the read function in <code>ffiec.pq</code> moves to what I call (unimaginatively) the “slow path”. A “feature” (it turns out) of the TSV files provided on the FFIEC Bulk Data website is that each line ends with not just <code>\n</code>, but <code>\t\n</code>. This means we can assume that any <code>\n</code> not preceded by <code>\t</code> is an embedded newline, not a line-terminating endline.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a> So I can read the data into the variable <code>txt</code> using <code>readLines()</code> and use a regular expression to replace embedded newlines with an alternative character. The alternative I use is a space and I use the <code>gsub()</code> function to achieve this: <code>gsub("(?&lt;!\\t)\\n", " ", txt, perl = TRUE)</code> The regular expression here is <code>(?&lt;!\\t)\\n</code> is equivalent to <code>(?&lt;!\t)\n</code> in Perl or <code>r"(?&lt;!\t)\n"</code> in Python.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a> In words, the regular expression literally means “any newline character that is not immediately preceded by a tab” and the <code>gsub()</code> function will replace such characters with spaces (<code>" "</code>) because that is the second argument to <code>gsub()</code>.</p>
+<p>This fix addresses almost all the problematic files. “Almost all” means “all but two”. The issue with the remaining two files is (as you might have guessed) <strong>embedded tabs</strong>. Unfortunately, there’s no easy “identify the embedded tabs and replace them” fix, because there’s no easy way to distinguish embedded tabs from delimiting tabs. However, we can detect the presence of embedded tabs in an affected from the existence of too many tabs in that row.</p>
+<p>For one of the two “bad” files, there is only one text field, so once we detect the presence of the embedded tab, we can assume that the extra tab belongs in that field: Problem solved. For the other “bad” file, there are several text fields and, while there is just one bad row, we cannot be sure which text field has the embedded tab. The <code>ffiec.pq</code> package just assumes that the embedded tab belongs in the last field and moves on. This means that the textual data for one row (i.e., one financial institution) for one schedule for one quarter cannot be guaranteed to be completely correct.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a> Such is life.</p>
+<p>Even without addressing the issue, given that only two files are affected, it’s possible to measure the “damage” created by embedded tabs.</p>
+<p>Let’s look at the earlier file, which turns out to affect the Schedule RIE data for The Traders National Bank (<code>IDRSSD</code> of <code>490937</code>) for June 2004.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a> Traders National Bank in Tennessee was “Tullahoma’s second oldest bank”, until changing its name to Wellworth Bank (seemingly after some mergers), and it listed total assets of $117,335,000 in the affected Call Report.</p>
+<p>Let’s look at the textual data we have in our Parquet files for this case:<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>ffiec_str <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="at">schedule =</span> <span class="st">"ffiec_str"</span>) </span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>ffiec_str <span class="sc">|&gt;</span> </span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="st">"490937"</span>, date <span class="sc">==</span> <span class="st">"2004-06-30"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, item, value) <span class="sc">|&gt;</span> </span>
+<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)) <span class="sc">|&gt;</span></span>
+<span id="cb88-7"><a href="#cb88-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb88-8"><a href="#cb88-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.023   0.030   0.025 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+  IDRSSD item     value                                                   
+   &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;                                                   
+1 490937 TEXT4464 ATM Fees, Exam Fees, Dues &amp; Chairitable Cont            
+2 490937 TEXT4467 Telephone, BanClub, Federal Res Fees, NSF and Other Loss
+3 490937 TEXT4468 Courier, Audit Tax, Deff Comp, Other                    
+4 490937 TEXT4469 ns Exp, Bus Dev, P                                      
+5 490937 TEXT3549 IENC SECURITIES                                         
+6 490937 TEXT3550 IENC CD'S                                               </code></pre>
+</div>
+</div>
+<p>We can compare this with what we see in the Call Report in <a href="#fig-old-bad" class="quarto-xref">Figure&nbsp;6</a>, where we see that the value of <code>TEXT4468</code> should be something like <code>"Courier, Audit Tax, Deff Comp, Other\tns Exp, Bus Dev, P"</code>. The embedded tab has split this into <code>"Courier, Audit Tax, Deff Comp, Other"</code> for <code>TEXT4468</code> and <code>"ns Exp, Bus Dev, P"</code> for <code>TEXT4469</code>, which should be <code>NA</code>. If the values for <code>TEXT4468</code>and <code>TEXT4469</code> for Traders National Bank in June 2004 are important to your analysis, you could fix this “by hand” easily enough.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-old-bad" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Extract from June 2004 Call Report for The Traders National Bank shows the correct textual values as discussed in the text.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-old-bad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<embed src="images/cr_490937.pdf" class="img-fluid" alt="Extract from June 2004 Call Report for The Traders National Bank shows the correct textual values as discussed in the text.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-old-bad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Extract from June 2004 Call Report for The Traders National Bank
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Looking at the later file, there were embedded tabs in two rows of Schedule NARR for December 2022. I compared the values in the Parquet file with those in the Call Reports for the two affected banks and the values in the Parquet file match perfectly.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a> Because Schedule NARR (“Optional Narrative Statement Concerning the Amounts Reported in the Consolidated Reports of Condition and Income”) has just one text column (<code>TEXT6980</code>), the fix employed by the <code>ffiec.pq</code> package will work without issues.<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a></p>
+</section>
+<section id="handling-missing-value-sentinels" class="level3" data-number="3.1.2">
+<h3 data-number="3.1.2" class="anchored" data-anchor-id="handling-missing-value-sentinels"><span class="header-section-number">3.1.2</span> Handling missing-value sentinels</h3>
+<p>Users familiar with both <code>readr</code> and Call Report data might also have noticed the use of <code>na = c("", "CONF")</code> in the call to <code>read_tsv()</code> above. The default value for this function is <code>na = c("", "NA")</code> means that empty values and the characters <code>NA</code> are treated as missing values. As I saw no evidence that the export process for FFIEC Bulk Data files used <code>"NA"</code> to mark <code>NA</code> values, I elected not to treat <code>"NA"</code> as <code>NA</code>. However, a wrinkle is that the reporting firms some times populate text fields—but not numerical fields—with the value <code>"NA"</code>.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a> While the most sensible interpretation of such values is as <code>NA</code>, without further investigation it is difficult to be sure that <code>"NA"</code> is the canonical form in which firms reported <code>NA</code> values rather than <code>"N/A"</code> or <code>"Not applicable"</code> or some other variant.</p>
+<p>This approach seems validated by the fact that I see the value <code>"NR"</code> in text fields of PDF versions of Call Reports and these values show up as empty values in the TSV files, suggesting that <code>"NR"</code>, not <code>"NA"</code> is the FFIEC’s canonical way of representing <code>NA</code> values in these files, while <code>"NA"</code> is literally the text value <code>"NA"</code>, albeit perhaps one intended <em>by the reporting firm</em> to convey the idea of <code>NA</code>. Users of the FFIEC data created by the <code>ffiec.pq</code> package who wish to use textual data should be alert to the possibility that values in those fields may be intended by the reporting firm to convey the idea of <code>NA</code>, even if they are not treated as such by the FFIEC’s process for creating the TSV files.</p>
+<p>The other value in the <code>na</code> argument used above is <code>"CONF"</code>, which denotes that the the reported value is confidential and therefore not publicly disclosed. Ideally, we might distinguish between <code>NA</code>, meaning “not reported by the firm to the FFIEC” or “not applicable to this firm” or things like that, from <code>"CONF"</code>, meaning the FFIEC has the value, but we do not. Unfortunately, the value <code>"CONF"</code> often appears in numeric fields and there is no simple way to ask <code>read_tsv()</code> to record the idea that “this value is confidential”, so I just read these in as <code>NA</code>.<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a></p>
+<p>I say “no simple way” because there are probably workarounds that allow <code>"CONF"</code> to be distinguished from true <code>NA</code>s. For example, I could have chosen to have <code>read_tsv()</code> read all numeric fields as character fields and then convert the value <code>CONF</code> in such fields to a <strong>sentinel value</strong> such as <code>Inf</code> (R’s way of saying “infinity” or <span class="math inline">\(\infty\)</span>).<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a> This would not be terribly difficult, but would have the unfortunate effect of surprising users of the data who (understandably) didn’t read the manual and starting finding that the mean values of some fields are <code>Inf</code>. Perhaps the best way to address this would allow the user of <code>ffiec.pq</code> to <em>choose</em> that behaviour as an option, but I did not implement this feature at this time.</p>
+<p>In addition to these missing values, I discovered in working with the data that the FFIEC often used specific values as <strong>sentinel values</strong> for <code>NA</code>. For example, <code>"0"</code> is used for some fields, while <code>"00000000"</code> is used to mark dates as missing, and <code>"12/31/9999 12:00:00 AM"</code> is used for timestamps.<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a> I recoded such sentinel values as <code>NA</code> in each case.</p>
+</section>
+</section>
+</section>
+<section id="the-service-level-agreement" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> The service-level agreement</h1>
+<p><span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span> suggested a pro forma service-level agreement covering the deliverables from the <em>Curate</em> team with the following elements:</p>
+<ol type="1">
+<li>The data will be presented as a set of tables in a modern storage format.</li>
+<li>The division into tables will adhere to a pragmatic version of good database principles.</li>
+<li>The <strong>primary key</strong> of each table will be identified and validated.</li>
+<li>Each variable (column) of each table will be of the correct type.</li>
+<li>There will be no manual steps that cannot be reproduced.</li>
+<li>A process for updating the curated data will be established.</li>
+<li>The entire process will be documented in some way.</li>
+<li>Some process for version control of data will be maintained.</li>
+</ol>
+<p>So in this section, I do an evaluation (perhaps biased) of how well <code>ffiec.pq</code> meets the requirements of these elements.</p>
+<section id="storage-format" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="storage-format"><span class="header-section-number">4.1</span> Storage format</h2>
+<p>In principle, the storage format should fairly minor detail determined by the needs of the <em>Understand</em> team. For example, if the <em>Understand</em> team works in Stata or Excel, then perhaps they will want the data in some kind of Stata format or as Excel files. However, I think it can be appropriate to push back on notions that data will be delivered in form that involves downgrading the data or otherwise compromises the process in a way that may ultimately add to the cost and complexity of the task for the <em>Curate</em> team. For example, “please send the final data as an Excel file attachment as a reply email” might be a request to be resisted because the process of converting to Excel can entail the degradation of data (e.g., time stamps or encoding of text).<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a> Instead it may be better to choose a more robust storage format and supply a script for turning that into a preferred format.</p>
+<p>One storage format that I have used in the past would deliver data as tables in a (PostgreSQL) database. The <em>Understand</em> team could be given access data from a particular source organized as a <strong>schema</strong> in a database. Accessing the data in this form is easy for any modern software package. One virtue of this approach is that the data might be curated using, say, Python even though the client will analyse it using, say, Stata.<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a> I chose to use Parquet files for <code>ffiec.pq</code>, in part because I don’t have a PostgreSQL server to put the data into and share with you. But Parquet files offer high performance, are space-efficient, and can be used with any modern data analysis tool.</p>
+</section>
+<section id="good-database-principles" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="good-database-principles"><span class="header-section-number">4.2</span> Good database principles</h2>
+<p>While I argued that one does not want to get “particularly fussy about database normalization”, if anything I may have pushed this further than some users might like. However, with <code>ffiec_pivot()</code>, it is relatively easy (and not too costly) to get the data into a “wide” form if that is preferred. The legacy version of Call Reports data offered by WRDS went to the other extreme with a “One Big Table” approach, which meant that this data set never moved to PostgreSQL because of limits there.<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a></p>
+</section>
+<section id="primary-keys" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="primary-keys"><span class="header-section-number">4.3</span> Primary keys</h2>
+<p>In <span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span>, I suggested that “the <em>Curate</em> team should communicate the primary key of each table to the <em>Understand</em> team. A primary key of a table will be a set of variables that can be used to uniquely identify a row in that table. In general a primary key will have no missing values. Part of data curation will be confirming that a proposed primary key is in fact a valid primary key.”</p>
+<div class="cell">
+<div id="tbl-pkey" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-pkey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Primary key checks
+</figcaption>
+<div aria-describedby="tbl-pkey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Schedule</th>
+<th style="text-align: left;">Primary key</th>
+<th style="text-align: left;">Check</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>por</code></td>
+<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code></td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ffiec_float</code></td>
+<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>ffiec_int</code></td>
+<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ffiec_str</code></td>
+<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>ffiec_bool</code></td>
+<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ffiec_date</code></td>
+<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>ffiec_schedules</code></td>
+<td style="text-align: left;"><code>item</code>, <code>date</code></td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Valid primary keys for each schedule are shown in <a href="#tbl-pkey" class="quarto-xref">Table&nbsp;2</a>. To checking these, I used the function <code>ffiec_check_pq_keys()</code>, which checks the validity of a proposed primary key for a schedule. That every column except <code>value</code> forms part of the primary key is what allows us to use <code>ffiec_pivot()</code> to create unique values in the resulting “wide” tables.</p>
+</section>
+<section id="data-types" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="data-types"><span class="header-section-number">4.4</span> Data types</h2>
+<p>In <span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span>, I proposed that “each variable of each table should be of the correct type. For example, dates should be of type <code>DATE</code>, variables that only take integer values should be of <code>INTEGER</code> type. Date-times should generally be given with <code>TIMESTAMP WITH TIME ZONE</code> type. Logical columns should be supplied with type <code>BOOLEAN</code>.”<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a></p>
+<p>This element is (to the best of my knowledge) satisfied with one exception. The Parquet format is a bit like the Model T Ford: it supports time zones, and you can use any time zone you want, so long as it is UTC.<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a> As discussed above, there is only one timestamp in the whole set-up, <code>last_date_time_submission_updated_on</code> on the POR files and I discussed this field above.</p>
+</section>
+<section id="no-manual-steps" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="no-manual-steps"><span class="header-section-number">4.5</span> No manual steps</h2>
+<p>When data vendors are providing well-curated data sets, much about the curation process will be obscure to the user. This makes some sense, as the data curation process has elements of trade secrets. But often data will be supplied by vendors in an imperfect state and significant data curation will be performed by the <em>Curate</em> team working for or within the same organization as the <em>Understand</em> team.</p>
+<p>Focusing on the case where the data curation process transforms an existing data set—say, one purchased from an outside vendor—into a curated data set in sense used here, there are a few ground rules regarding manual steps.</p>
+<p>“First, <em>the original data files should not be modified in any way</em>.” Correct. The <code>ffiec.pq</code> package does not modify the FFIEC Bulk Data files after downloading them. I do make some corrections to the <code>item_name</code> variable in the <code>ffiec_items</code> package, but these “manual steps [are] extensively documented and applied in a transparent, automated fashion.” The code for these steps can be found on <a href="https://github.com/iangow/ffiec.pq/blob/main/data-raw/ffiec_dict.R">the GitHub page</a> for the <code>ffiec.pq</code> package.</p>
+</section>
+<section id="documentation" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="documentation"><span class="header-section-number">4.6</span> Documentation</h2>
+<p>“The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise.” I regard that having the <code>ffiec.pq</code> package do all the work of processing the data satisfies this requirement.</p>
+<p>A important idea here is that the code for processing the data is documentation in its own right. Beyond that the document you are reading now is a form of documentation, as is the documentation in the <code>ffiec.pq</code> package.</p>
+</section>
+<section id="update-process" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="update-process"><span class="header-section-number">4.7</span> Update process</h2>
+<p>If a new zip file appears on the FFIEC Bulk Data website, you can download it using the process outlined in <a href="#sec-raw-data" class="quarto-xref">Section&nbsp;1.1</a>. Just changing the <code>[:4]</code> to <code>[0]</code> and the script downloads the latest file.</p>
+<p>Then run the following code and the data will be updated:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_list_zips</span>() <span class="sc">|&gt;</span></span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">==</span> <span class="fu">max</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(zipfile) <span class="sc">|&gt;</span></span>
+<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>() <span class="sc">|&gt;</span></span>
+<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_process</span>() <span class="sc">|&gt;</span></span>
+<span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+ 14.737   1.714  13.420 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> <span class="fu">count</span>(date, ok)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  date       ok        n
+  &lt;date&gt;     &lt;lgl&gt; &lt;int&gt;
+1 2025-12-31 TRUE     39</code></pre>
+</div>
+</div>
+</section>
+<section id="data-version-control" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="data-version-control"><span class="header-section-number">4.8</span> Data version control</h2>
+<p><span class="citation" data-cites="Welch:2019aa">Welch (<a href="#ref-Welch:2019aa" role="doc-biblioref">2019</a>)</span> argues that, to ensure that results can be reproduced, “the author should keep a private copy of the full data set with which the results were obtained.” This imposes a significant cost on the <em>Understand</em> team to maintain archives of data sets that may run to several gigabytes or more and it would seem much more efficient for these obligations to reside with the parties with the relevant expertise. Data version control is a knotty problem and one that even some large data providers don’t appear to have solutions for.</p>
+<p>I am delivering the Call Report data not as the data files, but as an R package along with instructions for obtaining the zip files from the FFIEC Bulk Data website. So I cannot be said to be providing much version control of data here. That said, if a user retains the downloaded zip files, the application of the <code>ffiec.pq</code> functions to process these into Parquet files should provide a high degree of reproducibility of the data for an individual researcher.<a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a></p>
+<p>For my own purposes, I achieve a <em>modest</em> level of data version control by using Dropbox, which offers the ability to restore some previous versions of data files.</p>
+</section>
+</section>
+<section id="the-future-of-data-curation" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> The future of data curation</h1>
+<p>Data science seems to be in a strange state at the moment. On the one hand, things must be a little depressing. Many data scientists must be wondering about their future in a world in which AI can handle many tasks formerly done by people. On the other hand, data science has come leaps and bounds in the last fifteen years or so <span class="citation" data-cites="janert2010data">(pandas doesn’t even rate a mention in <a href="#ref-janert2010data" role="doc-biblioref">Janert, 2010</a>)</span> and things like Polars, and Arrow, and DuckDB, not to mention things like the Tidyverse are truly exciting developments.</p>
+<p>My sense from working on this data curation task is that humans will continue to be essential for data curation for the foreseeable future. In fact, the value of data curation might have gone up, as AI increase the population of people whose modest coding skills no longer prevent them from trying their hand at data analysis.</p>
+<p>While I used OpenAI’s ChatGPT 5.2 on this project, there were some “open the pod-bay doors, please, HAL” moments along the way. The one-line <code>txt2 &lt;- gsub("(?&lt;!\\t)\\n", " ", txt, perl = TRUE)</code> fix was deemed “unsafe” and ChatGPT even passive-aggressively suggested that “I think you want to use <code>txt</code>, not <code>txt2</code> in <code>read_tsv()</code>” at one point. I think ChatGPT did not understand that this code is not being put into a production system in which users load random zip files at all hours of the day. In effect, I have the population of zip files and, because of how I wrote the code, any errors in reading would’ve have just stopped the code. Using that one-liner allowed me to delete 700 lines of sloppy AI code. That said, I’m not sure I would have attempted this task if AI weren’t along for the ride.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+
+
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Gow:2026aa" class="csl-entry" role="listitem">
+Gow, I.D., 2026. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6149488">Data curation and the data science workflow</a>.
+</div>
+<div id="ref-Gow_2024" class="csl-entry" role="listitem">
+Gow, I.D., Ding, T., 2024. Empirical research in accounting: Tools and methods. Chapman &amp; Hall/CRC. <a href="https://doi.org/10.1201/9781003456230">https://doi.org/10.1201/9781003456230</a>
+</div>
+<div id="ref-janert2010data" class="csl-entry" role="listitem">
+Janert, P.K., 2010. Data analysis with open source tools: A hands-on guide for programmers and data scientists. O’Reilly Media, Sebastopol, CA.
+</div>
+<div id="ref-kashyap2002banks" class="csl-entry" role="listitem">
+Kashyap, A.K., Rajan, R., Stein, J.C., 2002. Banks as liquidity providers: An explanation for the co-existence of lending and deposit-taking. Journal of Finance 57, 33–63. <a href="https://doi.org/10.1111/1540-6261.00415">https://doi.org/10.1111/1540-6261.00415</a>
+</div>
+<div id="ref-Welch:2019aa" class="csl-entry" role="listitem">
+Welch, I., 2019. Editorial: An opinionated FAQ. Critical Finance Review 8, 19–24. <a href="https://doi.org/10.1561/104.00000077">https://doi.org/10.1561/104.00000077</a>
+</div>
+<div id="ref-Wickham:2023aa" class="csl-entry" role="listitem">
+Wickham, H., Çetinkaya-Rundel, M., Grolemund, G., 2023. <a href="https://books.google.com/books?id=TiLEEAAAQBAJ">R for data science</a>. O’Reilly Media, Sebastopol, CA.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>As will be seen this, this <em>load</em> step will not generally be an elaborate one. The inclusion of a separate <em>load</em> step serves more to better delineate the distinction between the <em>Curate</em> process and the <em>Understand</em> process.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Execute <code>install.packages(c("tidyverse", "farr", "DBI", "duckdb", "pak", dbplyr")</code> within R to install all the packages other than <code>ffiec.pq</code> that you will need to run the R code in this note.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>I already included <code>pak</code> in the command in the footnote to the previous paragraph.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>At the time of writing, there are 99 files, but each quarter will bring a new file to be processed.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>I discovered this package after writing most of this note. In my case, I pointed-and-clicked to get many of the files and <a href="https://people.wgtn.ac.nz/martien.lubberink">Martien Lubberink</a> of Victoria University of Wellington kindly provided the rest.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>I recommend that readers follow a similar approach if following along with this note, as it makes subsequent steps easier to implement. A reader can simply specify <code>os.environ['RAW_DATA_DIR'] = "/Users/igow/Dropbox/raw_data"</code>, substituting a location where the data should go on his or her computer.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>Note I am using the argument <code>use_multicore = TRUE</code>, which gives me about a five-time improvement in performance, but you will see different results depending on your system. You might test the code on a few files before running the whole thing. The <code>ffiec_process()</code> can accept a list of fully qualified paths to zipfiles, which can be created with the help of <code>ffiec_list_zips()</code>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Note that nothing is being “loaded” into RAM, the file is merely being scanned by DuckDB.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Parquet files are compressed, so they use less space on disk than they do when they are loaded into RAM.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Note that <code>collect()</code> here actually brings the data into R; <code>compute()</code> merely materializes the data as a table in the DuckDB database.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>See <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>, p.&nbsp;311-315, for discussion of time spans.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>I am writing this from the Boston area, so it would be insufficiently confusing if I did not make this change to my settings. In effect, I want to ensure that the code works for someone in a different time zone.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>I say somewhat arbitrarily because you probably don’t want to choose a day that is missing an hour due to shift from <code>EST</code> to <code>EDT</code>.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>Tabs and newlines are what are sometimes called <strong>invisibles</strong> because their presence is not apparent from viewing their usual representation as text (for example, a tab might look the same as a series of spaces). The <code>\t</code> and <code>\n</code> representations are quite standard ways of making these characters visible to humans.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>In practice, there’s a little clean-up to be done before returning <code>df</code>, as I will explain shortly.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>Unfortunately, the <code>read_tsv()</code> function does not allow us to specify an alternative to the default for line-terminating characters. It seems that other R and Python packages also do not offer this option.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>There are extra backslashes in the R version to specify that the backslashes represent backslashes to be passed along to <code>gsub()</code>, not special characters to be interpreted by R itself.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>This is not a completely insoluble problem in that we could inspect the XBRL data to determine the correct form of the data in this case. This is “above my pay grade” in this setting. (I’m not being paid to do this!)<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>Note that it would be somewhat faster to use <code>ffiec_text &lt;- load_parquet(db, "ffiec_str_20040630", "ffiec")</code>, but this code doesn’t take too long to run.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>Only the textual data will have embedded tabs and, because such data is arranged after numerical data, only text data will be affected by embedded tabs.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>See <a href="https://github.com/iangow/ffiec.pq/issues/3">here</a> for the gory details. Interestingly, the WRDS Call Report data have the <a href="https://gist.github.com/iangow/809e67527c41dd54872f155b67f6c442">same issue</a> with the earlier case and have incorrect data for one of the banks in the latter case. This seems to confirm that WRDS uses the TSV data itself in creating its Call Report data sets.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>Recall that the “fix” assumes that embedded tab belongs in last available text column.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>If <code>"NA"</code> appeared in a numeric field, my code would report an error. As I detected no errors in importing the data, I know there are no such values.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>This is the kind of situation where SAS’s approach to coding missing values would be helpful.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>In a sense, this would be doing the opposite of what the Python package pandas did in treating <code>np.NaN</code> as the way of expressing what later became <code>pd.NA</code>; I’d be using <code>Inf</code> to distinguish different kinds of missing values.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>Note that this timestamp sentinel appears in the “MDRM” data from the Federal Reserve that I used to construct <code>ffiec_items</code>, not in the FFIEC data sets themselves.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>I discuss some of the issues with Excel as a storage format below.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>One project I worked on involved Python code analysing text and putting results in a PostgreSQL database and a couple of lines of code were sufficient for a co-author in a different city to load these data into Stata.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>A rule of thumb might be that, if you cannot store your fairly standard data in PostgreSQL, then perhaps you need to revisit the structure of the data.<a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p><span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span> is referring to PostgreSQL types. The <code>ffiec.pq</code> package uses (logical) Parquet types <code>DATE</code>, <code>INT32</code>, <code>TIMESTAMP(isAdjustedToUTC = true)</code>, and <code>BOOLEAN</code> types, respectively for these types. Floating-point numbers are stored as <code>FLOAT64</code> and strings as <code>STRING</code>.<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>Henry Ford famously said of the Model T that “any customer can have a car painted any color that he wants so long as it is black.” Strictly speaking, the Parquet format supports <strong>timezone-aware timestamps</strong>, but only as UTC instants, as other time zones are not supported.<a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p>Note that a researcher might need to use a specific version of the <code>ffiec.pq</code> package to achieve full reproducibility, but the <code>pak</code> package allows for that.<a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
