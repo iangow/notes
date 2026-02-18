@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Ian D. Gow">
-<meta name="dcterms.date" content="2026-02-07">
+<meta name="dcterms.date" content="2026-02-18">
 
 <title>Data curation: The case of Call Reports – notes</title>
 <style>
@@ -268,7 +268,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">7 February 2026</p>
+      <p class="date">18 February 2026</p>
     </div>
   </div>
   
@@ -397,7 +397,7 @@ Completed: 4/4 downloads</code></pre>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ffiec_process_xbrls</span>(zipfiles<span class="sc">$</span>zipfile[<span class="dv">1</span>]) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-216.845 153.658 412.516 </code></pre>
+184.256  70.684 256.443 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 4
@@ -433,7 +433,7 @@ Completed: 4/4 downloads</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">ffiec_process</span>(<span class="at">use_multicore =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
- 25.389  27.354 763.257 </code></pre>
+  8.102   4.427 226.937 </code></pre>
 </div>
 </div>
 <p>Note that, behind the scenes, the <code>ffiec_process()</code> extracts the data in two phases. In the first phase, it processes the data for each schedule for each quarter into Parquet file. This results in 3713 Parquet files. In the second phase, <code>ffiec_process()</code> proceeds to organize the data in the 3713 Parquet files by variable type to facilitate working with the data. Once the data have been organized, the 3713 schedule-and-quarter-specific Parquet files are discarded.</p>
@@ -705,12 +705,12 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_float"</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.038   0.014   0.015 </code></pre>
+  0.036   0.017   0.014 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>ffiec_float</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A query:  ?? x 4
-# Database: DuckDB 1.4.4 [root@Darwin 25.4.0:R 4.5.2/:memory:]
+<pre><code># Source:   SQL [?? x 4]
+# Database: DuckDB 1.4.4 [igow@Darwin 25.4.0:R 4.5.2/:memory:]
    IDRSSD date       item        value
     &lt;int&gt; &lt;date&gt;     &lt;chr&gt;       &lt;dbl&gt;
  1     37 2001-03-31 RCON3562   0     
@@ -741,7 +741,7 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  5.635   0.949   0.886 </code></pre>
+  5.201   0.703   0.795 </code></pre>
 </div>
 </div>
 <p>So, do balance sheets balance? Well, not always.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
@@ -753,8 +753,8 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <pre><code># A tibble: 2 × 2
   bs_balance      n
   &lt;lgl&gt;       &lt;dbl&gt;
-1 TRUE       640570
-2 FALSE       21793</code></pre>
+1 FALSE       21793
+2 TRUE       640570</code></pre>
 </div>
 </div>
 <p>What’s going on? Well, one possibility is simply rounding error. So in the following code, I set <code>imbalance_flag</code> to <code>TRUE</code> only if the gap is more than <code>1</code> (these are in thousands of USD).</p>
@@ -791,13 +791,13 @@ Table&nbsp;1: Table keys, arrow types, and access code
  1 1362246 2002-06-30       278586      5334
  2  664653 2002-03-31        25490       224
  3 2821825 2001-03-31        55220        30
- 4  536554 2001-03-31         4624        10
- 5  647414 2002-12-31        83399        10
- 6  178150 2004-03-31       103939        10
- 7 3097243 2005-06-30        40939        10
- 8  545604 2001-06-30       246223        10
- 9  678931 2001-09-30        31237        10
-10  842358 2002-06-30       202388        10
+ 4 3097243 2005-06-30        40939        10
+ 5  920733 2001-12-31        48439        10
+ 6  293053 2002-03-31       314157        10
+ 7  178150 2004-03-31       103939        10
+ 8  536554 2001-03-31         4624        10
+ 9   83151 2003-12-31        97324        10
+10  545604 2001-06-30       246223        10
 # ℹ 189 more rows</code></pre>
 </div>
 </div>
@@ -811,16 +811,16 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <pre><code># A tibble: 199 × 4
     IDRSSD date       total_assets imbalance
      &lt;int&gt; &lt;date&gt;            &lt;dbl&gt;     &lt;dbl&gt;
- 1  773546 2005-06-30        97558         2
- 2  475756 2005-06-30        68158         2
- 3  131940 2005-06-30        27432         8
- 4 3097243 2005-06-30        40939        10
- 5   20147 2005-06-30        48130       -10
- 6   22954 2005-06-30        65027       -10
- 7   33549 2005-06-30        43865         3
- 8  827953 2005-03-31        50080         5
+ 1 3097243 2005-06-30        40939        10
+ 2  773546 2005-06-30        97558         2
+ 3  475756 2005-06-30        68158         2
+ 4  131940 2005-06-30        27432         8
+ 5   22954 2005-06-30        65027       -10
+ 6   33549 2005-06-30        43865         3
+ 7   20147 2005-06-30        48130       -10
+ 8 2646327 2005-03-31        98814        -8
  9  587574 2005-03-31         4705         2
-10 2646327 2005-03-31        98814        -8
+10   42037 2005-03-31        60913         2
 # ℹ 189 more rows</code></pre>
 </div>
 </div>
@@ -1038,7 +1038,7 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 <span id="cb77-28"><a href="#cb77-28" aria-hidden="true" tabindex="-1"></a>elapsed <span class="op">=</span> end <span class="op">-</span> start</span>
 <span id="cb77-29"><a href="#cb77-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time taken: </span><span class="sc">{</span>elapsed<span class="sc">:.6f}</span><span class="ss"> seconds'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time taken: 0.279855 seconds</code></pre>
+<pre><code>Time taken: 0.214386 seconds</code></pre>
 </div>
 </div>
 <p>We can peek at the data. So Polars has processed GBs of data and created a table with over 600,000 rows in well under a second. Don’t try this at home … if you’re using pandas.</p>
@@ -1079,103 +1079,103 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 </thead>
 <tbody>
 <tr class="odd">
-<td>869346</td>
-<td>2019-09-30</td>
-<td>207279.0</td>
-<td>187589.0</td>
-<td>19690.0</td>
+<td>261258</td>
+<td>2005-12-31</td>
+<td>147781.0</td>
+<td>122508.0</td>
+<td>25273.0</td>
 <td>0.0</td>
-<td>207279.0</td>
+<td>147781.0</td>
 </tr>
 <tr class="even">
-<td>2807173</td>
-<td>2004-12-31</td>
-<td>16058.0</td>
-<td>13844.0</td>
-<td>2214.0</td>
+<td>459644</td>
+<td>2007-09-30</td>
+<td>76882.0</td>
+<td>71317.0</td>
+<td>5565.0</td>
 <td>0.0</td>
-<td>16058.0</td>
+<td>76882.0</td>
 </tr>
 <tr class="odd">
-<td>950758</td>
-<td>2006-03-31</td>
-<td>87901.0</td>
-<td>80397.0</td>
-<td>7504.0</td>
+<td>80431</td>
+<td>2010-06-30</td>
+<td>79143.0</td>
+<td>70689.0</td>
+<td>8454.0</td>
 <td>0.0</td>
-<td>87901.0</td>
+<td>79143.0</td>
 </tr>
 <tr class="even">
-<td>819855</td>
-<td>2023-09-30</td>
-<td>1.013687e6</td>
-<td>937222.0</td>
-<td>76465.0</td>
-<td>0.0</td>
-<td>1.013687e6</td>
+<td>214106</td>
+<td>2020-06-30</td>
+<td>1.673532e6</td>
+<td>1.5426e6</td>
+<td>130877.0</td>
+<td>55.0</td>
+<td>1.673532e6</td>
 </tr>
 <tr class="odd">
-<td>680813</td>
-<td>2013-03-31</td>
-<td>1.130088e6</td>
-<td>1.026017e6</td>
-<td>104071.0</td>
-<td>0.0</td>
-<td>1.130088e6</td>
-</tr>
-<tr class="even">
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-</tr>
-<tr class="odd">
-<td>439730</td>
-<td>2006-09-30</td>
-<td>50448.0</td>
-<td>42163.0</td>
-<td>8285.0</td>
-<td>0.0</td>
-<td>50448.0</td>
-</tr>
-<tr class="even">
-<td>2934930</td>
-<td>2011-03-31</td>
-<td>169623.0</td>
-<td>154310.0</td>
-<td>15313.0</td>
-<td>0.0</td>
-<td>169623.0</td>
-</tr>
-<tr class="odd">
-<td>811279</td>
-<td>2018-03-31</td>
-<td>976781.0</td>
-<td>847651.0</td>
-<td>129130.0</td>
-<td>0.0</td>
-<td>976781.0</td>
-</tr>
-<tr class="even">
-<td>2705112</td>
+<td>348551</td>
 <td>2012-06-30</td>
-<td>126200.0</td>
-<td>113478.0</td>
-<td>12722.0</td>
+<td>415441.0</td>
+<td>382166.0</td>
+<td>33275.0</td>
 <td>0.0</td>
-<td>126200.0</td>
+<td>415441.0</td>
+</tr>
+<tr class="even">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
 </tr>
 <tr class="odd">
-<td>662453</td>
-<td>2004-03-31</td>
-<td>306702.0</td>
-<td>286479.0</td>
-<td>20223.0</td>
+<td>744144</td>
+<td>2001-09-30</td>
+<td>101384.0</td>
+<td>93006.0</td>
+<td>8378.0</td>
 <td>0.0</td>
-<td>306702.0</td>
+<td>101384.0</td>
+</tr>
+<tr class="even">
+<td>684455</td>
+<td>2025-09-30</td>
+<td>1.41993e6</td>
+<td>1.260075e6</td>
+<td>159855.0</td>
+<td>0.0</td>
+<td>1.41993e6</td>
+</tr>
+<tr class="odd">
+<td>272030</td>
+<td>2005-09-30</td>
+<td>17496.0</td>
+<td>14576.0</td>
+<td>2920.0</td>
+<td>0.0</td>
+<td>17496.0</td>
+</tr>
+<tr class="even">
+<td>316840</td>
+<td>2010-09-30</td>
+<td>2.93123e6</td>
+<td>2.584113e6</td>
+<td>347117.0</td>
+<td>0.0</td>
+<td>2.93123e6</td>
+</tr>
+<tr class="odd">
+<td>2756785</td>
+<td>2009-03-31</td>
+<td>1.091968e6</td>
+<td>973822.0</td>
+<td>118146.0</td>
+<td>0.0</td>
+<td>1.091968e6</td>
 </tr>
 </tbody>
 </table>
@@ -1352,7 +1352,7 @@ Figure&nbsp;5: Total assets for top 5 banks
 <span id="cb88-8"><a href="#cb88-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.021   0.036   0.021 </code></pre>
+  0.020   0.031   0.022 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3
@@ -1510,7 +1510,7 @@ Table&nbsp;2: Primary key checks
 <span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
- 13.206   1.385  12.195 </code></pre>
+ 13.455   1.428  12.314 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> <span class="fu">count</span>(date, ok)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
