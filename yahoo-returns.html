@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2025-02-26">
+
+<title>Stock returns on Yahoo Finance – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#summary" id="toc-summary" class="nav-link active" data-scroll-target="#summary"><span class="header-section-number">1</span> Summary</a></li>
+  <li><a href="#data-analysis" id="toc-data-analysis" class="nav-link" data-scroll-target="#data-analysis"><span class="header-section-number">2</span> Data analysis</a>
+  <ul class="collapse">
+  <li><a href="#comparing-with-crsp-returns" id="toc-comparing-with-crsp-returns" class="nav-link" data-scroll-target="#comparing-with-crsp-returns"><span class="header-section-number">2.1</span> Comparing with CRSP returns</a></li>
+  </ul></li>
+  <li><a href="#creating-an-alternative-version-of-adjusted" id="toc-creating-an-alternative-version-of-adjusted" class="nav-link" data-scroll-target="#creating-an-alternative-version-of-adjusted"><span class="header-section-number">3</span> Creating an alternative version of <code>adjusted</code></a></li>
+  <li><a href="#glossary" id="toc-glossary" class="nav-link" data-scroll-target="#glossary"><span class="header-section-number">4</span> Glossary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="yahoo-returns.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Stock returns on Yahoo Finance</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow <a href="mailto:iandgow@gmail.com" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/0000-0002-6243-8409" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 26, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="summary" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Summary</h1>
+<p>There appear to be few easy-to-use sources of <em>free</em> stock price data out there, but one venerable source is <a href="https://finance.yahoo.com/">Yahoo Finance</a>, which was a source of such data before Google was even a twinkle in the eye of Larry Page and Sergey Brin. So you may have used Yahoo Finance yourself to calculate stock returns. Yahoo Finance offers two versions of daily closing prices: <code>close</code> (“close price adjusted for splits”) and <code>adjusted</code> (“adjusted for splits and dividend and/or capital gain distributions”). If I denote <code>close</code> and <code>adjusted</code> on date <span class="math inline">\(t\)</span> as <span class="math inline">\(c_t\)</span> and <span class="math inline">\(a_t\)</span>, respectively, you likely calculated returns as</p>
+<p><span class="math display">\[ r_t = \frac{a_t}{a_{t-1}} - 1 \]</span> And denoting dividends (including capital gain distributions) on date <span class="math inline">\(t\)</span> as <span class="math inline">\(d_t\)</span>, you likely figured that the above was equivalent to the standard formula:</p>
+<p><span class="math display">\[ r_t = \frac{c_t + d_t}{c_{t-1}} - 1 \]</span> But I have discovered that this is <em>not true</em>. Instead, the adjusted stock price is calculated so that returns are calculated using the following expression:</p>
+<p><span class="math display">\[ r_t = \frac{a_t}{a_{t-1}} - 1 =  \frac{c_t}{c_{t-1} - d_t} - 1 \]</span> I’m guessing that many finance experts would regard the latter formula as simply <em>wrong</em>. Interestingly, <a href="https://www.investopedia.com/ask/answers/06/adjustedclosingprice.asp">Investopedia</a> suggests that one adjusts stock prices for dividends in precisely the way implied by the Yahoo Finance calculation: that is, you adjust <span class="math inline">\(c_{t-1}\)</span> by subtracting <span class="math inline">\(d_t\)</span> from it.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> I’m inclined to label it as <em>unorthodox</em> rather than simply wrong. While the good news is that the differences are not large, I wonder how many realize that this is how Yahoo Finance is doing things.</p>
+<p>In effect, the standard calculation assumes that you buy for cash at close one day and sell the next day, getting the proceeds of the sale and the associated dividends at that time. In contrast, the Yahoo Finance calculation assumes that you only need to supply cash to buy the shares at close one day <em>net of dividends</em> and sell the next day. The former seems a bit easier to describe and perhaps to pull off. Try asking your broker if you can do the latter! Of course, there’s a bit of fiction in all these calculations with trades at closing prices and dividends being paid on the ex-dividend date, but they are useful benchmark.</p>
+<p>I think this case illustrates the reality that many data items are not well-documented and, even if they are, it makes sense to check that the data line up with the documentation.</p>
+</section>
+<section id="data-analysis" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Data analysis</h1>
+<div id="tip-pkgs" class="callout callout-style-default callout-tip callout-titled" data-text-align="left">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip&nbsp;1
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In writing this note, I used the packages listed below.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/yahoo-returns.qmd">here</a>.</p>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyquant)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(farr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In this note, I focus on the Coca-Cola Company (ticker symbol <code>KO</code>). While, in principle, I could download historical stock prices directly from <a href="https://finance.yahoo.com/quote/KO/history/" class="uri">https://finance.yahoo.com/quote/KO/history/</a>, I find it easier to use <code>tq_get()</code> from the <code>tidyquant</code> package to get these prices.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ko_prices <span class="ot">&lt;-</span> <span class="fu">tq_get</span>(<span class="st">"KO"</span>, <span class="at">from =</span> <span class="st">"2017-01-01"</span>, <span class="at">to =</span> <span class="st">"2024-12-31"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If we look at the data, we see the following:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ko_prices</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2,011 × 8
+   symbol date        open  high   low close   volume adjusted
+   &lt;chr&gt;  &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+ 1 KO     2017-01-03  41.5  41.8  41.3  41.8 14711000     31.5
+ 2 KO     2017-01-04  41.9  42.0  41.6  41.7  9959400     31.4
+ 3 KO     2017-01-05  41.7  41.9  41.5  41.8  8968300     31.5
+ 4 KO     2017-01-06  41.7  41.8  41.5  41.7 10246600     31.5
+ 5 KO     2017-01-09  41.2  41.6  41.2  41.3 14822500     31.2
+ 6 KO     2017-01-10  41.4  41.4  40.9  41.0 19706800     30.9
+ 7 KO     2017-01-11  40.8  41.1  40.8  41.0  9266200     31.0
+ 8 KO     2017-01-12  41.0  41.0  40.8  41.0  8541200     30.9
+ 9 KO     2017-01-13  41    41.0  40.7  40.9  8123500     30.8
+10 KO     2017-01-17  40.8  41.3  40.8  41.2 12469400     31.1
+# ℹ 2,001 more rows</code></pre>
+</div>
+</div>
+<p>The first thing to note is that we appear to have <em>daily</em> data. There are gaps in the data (e.g., where are <code>2017-01-07</code> and <code>2017-01-08</code>?), but this can be explained by the fact that most stock exchanges do not trade on weekends, including the New York Stock Exchange (NYSE) on which Coca-Cola trades.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ko_prices <span class="sc">|&gt;</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dow =</span> <span class="fu">wday</span>(date, <span class="at">label =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(dow)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 2
+  dow       n
+  &lt;ord&gt; &lt;int&gt;
+1 Mon     375
+2 Tue     413
+3 Wed     411
+4 Thu     407
+5 Fri     405</code></pre>
+</div>
+</div>
+<p>Having understood <code>date</code>, we can shift our attention to the other fields in <code>ko_prices</code>:</p>
+<ul>
+<li><code>symbol</code>: The stock’s ticker symbol. For non-US exchanges, this can differ from the ticker used by the exchange on which the stock is traded because a suffix is added to indicate the exchange (e.g., <code>.AX</code> for Australian stocks). Tickers are problematic firm identifiers because a firm’s ticker can change over time (much like a CUSIP) and also because tickers can be reused by different companies (unlike CUSIPs). More on firm identifiers can be found in <a href="https://iangow.github.io/far_book/identifiers.html">Chapter 7</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a>.</li>
+<li><code>open</code>: The price at which the stock started trading when the market opened on <code>date</code>.</li>
+<li><code>high</code>: The highest price the stock reached during trading on <code>date</code>.</li>
+<li><code>low</code>: The lowest price the stock reached during trading on <code>date</code>.</li>
+<li><code>close</code>: The last price at which the stock was traded when the market closed for <code>date</code>.</li>
+<li><code>volume</code>: The total number of shares traded on <code>date</code>.</li>
+<li><code>adjusted</code>: The closing price adjusted for corporate actions such as dividends, stock splits, and other events to reflect the stock’s actual value over time.</li>
+</ul>
+<p>Focusing on the two closing prices—<code>close</code> and <code>adjusted</code>—the natural first question is what does the word “adjusted” mean? As we have done before, we will use the data and our knowledge of the setting to infer the meaning of this word. Knowing what plots can reveal quickly, I start with <a href="#fig-adj-ratio" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ko_prices <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">adj_ratio =</span> adjusted <span class="sc">/</span> close) <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> adj_ratio)) <span class="sc">+</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-adj-ratio" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-adj-ratio-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="yahoo-returns_files/figure-html/fig-adj-ratio-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-adj-ratio-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Ratio of <code>adjusted</code> to <code>close</code> over time
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>We can see a couple of things in <a href="#fig-adj-ratio" class="quarto-xref">Figure&nbsp;1</a>. First, the <code>adj_ratio</code> (defined as <code>adjusted</code> divided by <code>close</code>) equals one at the end of the period of our data set. Second, it appears that <code>adj_ratio</code> is a step function with respect to time: it is constant for periods, then steps up in discrete amounts on certain dates. This latter fact is consistent with “corporate actions such as dividends” occurring relatively infrequently on discrete dates.</p>
+<p>In practice, the most common “corporate action” is the payment of dividends and we can get data on dividends using <code>tq_get()</code> with the argument <code>get = "dividends"</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>ko_divs <span class="ot">&lt;-</span> <span class="fu">tq_get</span>(<span class="st">"KO"</span>, <span class="at">from =</span> <span class="st">"2017-01-01"</span>, <span class="at">to =</span> <span class="st">"2024-12-31"</span>, </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">get =</span> <span class="st">"dividends"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Here it seems that Coca-Cola pays quarterly dividends that can vary from one year to the next:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ko_divs <span class="sc">|&gt;</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(date)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 32 × 3
+   symbol date       value
+   &lt;chr&gt;  &lt;date&gt;     &lt;dbl&gt;
+ 1 KO     2024-11-29 0.485
+ 2 KO     2024-09-13 0.485
+ 3 KO     2024-06-14 0.485
+ 4 KO     2024-03-14 0.485
+ 5 KO     2023-11-30 0.46 
+ 6 KO     2023-09-14 0.46 
+ 7 KO     2023-06-15 0.46 
+ 8 KO     2023-03-16 0.46 
+ 9 KO     2022-11-30 0.44 
+10 KO     2022-09-15 0.44 
+# ℹ 22 more rows</code></pre>
+</div>
+</div>
+<p>In the following code, I calculate <code>adj_amt</code>, which represents the amount of the dividend implied by the values in <code>close</code> and <code>adjusted</code> on a given trading day and the previous day.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ko_rets <span class="ot">&lt;-</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  ko_prices <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol, date, close, adjusted) <span class="sc">|&gt;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">adj_ratio =</span> adjusted <span class="sc">/</span> close) <span class="sc">|&gt;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(symbol) <span class="sc">|&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lag_close =</span> <span class="fu">lag</span>(close),</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">lag_adjusted =</span> <span class="fu">lag</span>(adjusted)) <span class="sc">|&gt;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ret_yahoo =</span> adjusted <span class="sc">/</span> lag_adjusted <span class="sc">-</span> <span class="dv">1</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">adj_amt =</span> <span class="fu">round</span>(lag_close <span class="sc">-</span> lag_adjusted <span class="sc">/</span> adj_ratio, <span class="dv">4</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(date))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>As can be seen below, I have managed to recover precisely the amounts seen in <code>ko_divs</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ko_rets <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>symbol, <span class="sc">-</span>adj_ratio) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(adj_amt <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 7
+  date       close adjusted lag_close lag_adjusted  ret_yahoo adj_amt
+  &lt;date&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;
+1 2024-11-29 64.08    62.24     64.43        62.11  0.002111    0.485
+2 2024-09-13 71.41    68.84     71.23        68.20  0.009400    0.485
+3 2024-06-14 62.55    59.89     62.99        59.85  0.0007200   0.485
+4 2024-03-14 60.5     57.48     61.12        57.61 -0.002226    0.485
+5 2023-11-30 58.44    55.08     58.23        54.45  0.01160     0.46 
+6 2023-09-14 58.46    54.67     58.44        54.22  0.008279    0.46 </code></pre>
+</div>
+</div>
+<p>So this provides verification of the formula I used to calculate <code>adj_amt</code>. But where did this calculation come from?</p>
+<p>To be honest, I played around with the numbers until my calculation of <code>adj_amt</code> equalled <code>value</code> in <code>ko_divs</code>. If I denote <code>adj_ratio</code> at time <span class="math inline">\(t\)</span> as <span class="math inline">\(\alpha_t\)</span>, then my calculation implies</p>
+<p><span class="math display">\[ d_t = c_{t-1} - \frac{a_{t-1}}{\alpha_t} \]</span> Given that <span class="math inline">\(\alpha_t = \frac{a_t}{c_t}\)</span>, I can then show that this yields the expression provided in the introduction.</p>
+<p><span class="math display">\[
+\begin{aligned}
+d_t &amp;= c_{t-1} - \frac{a_{t-1}}{\alpha_t} \\
+d_t &amp;= c_{t-1} - c_t \frac{a_{t-1}}{a_t} \\
+c_t \frac{a_{t-1}}{a_t} &amp;= c_{t-1} - d_t \\
+\frac{a_{t-1}}{a_t} &amp;= \frac{c_{t-1} - d_t}{c_t} \\
+\frac{a_t}{a_{t-1}} &amp;= \frac{c_t}{c_{t-1} - d_t} \\
+\frac{a_t}{a_{t-1}} - 1 &amp;= \frac{c_t}{c_{t-1} - d_t}  - 1\\
+\end{aligned}
+\]</span></p>
+<p>I can verify this equation using the first row of data above. The left-hand side is already found in <code>ko_rets</code> as <code>ret_yahoo</code>, which was calculated by dividing 62.2436 by 62.1125 and subtracting one to get a percentage return of 0.2111%.</p>
+<p>The right-hand side expression can be calculated using <span class="math inline">\(c_t = 64.08\)</span>, <span class="math inline">\(c_{t-1} = 64.43\)</span>, and <span class="math inline">\(d_t = 0.485\)</span>, to get 0.2111%. This confirms the equation in this case.</p>
+<p>Using the standard formula gives a percentage return of 0.2095%. This confirms that the two calculations yield (<em>slightly</em>) different results.</p>
+<section id="comparing-with-crsp-returns" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="comparing-with-crsp-returns"><span class="header-section-number">2.1</span> Comparing with CRSP returns</h2>
+<p>The Center for Research in Security Prices, LLC (CRSP) is the <em>de facto</em> standard source of stock returns for US stocks in academic finance.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> I have a significant subset of CRSP in a repository of parquet files along the lines described in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a>.</p>
+<p>Here I collect data from the CRSP daily stock file (<code>crsp.dsf</code>) for Coca-Cola and store it in <code>crsp_rets_ko</code>, a <strong>remote data frame</strong>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>stocknames <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"stocknames"</span>, <span class="st">"crsp"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>dsf <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"dsf"</span>, <span class="st">"crsp"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>crsp_rets_ko <span class="ot">&lt;-</span> </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  stocknames <span class="sc">|&gt;</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ticker <span class="sc">==</span> <span class="st">"KO"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(permno) <span class="sc">|&gt;</span> </span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(dsf, <span class="at">by =</span> <span class="st">"permno"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(permno, date, prc, ret)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The standard measure of returns on CRSP is <code>ret</code> and I compare this with <code>ret_yahoo</code> (calculated using adjusted stock prices) and with <code>ret_std</code>, calculated using the “standard” formula discussed above. As can be seen below, the CRSP calculation (<code>ret</code>) and the standard formula (<code>ret_std</code>) line up pretty much perfectly.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>crsp_rets_ko <span class="sc">|&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ko_rets, <span class="at">by =</span> <span class="st">"date"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ret_std =</span> (close <span class="sc">+</span> adj_amt) <span class="sc">/</span> lag_close <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(adj_amt <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(date, ret_yahoo, ret_std, ret) <span class="sc">|&gt;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 32 × 4
+   date        ret_yahoo    ret_std       ret
+   &lt;date&gt;          &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;
+ 1 2024-11-29  0.002111   0.002095   0.002095
+ 2 2024-09-13  0.009400   0.009336   0.009336
+ 3 2024-06-14  0.0007200  0.0007144  0.000714
+ 4 2024-03-14 -0.002226  -0.002209  -0.002209
+ 5 2023-11-30  0.01160    0.01151    0.01151 
+ 6 2023-09-14  0.008279   0.008214   0.008214
+ 7 2023-06-15  0.01374    0.01364    0.01364 
+ 8 2023-03-16  0.005503   0.005461   0.005461
+ 9 2022-11-30  0.02531    0.02513    0.02513 
+10 2022-09-15 -0.01359   -0.01349   -0.01349 
+# ℹ 22 more rows</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="creating-an-alternative-version-of-adjusted" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Creating an alternative version of <code>adjusted</code></h1>
+<p>Can we create a version of <code>adjusted</code> that achieves the following desiderata?</p>
+<ol type="1">
+<li>The final value of <code>close</code> equals <code>adjusted</code></li>
+<li>Returns calculated using <code>adjusted</code> match the “standard” approach</li>
+</ol>
+<p>The answer is “yes” (of course).</p>
+<p>I first create <code>ko_prices_alt</code> with <code>adjusted</code> modified in the necessary way. Note that I use window functions with the data sorted by <code>desc(date)</code> so that the time-series ends with <code>close</code> equal to <code>adjusted</code> and the adjustment ratio changes going back in time.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>ko_prices_alt <span class="ot">&lt;-</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  ko_rets <span class="sc">|&gt;</span> </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">adj_ratio =</span> <span class="fu">coalesce</span>(<span class="fu">lag</span>(<span class="fu">cumprod</span>(close <span class="sc">/</span> (close <span class="sc">+</span> adj_amt))), <span class="dv">1</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">adjusted =</span> close <span class="sc">*</span> adj_ratio) <span class="sc">|&gt;</span> </span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol, date, close, adjusted, adj_amt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I can then calculate returns and store them in <code>ko_rets_alt</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>ko_rets_alt <span class="ot">&lt;-</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  ko_prices_alt <span class="sc">|&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(symbol) <span class="sc">|&gt;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ret_adj =</span> adjusted <span class="sc">/</span> <span class="fu">lag</span>(adjusted) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Finally, I focus on those <code>dates</code> where <code>adj_amt</code> is non-zero so that I can check that <code>ret</code> from CRSP equals <code>ret_adj</code>, the return calculated from <code>adjusted</code> in <code>ko_prices_alt</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>crsp_rets_ko <span class="sc">|&gt;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ko_rets_alt, <span class="at">by =</span> <span class="st">"date"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(adj_amt <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(date, ret_adj, ret) <span class="sc">|&gt;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 32 × 3
+   date          ret_adj       ret
+   &lt;date&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+ 1 2024-11-29  0.002095   0.002095
+ 2 2024-09-13  0.009336   0.009336
+ 3 2024-06-14  0.0007144  0.000714
+ 4 2024-03-14 -0.002209  -0.002209
+ 5 2023-11-30  0.01151    0.01151 
+ 6 2023-09-14  0.008214   0.008214
+ 7 2023-06-15  0.01364    0.01364 
+ 8 2023-03-16  0.005461   0.005461
+ 9 2022-11-30  0.02513    0.02513 
+10 2022-09-15 -0.01349   -0.01349 
+# ℹ 22 more rows</code></pre>
+</div>
+</div>
+<p>Thus we see that the second desideratum is obtained. To see that we get the first, I create <a href="#fig-adj-rets" class="quarto-xref">Figure&nbsp;2</a>, where it can be seen that the two lines converge by the end of the time-series.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>ko_prices_alt <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">year</span>(date) <span class="sc">&gt;=</span> <span class="dv">2024</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(close, adjusted)) <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> value, <span class="at">color =</span> name, <span class="at">line =</span> name)) <span class="sc">+</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-adj-rets" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-adj-rets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="yahoo-returns_files/figure-html/fig-adj-rets-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-adj-rets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Adjusted and raw close prices (using <code>ko_prices_alt</code>)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="glossary" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Glossary</h1>
+<p>Here is a small glossary of terms related to dividends.</p>
+<ul>
+<li><strong>Dividend</strong>: A distribution made by a company to its shareholders, usually from profits, either in cash or additional shares. Cash dividends are generally expressed on a per-share basis (e.g., 50.4 cents per share) with all shareholders in a given <strong>class</strong>. Most companies have a single class of shares. For many firms with multiple classes of shares, the dividends paid are the same for all classes, but shares from different classes have different voting rights.</li>
+<li><strong>Cum dividend</strong>: When a stock is purchased <em>cum dividend</em>, the purchaser gets the right to the upcoming dividend. If you buy the stock before the ex-dividend date, you will receive the associated dividend payment.</li>
+<li><strong>Ex-dividend date</strong>: The first trading day on which a stock no longer carries the right to receive the previously declared dividend. If you buy the stock on or after the ex-dividend date, you will not receive the upcoming dividend.</li>
+<li><strong>Record date</strong>: The date when the company checks its books to determine who the dividend should be paid to. Due to stock exchange settlement rules, you must buy the stock before the ex-dividend date to receive the dividend.</li>
+<li><strong>Payment date</strong>: The date when the dividend is actually paid to shareholders.</li>
+</ul>
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>This approach to calculating adjusted stock price works only on the day the ex-dividend date when the previous values of <code>close</code> and <code>adjusted</code> are equal.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Execute <code>install.packages(c("tidyquant", "tidyverse", "farr", "DBI", "duckdb", "dbplyr")</code> within R to install all the packages you need to run the code in this note.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Note that I use <code>round(., 4)</code> to eliminate quirky issues related to less-significant digits with double-precision numbers.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>See <a href="https://iangow.github.io/far_book/identifiers.html#the-crsp-database">Section 7.2</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> for more on CRSP.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>For more on remote data frames see <a href="https://iangow.github.io/far_book/fin-state.html">Chapter 6</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a>.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
