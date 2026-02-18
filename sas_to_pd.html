@@ -184,7 +184,12 @@ div.csl-indent {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Using SAS to create pandas data</h1>
-</div>
+  <div class="quarto-categories">
+    <div class="quarto-category">SAS</div>
+    <div class="quarto-category">pandas</div>
+    <div class="quarto-category">wrds2pg</div>
+  </div>
+  </div>
 
 
 
@@ -227,7 +232,7 @@ Tip
 </div>
 <div class="callout-body-container callout-body">
 <p>The following command (run in the terminal on your computer) installs the packages you need.</p>
-<div id="60d82fce" class="cell" data-execution_count="3">
+<div id="44d1c6a5" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install wrds2pg <span class="op">--</span>upgrade</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pip install pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -239,7 +244,7 @@ Tip
 <section id="sec-pandas" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Expressive pandas</h1>
 <p>Since 2012, pandas has become the leading <strong>data frame library</strong> in Python. A real strength of pandas appears to be its expressiveness, which allows a user to explore data with succinct code. To show this, I will adapt an example from <span class="citation" data-cites="hilpisch2019">Hilpisch (<a href="#ref-hilpisch2019" role="doc-biblioref">2019</a>)</span>. The following code reads data from a GitHub page …</p>
-<div id="ce793f68" class="cell" data-execution_count="4">
+<div id="17846da8" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> (<span class="st">"https://raw.githubusercontent.com/yhilpisch/"</span></span>
@@ -270,7 +275,7 @@ Figure&nbsp;1: Stock prices for five firms: Original
 </div>
 </div>
 <p>Looking at the code, it seems that pandas has magically intuited that the data set comprises a number of time series, so a call to the <code>.plot()</code> method of the <code>pd.DataFrame</code> generates a plot and <code>subplots=True</code> makes a subplot for each series. Of course, it wasn’t some special instinct for the meaning of data that allowed pandas to do this. Rather, by having dates in the first column of the CSV and then telling pandas to use that column to generate the <code>Index</code> for the <code>pd.DataFrame</code>, we get the data in the following form:</p>
-<div id="015bc009" class="cell" data-execution_count="6">
+<div id="cd52fee1" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <div>
@@ -343,7 +348,7 @@ Figure&nbsp;1: Stock prices for five firms: Original
 </div>
 </div>
 <p>As can be seen, <code>Date</code> is different from the other “columns” of the data frame; in a sense, it’s not a column at all, but the index for the data frame:</p>
-<div id="faf83510" class="cell" data-execution_count="7">
+<div id="21212bbb" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data.index</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>DatetimeIndex(['2010-01-01', '2010-01-04', '2010-01-05', '2010-01-06',
@@ -357,7 +362,7 @@ Figure&nbsp;1: Stock prices for five firms: Original
 </div>
 </div>
 <p>Having the data in this form allows us to access the data with succinct code. We can use <code>.loc[]</code> to select by date …</p>
-<div id="728af55d" class="cell" data-execution_count="8">
+<div id="58be8bb9" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data.loc[<span class="st">'2010-01-08'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>AAPL.O     30.282827
@@ -369,7 +374,7 @@ Name: 2010-01-08 00:00:00, dtype: float64</code></pre>
 </div>
 </div>
 <p>… and <code>[]</code> to select by column.</p>
-<div id="7056978a" class="cell" data-execution_count="9">
+<div id="10d209fa" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data[<span class="st">'AAPL.O'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>Date
@@ -388,7 +393,7 @@ Name: AAPL.O, Length: 2216, dtype: float64</code></pre>
 </div>
 </div>
 <p>An important operation for financial time series is <strong>resampling</strong> <span class="citation" data-cites="hilpisch2019">(<a href="#ref-hilpisch2019" role="doc-biblioref">Hilpisch, 2019, p. 215</a>)</span>. For example, we could transform the daily data in <code>data</code> into weekly data with one line:</p>
-<div id="858a894b" class="cell" data-execution_count="10">
+<div id="bca25038" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data.resample(<span class="st">'W'</span>).last().head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
 <div>
@@ -461,7 +466,7 @@ Name: AAPL.O, Length: 2216, dtype: float64</code></pre>
 </div>
 </div>
 <p>Similarly with monthly data …</p>
-<div id="1ad8fb63" class="cell" data-execution_count="11">
+<div id="002b532d" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>data.resample(<span class="st">'ME'</span>).last().head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <div>
@@ -543,13 +548,13 @@ Name: AAPL.O, Length: 2216, dtype: float64</code></pre>
 <section id="generating-fig-original-using-sas" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Generating <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a> using SAS</h1>
 <p>I put the SAS code shown in <a href="#lst-sas" class="quarto-xref">Listing&nbsp;1</a> and <a href="#lst-sas-2" class="quarto-xref">Listing&nbsp;2</a> in a file <code>dsf_to_pd.sas</code> and I can load it as follows.</p>
-<div id="e13439e5" class="cell" data-execution_count="12">
+<div id="5095fdf5" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>sas_code <span class="op">=</span> Path(<span class="st">"dsf_to_pd.sas"</span>).read_text(encoding<span class="op">=</span><span class="st">"utf-8"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I will use <code>sas_to_pandas()</code> from <code>wrds2pg</code> to run the SAS code on the WRDS server.</p>
-<div id="67b1bc89" class="cell" data-execution_count="13">
+<div id="af914962" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> wrds2pg <span class="im">import</span> sas_to_pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The first step is to look up tickers and link them to the security identifier used by CRSP (<code>permno</code>). The tickers found in the data provided by Hilpisch above include suffixes that indicate the exchange the stocks traded on.</p>
@@ -560,43 +565,43 @@ Name: AAPL.O, Length: 2216, dtype: float64</code></pre>
 <p>The first data set is <code>dsf_g</code>, which cumulates <code>(1 + retx)</code> by <code>ticker</code> as the variable <code>growth</code>. Then <code>lastvals</code> grabs the last values for each <code>ticker</code> and stores these as <code>prc_last</code> and <code>growth_last</code>.</p>
 <p>One way to interpret part of the SAS below that creates <code>dsf_adj</code> is, taking one stock at a time, that <code>growth_last</code> is the cumulative returns for each stock over the whole time series and the adjusted price for each date is the final price (<code>prc_last</code>) multiplied by the cumulative returns to date (<code>growth</code>) divided by <code>growth_last</code>.</p>
 <p>The final step of the SAS code dumps the contents of <code>dsf_adj</code> to CSV so it can be read into pandas. Note that the dates do not get parsed by the current version of <code>sas_to_pandas()</code>, so we will have to do that ourselves in pandas below.</p>
-<div id="4ed7433a" class="cell" data-execution_count="14">
+<div id="8015c9e0" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>dsf_adj <span class="op">=</span> sas_to_pandas(sas_code)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 6.129 s</p>
+<p><strong>Wall time:</strong> 4.750 s</p>
 </div>
 </div>
 <p>Once we have a <code>pd.DataFrame</code>, we convert <code>date</code> to a <code>datetime64[ns]</code> and set the index using the resulting column.</p>
-<div id="e72b3b6e" class="cell" data-execution_count="15">
+<div id="d414f323" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>dsf_adj[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(dsf_adj[<span class="st">"date"</span>], <span class="bu">format</span><span class="op">=</span><span class="st">"%Y%m</span><span class="sc">%d</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 2.26 ms</p>
+<p><strong>Wall time:</strong> 3.10 ms</p>
 </div>
 </div>
 <p>Next, we <code>.pivot()</code> the data (in the earlier note we did this using polars or Ibis).</p>
-<div id="8192d90f" class="cell" data-execution_count="16">
+<div id="e6a136b0" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> (dsf_adj</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    .pivot(index<span class="op">=</span><span class="st">"date"</span>, columns<span class="op">=</span><span class="st">"ticker"</span>, values<span class="op">=</span><span class="st">"prc_adj"</span>)</span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 3.51 ms</p>
+<p><strong>Wall time:</strong> 3.87 ms</p>
 </div>
 </div>
 <p>I use <code>clean_tickers()</code> to order the columns in the data frame so that <a href="#fig-sas" class="quarto-xref">Figure&nbsp;2</a> better mirrors <a href="#fig-original" class="quarto-xref">Figure&nbsp;1</a>.</p>
-<div id="8f4c2cca" class="cell" data-execution_count="17">
+<div id="10a4beb1" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>clean_tickers <span class="op">=</span> [re.sub(<span class="vs">r"</span><span class="ch">\.</span><span class="pp">[A-Z]</span><span class="op">+</span><span class="dv">$</span><span class="vs">"</span>, <span class="st">""</span>, t) <span class="cf">for</span> t <span class="kw">in</span> ticker_list]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>It turns out that the index in the original data frame is filled out with empty rows on public holidays, likely because the original data included commodities and exchange rates that traded on those dates and we omitted those data here. Having the dates in the index actually makes the plot look better, so I effectively add them to the index of <code>data_alt</code> by using <code>.reindex(data.index)</code>.</p>
-<div id="3df0f967" class="cell" data-execution_count="18">
+<div id="87d3adbf" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>ptime</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>data_alt <span class="op">=</span> data_alt.reindex(data.index)[clean_tickers]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 0.82 ms</p>
+<p><strong>Wall time:</strong> 0.69 ms</p>
 </div>
 </div>
 <div id="cell-fig-sas" class="cell" data-execution_count="19">
