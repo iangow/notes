@@ -24,7 +24,20 @@ format:
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
 csl: jfe.csl
+execute:
+  freeze: auto
 ---
+
+```{r}
+#| include: false
+Sys.setenv(RETICULATE_PYTHON = normalizePath("notes_py/bin/python"))
+library(reticulate)
+py_config()
+knitr::opts_chunk$set(
+  cache = TRUE,
+  cache.path = "curate_call_reports_cache/"
+)
+```
 
 I recently [@Gow:2026aa] proposed an extension to the data science "whole game" of [R for Data Science](https://r4ds.hadley.nz/whole-game) [@Wickham:2023aa].
 In @Gow:2026aa, I used Australian stock price data to illustrate the data curation process and, in this note, I use US bank "Call Report" data as a second illustration.
