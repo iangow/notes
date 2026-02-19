@@ -7,7 +7,6 @@ author:
 date: 2026-01-21
 date-format: "D MMMM YYYY"
 number-sections: true
-format-links: false
 format:
   html:
     toc: true
@@ -15,7 +14,7 @@ format:
     toc-depth: 3
     colorlinks: true
     syntax-definitions:
-      - sas.xml
+      - ../sas.xml
   pdf: 
     include-in-header:
       text: |
@@ -30,9 +29,11 @@ format:
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
     syntax-definitions:
-      - sas.xml
-bibliography: papers.bib
-csl: jfe.csl
+      - ../sas.xml
+bibliography: ../papers.bib
+csl: ../jfe.csl
+execute:
+  freeze: auto
 ---
 
 In this note, I use a simple query to benchmark performance of various approaches to accessing data in `comp.g_secd`.
@@ -62,7 +63,7 @@ library(farr)
 ```{r}
 #| label: setup
 #| include: false
-Sys.setenv(RETICULATE_PYTHON = "notes_py/bin/python")
+Sys.setenv(RETICULATE_PYTHON = "../notes_py/bin/python")
 library(reticulate)
 py_config()
 ```
@@ -156,7 +157,7 @@ print(
 )
 ```
 
-I put this SAS code into a file `qsas dsf_to_pd.sas` in my home directory on the WRDS server and ran `qsas g_secd.sas`.
+I put this SAS code into a file `g_secd.sas` in my home directory on the WRDS server and ran `qsas g_secd.sas`.
 Inspecting `g_secd.log` a few minutes later, I see `The SAS System used: real time 6:08.66`.
 So SAS needs more than 5 minutes to run this query.
 And here is a sample of the output in `g_secd.lst`:
@@ -290,33 +291,20 @@ Returning to the mismatch between the output from the SAS query and the PostgreS
 
 ```{python}
 from pathlib import Path
-from db2pq import get_modified_pq
+from db2pq import pq_last_modified
 import os
-
-def get_modified(table, schema, *, 
-                 data_dir=None, archive=False):
-  if data_dir is None:
-      data_dir = Path(os.environ["DATA_DIR"]).expanduser()
-  
-  if archive:
-      files = list((data_dir / schema / "archive")
-                   .glob(f"{table}_*.parquet"))
-      return [get_modified_pq(file) for file in files]
-  else:
-      path = data_dir / schema / f"{table}.parquet"
-      return get_modified_pq(path) 
 ```
 
 Running this function on the main file tells us that the PostgreSQL table was updated yesterday, explaining why we see the difference from the WRDS SAS output above:
 
 ```{python}
-get_modified("g_secd", "comp")
+pq_last_modified("g_secd", "comp")
 ```
 
 We can run the function with `archive=True` to see what we have in the archive:
 
 ```{python}
-get_modified("g_secd", "comp", archive=True)
+pq_last_modified("g_secd", "comp", archive=True)
 ```
 
 The one archived file I have has an update string taken from the SAS file existing on the WRDS server when that update occurred.^[A recent update to `db2pq` means that the "last updated" string comes from the comments appended to the PostgreSQL table.]

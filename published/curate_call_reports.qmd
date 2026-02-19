@@ -4,11 +4,10 @@ author:
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
-date: 2026-02-07
+date: 2026-02-18
 number-sections: true
 date-format: "D MMMM YYYY"
-categories: ["data curation", Polars, DuckDB]
-format-links: false
+categories: ["Data curation", Polars, DuckDB]
 format:
   html:
     toc: true
@@ -23,19 +22,18 @@ format:
     papersize: a4
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
-bibliography: papers.bib
-csl: jfe.csl
+bibliography: ../papers.bib
+csl: ../jfe.csl
 execute:
   freeze: auto
 ---
 
 ```{r}
 #| include: false
-Sys.setenv(RETICULATE_PYTHON = normalizePath("notes_py/bin/python"))
+Sys.setenv(RETICULATE_PYTHON = normalizePath("../notes_py/bin/python"))
 library(reticulate)
 py_config()
 knitr::opts_chunk$set(
-  cache = TRUE,
   cache.path = "curate_call_reports_cache/"
 )
 ```
@@ -59,7 +57,7 @@ The inclusion of a separate *load* step serves more to better delineate the dist
 #| fig-alt: |
 #|   A diagram displaying the data science workflow.
 
-knitr::include_graphics("images/data-science.png", dpi = 270)
+knitr::include_graphics("../images/data-science.png", dpi = 270)
 ```
 
 In this note, as in @Gow:2026aa, I focus on the data curation (*Curate*) process.
@@ -229,6 +227,7 @@ You should set `RAW_DATA_DIR` to match what you used above in Python and you sho
 The processed files will occupy about 3 GB of disk space, so make sure you have room for these there.
 
 ```{r}
+#| eval: false
 Sys.setenv(RAW_DATA_DIR="/Users/igow/Dropbox/raw_data")
 Sys.setenv(DATA_DIR="/Users/igow/Dropbox/pq_data")
 ```
@@ -498,7 +497,7 @@ In effect, I want to ensure that the code works for someone in a different time 
 #|   Setting my computer to a different time zone
 #| fig-alt: |
 #|   Figure showing that computer has been set to the time zone of Sydney, Australia.
-knitr::include_graphics("images/time_zone.png")
+knitr::include_graphics("../images/time_zone.png")
 ```
 
 Now, R sees my time zone as `Australia/Sydney`:
@@ -966,7 +965,7 @@ If the values for `TEXT4468`and `TEXT4469` for Traders National Bank in June 200
 #| fig-alt: |
 #|   Extract from June 2004 Call Report for The Traders National Bank shows the correct textual values as discussed in the text.
 
-knitr::include_graphics("images/cr_490937.pdf")
+knitr::include_graphics("../images/cr_490937.pdf")
 ```
 
 Looking at the later file, there were embedded tabs in two rows of Schedule NARR for December 2022.

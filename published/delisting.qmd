@@ -1,22 +1,32 @@
 ---
 title: "Adding delisting returns to monthly data"
 author: 
-  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+  - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
 abstract: "This short note uses SAS code by Richard Price to illustrate the process of translating SAS code using WRDS to R code."
-date: today
+date: 2023-04-07
 date-format: "D MMMM YYYY"
-bibliography: papers.bib
+bibliography: ../papers.bib
 title-block-style: plain
-csl: jfe.csl
+csl: ../jfe.csl
+execute:
+  freeze: auto
 format: 
-    pdf:
-        toc: false
-        number-sections: true
-        colorlinks: true
-        mainfont: TeX Gyre Pagella
-        sansfont: TeX Gyre Pagella
+  html: 
+    colorlinks: true
+    syntax-definitions:
+      - ../sas.xml
+    number-sections: true
+    toc: false
+  pdf:
+    toc: false
+    syntax-definitions:
+      - ../sas.xml
+    number-sections: true
+    colorlinks: true
+    mainfont: TeX Gyre Pagella
+    sansfont: TeX Gyre Pagella
 ---
 
 ## Introduction
@@ -59,8 +69,7 @@ Here we get a table of "regular" returns, we will incorporate delisting returns 
 The code includes "an arbitrary restriction of the sample for illustration purposes."
 The data are restricted to 2003 and `permno` values less than 12000.
 
-```{sas}
-#| eval: false
+```sas
 proc sql;
     create table monthlyreturns as
 	select permno, date, ret
@@ -84,8 +93,7 @@ It's not clear what this table provides that `crsp.dsedelist` does not, but usin
 
 The first portion of SAS code is easily translated to R.
 
-```{sas}
-#| eval: false
+```sas
 data delist;
   set crsp.mse;
   where dlstcd > 199;
@@ -105,8 +113,7 @@ delist <-
 Compute replacement values for missing delisting returns using daily delisting returns.
 Richard says modify year range as needed, but I drop this filter in the R code, as it makes little difference to performance and (surprisingly) no difference to the results.
 
-```{sas}
-#| eval: false
+```sas
 proc sql;
   create table rvtemp as
 	select * from crsp.dsedelist
@@ -120,8 +127,7 @@ The following code calculates the mean values of `dlret` by `dlstcd`.
 Later will use these values to fill missing values of `dlret`.
 Richard says in a comment "could use `median=median_dlret` and `probm=median_pvalue` if you do not like mean delisting returns as the replacement value."
 
-```{sas}
-#| eval: false
+```sas
 proc univariate data=rvtemp noprint;
     var dlret;
     output out=rv mean=mean_dlret probt=mean_pvalue;
@@ -177,8 +183,7 @@ Again the R code is a simple translation of the SAS code.
 One difference here is that I use a new table name `delist_rv`, as I find re-using table names to be confusing when debugging code (though no real debugging was required here because I am mimicking someone else's code).
 Note that I add `month` and `year` variables, as we will use these to merge below data sets below.
 
-```{sas}
-#| eval: false
+```sas
 proc sql;
     create table delist as
 	select a.*, b.rv
@@ -252,10 +257,9 @@ delist_rv <- get_delist(pg)
 ## Merge monthly returns with delisting data
 
 Translating the SAS code here is pretty straightforward.
-The SAS code involves `PROC SQL` follwowed by a data step, but I do it all in one series of pipes.
+The SAS code involves `PROC SQL` followed by a data step, but I do it all in one series of pipes.
 
-```{sas}
-#| eval: false
+```sas
 proc sql;
   create table monthlyreturns as
 	  select a.*, b.dlret, b.dlstcd, b.rv, b.date as dldate, b.dlpdt

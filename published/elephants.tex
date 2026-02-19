@@ -1,4 +1,5 @@
 % Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{hyphens}{url}
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
@@ -7,21 +8,22 @@
   letterpaper,
   DIV=11,
   numbers=noendperiod]{scrartcl}
-
+\usepackage{xcolor}
 \usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
 \else % if luatex or xetex
-  \usepackage{unicode-math}
+  \usepackage{unicode-math} % this also loads fontspec
   \defaultfontfeatures{Scale=MatchLowercase}
   \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
 \fi
 \usepackage{lmodern}
 \ifPDFTeX\else
-    % xetex/luatex font selection
+  % xetex/luatex font selection
   \setmainfont[]{TeX Gyre Pagella}
   \setsansfont[]{TeX Gyre Pagella}
 \fi
@@ -41,22 +43,32 @@
 }{% if KOMA class
   \KOMAoptions{parskip=half}}
 \makeatother
-\usepackage{xcolor}
-\setlength{\emergencystretch}{3em} % prevent overfull lines
-\setcounter{secnumdepth}{5}
 % Make \paragraph and \subparagraph free-standing
+\makeatletter
 \ifx\paragraph\undefined\else
   \let\oldparagraph\paragraph
-  \renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
 \fi
 \ifx\subparagraph\undefined\else
   \let\oldsubparagraph\subparagraph
-  \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
 \fi
+\makeatother
 
 
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+\usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -68,46 +80,88 @@
 \makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
-\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
-\makeatother
-% Scale images if necessary, so that they will not overflow the page
-% margins by default, and it is still possible to overwrite the defaults
-% using explicit options in \includegraphics[width, height, ...]{}
-\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
 % Set default figure placement to htbp
-\makeatletter
 \def\fps@figure{htbp}
+\makeatother
+
+
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
 \makeatother
 \newlength{\cslhangindent}
 \setlength{\cslhangindent}{1.5em}
 \newlength{\csllabelwidth}
 \setlength{\csllabelwidth}{3em}
-\newlength{\cslentryspacingunit} % times entry-spacing
-\setlength{\cslentryspacingunit}{\parskip}
-\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
- {% don't indent paragraphs
-  \setlength{\parindent}{0pt}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
   % turn on hanging indent if param 1 is 1
   \ifodd #1
-  \let\oldpar\par
-  \def\par{\hangindent=\cslhangindent\oldpar}
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
   \fi
   % set entry spacing
-  \setlength{\parskip}{#2\cslentryspacingunit}
- }%
- {}
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
 \usepackage{calc}
-\newcommand{\CSLBlock}[1]{#1\hfill\break}
-\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
-\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+
+
+\usepackage{abstract}
+
+% Indent abstract on both sides
+\setlength{\absleftindent}{1.5cm}
+\setlength{\absrightindent}{1.5cm}
+
+% Smaller font in abstract
+\renewcommand{\abstracttextfont}{\small}
+
+% Optional: style the "Abstract" label
+\renewcommand{\abstractnamefont}{\normalfont\bfseries}
+\renewcommand{\abstractname}{Abstract}
+
+% Leave justification as default (fully justified). If you prefer ragged-right, uncomment:
+% \renewcommand{\abstracttextfont}{\small\noindent\ignorespaces}
+% \AtBeginEnvironment{abstract}{\raggedright}
+
+\usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+\usepackage{fontspec}
+\deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
 \KOMAoption{captions}{tableheading}
-\makeatletter
-\makeatother
-\makeatletter
-\makeatother
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -144,25 +198,14 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \makeatother
 \makeatletter
+\makeatother
+\makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \makeatother
-\makeatletter
-\@ifpackageloaded{tcolorbox}{}{\usepackage[skins,breakable]{tcolorbox}}
-\makeatother
-\makeatletter
-\@ifundefined{shadecolor}{\definecolor{shadecolor}{rgb}{.97, .97, .97}}
-\makeatother
-\makeatletter
-\makeatother
-\makeatletter
-\makeatother
-\ifLuaTeX
-  \usepackage{selnolig}  % disable illegal ligatures
-\fi
-\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\urlstyle{same} % disable monospaced font for URLs
+\urlstyle{same}
 \hypersetup{
   pdftitle={The elephant in the room: p-hacking and accounting research},
   pdfauthor={Ian D. Gow},
@@ -173,14 +216,16 @@
   urlcolor={Blue},
   pdfcreator={LaTeX via pandoc}}
 
-\title{The elephant in the room: p-hacking and accounting research}
-\author{Ian D. Gow\footnote{University of Melbourne,
-  \href{mailto:ian.gow@unimelb.edu.au}{\nolinkurl{ian.gow@unimelb.edu.au}}}}
-\date{8 August 2023}
 
+\title{The elephant in the room: p-hacking and accounting research}
+\author{Ian D. Gow}
+\date{8 August 2023}
 \begin{document}
 \maketitle
+
+
 \begin{abstract}
+
 Ohlson (2023) draws on his experience in empirical accounting seminars
 to identify five ``elephants in the room''. I interpret each of these
 elephants as either a variant or a symptom of p-hacking. I provide
@@ -190,11 +235,10 @@ identify a number of steps that could be taken to reduce p-hacking in
 accounting research. I conjecture that facilitating and encouraging
 replication alone could have profound effects on the quality and
 quantity of empirical accounting research.
-\end{abstract}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[borderline west={3pt}{0pt}{shadecolor}, sharp corners, frame hidden, enhanced, breakable, interior hidden, boxrule=0pt]}{\end{tcolorbox}}\fi
 
-\hypertarget{five-elephants-or-one}{%
-\section{Five elephants or one?}\label{five-elephants-or-one}}
+\end{abstract}
+
+\section{Five elephants or one?}\label{five-elephants-or-one}
 
 Ohlson (2023) identifies five of what he calls ``elephants in the room''
 (or topics considered taboo in seminars). I read these not so much as
@@ -245,8 +289,7 @@ then offer some circumstantial evidence of its prevalence in accounting
 research. Finally, I offer some ideas on how to address the
 ``elephant(s) in the room'' of accounting research.
 
-\hypertarget{the-practice-of-p-hacking}{%
-\section{The practice of p-hacking}\label{the-practice-of-p-hacking}}
+\section{The practice of p-hacking}\label{the-practice-of-p-hacking}
 
 According to Wigglesworth (2021), Campbell Harvey, professor of finance
 at Duke University, suggests that ``at least half of the 400 supposedly
@@ -342,11 +385,9 @@ data.\footnote{For example, if I am testing a hypothesis using data from
   but this seems unlikely to be popular in a discipline accustomed to
   hundreds of thousands of observations.}
 
-\hypertarget{evidence-of-p-hacking}{%
-\section{Evidence of p-hacking}\label{evidence-of-p-hacking}}
+\section{Evidence of p-hacking}\label{evidence-of-p-hacking}
 
-\hypertarget{conversational-evidence}{%
-\subsection{Conversational evidence}\label{conversational-evidence}}
+\subsection{Conversational evidence}\label{conversational-evidence}
 
 The contention of Ohlson (2023) that raising issues related to p-hacking
 is taboo in empirical accounting seminars seems very plausible. Outside
@@ -406,9 +447,8 @@ statistically significant association to `predict'\,'', as there seems
 to be little value in devoting effort to predict a relation that is not
 supported by the data set you have.
 
-\hypertarget{evidence-from-the-2017-jar-rep-trial}{%
 \subsection{Evidence from the 2017 JAR REP
-trial}\label{evidence-from-the-2017-jar-rep-trial}}
+trial}\label{evidence-from-the-2017-jar-rep-trial}
 
 The 2017 JAR REP trial itself provides circumstantial evidence of
 p-hacking in papers produced using the TEP (i.e., almost all papers in
@@ -430,9 +470,8 @@ JAR conference raise the uncomfortable prospect that many results
 produced by the TEP (i.e., almost all research in accounting) arise from
 p-hacking and are simply false rejections of true null hypotheses.
 
-\hypertarget{circumstantial-evidence-from-replications}{%
 \subsection{Circumstantial evidence from
-replications}\label{circumstantial-evidence-from-replications}}
+replications}\label{circumstantial-evidence-from-replications}
 
 Another source of evidence on the prevalence of p-hacking is
 replications. We expect that p-hacked papers will have results that are
@@ -602,8 +641,7 @@ and it seems difficult to distinguish much of contemporaneous accounting
 research from what you would see if p-hacking were the modus operandi of
 most researchers.
 
-\hypertarget{what-to-do}{%
-\section{What to do?}\label{what-to-do}}
+\section{What to do?}\label{what-to-do}
 
 If p-hacking is as prevalent as it seems to be, the natural question is
 what, if anything, can be done about it. Before addressing this, it is
@@ -629,9 +667,8 @@ p-hacking to an extent that research in aggregate might again have some
 value. In this section, I discuss four ideas for addressing concerns
 about p-hacking.
 
-\hypertarget{reject-papers-that-ask-silly-questions}{%
 \subsection{Reject papers that ask silly
-questions}\label{reject-papers-that-ask-silly-questions}}
+questions}\label{reject-papers-that-ask-silly-questions}
 
 Accounting academics appear to adore ``novelty'', where novelty often
 means asking questions that no-one has even dreamed of asking before.
@@ -671,9 +708,8 @@ inconsistent with the reality that almost all published papers have
 researchers compensate for the smallness of the (apparent) phenomena
 they study by simply looking harder (i.e., p-hacking).
 
-\hypertarget{increase-emphasis-on-replication}{%
 \subsection{Increase emphasis on
-replication}\label{increase-emphasis-on-replication}}
+replication}\label{increase-emphasis-on-replication}
 
 We saw above that being able to replicate papers such as Fang et al.
 (2016) and Li et al. (2018) makes it easy to see just how fragile their
@@ -762,9 +798,8 @@ research-related performance measure. More recently, the \emph{American
 Economic Review} published a comment on a paper that was then retracted
 (Bach et al., 2023).
 
-\hypertarget{decrease-emphasis-on-identification-strategies}{%
 \subsection{Decrease emphasis on ``identification
-strategies''}\label{decrease-emphasis-on-identification-strategies}}
+strategies''}\label{decrease-emphasis-on-identification-strategies}
 
 It is widely understood that accounting research has become increasingly
 concerned about ``identification strategies'' in recent years.
@@ -808,9 +843,8 @@ instruments exist in accounting research.\footnote{See Gow and Ding
 claim to use RDD generally do not.\footnote{See Gow and Ding (2023h) for
   a recent survey of the use of RDD in accounting research.}
 
-\hypertarget{incorporate-discussion-of-p-hacking-into-research-training}{%
 \subsection{Incorporate discussion of p-hacking into research
-training}\label{incorporate-discussion-of-p-hacking-into-research-training}}
+training}\label{incorporate-discussion-of-p-hacking-into-research-training}
 
 One hopes that accounting research training has not ``evolved'' to the
 point that PhD students are being taught how to do p-hacking. Instead,
@@ -896,9 +930,8 @@ There appears to be some irony in a research field that often examines
 control systems itself having control systems without audit trails,
 separation of duties, or robust review processes.
 
-\hypertarget{encourage-more-descriptive-research}{%
 \subsection{Encourage more descriptive
-research}\label{encourage-more-descriptive-research}}
+research}\label{encourage-more-descriptive-research}
 
 Gow et al. (2016, p. 499) point out that ``there are very few studies
 published in top accounting journals that focus on providing detailed
@@ -918,8 +951,7 @@ the understanding of the research community of how the real world works,
 making it more difficult to pass off p-hacked results that are not
 consistent with actual business practices.
 
-\hypertarget{concluding-comments}{%
-\section{Concluding comments}\label{concluding-comments}}
+\section{Concluding comments}\label{concluding-comments}
 
 Ohlson (2023) draws on his experience in empirical accounting seminars
 to identify five ``elephants in the room''. I interpret each of these
@@ -932,8 +964,7 @@ p-hacking in accounting research, I conjecture that facilitating and
 encouraging replication alone could have profound effects on the quality
 and quantity of empirical accounting research.
 
-\hypertarget{sec-other-elephants}{%
-\section{Appendix: The other elephants}\label{sec-other-elephants}}
+\section{Appendix: The other elephants}\label{sec-other-elephants}
 
 Above I explained that the basic Elephant \#5 of Ohlson (2023) (``Issues
 Related to `Screen-Picking' and `Data-Snooping'\,'') is synonymous with
@@ -959,289 +990,289 @@ results, as we do not expect those results to hold in a new sample,
 pretty much by definition. Here Ohlson (2023) is effectively discussing
 the idea of replication by the authors of the paper themselves.
 
-\hypertarget{references}{%
-\section*{References}\label{references}}
+\section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
 
-\hypertarget{refs}{}
+\phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
-\leavevmode\vadjust pre{\hypertarget{ref-Angrist:2014aa}{}}%
+\bibitem[\citeproctext]{ref-Angrist:2014aa}
 Angrist, J.D., Pischke, J.-S., 2014.
 \href{https://books.google.com/books?id=dEh-BAAAQBAJ}{Mastering
 'metrics: The path from cause to effect}. Princeton University Press.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Angrist:2008vk}{}}%
+\bibitem[\citeproctext]{ref-Angrist:2008vk}
 Angrist, J.D., Pischke, J.-S., 2008. Mostly harmless econometrics: An
 empiricist's companion. Princeton University Press.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bach:2023aa}{}}%
+\bibitem[\citeproctext]{ref-Bach:2023aa}
 Bach, L., Bozio, A., Guillouzouic, A., Malgouyres, C., 2023. Dividend
 taxes and the allocation of capital: comment. American Economic Review
 Forthcoming. \url{https://doi.org/10.1257/aer.20221432}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Ball:2019wu}{}}%
+\bibitem[\citeproctext]{ref-Ball:2019wu}
 Ball, R., Brown, P., 2019. {B}all and {B}rown (1968) after fifty years.
 Pacific-Basin Finance Journal 53, 410--431.
 \url{https://doi.org/10.1016/j.pacfin.2018.12.008}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Ball:1968ub}{}}%
+\bibitem[\citeproctext]{ref-Ball:1968ub}
 Ball, R., Brown, P., 1968. An empirical evaluation of accounting income
 numbers. Journal of Accounting Research 6, 159--178.
 \url{https://doi.org/10.2307/2490232}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bamber:2000wv}{}}%
+\bibitem[\citeproctext]{ref-Bamber:2000wv}
 Bamber, L.S., Christensen, T.E., Gaver, K.M., 2000. Do we really
 {``know''} what we think we know? A case study of seminal research and
 its subsequent overgeneralization. Accounting, Organizations and Society
 25, 103--129. \url{https://doi.org/10.1016/S0361-3682(99)00027-6}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bao:2021}{}}%
+\bibitem[\citeproctext]{ref-Bao:2021}
 Bao, Y., Ke, B., Li, B., Yu, Y.J., Zhang, J., 2021.
 \href{https://econjwatch.org/articles/a-response-to-critique-of-an-article-on-machine-learning-in-the-detection-of-accounting-fraud}{A
 response to {``critique of an article on machine learning in the
 detection of accounting fraud''}}. Econ Journal Watch 18, 71--78.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bao:2020aa}{}}%
+\bibitem[\citeproctext]{ref-Bao:2020aa}
 Bao, Y., Ke, B., Li, B., Yu, Y.J., Zhang, J., 2020. Detecting accounting
 fraud in publicly traded {U.S.} Firms using a machine learning approach.
 Journal of Accounting Research 58, 199--235.
 \url{https://doi.org/10.1111/1475-679X.12292}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Beaver:1968vf}{}}%
+\bibitem[\citeproctext]{ref-Beaver:1968vf}
 Beaver, W.H., 1968. The information content of annual earnings
 announcements. Journal of Accounting Research 6, 67--92.
 \url{https://doi.org/10.2307/2490070}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bernard:1989uu}{}}%
+\bibitem[\citeproctext]{ref-Bernard:1989uu}
 Bernard, V.L., Thomas, J.K., 1989. Post-earnings-announcement drift:
 Delayed price response or risk premium? Journal of Accounting Research
 27, 1--36. \url{https://doi.org/10.2307/2491062}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bird:2019aa}{}}%
+\bibitem[\citeproctext]{ref-Bird:2019aa}
 Bird, A., Karolyi, S.A., 2019. Retraction: Governance and taxes:
 Evidence from regression discontinuity. The Accounting Review 000--000.
 \url{https://doi.org/10.2308/1558-7967-92.1.000}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Black:2022tz}{}}%
+\bibitem[\citeproctext]{ref-Black:2022tz}
 Black, B.S., Desai, H., Litvak, K., Yoo, W., Yu, J.J., 2022. The {SEC}'s
 short-sale experiment: Evidence on causal channels and on the importance
 of specification choice in randomized and natural experiments.
 \url{https://doi.org/10.2139/ssrn.3657196}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bloomfield:2021va}{}}%
+\bibitem[\citeproctext]{ref-Bloomfield:2021va}
 Bloomfield, M.J., 2021. The asymmetric effect of reporting flexibility
 on priced risk. Journal of Accounting Research 59, 867--910.
 \url{https://doi.org/10.1111/1475-679X.12346}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Bloomfield:2018va}{}}%
+\bibitem[\citeproctext]{ref-Bloomfield:2018va}
 Bloomfield, R., Rennekamp, K., Steenhoven, B., 2018. No system is
 perfect: Understanding how registration-based editorial processes affect
 reproducibility and investment in research quality. Journal of
 Accounting Research 56, 313--362.
 \url{https://doi.org/10.1177/0956797611417632}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Boissel:2022aa}{}}%
+\bibitem[\citeproctext]{ref-Boissel:2022aa}
 Boissel, C., Matray, A., 2022. Dividend taxes and the allocation of
 capital. American Economic Review 112, 2884--2920.
 \url{https://doi.org/10.1257/aer.20210369}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Chambers:2014aa}{}}%
+\bibitem[\citeproctext]{ref-Chambers:2014aa}
 Chambers, C.D., Feredoes, E., Muthukumaraswamy, S.D., Etchells, P.J.,
 2014. Instead of "playing the game" it is time to change the rules:
 Registered reports at {AIMS Neuroscience} and beyond. {AIMS
 Neuroscience} 1, 4--17.
 \url{https://doi.org/10.3934/neuroscience.2014.1.4}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Cunningham:2021vk}{}}%
+\bibitem[\citeproctext]{ref-Cunningham:2021vk}
 Cunningham, S., 2021. Causal inference: The mixtape. Yale University
 Press.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Dechow:1995wr}{}}%
+\bibitem[\citeproctext]{ref-Dechow:1995wr}
 Dechow, P.M., Sloan, R.G., Sweeney, A.P., 1995. Detecting earnings
 management. The Accounting Review 70, 193--225.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Doyle:2001aa}{}}%
+\bibitem[\citeproctext]{ref-Doyle:2001aa}
 Doyle, A.C., 2001.
 \href{https://books.google.com/books?id=xN2lK7oPTjYC}{A study in
 scarlet}, Classics series. Penguin Publishing Group.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Fang:2016uy}{}}%
+\bibitem[\citeproctext]{ref-Fang:2016uy}
 Fang, V.W., Huang, A.H., Karpoff, J.M., 2016. Short selling and earnings
 management: A controlled experiment. The Journal of Finance 71,
 1251--1294. \url{https://doi.org/10.1111/jofi.12369}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Fang:2019tt}{}}%
+\bibitem[\citeproctext]{ref-Fang:2019tt}
 Fang, V.W., Huang, A., Karpoff, J.M., 2019. Reply to 'the {Reg SHO}
 reanalysis project: Reconsidering {Fang, Huang and Karpoff} (2016) on
 {Reg SHO} and earnings management' by {Black et al.} (2019).
 \url{https://doi.org/10.2139/ssrn.3507033}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Foster:1977wy}{}}%
+\bibitem[\citeproctext]{ref-Foster:1977wy}
 Foster, G., 1977. Quarterly accounting data: Time-series properties and
 predictive-ability results. The Accounting Review 52, 1--21.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Gelman:2019ws}{}}%
+\bibitem[\citeproctext]{ref-Gelman:2019ws}
 Gelman, andrew, Imbens, G., 2019.
 \href{https://doi.org/10.1080/07350015.2017.1366909}{Why high-order
 polynomials should not be used in regression discontinuity designs}.
 Journal of Business \& Economic Statistics 37, 447--456.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Gow:2022ab}{}}%
+\bibitem[\citeproctext]{ref-Gow:2022ab}
 Gow, I.D., 2022. Should bao et al. (2020) be retracted? {SSRN}
 Electronic Journal. \url{https://doi.org/10.2139/ssrn.4246151}
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_24}{}}%
+\bibitem[\citeproctext]{ref-far_book_24}
 Gow, I.D., Ding, T.T., 2023h.
 \href{https://iangow.github.io/far_book/regression-discontinuity-designs.html}{Regression
 discontinuity designs}, in: Empirical Research in Accounting: Tools and
 Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_22}{}}%
+\bibitem[\citeproctext]{ref-far_book_22}
 Gow, I.D., Ding, T.T., 2023i.
 \href{https://iangow.github.io/far_book/iv.html}{Instrumental
 variables}, in: Empirical Research in Accounting: Tools and Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_21}{}}%
+\bibitem[\citeproctext]{ref-far_book_21}
 Gow, I.D., Ding, T.T., 2023a.
 \href{https://iangow.github.io/far_book/natural-revisited.html}{Natural
 experiments revisited}, in: Empirical Research in Accounting: Tools and
 Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_23}{}}%
+\bibitem[\citeproctext]{ref-far_book_23}
 Gow, I.D., Ding, T.T., 2023g.
 \href{https://iangow.github.io/far_book/panel-data.html}{Panel data},
 in: Empirical Research in Accounting: Tools and Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_13}{}}%
+\bibitem[\citeproctext]{ref-far_book_13}
 Gow, I.D., Ding, T.T., 2023d.
 \href{https://iangow.github.io/far_book/bb68.html}{{B}all and {B}rown
 (1968)}, in: Empirical Research in Accounting: Tools and Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_14}{}}%
+\bibitem[\citeproctext]{ref-far_book_14}
 Gow, I.D., Ding, T.T., 2023e.
 \href{https://iangow.github.io/far_book/beaver68.html}{Beaver (1968)},
 in: Empirical Research in Accounting: Tools and Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_16}{}}%
+\bibitem[\citeproctext]{ref-far_book_16}
 Gow, I.D., Ding, T.T., 2023f.
 \href{https://iangow.github.io/far_book/pead.html}{Post-earnings
 announcement drift}, in: Empirical Research in Accounting: Tools and
 Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-far_book_1}{}}%
+\bibitem[\citeproctext]{ref-far_book_1}
 Gow, I.D., Ding, T.T., 2023c.
 \href{https://iangow.github.io/far_book/intro.html}{Introduction}, in:
 Empirical Research in Accounting: Tools and Methods.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Gow:2022aa}{}}%
+\bibitem[\citeproctext]{ref-Gow:2022aa}
 Gow, I.D., Ding, T.T., 2023b.
 \href{https://iangow.github.io/far_book}{Empirical research in
 accounting: Tools and methods}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Gow:2016kn}{}}%
+\bibitem[\citeproctext]{ref-Gow:2016kn}
 Gow, I.D., Larcker, D.F., Reiss, P.C., 2016. Causal inference in
 accounting research. Journal of Accounting Research 54, 477--523.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Gow:2010ub}{}}%
+\bibitem[\citeproctext]{ref-Gow:2010ub}
 Gow, I.D., Ormazabal, G., Taylor, D.J., 2010.
 \href{http://www.jstor.org/stable/20744139}{Correcting for
 cross-sectional and time-series dependence in accounting research}. The
 Accounting Review 85, 483--512.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Guest:2021aa}{}}%
+\bibitem[\citeproctext]{ref-Guest:2021aa}
 Guest, P.M., 2021. Risk management in financial institutions: A
 replication. The Journal of Finance 76, 2689--2707.
 \url{https://doi.org/10.1111/jofi.13063}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Hail:2020aa}{}}%
+\bibitem[\citeproctext]{ref-Hail:2020aa}
 Hail, L., Lang, M., Leuz, C., 2020. Reproducibility in accounting
 research: Views of the research community. Journal of Accounting
 Research 58, 519--543. \url{https://doi.org/10.1111/1475-679X.12305}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Harvey:2017ux}{}}%
+\bibitem[\citeproctext]{ref-Harvey:2017ux}
 Harvey, C.R., 2017. Presidential address: The scientific outlook in
 financial economics. The Journal of Finance 72, 1399--1440.
 \url{https://doi.org/10.1111/jofi.12530}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Huntington-Klein:2021aa}{}}%
+\bibitem[\citeproctext]{ref-Huntington-Klein:2021aa}
 Huntington-Klein, N., 2021.
 \href{https://books.google.com/books?id=f0NOEAAAQBAJ}{The effect: An
 introduction to research design and causality}. CRC Press.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Iliev:2010ic}{}}%
+\bibitem[\citeproctext]{ref-Iliev:2010ic}
 Iliev, P., 2010. The effect of {SOX Section} 404: Costs, earnings
 quality, and stock prices. The Journal of Finance 65, 1163--1196.
 \url{https://doi.org/10.1111/j.1540-6261.2010.01564.x}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Ioannidis:2005aa}{}}%
+\bibitem[\citeproctext]{ref-Ioannidis:2005aa}
 Ioannidis, J.P.A., 2005. Why most published research findings are false.
 {PLoS} Medicine 2, e124.
 \url{https://doi.org/10.1371/journal.pmed.0020124}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Kothari:2005aa}{}}%
+\bibitem[\citeproctext]{ref-Kothari:2005aa}
 Kothari, S.P., Leone, A.J., Wasley, C.E., 2005. Performance matched
 discretionary accrual measures. Journal of Accounting and Economics 39,
 163--197. \url{https://doi.org/10.1016/j.jacceco.2004.11.002}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Li:2018tj}{}}%
+\bibitem[\citeproctext]{ref-Li:2018tj}
 Li, Y., Lin, Y., Zhang, L., 2018. Trade secrets law and corporate
 disclosure: Causal evidence on the proprietary cost hypothesis. Journal
 of Accounting Research 56, 265--308.
 \url{https://doi.org/10.1111/1475-679X.12187}
 
-\leavevmode\vadjust pre{\hypertarget{ref-MS:2019}{}}%
+\bibitem[\citeproctext]{ref-MS:2019}
 Management Science, 2019.
 \href{https://pubsonline.informs.org/page/mnsc/datapolicy}{Policy for
 data and code disclosure}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Ohlson:2023aa}{}}%
+\bibitem[\citeproctext]{ref-Ohlson:2023aa}
 Ohlson, J.A., 2023. Empirical accounting seminars: Elephants in the
 room. Accounting, Economics, and Law: A Convivium 0.
 \url{https://doi.org/10.1515/ael-2021-0067}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Rosenbaum:1984aa}{}}%
+\bibitem[\citeproctext]{ref-Rosenbaum:1984aa}
 Rosenbaum, P.R., 1984. The consquences of adjustment for a concomitant
 variable that has been affected by the treatment. Journal of the Royal
 Statistical Society. Series A (General) 147, 656.
 \url{https://doi.org/10.2307/2981697}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Simchi-Levi:2023aa}{}}%
+\bibitem[\citeproctext]{ref-Simchi-Levi:2023aa}
 Simchi-Levi, D., 2023.
 \href{https://www.informs.org/Blogs/ManSci-Blogs/From-the-Editor}{From
-the editor}. Managemenet Science.
+the editor}. Management Science.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Simmons:2018}{}}%
+\bibitem[\citeproctext]{ref-Simmons:2018}
 Simmons, J.P., 2018.
 \href{https://www.youtube.com/watch?v=8wDwcp1EwNM}{Life after
 p-hacking}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Simmons:2011ux}{}}%
+\bibitem[\citeproctext]{ref-Simmons:2011ux}
 Simmons, J.P., Nelson, L.D., Simonsohn, U., 2011. False-positive
 psychology: Undisclosed flexibility in data collection and analysis
 allows presenting anything as significant. Psychological Science 22,
 1359--1366. \url{https://doi.org/10.1177/0956797611417632}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Sloan:1996wd}{}}%
+\bibitem[\citeproctext]{ref-Sloan:1996wd}
 Sloan, R.G., 1996. Do stock prices fully reflect information in accruals
 and cash flows about future earnings? The Accounting Review 71,
 289--315.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Wigglesworth:2021aa}{}}%
+\bibitem[\citeproctext]{ref-Wigglesworth:2021aa}
 Wigglesworth, R., 2021.
 \href{https://www.ft.com/content/9025393f-76da-4b8f-9436-4341485c75d0?shareType=nongift}{The
 hidden {``replication crisis''} of finance}. Financial Times.
 
-\leavevmode\vadjust pre{\hypertarget{ref-wiki:elephant}{}}%
+\bibitem[\citeproctext]{ref-wiki:elephant}
 Wikipedia, 2023.
 \href{https://en.wikipedia.org/wiki/Blind_men_and_an_elephant}{Blind men
 and an elephant}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-Zhang:2007tv}{}}%
+\bibitem[\citeproctext]{ref-Zhang:2007tv}
 Zhang, I.X., 2007. Economic consequences of the {Sarbanes-Oxley Act} of
 2002. Journal of Accounting and Economics 44, 74--115.
 \url{https://doi.org/10.1016/j.jacceco.2007.02.002}
 
 \end{CSLReferences}
+
 
 
 
