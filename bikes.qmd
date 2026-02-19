@@ -53,8 +53,8 @@ The following SQL creates `bikes_raw`, which is fairly unprocessed data.
 Only `RUNDATE` is given a type, and this is `TIMESTAMP` because there is no time zone information in the data.
 
 ```{sql}
-#| connection: db
-#| 
+--| connection: db
+--| 
 CREATE OR REPLACE TABLE bikes_raw AS
   SELECT *
   FROM read_csv('74id-aqj9.csv',
@@ -65,9 +65,9 @@ CREATE OR REPLACE TABLE bikes_raw AS
 The following SQL produces some information on the contents of `bikes_raw` that is shown in @tbl-bikes-raw.
 
 ```{sql}
-#| connection: db
-#| max.print: -1
-#| output.var: results
+--| connection: db
+--| max.print: -1
+--| output.var: results
 SELECT column_name, column_type, max, null_percentage
 FROM (SUMMARIZE bikes_raw);
 ```
@@ -110,9 +110,9 @@ bikes <-
 The following SQL produces some information on the contents of `bikes` that is shown in @tbl-bikes.
 
 ```{sql}
-#| connection: db
-#| max.print: -1
-#| output.var: results
+--| connection: db
+--| max.print: -1
+--| output.var: results
 SELECT column_name, column_type, max, null_percentage
 FROM (SUMMARIZE bikes);
 ```
