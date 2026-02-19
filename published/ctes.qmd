@@ -25,6 +25,8 @@ format:
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
 csl: jfe.csl
+execute:
+  freeze: auto
 ---
 
 In this note, I use a query from @tanimura2021sql to illustrate first how one can re-write an SQL query using common table expressions (CTEs) and then how one can re-write that query again using `dbplyr`.
@@ -71,10 +73,10 @@ download_data <- function(filename, data_dir = "data") {
 
   url <- paste0("https://raw.githubusercontent.com/cathytanimura/",
                 "sql_book/master/Chapter%204%3A%20Cohorts/")
-
+  
   local_filename <- file.path(data_dir, paste0(filename, ".csv"))
   if (!file.exists(local_filename)) {
-    download.file(url = paste0(url, filename), destfile = local_filename)
+    download.file(url = paste0(url, filename, ".csv"), destfile = local_filename)
   }
 } 
 
@@ -131,10 +133,10 @@ I also rename the column `cohort_century` to `cohort` throughout. The value of u
 Note that the output shown in @tbl-original matches the output shown in @tanimura2021sql [p. 162].
 
 ```{sql}
-#| label: sql_original
-#| connection: db
-#| include: false
-#| output.var: out_original
+--| label: sql_original
+--| connection: db
+--| include: false
+--| output.var: out_original
 SELECT aa.cohort,
   round(bb.rep_and_sen_5_yrs * 1.0 / aa.reps, 4) AS pct_5_yrs,
   round(bb.rep_and_sen_10_yrs * 1.0 / aa.reps, 4) AS pct_10_yrs,
@@ -200,10 +202,10 @@ All references to `b` are changed to references to `a`.
 If you run the query in @lst-mod1, you will see it produces the same results as seen in @tbl-original.
 
 ```{sql}
-#| label: sql_mod1
-#| connection: db
-#| include: false
-#| output.var: out_mod1
+--| label: sql_mod1
+--| connection: db
+--| include: false
+--| output.var: out_mod1
 WITH a AS (
   SELECT id_bioguide, min(term_start) AS first_term
   FROM legislators_terms
@@ -255,10 +257,10 @@ Note that there are commas after the CTEs defining `a` and `aa`, but not after `
 Again, if you run the SQL, you will see that the results are unchanged.
 
 ```{sql}
-#| label: sql_mod2
-#| connection: db
-#| include: false
-#| output.var: out_mod2
+--| label: sql_mod2
+--| connection: db
+--| include: false
+--| output.var: out_mod2
 WITH a AS (
   SELECT id_bioguide, min(term_start) AS first_term
   FROM legislators_terms
@@ -311,10 +313,10 @@ Noting that `age(c.term_start, a.first_term)` appears three times in the query i
 I split `bb` into two (part is now `bbb` followed by a simplified `bb`) so that I have a query in which `age(c.term_start, a.first_term)` appears just once.
 
 ```{sql}
-#| label: sql_mod3
-#| connection: db
-#| include: false
-#| output.var: out_mod3
+--| label: sql_mod3
+--| connection: db
+--| include: false
+--| output.var: out_mod3
 WITH a AS (
     SELECT id_bioguide, min(term_start) AS first_term
     FROM legislators_terms
@@ -371,10 +373,10 @@ We also clean up `ages` a little (e.g., `USING`) and move `cohort` to `cohorts`.
 If you run the SQL, you will see that the results are unchanged.
 
 ```{sql}
-#| label: sql_mod4
-#| connection: db
-#| include: false
-#| output.var: out_mod4
+--| label: sql_mod4
+--| connection: db
+--| include: false
+--| output.var: out_mod4
 WITH cohorts AS (
   SELECT id_bioguide, min(term_start) AS first_term,
     date_part('century', min(term_start)) AS cohort,
@@ -430,10 +432,10 @@ The value of doing so it that it means we can easily edit the query to debug the
 For example, we could put `SELECT * FROM cohorts` at the end of the query in @lst-mod5 to look into `cohorts` if we are concerned about the output we are seeing from `cohort_retention`.
 
 ```{sql}
-#| label: sql_mod5
-#| connection: db
-#| include: false
-#| output.var: out_mod5
+--| label: sql_mod5
+--| connection: db
+--| include: false
+--| output.var: out_mod5
 WITH cohorts AS (
   SELECT id_bioguide, min(term_start) AS first_term,
     date_part('century', min(term_start)) AS cohort,
