@@ -24,6 +24,10 @@ format:
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
+execute: 
+  freeze: auto
+engine: jupyter
+jupyter: notes_py
 ---
 
 In this chapter, we cover @Beaver:1968vf, the second winner of the Seminal Contributions to Accounting Literature Award.^[The list of winners can be found at <https://go.unimelb.edu.au/yzw8>.]
@@ -132,25 +136,25 @@ os.environ["WRDS_ID"] = "iangow"
 ```{python}
 #| label: load_wrds
 #| eval: true
-def load_wrds(db, table, schema, wrds_id=None):
-    if not wrds_id:
-        wrds_id = os.getenv('WRDS_ID')
-    
-    uri = f"postgres://localhost:5432/igow"
-    
-    return db.read_postgres(uri, table_name=table, database=schema)
+import ibis
+
+def load_wrds(db, table, schema):
+    return db.table(table, database=("wrds", schema)) 
 ```
 
 ```{python}
 #| label: connect-pg-db
 #| eval: true
-db = ibis.duckdb.connect(pg_connection_limit = 1)
+db = ibis.duckdb.connect()
 
-db
+wrds_id = os.getenv('WRDS_ID')
+uri = f"postgres://{wrds_id}@wrds-pgdata.wharton.upenn.edu:9737/wrds"
 
+db.raw_sql("LOAD postgres")
+con = db.raw_sql(f"ATTACH '{uri}' AS wrds (TYPE postgres)")
+```
 
-
-
+```{python}
 fundq = load_wrds(db, "fundq", "comp")
 ccmxpf_lnkhist = load_wrds(db, "ccmxpf_lnkhist", "crsp")
 dsi = load_wrds(db, "dsi", "crsp")
@@ -379,7 +383,9 @@ single_event_tds = (
     single_event_crsp
     .inner_join(trading_dates, "date")
     .mutate(relative_td = _.td - _.event_td)
-    .drop("event_td", "td")) 
+    .drop("event_td", "td")
+    .to_pandas()
+) 
 ```
 
 Now we can do a simple plot (@fig-single-event) of the trading volume (`vol`) against the number of trading days from the earnings announcement (`relative_td`).

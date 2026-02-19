@@ -19,6 +19,8 @@ format:
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
 csl: jfe.csl
+execute: 
+  freeze: auto
 ---
 
 ::: {.abstract}
@@ -200,7 +202,7 @@ sample |> mutate(hour = hour(a_datetime)) |> collect()
 We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). If you have set up a parquet data repository with this data in the `submissions` schema, then use `filings <- load_parquet(db, table = "filings", schema = "submissions")` instead.]
 
 ```{r}
-filings <- load_parquet(db, table = "filings", data_dir = "data")
+filings <- load_parquet(db, table = "filings", data_dir = "../data")
 ```
 
 An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC.
@@ -496,7 +498,7 @@ I include `IF NOT EXISTS` to avoid overwriting any existing table you might have
 ```{r}
 #| cache: true
 sql <- "CREATE TABLE IF NOT EXISTS pg.filings AS
-        SELECT * FROM 'data/filings.parquet'"
+        SELECT * FROM '../data/filings.parquet'"
 dbExecute(db, sql) |> system_time()
 ```
 
@@ -511,6 +513,7 @@ dbExecute(db, "CREATE TABLE IF NOT EXISTS pg.tickers AS
 dbExecute(db, "CREATE TABLE IF NOT EXISTS pg.sample_calls AS
                SELECT * FROM sample_calls")
 ```
+
 ### Re-running the analysis using PostgreSQL
 
 The first step is to connect to PostgreSQL, again using the `timezone` argument for the same reasons we discussed above with DuckDB.

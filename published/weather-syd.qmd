@@ -1,7 +1,7 @@
 ---
-title: "Defining winter and summer in Melbourne"
+title: "Defining winter and summer in Sydney"
 author: 
-  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+  - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
 date: 2024-04-20
@@ -10,19 +10,30 @@ bibliography: papers.bib
 title-block-style: plain
 csl: jfe.csl
 format: 
-    pdf:
-        toc: false
-        number-sections: true
-        colorlinks: true
-        mainfont: TeX Gyre Pagella
-        sansfont: TeX Gyre Pagella
-    docx:
-        number-sections: true
+  pdf:
+    toc: false
+    number-sections: true
+    colorlinks: true
+    mainfont: TeX Gyre Pagella
+    sansfont: TeX Gyre Pagella
+  html:
+    toc: false
+    number-sections: true
+    colorlinks: true
+execute: 
+  freeze: auto
 ---
 
 ```{r}
+#| label: setup
 #| include: false
+Sys.setenv(RETICULATE_PYTHON = "../notes_py/bin/python")
 library(reticulate)
+py_config()
+```
+
+```{r}
+#| include: false
 library(tidyverse)
 library(DBI)
 library(dbplyr)
@@ -42,32 +53,28 @@ from retry_requests import retry
 cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
 retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
 openmeteo = openmeteo_requests.Client(session = retry_session)
-
-latitude = -37.814
-longitude = 144.96332
-start_date = "2001-01-01"
-end_date = "2023-12-31"
-timezone = "Australia/Melbourne"
+latitude = -33.9
+longitude = 151.
 
 # Make sure all required weather variables are listed here
 # The order of variables in hourly or daily is important to assign them correctly below
 url = "https://archive-api.open-meteo.com/v1/archive"
 params = {
-	"latitude": latitude,
+	"latitude": latitude,  
 	"longitude": longitude,
-	"start_date": start_date,
-	"end_date": end_date,
+	"start_date": "2001-01-01",
+	"end_date": "2023-12-31",
 	"hourly": "temperature_2m",
 	"daily": ["temperature_2m_max", "temperature_2m_min"],
-	"timezone": timezone
+	"timezone": "Australia/Sydney"
 }
 responses = openmeteo.weather_api(url, params=params)
 response = responses[0]
 
 # Process daily data. The order of variables needs to be the same as requested.
 daily = response.Daily()
-daily_temperature_max = daily.Variables(0).ValuesAsNumpy()
-daily_temperature_min = daily.Variables(1).ValuesAsNumpy()
+daily_temperature_2m_max = daily.Variables(0).ValuesAsNumpy()
+daily_temperature_2m_min = daily.Variables(1).ValuesAsNumpy()
 
 daily_data = {"date": pd.date_range(
 	start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
@@ -75,8 +82,8 @@ daily_data = {"date": pd.date_range(
 	freq = pd.Timedelta(seconds = daily.Interval()),
 	inclusive = "left"
 )}
-daily_data["temperature_2m_max"] = daily_temperature_max
-daily_data["temperature_2m_min"] = daily_temperature_min
+daily_data["temperature_2m_max"] = daily_temperature_2m_max
+daily_data["temperature_2m_min"] = daily_temperature_2m_min
 
 daily_dataframe = pd.DataFrame(data = daily_data)
 ```
@@ -85,14 +92,13 @@ daily_dataframe = pd.DataFrame(data = daily_data)
 #| include: false
 db <- dbConnect(duckdb::duckdb())
 
-timezone = py$timezone
-latitude = py$latitude
-longitude = py$longitude
+latitude <- py$latitude
+longitude <- py$longitude
 
-temps_daily <-
+mel_daily <-
   py$daily_dataframe |>
-  mutate(date = as.Date(date, tz = timezone))  |>
-  copy_to(db, df = _, name = "temps_daily", overwrite = TRUE)
+  mutate(date = as.Date(date, tz = "Australia/Sydney"))  |>
+  copy_to(db, df = _, name = "mel_daily", overwrite = TRUE)
 ```
 
 ```{r}
@@ -100,7 +106,7 @@ temps_daily <-
 season_length <- 91
 
 mel_stats <-
-  temps_daily |>
+  mel_daily |>
   window_order(date) |>
   window_frame(0, season_length - 1) |>
   mutate(n_days = n(),
@@ -209,28 +215,29 @@ mel_seasons |>
 
 In the United States, one often hears people speak of the "official" start of seasons.
 Ironically, there seems to be nothing that is official about these dates.
-However, there is consensus about the dates in the US.
-The "official" start of summer is the summer solstice (for 2024: 21 December in Melbourne, 20 June in Boston) and the "official" start of winter is the winter solstice (for 2024: 21 June in Melbourne, 21 December in Boston).^[Seasons reckoned in this way are known as **astronomical seasons**. See [here](https://en.wikipedia.org/wiki/Season#Meteorological).]
+However, there is consensus about the dates.
+The "official" start of summer is the summer solstice (for 2024: 20 June in Boston, 21 December in Sydney) and the "official" start of winter is (for 2024: 21 December in Boston, 21 June in Sydney).
 
 In Australia, the usual convention is to divide seasons by months.
-On this basis, winter starts on 1 June and summer starts on 1 December.^[Seasons reckoned in this way are known as **meteorological seasons**. See [here](https://en.wikipedia.org/wiki/Season#Astronomical).]
+On this basis, winter starts on 1 June and summer starts on 1 December.
 
 Is there a sense in which one approach is more correct than the other?
 Focusing on summer and winter, one definition for these seasons would be that winter starts on the first day of the `r max_n_days`-day period that is the coldest such period for a year averaged over a number of years.
 Similarly, summer should starts on the first day of the `r max_n_days`-day period that is the hottest such period for a year averaged over a number of years.
 
-We answer this question focusing on Melbourne, Australia (latitude of `r latitude`, longitude: `r longitude`).
+We answer this question focusing on Sydney, Australia (latitude of `r latitude`, longitude: `r longitude`).
 
 Daily temperature data from [Open-Meteo](https://open-meteo.com) comprise a maximum and minimum temperature.
-So immediately we have two possible definitions of each season according to the temperature we use (e.g., summer could be the `r max_n_days`-day period that has the highest average minimum temperature or it could be the period that has the highest average maximum temperature).
+So immediately we have two possible definitions of each season according to the temperature we use (e.g., summer could be the `r max_n_days`-day period that has the highest average minimum temperature or it could be the period that has the highest average maximum temperature.
 Here we consider both.
 
 The start of winter based on the `r max_n_days`-day period with the lowest average maximum temperature is **`r format(winter_max, "%d %B")`**.
 The start of winter based on the `r max_n_days`-day period with the lowest average minimum temperature is **`r format(winter_min, "%d %B")`**.
+So whether we use maximums or minimums, we get close to the Australian convention for winter.
 
 The start of summer based on the `r max_n_days`-day period with the highest average maximum temperature is **`r format(summer_max, "%d %B")`**.
 The start of summer based on the `r max_n_days`-day period with the highest average minimum temperature is **`r format(summer_min, "%d %B")`**.
-So using maximums, we get close to the Australian convention for winter and close to the US convention for summer.
+With summer, we get close to the US convention for summer using minimums, but  close to the Australian convention using maximums.
 
 
 ```{r}
