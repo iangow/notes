@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2025-12-17">
+
+<title>Writing better SQL without writing SQL – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-original-query" id="toc-the-original-query" class="nav-link active" data-scroll-target="#the-original-query"><span class="header-section-number">1</span> The original query</a></li>
+  <li><a href="#converting-the-sql-to-a-cte-based-query" id="toc-converting-the-sql-to-a-cte-based-query" class="nav-link" data-scroll-target="#converting-the-sql-to-a-cte-based-query"><span class="header-section-number">2</span> Converting the SQL to a CTE-based query</a></li>
+  <li><a href="#translating-from-sql-to-dbplyr" id="toc-translating-from-sql-to-dbplyr" class="nav-link" data-scroll-target="#translating-from-sql-to-dbplyr"><span class="header-section-number">3</span> Translating from SQL to dbplyr</a></li>
+  <li><a href="#building-the-query-from-scratch-using-dbplyr" id="toc-building-the-query-from-scratch-using-dbplyr" class="nav-link" data-scroll-target="#building-the-query-from-scratch-using-dbplyr"><span class="header-section-number">4</span> Building the query from scratch using <code>dbplyr</code></a>
+  <ul class="collapse">
+  <li><a href="#reproducing-figure-4-12-of-tanimura2021sql" id="toc-reproducing-figure-4-12-of-tanimura2021sql" class="nav-link" data-scroll-target="#reproducing-figure-4-12-of-tanimura2021sql"><span class="header-section-number">4.1</span> Reproducing Figure 4-12 of <span class="citation" data-cites="tanimura2021sql">Tanimura (2021)</span></a></li>
+  <li><a href="#sec-fun" id="toc-sec-fun" class="nav-link" data-scroll-target="#sec-fun"><span class="header-section-number">4.2</span> Making a function</a></li>
+  </ul></li>
+  <li><a href="#sec-rec" id="toc-sec-rec" class="nav-link" data-scroll-target="#sec-rec"><span class="header-section-number">5</span> Reconciling differences in output</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="ctes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Writing better SQL without writing SQL</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow <a href="mailto:iandgow@gmail.com" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/0000-0002-6243-8409" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">17 December 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In this note, I use a query from <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> to illustrate first how one can re-write an SQL query using common table expressions (CTEs) and then how one can re-write that query again using <code>dbplyr</code>. I then do the analysis again from scratch, but using <code>dbplyr</code> expressions. I find that the SQL query contains inaccuracies, while the written-from-scratch <code>dbplyr</code> query does now. I conjecture that the “building blocks” approach to SQL facilitated by <code>dbplyr</code> may lead to more accurate of queries for many users.</p>
+<p>In writing this note, I used the packages listed below.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/ctes.qmd">here</a> and the latest version of this PDF is <a href="https://raw.githubusercontent.com/iangow/notes/main/ctes.pdf">here</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dbplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="the-original-query" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> The original query</h1>
+<p>Chapter 4 of <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> is entitled “cohort analysis” and uses data on US legislators to illustrate ideas related to survival analysis, including customer retention and survival analysis.</p>
+<p>The query I focus on in this note is provided in a section on “returnship” (or repeat purchase behaviour) <span class="citation" data-cites="tanimura2021sql">(<a href="#ref-tanimura2021sql" role="doc-biblioref">Tanimura, 2021, pp. 158–163</a>)</span>. <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021, p. 158</a>)</span> provides a verbal specification of the query: “What share of [legislators] start as representatives and go on to become senators? (Some senators later become representatives, but that is much less common.) Since relatively few make this transition, we’ll cohort legislators by the century in which they first became a representative.”<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p><span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> also discusses a filter that “excludes those [legislators] who were less than 10 years into their careers when the data was assembled” <span class="citation" data-cites="tanimura2021sql">(<a href="#ref-tanimura2021sql" role="doc-biblioref">Tanimura, 2021, p. 160</a>)</span>. While the rationale for this filter is not made entirely clear, it is presumably to address the issue of <strong>censoring</strong>. Specifically, if a legislator is only five years into a career at the time of data collection, we simply do not know whether or not this legislator will become a senator in year 6 or 7 or beyond. While standard texts on <strong>survival analysis</strong> focus a lot of effort on dealing with statistical issues related to censoring, <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> does not discuss these approaches at all, presumably because addressing these would require going much more into statistics than makes sense for a book on SQL. As I discuss below (see <a href="#sec-rec" class="quarto-xref">Section&nbsp;5</a>), if my understanding of the rationale for the filter is correct, then the original query in <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> does not implement it correctly.</p>
+<p>We first get the data, which requires an internet connection. I start by creating an in-memory DuckDB database.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then read the two downloaded data files into this database.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>legislators <span class="ot">&lt;-</span> <span class="fu">db_get_csv</span>(db, <span class="st">"legislators"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>legislators_terms <span class="ot">&lt;-</span> <span class="fu">db_get_csv</span>(db, <span class="st">"legislators_terms"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="#lst-original" class="quarto-xref">Listing&nbsp;2</a> shows the original SQL query from <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021, pp. 161–162</a>)</span>.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> Note that the output shown in <a href="#tbl-original" class="quarto-xref">Table&nbsp;1</a> matches the output shown in <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021, p. 162</a>)</span>.</p>
+<div class="cell">
+<div id="tbl-original" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Output from original SQL query (<a href="#lst-original" class="quarto-xref">Listing&nbsp;2</a>)
+</figcaption>
+<div aria-describedby="tbl-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">cohort</th>
+<th style="text-align: right;">pct_5_yrs</th>
+<th style="text-align: right;">pct_10_yrs</th>
+<th style="text-align: right;">pct_15_yrs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0.0502</td>
+<td style="text-align: right;">0.0970</td>
+<td style="text-align: right;">0.1438</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0.0088</td>
+<td style="text-align: right;">0.0244</td>
+<td style="text-align: right;">0.0409</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.0100</td>
+<td style="text-align: right;">0.0348</td>
+<td style="text-align: right;">0.0478</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">0.0400</td>
+<td style="text-align: right;">0.0764</td>
+<td style="text-align: right;">0.0873</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="converting-the-sql-to-a-cte-based-query" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Converting the SQL to a CTE-based query</h1>
+<p>The query shown in <a href="#lst-original" class="quarto-xref">Listing&nbsp;2</a> is quite complex and I will show how it can be simplified using <strong>common-table expressions</strong> (<strong>CTEs</strong>). According to the <a href="https://www.postgresql.org/docs/current/queries-with.html">documentation for PostgreSQL</a>: CTEs “can be thought of as defining temporary tables that exist just for one query.” CTEs are created using the SQL keyword <code>WITH</code>. In converting to a CTE-based query, I proceed in a series of small steps to better illustrate just how such a conversion can be done.</p>
+<p>In <a href="#lst-mod1" class="quarto-xref">Listing&nbsp;3</a>, I start by cleaning that up the two identical subqueries labelled <code>a</code> and <code>b</code>. I put <code>a</code> as a CTE at the beginning of the query (after <code>WITH</code>) and refer to that in both in the place where we currently refer to <code>a</code> and also in place of <code>b</code>. All references to <code>b</code> are changed to references to <code>a</code>. If you run the query in <a href="#lst-mod1" class="quarto-xref">Listing&nbsp;3</a>, you will see it produces the same results as seen in <a href="#tbl-original" class="quarto-xref">Table&nbsp;1</a>.</p>
+<p>In <a href="#lst-mod2" class="quarto-xref">Listing&nbsp;4</a>, I convert <code>aa</code> and <code>bb</code> from subqueries to CTEs. Note that there are commas after the CTEs defining <code>a</code> and <code>aa</code>, but not after <code>bb</code>, as it is the last CTE before the body of the query. Again, if you run the SQL, you will see that the results are unchanged.</p>
+<p>In <a href="#lst-mod3" class="quarto-xref">Listing&nbsp;5</a>, I switch to <code>USING</code> syntax for the join of <code>aa</code> and <code>bb</code>. My view is that <code>USING</code> produces more elegant SQL when it can be used and its use also facilitates the omission of the <code>aa</code> and <code>bb</code> prefixes for the variables in the final query. Noting that <code>age(c.term_start, a.first_term)</code> appears three times in the query in <a href="#lst-mod2" class="quarto-xref">Listing&nbsp;4</a>. I split <code>bb</code> into two (part is now <code>bbb</code> followed by a simplified <code>bb</code>) so that I have a query in which <code>age(c.term_start, a.first_term)</code> appears just once.</p>
+<p>In <a href="#lst-mod4" class="quarto-xref">Listing&nbsp;6</a>, I replace the meaningless labels for the CTEs (e.g., <code>a</code> and <code>bb</code>) with more meaningful labels (e.g., <code>cohorts</code> and <code>age_cuts</code>). We also clean up <code>ages</code> a little (e.g., <code>USING</code>) and move <code>cohort</code> to <code>cohorts</code>. If you run the SQL, you will see that the results are unchanged.</p>
+<p>In <a href="#lst-mod5" class="quarto-xref">Listing&nbsp;7</a>, I also put the “main” query in a CTE. The value of doing so it that it means we can easily edit the query to debug the CTEs that are used. For example, we could put <code>SELECT * FROM cohorts</code> at the end of the query in <a href="#lst-mod5" class="quarto-xref">Listing&nbsp;7</a> to look into <code>cohorts</code> if we are concerned about the output we are seeing from <code>cohort_retention</code>.</p>
+<div class="cell">
+<div id="tbl-mod5" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-mod5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Output from final translated SQL query (<a href="#lst-mod5" class="quarto-xref">Listing&nbsp;7</a>)
+</figcaption>
+<div aria-describedby="tbl-mod5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">cohort</th>
+<th style="text-align: right;">pct_5_yrs</th>
+<th style="text-align: right;">pct_10_yrs</th>
+<th style="text-align: right;">pct_15_yrs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0.0502</td>
+<td style="text-align: right;">0.0970</td>
+<td style="text-align: right;">0.1438</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0.0088</td>
+<td style="text-align: right;">0.0244</td>
+<td style="text-align: right;">0.0409</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.0100</td>
+<td style="text-align: right;">0.0348</td>
+<td style="text-align: right;">0.0478</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">0.0400</td>
+<td style="text-align: right;">0.0764</td>
+<td style="text-align: right;">0.0873</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="translating-from-sql-to-dbplyr" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Translating from SQL to dbplyr</h1>
+<p>Now that I have an SQL query based on CTEs, it is <em>much</em> easier to translate from SQL to <code>dbplyr</code>. In effect, I can translate each CTE in turn. I start with <code>cohorts</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>cohorts <span class="ot">&lt;-</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  legislators_terms <span class="sc">|&gt;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term_type <span class="sc">==</span> <span class="st">'rep'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">first_rep_term =</span> <span class="fu">min</span>(term_start, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">.by =</span> id_bioguide) <span class="sc">|&gt;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="fu">century</span>(first_rep_term))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Note that I could have created <code>cohort</code> as part of the <code>summarize()</code> step using <code>century(min(term_start, na.rm = TRUE))</code>, but my view is that the code is easier to read if <code>min(term_start, na.rm = TRUE)</code> appears just once and <code>cohort</code> is created as a function of <code>first_term</code> in a separate <code>mutate()</code> step.</p>
+<p>Translating <code>cohort_sizes</code> is also straightforward:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="ot">&lt;-</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  cohorts <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(first_rep_term <span class="sc">&lt;=</span> <span class="st">'2009-12-31'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">reps =</span> <span class="fu">n</span>(), <span class="at">.by =</span> cohort)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Note that <code>.groups = "drop"</code> is strictly optional in this case. Nonetheless I generally include <code>.groups = "drop"</code> in all my queries to prevent issues that can arise due to unintended grouping.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>Translating <code>ages</code> is not complicated:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ages <span class="ot">&lt;-</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  cohorts <span class="sc">|&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(legislators_terms, <span class="at">by =</span> <span class="st">"id_bioguide"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term_type <span class="sc">==</span> <span class="st">'sen'</span>, term_start <span class="sc">&gt;</span> first_rep_term) <span class="sc">|&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age =</span> <span class="fu">age</span>(term_start, first_rep_term)) <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohort, id_bioguide, age)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The main difference here is that <code>filter()</code> seems to go more naturally earlier in the query rather than at the end. It would make no difference if the order of the <code>mutate()</code> and <code>filter()</code> steps in the query below we flipped. However, we cannot put <code>filter()</code> at the end of the query (i.e., after <code>select()</code>) because the fields would no longer be available at that point.</p>
+<p>In translating <code>age_cuts</code>, it is useful to note that the original SQL included both a per-row calculation (the <code>CASE WHEN</code> calculation) and an aggregation by <code>cohort</code> (the <code>count(DISTINCT )</code> part).<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> To do things in a more step-by-step fashion, I put the per-row calculations in a <code>mutate()</code> call and then the aggregation in a <code>summarize()</code> call. Note that I trimmed the variable names in the <code>mutate()</code> step by using <code>num_</code> in place of <code>rep_and_sen_</code>. I also used <code>across()</code> in the <code>summarize()</code> step so that I only need to write <code>n_distinct()</code> once.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>age_cuts <span class="ot">&lt;-</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  ages <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">num_5_yrs =</span> <span class="fu">case_when</span>(age <span class="sc">&lt;=</span> <span class="fu">years</span>(<span class="dv">5</span>) <span class="sc">~</span> id_bioguide),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">num_10_yrs =</span> <span class="fu">case_when</span>(age <span class="sc">&lt;=</span> <span class="fu">years</span>(<span class="dv">10</span>) <span class="sc">~</span> id_bioguide),</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">num_15_yrs =</span> <span class="fu">case_when</span>(age <span class="sc">&lt;=</span> <span class="fu">years</span>(<span class="dv">15</span>) <span class="sc">~</span> id_bioguide)) <span class="sc">|&gt;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"num_"</span>), </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>            \(x) <span class="fu">n_distinct</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">.by =</span> cohort)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The final step of the translation is straightforward enough. I use <code>across()</code> again so that I only need to write <code>round(x * 1.0 / reps, 4)</code> once and I use <code>rename_with</code> to make it so the variables have the <code>pct_</code> prefix seen in the original query.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="sc">|&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(age_cuts, <span class="at">by =</span> <span class="st">"cohort"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"num_"</span>), \(x) <span class="fu">round</span>(x <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename_with</span>(\(x) <span class="fu">str_replace</span>(x, <span class="st">"^num_"</span>, <span class="st">"pct_"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohort, <span class="fu">starts_with</span>(<span class="st">"pct_"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(cohort) <span class="sc">|&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-translated" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-translated-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Output from query translated to <code>dbplyr</code>
+</figcaption>
+<div aria-describedby="tbl-translated-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">cohort</th>
+<th style="text-align: right;">pct_5_yrs</th>
+<th style="text-align: right;">pct_10_yrs</th>
+<th style="text-align: right;">pct_15_yrs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0.0502</td>
+<td style="text-align: right;">0.0970</td>
+<td style="text-align: right;">0.1438</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0.0088</td>
+<td style="text-align: right;">0.0244</td>
+<td style="text-align: right;">0.0409</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.0100</td>
+<td style="text-align: right;">0.0348</td>
+<td style="text-align: right;">0.0478</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">0.0400</td>
+<td style="text-align: right;">0.0764</td>
+<td style="text-align: right;">0.0873</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Comparison of <a href="#tbl-original" class="quarto-xref">Table&nbsp;1</a> and <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a> confirms that the <code>dbplyr</code> query yields the same result as the original SQL query.</p>
+</section>
+<section id="building-the-query-from-scratch-using-dbplyr" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Building the query from scratch using <code>dbplyr</code></h1>
+<p>Now let’s do it again more or less from scratch using <code>dbplyr</code>. In this version, I will build up block by block in a way that is easier (at least for me) to reason about.</p>
+<p>Before launching into the code, it is perhaps useful to step back and identify some key elements of the analysis.</p>
+<ul>
+<li><strong>population</strong>: Legislators who started as representatives before 31 December 2009.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></li>
+<li><strong>cohorts</strong>: Century of the start date of the first term.</li>
+<li><strong>exposure date</strong>: Date of the first term. Another term might be <strong>entry date</strong>.</li>
+<li><strong>event date</strong>: The <strong>event</strong> of interest is “becoming a senator” and the date is the first date of the first term as a senator (if any). Another term might be <strong>exit date</strong>.</li>
+</ul>
+<p>Note that cohorts here are defined based on dates, but this need not be the case in general. For example, A/B testing with websites involves cohorts based on which version of website the user is exposed to (either “A” or “B”).</p>
+<p>Also, “exposure date” is a term that I concocted that may seem more or less natural in other contexts. For example, in a vaccine trial, the exposure date might be the date on which a series of jabs is completed. In analysis of data on life expectancies, the exposure date might be the date of birth.</p>
+<p>I start by creating <code>first_terms</code>, a table with information about first terms for each legislator:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>first_terms <span class="ot">&lt;-</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  legislators_terms <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">first_rep_term =</span> <span class="fu">min</span>(<span class="fu">case_when</span>(term_type <span class="sc">==</span> <span class="st">'rep'</span> <span class="sc">~</span> term_start)),</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">first_sen_term =</span> <span class="fu">min</span>(<span class="fu">case_when</span>(term_type <span class="sc">==</span> <span class="st">'sen'</span> <span class="sc">~</span> term_start)),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">last_sen_term =</span> <span class="fu">max</span>(<span class="fu">case_when</span>(term_type <span class="sc">==</span> <span class="st">'sen'</span> <span class="sc">~</span> term_start)),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">first_term =</span> <span class="fu">min</span>(term_start),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">.by =</span> id_bioguide) <span class="sc">|&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We are interested in legislators who “start as representatives” (<code>first_term == first_rep_term</code>) and we want to exclude those who first term is after 31 December 2009 (<code>first_term &lt;= "2009-12-31"</code>), our population is created by applying filters to <code>first_terms</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cohorts_revised <span class="ot">&lt;-</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  first_terms <span class="sc">|&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(first_rep_term), </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>         first_term <span class="sc">==</span> first_rep_term,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>         first_term <span class="sc">&lt;=</span> <span class="st">"2009-12-31"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id_bioguide, first_rep_term, first_sen_term) <span class="sc">|&gt;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="fu">century</span>(first_rep_term))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Here <code>first_rep_term</code> is the exposure date and <code>first_sen_term</code> is the event date. Note that <code>cohorts_revised</code> includes both survival data (i.e., values for exposure date and event date) and cohort data and is focused exclusively on the population of interest. In other contexts it might make sense to calculate cohorts and survival data in separate queries before merging them.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
+<p>We can now calculate the sizes of the cohorts that we have formed.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="ot">&lt;-</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  cohorts_revised <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">reps =</span> <span class="fu">n</span>(), <span class="at">.by =</span> cohort)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now we have our data together, we can calculate the “time to event (if any)” (<code>event_time</code>) using the SQL function <code>age()</code>. If there is no senate term for a given legislator, then <code>event_time</code> will be <code>NA</code>. While one approach to censoring would replaced the missing values of <code>first_sen_term</code> with the date of data collection and add an indicator variable for censoring, I follow <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> in just using the 2009 cutoff and ignoring any issues related to censoring.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>cohorts_revised <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">event_time =</span> <span class="fu">age</span>(first_sen_term, first_rep_term))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A query:  ?? x 5
+# Database: DuckDB 1.4.4 [root@Darwin 25.4.0:R 4.5.2/:memory:]
+   id_bioguide first_rep_term first_sen_term cohort event_time    
+   &lt;chr&gt;       &lt;date&gt;         &lt;date&gt;          &lt;dbl&gt; &lt;drtn&gt;        
+ 1 S000033     1991-01-03     2007-01-04         20 497750400 secs
+ 2 C001080     2009-07-16     NA                 21        NA secs
+ 3 C001069     2007-01-04     NA                 21        NA secs
+ 4 D000191     1987-01-06     NA                 20        NA secs
+ 5 G000386     1975-01-14     1981-01-05         20 185932800 secs
+ 6 L000491     1993-05-10     NA                 20        NA secs
+ 7 L000569     2009-01-06     NA                 21        NA secs
+ 8 M001158     2005-01-04     NA                 21        NA secs
+ 9 M001165     2007-01-04     NA                 21        NA secs
+10 P000258     1991-01-03     NA                 20        NA secs
+# ℹ more rows</code></pre>
+</div>
+</div>
+<p>It is easy to check that <code>id_bioguide</code> is a valid key for <code>cohorts_revised</code>, which makes it easy to build up the curve of subsequent senate terms using a window function. Within each <code>cohort</code> we order by <code>event_time</code> and sum up the number of rows leading up to each value of <code>event_time</code>.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
+<p>Note that in our date set there will be ties in terms of <code>event_time</code>. For example, we might have exactly 6 observations with with <code>event_time</code> of exactly 5 years. If we had 432 representatives with <code>event_time</code> of less than 5 years and 6 with <code>event_time</code> of exactly 5 years, we would want to step from 432 to 438 immediately upon hitting the 5-year mark. Below I accomplish using the <code>max()</code> aggregate grouped by <code>cohort</code> and <code>event_time</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>pct_rep_then_sen <span class="ot">&lt;-</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  cohorts_revised <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">event_time =</span> <span class="fu">age</span>(first_sen_term, first_rep_term)) <span class="sc">|&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cum_ids =</span> <span class="fu">cumsum</span>(<span class="dv">1</span>),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">.by =</span> cohort,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">.order =</span> event_time) <span class="sc">|&gt;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cum_ids =</span> <span class="fu">max</span>(cum_ids, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">.by =</span> <span class="fu">c</span>(cohort, event_time)) <span class="sc">|&gt;</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(cohort_sizes, <span class="at">by =</span> <span class="st">"cohort"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pct =</span> cum_ids <span class="sc">/</span> reps) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>To produce the query analagous to that underlying <a href="#tbl-original" class="quarto-xref">Table&nbsp;1</a>, I can actually avoid the complicated <code>CASE</code> statements used in the original SQL. Instead, I first make a little table in R with the three cutoff values and send that to DuckDB and turn the rows into intervals using <code>years()</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>event_time_cutoffs <span class="ot">&lt;-</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">cutoff =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">15</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"event_time_cutoffs"</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">overwrite =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cutoff =</span> <span class="fu">years</span>(cutoff))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then use <code>cross_join()</code> to combine <code>pct_rep_then_sen</code> and <code>event_time_cutoffs</code> and calculate the <code>pct</code> values for each cutoff before using <code>pivot_wider()</code> to rearrange the table to match what is shown in <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>pct_rep_then_sen <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cross_join</span>(event_time_cutoffs) <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(event_time <span class="sc">&lt;=</span> cutoff) <span class="sc">|&gt;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">pct =</span> <span class="fu">max</span>(pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">.by =</span> <span class="fu">c</span>(cohort, cutoff)) <span class="sc">|&gt;</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cutoff =</span> <span class="fu">year</span>(cutoff)) <span class="sc">|&gt;</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">"cutoff"</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">names_prefix =</span> <span class="st">"pct_"</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from =</span> <span class="st">"pct"</span>, </span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">names_sort =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(cohort) <span class="sc">|&gt;</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-from-scratch" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-from-scratch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Output of from-scratch <code>dbplyr</code> query
+</figcaption>
+<div aria-describedby="tbl-from-scratch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">cohort</th>
+<th style="text-align: right;">pct_5</th>
+<th style="text-align: right;">pct_10</th>
+<th style="text-align: right;">pct_15</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0.0505</td>
+<td style="text-align: right;">0.0976</td>
+<td style="text-align: right;">0.1448</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0.0087</td>
+<td style="text-align: right;">0.0244</td>
+<td style="text-align: right;">0.0407</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.0101</td>
+<td style="text-align: right;">0.0349</td>
+<td style="text-align: right;">0.0478</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">0.0109</td>
+<td style="text-align: right;">0.0364</td>
+<td style="text-align: right;">0.0473</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Because of the more general form of our data with this modified query, it is easy to make the plot seen in <a href="#fig-surv" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>pct_rep_then_sen <span class="sc">|&gt;</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">event_time =</span> (<span class="fu">year</span>(event_time) <span class="sc">*</span> <span class="dv">12</span> <span class="sc">+</span> <span class="fu">month</span>(event_time)) <span class="sc">/</span> <span class="dv">12</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(event_time <span class="sc">&lt;=</span> <span class="dv">15</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">pct =</span> <span class="fu">max</span>(pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">.by =</span> <span class="fu">c</span>(cohort, event_time)) <span class="sc">|&gt;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="fu">as.character</span>(cohort)) <span class="sc">|&gt;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> event_time, <span class="at">y =</span> pct, <span class="at">group =</span> cohort,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>             <span class="at">colour =</span> cohort)) <span class="sc">+</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-surv" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-surv-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="ctes_files/figure-html/fig-surv-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-surv-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Representatives becoming senators over time by century
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Note that it would be easy to translate our <code>dbplyr</code> code—arguably a more precise solution than the original SQL query—back into SQL (probably using CTEs) if that were desired.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
+<section id="reproducing-figure-4-12-of-tanimura2021sql" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="reproducing-figure-4-12-of-tanimura2021sql"><span class="header-section-number">4.1</span> Reproducing Figure 4-12 of <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span></h2>
+<p>Finally, I reproduce Figure 4-12 of <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021, p. 163</a>)</span>. This plot requires changes to the cohorts, to the cutoffs (now 10 and 20 years), and (it seems) to the population. From visual inspection of Figure 4-12 of <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span>, it seems that we now require a representative’s first term to have begun before 2000.</p>
+<p>Note that the query underlying Figure 4-12 of <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> is not provided in the book. Nor is the code for generating the plot itself. Because <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> only include SQL code, readers are on their own when it comes to code for generating the plots; this is an additional weakness of focusing on SQL code.</p>
+<p>The first step I take is to make a new version of <code>pct_rep_then_sen</code> with <code>cohort</code> now based on decades and with the stricter filter on <code>first_rep_term</code>. Note that I simply overwrite whatever value for <code>cohort</code> was already in <code>cohorts_revised</code>. I also embed the calculation of <code>reps</code> (the number of members of each cohort) in the same pipeline as the other calculations.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>pct_rep_then_sen <span class="ot">&lt;-</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  cohorts_revised <span class="sc">|&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(first_rep_term <span class="sc">&lt;=</span> <span class="st">"1999-12-31"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="fu">decade</span>(first_rep_term),</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">event_time =</span> <span class="fu">age</span>(first_sen_term, first_rep_term)) <span class="sc">|&gt;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">reps =</span> <span class="fu">n</span>(), <span class="at">.by =</span> cohort) <span class="sc">|&gt;</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cum_ids =</span> <span class="fu">cumsum</span>(<span class="dv">1</span>), <span class="at">.by =</span> cohort, <span class="at">.order =</span> event_time) <span class="sc">|&gt;</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cum_ids =</span> <span class="fu">max</span>(cum_ids, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">.by =</span> <span class="fu">c</span>(cohort, event_time)) <span class="sc">|&gt;</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pct =</span> cum_ids <span class="sc">/</span> reps) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I replace <code>event_time_cutoffs</code> with the new values (10 and 20 years):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>event_time_cutoffs <span class="ot">&lt;-</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">cutoff =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"event_time_cutoffs"</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">overwrite =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cutoff =</span> <span class="fu">years</span>(cutoff))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Making the plot is now quite straightforward and the results of the following code can be seen in <a href="#fig-surv-dec" class="quarto-xref">Figure&nbsp;2</a>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pct_rep_then_sen <span class="sc">|&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cross_join</span>(event_time_cutoffs) <span class="sc">|&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(event_time <span class="sc">&lt;=</span> cutoff) <span class="sc">|&gt;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">pct =</span> <span class="fu">max</span>(pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">.by =</span> <span class="fu">c</span>(cohort, cutoff)) <span class="sc">|&gt;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cutoff =</span> <span class="fu">as.character</span>(<span class="fu">year</span>(cutoff))) <span class="sc">|&gt;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> cohort, <span class="at">y =</span> pct, <span class="at">color =</span> cutoff, <span class="at">group =</span> cutoff)) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-surv-dec" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-surv-dec-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="ctes_files/figure-html/fig-surv-dec-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-surv-dec-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Share of representatives who become senators by decade
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-fun" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="sec-fun"><span class="header-section-number">4.2</span> Making a function</h2>
+<p>Creating the code underlying Figure 4-12 of <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span> likely involved a lot of copy-pasting and editing (e.g., to create new <code>CASE</code> statements for the new cutoffs and new <code>WHERE</code> clauses) even before moving the code (or data) to Python or Tableau to make the plot. The code above suggests that we might accomplish variants on the plot more programmatically and I pursue this idea in this section.</p>
+<p>One benefit of doing this is that I can show how putting the survival data into a canonical structure can make it easier to run variants based on different populations and cohort definitions.</p>
+<p>First, I put the essence of the code in the following function with the only real edits being that I use more generic names for the tables and fields and put the cutoffs to be used in a variable <code>cutoffs</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>make_plot <span class="ot">&lt;-</span> <span class="cf">function</span>(cohorts, survival_data, <span class="at">cutoffs =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>)) {</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  plot_data <span class="ot">&lt;-</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    survival_data <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">event_time =</span> <span class="fu">age</span>(event_date, entry_date)) <span class="sc">|&gt;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">inner_join</span>(cohorts, <span class="at">by =</span> <span class="st">"id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">reps =</span> <span class="fu">n</span>(), <span class="at">.by =</span> cohort) <span class="sc">|&gt;</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cum_ids =</span> <span class="fu">cumsum</span>(<span class="dv">1</span>), <span class="at">.by =</span> cohort, <span class="at">.order =</span> event_time) <span class="sc">|&gt;</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cum_ids =</span> <span class="fu">max</span>(cum_ids, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">.by =</span> <span class="fu">c</span>(cohort, event_time)) <span class="sc">|&gt;</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">pct =</span> cum_ids <span class="sc">/</span> reps) </span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  event_time_cutoffs <span class="ot">&lt;-</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">cutoff =</span> cutoffs) <span class="sc">|&gt;</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">copy_to</span>(db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"event_time_cutoffs"</span>,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">overwrite =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cutoff =</span> <span class="fu">years</span>(cutoff))</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>  plot_data <span class="sc">|&gt;</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cross_join</span>(event_time_cutoffs) <span class="sc">|&gt;</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(event_time <span class="sc">&lt;=</span> cutoff) <span class="sc">|&gt;</span></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarize</span>(<span class="at">pct =</span> <span class="fu">max</span>(pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>              <span class="at">.by =</span> <span class="fu">c</span>(cohort, cutoff)) <span class="sc">|&gt;</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cutoff =</span> <span class="fu">as.character</span>(<span class="fu">year</span>(cutoff))) <span class="sc">|&gt;</span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> cohort, <span class="at">y =</span> pct, <span class="at">color =</span> cutoff, <span class="at">group =</span> cutoff)) <span class="sc">+</span></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>()</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I next construct <code>survival_data</code> in a canonical form with <code>id</code>, <code>entry_date</code>, and <code>event_date</code> as the fields.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>survival_data <span class="ot">&lt;-</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  first_terms <span class="sc">|&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(first_rep_term), </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>         first_term <span class="sc">==</span> first_rep_term) <span class="sc">|&gt;</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">id =</span> id_bioguide,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">entry_date =</span> first_rep_term,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">event_date =</span> first_sen_term) <span class="sc">|&gt;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, entry_date, event_date)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now I can easily reproduce <a href="#fig-surv-dec" class="quarto-xref">Figure&nbsp;2</a> using the following code with the results being seen in <a href="#fig-surv-cent-alt" class="quarto-xref">Figure&nbsp;3</a>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>survival_data <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(entry_date <span class="sc">&lt;=</span> <span class="st">"1999-12-31"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="fu">decade</span>(entry_date)) <span class="sc">|&gt;</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, cohort) <span class="sc">|&gt;</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">make_plot</span>(<span class="at">survival_data =</span> survival_data,</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">cutoffs =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-surv-cent-alt" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-surv-cent-alt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="ctes_files/figure-html/fig-surv-cent-alt-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-surv-cent-alt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Share of representatives who become senators by decade (encore)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>And with a few lines of code, I can make a plot version of <a href="#tbl-from-scratch" class="quarto-xref">Table&nbsp;4</a>, which can be seen in <a href="#fig-surv-cent" class="quarto-xref">Figure&nbsp;4</a>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>survival_data <span class="sc">|&gt;</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(entry_date <span class="sc">&lt;=</span> <span class="st">"2009-12-31"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="fu">century</span>(entry_date)) <span class="sc">|&gt;</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, cohort) <span class="sc">|&gt;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">make_plot</span>(<span class="at">survival_data =</span> survival_data,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">cutoffs =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">15</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-surv-cent" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-surv-cent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="ctes_files/figure-html/fig-surv-cent-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-surv-cent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Share of representatives who become senators by century
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-rec" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Reconciling differences in output</h1>
+<p>A careful reader might have noticed differences between the numbers in <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a> and those in <a href="#tbl-from-scratch" class="quarto-xref">Table&nbsp;4</a> and wonder why these differences exist. These differences seem particularly pronounced for the representatives from the 21st century cohort, which seems consistent with the explanations I provide below.</p>
+<p>I would argue that the numbers in <a href="#tbl-from-scratch" class="quarto-xref">Table&nbsp;4</a> better address the original question from <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021, p. 158</a>)</span>: “What share of [legislators] start as representatives and go on to become senators? (Some senators later become representatives, but that is much less common.) Since relatively few make this transition, we’ll cohort legislators by the century in which they first became a representative.”<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> My query is also more consistent in applying “<code>WHERE first_term &lt;= '2009-12-31'</code> [which] excludes those [legislators] who were less than 10 years into their careers when the data was assembled” <span class="citation" data-cites="tanimura2021sql">(<a href="#ref-tanimura2021sql" role="doc-biblioref">Tanimura, 2021, p. 160</a>)</span>.</p>
+<p>It turns out that some representatives that were correctly excluded in producing <a href="#tbl-from-scratch" class="quarto-xref">Table&nbsp;4</a> were incorrectly included in the original analysis underlying <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a>. I compile the “problem cases” in a single data frame <code>problem_cases</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>problem_cases <span class="ot">&lt;-</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  first_terms <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(cohorts, <span class="at">by =</span> <span class="st">"id_bioguide"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(cohorts_revised, <span class="at">by =</span> <span class="st">"id_bioguide"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(first_sen_term) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(first_rep_term)) <span class="sc">|&gt;</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rep_to_sen =</span>  last_sen_term <span class="sc">&gt;</span> first_rep_term,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">sen_to_rep =</span>  first_sen_term <span class="sc">&lt;</span> first_rep_term ,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">too_late =</span> first_rep_term <span class="sc">&gt;</span> <span class="st">'2009-12-31'</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The first set of problem cases comprises those legislators who were senators <em>before</em> they were representatives. These legislators should have been excluded on the basis that they do not meet the “start as representatives” criterion. Note that this set can be view as comprising two subsets. The first subset are those legislators who started as senators, then became representatives, then became senators again. These observations will affect both the numerators and the denominators of the proportions shown in <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a>. Cases from this first subset—shown in <a href="#tbl-problems-sen-first" class="quarto-xref">Table&nbsp;5</a>—are identified using the following code:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>problem_cases <span class="sc">|&gt;</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(sen_to_rep, rep_to_sen) <span class="sc">|&gt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(first_rep_term) <span class="sc">|&gt;</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id_bioguide, first_sen_term, first_rep_term, last_sen_term) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div id="tbl-problems-sen-first" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-problems-sen-first-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: Problematic cases: Senators first, later senators again
+</figcaption>
+<div aria-describedby="tbl-problems-sen-first-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<!-- preamble start -->
+
+    <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script>
+
+    <script>
+      // Create table-specific functions using external factory
+      const tableFns_zyzha2793aeweph11flm = TinyTable.createTableFunctions("tinytable_zyzha2793aeweph11flm");
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: '3', j: 1 }, { i: '3', j: 2 }, { i: '3', j: 3 }, { i: '3', j: 4 } ], css_id: 'tinytable_css_t12pryvzv3futs5f4i58',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 }, { i: '0', j: 3 }, { i: '0', j: 4 } ], css_id: 'tinytable_css_9u6qsv4lfhm90cn7ccti',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  tableFns_zyzha2793aeweph11flm.styleCell(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
+    <style>
+    /* tinytable css entries after */
+    #tinytable_zyzha2793aeweph11flm td.tinytable_css_t12pryvzv3futs5f4i58, #tinytable_zyzha2793aeweph11flm th.tinytable_css_t12pryvzv3futs5f4i58 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%;  }
+    #tinytable_zyzha2793aeweph11flm td.tinytable_css_9u6qsv4lfhm90cn7ccti, #tinytable_zyzha2793aeweph11flm th.tinytable_css_9u6qsv4lfhm90cn7ccti {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%;  }
+    </style>
+    <div class="container">
+      <table class="tinytable table table-sm" id="tinytable_zyzha2793aeweph11flm" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+        
+        <thead>
+              <tr>
+                <th scope="col" data-row="0" data-col="1">id_bioguide</th>
+                <th scope="col" data-row="0" data-col="2">first_sen_term</th>
+                <th scope="col" data-row="0" data-col="3">first_rep_term</th>
+                <th scope="col" data-row="0" data-col="4">last_sen_term</th>
+              </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                  <td data-row="1" data-col="1">C000482</td>
+                  <td data-row="1" data-col="2">1806-01-01</td>
+                  <td data-row="1" data-col="3">1811-11-04</td>
+                  <td data-row="1" data-col="4">1849-12-03</td>
+                </tr>
+                <tr>
+                  <td data-row="2" data-col="1">M000519</td>
+                  <td data-row="2" data-col="2">1826-01-01</td>
+                  <td data-row="2" data-col="3">1833-12-02</td>
+                  <td data-row="2" data-col="4">1837-09-04</td>
+                </tr>
+                <tr>
+                  <td data-row="3" data-col="1">J000137</td>
+                  <td data-row="3" data-col="2">1818-01-01</td>
+                  <td data-row="3" data-col="3">1833-12-02</td>
+                  <td data-row="3" data-col="4">1844-01-01</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- hack to avoid NA insertion in last line -->
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The second subset are those legislators who started as senators, then became representatives, but did <em>not</em> became senators again after serving as a representative. These observations will not affect the numerators of the proportions shown in <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a>, but will affect the denominators. Some cases from this second subset—shown in <a href="#tbl-problems-not-later-sen" class="quarto-xref">Table&nbsp;6</a>—are identified using the following code:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>problem_cases <span class="sc">|&gt;</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(sen_to_rep, <span class="sc">!</span>rep_to_sen) <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id_bioguide, first_sen_term, last_sen_term, first_rep_term) <span class="sc">|&gt;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div id="tbl-problems-not-later-sen" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-problems-not-later-sen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Problematic cases: Senators first, not later senators again (10 cases)
+</figcaption>
+<div aria-describedby="tbl-problems-not-later-sen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<!-- preamble start -->
+
+    <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script>
+
+    <script>
+      // Create table-specific functions using external factory
+      const tableFns_fvwxby623h0jdcrf80mu = TinyTable.createTableFunctions("tinytable_fvwxby623h0jdcrf80mu");
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: '10', j: 1 }, { i: '10', j: 2 }, { i: '10', j: 3 }, { i: '10', j: 4 } ], css_id: 'tinytable_css_6vfij5f7clwzhuvuwub2',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 }, { i: '0', j: 3 }, { i: '0', j: 4 } ], css_id: 'tinytable_css_iyaw86j2b35f4ldiqmgr',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  tableFns_fvwxby623h0jdcrf80mu.styleCell(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
+    <style>
+    /* tinytable css entries after */
+    #tinytable_fvwxby623h0jdcrf80mu td.tinytable_css_6vfij5f7clwzhuvuwub2, #tinytable_fvwxby623h0jdcrf80mu th.tinytable_css_6vfij5f7clwzhuvuwub2 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%;  }
+    #tinytable_fvwxby623h0jdcrf80mu td.tinytable_css_iyaw86j2b35f4ldiqmgr, #tinytable_fvwxby623h0jdcrf80mu th.tinytable_css_iyaw86j2b35f4ldiqmgr {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%;  }
+    </style>
+    <div class="container">
+      <table class="tinytable table table-sm" id="tinytable_fvwxby623h0jdcrf80mu" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+        
+        <thead>
+              <tr>
+                <th scope="col" data-row="0" data-col="1">id_bioguide</th>
+                <th scope="col" data-row="0" data-col="2">first_sen_term</th>
+                <th scope="col" data-row="0" data-col="3">last_sen_term</th>
+                <th scope="col" data-row="0" data-col="4">first_rep_term</th>
+              </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                  <td data-row="1" data-col="1">N000086</td>
+                  <td data-row="1" data-col="2">1799-12-02</td>
+                  <td data-row="1" data-col="3">1799-12-02</td>
+                  <td data-row="1" data-col="4">1807-10-26</td>
+                </tr>
+                <tr>
+                  <td data-row="2" data-col="1">M000221</td>
+                  <td data-row="2" data-col="2">1800-01-01</td>
+                  <td data-row="2" data-col="3">1800-01-01</td>
+                  <td data-row="2" data-col="4">1817-12-01</td>
+                </tr>
+                <tr>
+                  <td data-row="3" data-col="1">W000476</td>
+                  <td data-row="3" data-col="2">1859-12-05</td>
+                  <td data-row="3" data-col="3">1859-12-05</td>
+                  <td data-row="3" data-col="4">1869-03-04</td>
+                </tr>
+                <tr>
+                  <td data-row="4" data-col="1">P000557</td>
+                  <td data-row="4" data-col="2">1880-01-01</td>
+                  <td data-row="4" data-col="3">1880-01-01</td>
+                  <td data-row="4" data-col="4">1883-12-03</td>
+                </tr>
+                <tr>
+                  <td data-row="5" data-col="1">N000160</td>
+                  <td data-row="5" data-col="2">1871-03-04</td>
+                  <td data-row="5" data-col="3">1871-03-04</td>
+                  <td data-row="5" data-col="4">1885-12-07</td>
+                </tr>
+                <tr>
+                  <td data-row="6" data-col="1">R000125</td>
+                  <td data-row="6" data-col="2">1806-11-25</td>
+                  <td data-row="6" data-col="3">1807-10-26</td>
+                  <td data-row="6" data-col="4">1817-12-01</td>
+                </tr>
+                <tr>
+                  <td data-row="7" data-col="1">K000069</td>
+                  <td data-row="7" data-col="2">1868-01-01</td>
+                  <td data-row="7" data-col="3">1877-10-15</td>
+                  <td data-row="7" data-col="4">1883-12-03</td>
+                </tr>
+                <tr>
+                  <td data-row="8" data-col="1">W000012</td>
+                  <td data-row="8" data-col="2">1915-12-06</td>
+                  <td data-row="8" data-col="3">1921-04-11</td>
+                  <td data-row="8" data-col="4">1933-03-09</td>
+                </tr>
+                <tr>
+                  <td data-row="9" data-col="1">W000658</td>
+                  <td data-row="9" data-col="2">1949-01-20</td>
+                  <td data-row="9" data-col="3">1949-01-20</td>
+                  <td data-row="9" data-col="4">1952-08-02</td>
+                </tr>
+                <tr>
+                  <td data-row="10" data-col="1">D000069</td>
+                  <td data-row="10" data-col="2">1798-12-05</td>
+                  <td data-row="10" data-col="3">1798-12-05</td>
+                  <td data-row="10" data-col="4">1799-12-02</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- hack to avoid NA insertion in last line -->
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The second set of problem cases are representatives whose terms began after <code>'2009-12-31'</code>. The original SQL query imposed this requirement in calculating <code>cohort_sizes</code>, but not in constructing the cohorts themselves. Thus, while the SQL in <a href="#lst-original" class="quarto-xref">Listing&nbsp;2</a> does exclude these cases from the denominator, these legislators are included in the numerator if they go on to serve as senators. These cases are shown in <a href="#tbl-problems-too-late" class="quarto-xref">Table&nbsp;7</a>. In contrast I was consistent in application of the <code>first_rep_term &lt;= '2009-12-31'</code> criterion throughout. These observations will not affect the denominators of the proportions shown in <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a>, but will affect the numerators. The members of this set of problem cases—shown in <a href="#tbl-problems-too-late" class="quarto-xref">Table&nbsp;7</a>—are identified using the following code:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>problem_cases <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(too_late) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id_bioguide, first_rep_term, first_sen_term, last_sen_term)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div id="tbl-problems-too-late" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-problems-too-late-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;7: Problematic cases: Too late
+</figcaption>
+<div aria-describedby="tbl-problems-too-late-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<!-- preamble start -->
+
+    <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script>
+
+    <script>
+      // Create table-specific functions using external factory
+      const tableFns_khhihac5abypegpocoqy = TinyTable.createTableFunctions("tinytable_khhihac5abypegpocoqy");
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: '11', j: 1 }, { i: '11', j: 2 }, { i: '11', j: 3 }, { i: '11', j: 4 } ], css_id: 'tinytable_css_eoq0weyv0rtm4fcmi01p',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 }, { i: '0', j: 3 }, { i: '0', j: 4 } ], css_id: 'tinytable_css_sfe0quoymotrhv21w6ik',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  tableFns_khhihac5abypegpocoqy.styleCell(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
+    <style>
+    /* tinytable css entries after */
+    #tinytable_khhihac5abypegpocoqy td.tinytable_css_eoq0weyv0rtm4fcmi01p, #tinytable_khhihac5abypegpocoqy th.tinytable_css_eoq0weyv0rtm4fcmi01p {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%;  }
+    #tinytable_khhihac5abypegpocoqy td.tinytable_css_sfe0quoymotrhv21w6ik, #tinytable_khhihac5abypegpocoqy th.tinytable_css_sfe0quoymotrhv21w6ik {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%;  }
+    </style>
+    <div class="container">
+      <table class="tinytable table table-sm" id="tinytable_khhihac5abypegpocoqy" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+        
+        <thead>
+              <tr>
+                <th scope="col" data-row="0" data-col="1">id_bioguide</th>
+                <th scope="col" data-row="0" data-col="2">first_rep_term</th>
+                <th scope="col" data-row="0" data-col="3">first_sen_term</th>
+                <th scope="col" data-row="0" data-col="4">last_sen_term</th>
+              </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                  <td data-row="1" data-col="1">L000575</td>
+                  <td data-row="1" data-col="2">2011-01-05</td>
+                  <td data-row="1" data-col="3">2015-01-06</td>
+                  <td data-row="1" data-col="4">2017-01-03</td>
+                </tr>
+                <tr>
+                  <td data-row="2" data-col="1">Y000064</td>
+                  <td data-row="2" data-col="2">2011-01-05</td>
+                  <td data-row="2" data-col="3">2017-01-03</td>
+                  <td data-row="2" data-col="4">2017-01-03</td>
+                </tr>
+                <tr>
+                  <td data-row="3" data-col="1">S001184</td>
+                  <td data-row="3" data-col="2">2011-01-05</td>
+                  <td data-row="3" data-col="3">2013-01-03</td>
+                  <td data-row="3" data-col="4">2017-01-03</td>
+                </tr>
+                <tr>
+                  <td data-row="4" data-col="1">S001191</td>
+                  <td data-row="4" data-col="2">2013-01-03</td>
+                  <td data-row="4" data-col="3">2019-01-03</td>
+                  <td data-row="4" data-col="4">2019-01-03</td>
+                </tr>
+                <tr>
+                  <td data-row="5" data-col="1">D000622</td>
+                  <td data-row="5" data-col="2">2013-01-03</td>
+                  <td data-row="5" data-col="3">2017-01-03</td>
+                  <td data-row="5" data-col="4">2017-01-03</td>
+                </tr>
+                <tr>
+                  <td data-row="6" data-col="1">G000562</td>
+                  <td data-row="6" data-col="2">2011-01-05</td>
+                  <td data-row="6" data-col="3">2015-01-06</td>
+                  <td data-row="6" data-col="4">2015-01-06</td>
+                </tr>
+                <tr>
+                  <td data-row="7" data-col="1">C001096</td>
+                  <td data-row="7" data-col="2">2013-01-03</td>
+                  <td data-row="7" data-col="3">2019-01-03</td>
+                  <td data-row="7" data-col="4">2019-01-03</td>
+                </tr>
+                <tr>
+                  <td data-row="8" data-col="1">D000618</td>
+                  <td data-row="8" data-col="2">2013-01-03</td>
+                  <td data-row="8" data-col="3">2015-01-06</td>
+                  <td data-row="8" data-col="4">2015-01-06</td>
+                </tr>
+                <tr>
+                  <td data-row="9" data-col="1">M001197</td>
+                  <td data-row="9" data-col="2">2015-01-06</td>
+                  <td data-row="9" data-col="3">2019-01-03</td>
+                  <td data-row="9" data-col="4">2019-01-03</td>
+                </tr>
+                <tr>
+                  <td data-row="10" data-col="1">C001095</td>
+                  <td data-row="10" data-col="2">2013-01-03</td>
+                  <td data-row="10" data-col="3">2015-01-06</td>
+                  <td data-row="10" data-col="4">2015-01-06</td>
+                </tr>
+                <tr>
+                  <td data-row="11" data-col="1">R000608</td>
+                  <td data-row="11" data-col="2">2017-01-03</td>
+                  <td data-row="11" data-col="3">2019-01-03</td>
+                  <td data-row="11" data-col="4">2019-01-03</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- hack to avoid NA insertion in last line -->
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>It is easy to show that these issues explain the differences between <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a> and <a href="#tbl-from-scratch" class="quarto-xref">Table&nbsp;4</a>. To do so, I need to recapitulate some steps from the analysis above, starting with a revised version of <code>ages</code> in which I <code>anti_join()</code> the <code>problem_cases</code> data frame.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ages <span class="ot">&lt;-</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  cohorts <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(problem_cases, <span class="at">by =</span> <span class="st">"id_bioguide"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(legislators_terms, <span class="at">by =</span> <span class="st">"id_bioguide"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term_type <span class="sc">==</span> <span class="st">'sen'</span>, term_start <span class="sc">&gt;</span> first_rep_term) <span class="sc">|&gt;</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age =</span> <span class="fu">age</span>(term_start, first_rep_term)) <span class="sc">|&gt;</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohort, id_bioguide, age)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We then pass this revised <code>ages</code> to create a new version of <code>age_cuts</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>age_cuts <span class="ot">&lt;-</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  ages <span class="sc">|&gt;</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">num_5_yrs =</span> <span class="fu">if_else</span>(age <span class="sc">&lt;=</span> <span class="fu">years</span>(<span class="dv">5</span>), id_bioguide, <span class="cn">NA</span>),</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">num_10_yrs =</span> <span class="fu">if_else</span>(age <span class="sc">&lt;=</span> <span class="fu">years</span>(<span class="dv">10</span>), id_bioguide, <span class="cn">NA</span>),</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">num_15_yrs =</span> <span class="fu">if_else</span>(age <span class="sc">&lt;=</span> <span class="fu">years</span>(<span class="dv">15</span>), id_bioguide, <span class="cn">NA</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"num_"</span>), </span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>            \(x) <span class="fu">n_distinct</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">.by =</span> cohort)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Finally, I <code>left_join()</code> this revised <code>age_cuts</code> to produce <a href="#tbl-translated-fixed" class="quarto-xref">Table&nbsp;8</a>. We now see that the output lines up with that in <a href="#tbl-from-scratch" class="quarto-xref">Table&nbsp;4</a>, confirming that the observations in <code>problem_cases</code> are the source of the differences between <a href="#tbl-from-scratch" class="quarto-xref">Table&nbsp;4</a> and <a href="#tbl-translated" class="quarto-xref">Table&nbsp;3</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="sc">|&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(age_cuts, <span class="at">by =</span> <span class="st">"cohort"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"num_"</span>), \(x) <span class="fu">round</span>(x <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename_with</span>(\(x) <span class="fu">str_replace</span>(x, <span class="st">"^num_"</span>, <span class="st">"pct_"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohort, <span class="fu">starts_with</span>(<span class="st">"pct_"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(cohort) <span class="sc">|&gt;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-translated-fixed" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-translated-fixed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;8: Output from query translated to <code>dbplyr</code> omitting problem cases
+</figcaption>
+<div aria-describedby="tbl-translated-fixed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">cohort</th>
+<th style="text-align: right;">pct_5_yrs</th>
+<th style="text-align: right;">pct_10_yrs</th>
+<th style="text-align: right;">pct_15_yrs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0.0505</td>
+<td style="text-align: right;">0.0976</td>
+<td style="text-align: right;">0.1448</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0.0087</td>
+<td style="text-align: right;">0.0244</td>
+<td style="text-align: right;">0.0407</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.0101</td>
+<td style="text-align: right;">0.0349</td>
+<td style="text-align: right;">0.0478</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">0.0109</td>
+<td style="text-align: right;">0.0364</td>
+<td style="text-align: right;">0.0473</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div style="page-break-after: always;"></div>
+<div class="cell">
+<div id="lst-utility" class="r cell-code listing quarto-float quarto-figure quarto-figure-left anchored">
+<figure class="quarto-float quarto-float-lst figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-utility-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Listing&nbsp;1: Utility functions
+</figcaption>
+<div aria-describedby="lst-utility-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>download_data <span class="ot">&lt;-</span> <span class="cf">function</span>(filename, <span class="at">data_dir =</span> <span class="st">"data"</span>) {</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(data_dir)) <span class="fu">dir.create</span>(data_dir)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  url <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"https://raw.githubusercontent.com/cathytanimura/"</span>,</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                <span class="st">"sql_book/master/Chapter%204%3A%20Cohorts/"</span>)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  local_filename <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_dir, <span class="fu">paste0</span>(filename, <span class="st">".csv"</span>))</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(local_filename)) {</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">download.file</span>(<span class="at">url =</span> <span class="fu">paste0</span>(url, filename, <span class="st">".csv"</span>), <span class="at">destfile =</span> local_filename)</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>} </span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>db_read_csv <span class="ot">&lt;-</span> <span class="cf">function</span>(db, table, <span class="at">data_dir =</span> <span class="st">"data"</span>) {</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  csv_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_dir, <span class="fu">paste0</span>(table, <span class="st">".csv"</span>))</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl</span>(db, <span class="fu">paste0</span>(<span class="st">"read_csv_auto('"</span>, csv_file, <span class="st">"')"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">compute</span>(<span class="at">name =</span> table)</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>db_get_csv <span class="ot">&lt;-</span> <span class="cf">function</span>(db, table, <span class="at">data_dir =</span> <span class="st">"data"</span>) {</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">download_data</span>(table, <span class="at">data_dir =</span> data_dir)</span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">db_read_csv</span>(db, table, <span class="at">data_dir =</span> data_dir) </span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="lst-original" class="r cell-code listing quarto-float quarto-figure quarto-figure-left anchored">
+<figure class="quarto-float quarto-float-lst figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Listing&nbsp;2: Original SQL from <span class="citation" data-cites="tanimura2021sql">Tanimura (<a href="#ref-tanimura2021sql" role="doc-biblioref">2021</a>)</span>
+</figcaption>
+<div aria-describedby="lst-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>SELECT aa.cohort,</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_5_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_5_yrs,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_10_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_10_yrs,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_15_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_15_yrs</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>FROM</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>  SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>, a.first_term) AS cohort,</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(id_bioguide) AS reps</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  FROM</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  (</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    SELECT id_bioguide, <span class="fu">min</span>(term_start) AS first_term</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    FROM legislators_terms</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>    WHERE <span class="at">term_type =</span> <span class="st">'rep'</span></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>    GROUP BY <span class="dv">1</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>  ) a</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>  WHERE first_term <span class="sc">&lt;=</span> <span class="st">'2009-12-31'</span></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>) aa</span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>LEFT JOIN</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a>  SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>, b.first_term) AS cohort,</span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, b.first_term) <span class="sc">&lt;=</span></span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'5 years'</span> </span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a>      THEN b.id_bioguide END) AS rep_and_sen_5_yrs,</span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, b.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'10 years'</span> </span>
+<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>      THEN b.id_bioguide END) AS rep_and_sen_10_yrs,</span>
+<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, b.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'15 years'</span> </span>
+<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a>      THEN b.id_bioguide END) AS rep_and_sen_15_yrs</span>
+<span id="cb33-31"><a href="#cb33-31" aria-hidden="true" tabindex="-1"></a>  FROM</span>
+<span id="cb33-32"><a href="#cb33-32" aria-hidden="true" tabindex="-1"></a>  (</span>
+<span id="cb33-33"><a href="#cb33-33" aria-hidden="true" tabindex="-1"></a>    SELECT id_bioguide, <span class="fu">min</span>(term_start) AS first_term</span>
+<span id="cb33-34"><a href="#cb33-34" aria-hidden="true" tabindex="-1"></a>    FROM legislators_terms</span>
+<span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a>    WHERE <span class="at">term_type =</span> <span class="st">'rep'</span></span>
+<span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a>    GROUP BY <span class="dv">1</span></span>
+<span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a>  ) b</span>
+<span id="cb33-38"><a href="#cb33-38" aria-hidden="true" tabindex="-1"></a>  JOIN legislators_terms c </span>
+<span id="cb33-39"><a href="#cb33-39" aria-hidden="true" tabindex="-1"></a>  ON <span class="at">b.id_bioguide =</span> c.id_bioguide AND <span class="at">c.term_type =</span> <span class="st">'sen'</span> </span>
+<span id="cb33-40"><a href="#cb33-40" aria-hidden="true" tabindex="-1"></a>    AND c.term_start <span class="sc">&gt;</span> b.first_term</span>
+<span id="cb33-41"><a href="#cb33-41" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span></span>
+<span id="cb33-42"><a href="#cb33-42" aria-hidden="true" tabindex="-1"></a>) bb ON aa.cohort <span class="ot">=</span> bb.cohort</span>
+<span id="cb33-43"><a href="#cb33-43" aria-hidden="true" tabindex="-1"></a>ORDER BY <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="lst-mod1" class="r cell-code listing quarto-float quarto-figure quarto-figure-left anchored">
+<figure class="quarto-float quarto-float-lst figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-mod1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Listing&nbsp;3: SQL with our first CTE
+</figcaption>
+<div aria-describedby="lst-mod1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>WITH a <span class="fu">AS</span> (</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  SELECT id_bioguide, <span class="fu">min</span>(term_start) AS first_term</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  FROM legislators_terms</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  WHERE <span class="at">term_type =</span> <span class="st">'rep'</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>) </span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>SELECT aa.cohort,</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_5_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_5_yrs,</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_10_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_10_yrs,</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_15_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_15_yrs</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>FROM</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>, a.first_term) AS cohort,</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(id_bioguide) AS reps</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>  FROM a</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>  WHERE first_term <span class="sc">&lt;=</span> <span class="st">'2009-12-31'</span></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>) aa</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>LEFT JOIN</span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>  SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>, a.first_term) AS cohort,</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, a.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'5 years'</span> </span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>      THEN a.id_bioguide END) AS rep_and_sen_5_yrs,</span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, a.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'10 years'</span> </span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a>      THEN a.id_bioguide END) AS rep_and_sen_10_yrs,</span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, a.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'15 years'</span> </span>
+<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>      THEN a.id_bioguide END) AS rep_and_sen_15_yrs</span>
+<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>  FROM a</span>
+<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>  JOIN legislators_terms c ON <span class="at">a.id_bioguide =</span> c.id_bioguide</span>
+<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>  AND <span class="at">c.term_type =</span> <span class="st">'sen'</span> AND c.term_start <span class="sc">&gt;</span> a.first_term</span>
+<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span></span>
+<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>) bb ON aa.cohort <span class="ot">=</span> bb.cohort</span>
+<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>ORDER BY <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="lst-mod2" class="r cell-code listing quarto-float quarto-figure quarto-figure-left anchored">
+<figure class="quarto-float quarto-float-lst figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-mod2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Listing&nbsp;4: SQL with CTEs for <code>aa</code> and <code>bb</code>
+</figcaption>
+<div aria-describedby="lst-mod2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>WITH a <span class="fu">AS</span> (</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  SELECT id_bioguide, <span class="fu">min</span>(term_start) AS first_term</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  FROM legislators_terms</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  WHERE <span class="at">term_type =</span> <span class="st">'rep'</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>),</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>aa <span class="fu">AS</span> (</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>,a.first_term) AS cohort,</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">count</span>(id_bioguide) AS reps</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>  FROM a</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>  WHERE first_term <span class="sc">&lt;=</span> <span class="st">'2009-12-31'</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>    GROUP BY <span class="dv">1</span>),</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>bb <span class="fu">AS</span> (</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>  SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>, a.first_term) AS cohort,</span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, a.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'5 years'</span> </span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>      THEN a.id_bioguide END) AS rep_and_sen_5_yrs,</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, a.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'10 years'</span> </span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>      THEN a.id_bioguide END) AS rep_and_sen_10_yrs,</span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN <span class="fu">age</span>(c.term_start, a.first_term) <span class="sc">&lt;=</span> </span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>      INTERVAL <span class="st">'15 years'</span> </span>
+<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a>      THEN a.id_bioguide END) AS rep_and_sen_15_yrs</span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a>  FROM a</span>
+<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a>  JOIN legislators_terms c ON <span class="at">a.id_bioguide =</span> c.id_bioguide</span>
+<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a>    AND <span class="at">c.term_type =</span> <span class="st">'sen'</span> AND c.term_start <span class="sc">&gt;</span> a.first_term</span>
+<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>) </span>
+<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>SELECT aa.cohort,</span>
+<span id="cb35-31"><a href="#cb35-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_5_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_5_yrs,</span>
+<span id="cb35-32"><a href="#cb35-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_10_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) AS pct_10_yrs,</span>
+<span id="cb35-33"><a href="#cb35-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(bb.rep_and_sen_15_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> aa.reps, <span class="dv">4</span>) as pct_15_yrs</span>
+<span id="cb35-34"><a href="#cb35-34" aria-hidden="true" tabindex="-1"></a>FROM aa</span>
+<span id="cb35-35"><a href="#cb35-35" aria-hidden="true" tabindex="-1"></a>LEFT JOIN bb ON aa.cohort <span class="ot">=</span> bb.cohort</span>
+<span id="cb35-36"><a href="#cb35-36" aria-hidden="true" tabindex="-1"></a>ORDER BY <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="lst-mod3" class="r cell-code listing quarto-float quarto-figure quarto-figure-left anchored">
+<figure class="quarto-float quarto-float-lst figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-mod3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Listing&nbsp;5: SQL with <code>bbb</code>
+</figcaption>
+<div aria-describedby="lst-mod3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>WITH a <span class="fu">AS</span> (</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    SELECT id_bioguide, <span class="fu">min</span>(term_start) AS first_term</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    FROM legislators_terms</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    WHERE <span class="at">term_type =</span> <span class="st">'rep'</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    GROUP BY <span class="dv">1</span>),</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>aa <span class="fu">AS</span> (</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>, first_term) AS cohort,</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">count</span>(id_bioguide) AS reps</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>    FROM a</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    WHERE first_term <span class="sc">&lt;=</span> <span class="st">'2009-12-31'</span></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    GROUP BY <span class="dv">1</span>),</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>bbb <span class="fu">AS</span> (</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    SELECT <span class="fu">date_part</span>(<span class="st">'century'</span>, a.first_term) AS cohort,</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>      a.id_bioguide,</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">age</span>(c.term_start, a.first_term) AS age</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>    FROM a</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>    JOIN legislators_terms c </span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a>    ON <span class="at">a.id_bioguide =</span> c.id_bioguide</span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>    AND <span class="at">c.term_type =</span> <span class="st">'sen'</span> AND c.term_start <span class="sc">&gt;</span> a.first_term), </span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a>bb <span class="fu">AS</span> (</span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>    SELECT cohort,</span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'5 years'</span> </span>
+<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a>        THEN id_bioguide END) AS rep_and_sen_5_yrs,</span>
+<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'10 years'</span></span>
+<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a>        THEN id_bioguide END) AS rep_and_sen_10_yrs,</span>
+<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'15 years'</span> </span>
+<span id="cb36-30"><a href="#cb36-30" aria-hidden="true" tabindex="-1"></a>        THEN id_bioguide END) AS rep_and_sen_15_yrs</span>
+<span id="cb36-31"><a href="#cb36-31" aria-hidden="true" tabindex="-1"></a>    FROM bbb</span>
+<span id="cb36-32"><a href="#cb36-32" aria-hidden="true" tabindex="-1"></a>    GROUP BY <span class="dv">1</span>) </span>
+<span id="cb36-33"><a href="#cb36-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-34"><a href="#cb36-34" aria-hidden="true" tabindex="-1"></a>SELECT cohort as cohort,</span>
+<span id="cb36-35"><a href="#cb36-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_5_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_5_yrs,</span>
+<span id="cb36-36"><a href="#cb36-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_10_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_10_yrs,</span>
+<span id="cb36-37"><a href="#cb36-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_15_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_15_yrs</span>
+<span id="cb36-38"><a href="#cb36-38" aria-hidden="true" tabindex="-1"></a>FROM aa</span>
+<span id="cb36-39"><a href="#cb36-39" aria-hidden="true" tabindex="-1"></a>LEFT JOIN bb </span>
+<span id="cb36-40"><a href="#cb36-40" aria-hidden="true" tabindex="-1"></a><span class="fu">USING</span> (cohort)</span>
+<span id="cb36-41"><a href="#cb36-41" aria-hidden="true" tabindex="-1"></a>ORDER BY <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="lst-mod4" class="r cell-code listing quarto-float quarto-figure quarto-figure-left anchored">
+<figure class="quarto-float quarto-float-lst figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-mod4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Listing&nbsp;6: SQL with meaningful labels
+</figcaption>
+<div aria-describedby="lst-mod4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>WITH cohorts <span class="fu">AS</span> (</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  SELECT id_bioguide, <span class="fu">min</span>(term_start) AS first_term,</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">date_part</span>(<span class="st">'century'</span>, <span class="fu">min</span>(term_start)) AS cohort,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  FROM legislators_terms</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  WHERE <span class="at">term_type =</span> <span class="st">'rep'</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>),</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="fu">AS</span> (</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  SELECT cohort, <span class="fu">count</span>(id_bioguide) AS reps</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  FROM cohorts</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  WHERE first_term <span class="sc">&lt;=</span> <span class="st">'2009-12-31'</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>),</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>ages <span class="fu">AS</span> (</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>  SELECT cohort, id_bioguide, </span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">age</span>(term_start, first_term) AS age</span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>  FROM cohorts</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>  JOIN legislators_terms</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">USING</span> (id_bioguide)</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>  WHERE <span class="at">term_type =</span> <span class="st">'sen'</span> AND term_start <span class="sc">&gt;</span> first_term), </span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>age_cuts <span class="fu">AS</span> (</span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>  SELECT cohort,</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'5 years'</span> </span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>      THEN id_bioguide END) AS rep_and_sen_5_yrs,</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'10 years'</span></span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>      THEN id_bioguide END) AS rep_and_sen_10_yrs,</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'15 years'</span> </span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>      THEN id_bioguide END) AS rep_and_sen_15_yrs</span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>  FROM ages</span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>) </span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>SELECT cohort,</span>
+<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_5_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_5_yrs,</span>
+<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_10_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_10_yrs,</span>
+<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_15_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_15_yrs</span>
+<span id="cb37-37"><a href="#cb37-37" aria-hidden="true" tabindex="-1"></a>FROM cohort_sizes</span>
+<span id="cb37-38"><a href="#cb37-38" aria-hidden="true" tabindex="-1"></a>LEFT JOIN age_cuts </span>
+<span id="cb37-39"><a href="#cb37-39" aria-hidden="true" tabindex="-1"></a><span class="fu">USING</span> (cohort)</span>
+<span id="cb37-40"><a href="#cb37-40" aria-hidden="true" tabindex="-1"></a>ORDER BY <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="lst-mod5" class="r cell-code listing quarto-float quarto-figure quarto-figure-left anchored">
+<figure class="quarto-float quarto-float-lst figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-mod5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Listing&nbsp;7: SQL with main query in CTE
+</figcaption>
+<div aria-describedby="lst-mod5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>WITH cohorts <span class="fu">AS</span> (</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  SELECT id_bioguide, <span class="fu">min</span>(term_start) AS first_term,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">date_part</span>(<span class="st">'century'</span>, <span class="fu">min</span>(term_start)) AS cohort,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  FROM legislators_terms</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  WHERE <span class="at">term_type =</span> <span class="st">'rep'</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>),</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="fu">AS</span> (</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  SELECT cohort, <span class="fu">count</span>(id_bioguide) AS reps</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>  FROM cohorts</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>  WHERE first_term <span class="sc">&lt;=</span> <span class="st">'2009-12-31'</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>),</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>ages <span class="fu">AS</span> (</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>  SELECT cohort, id_bioguide, <span class="fu">age</span>(term_start, first_term) AS age</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>  FROM cohorts</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>  JOIN legislators_terms</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">USING</span> (id_bioguide)</span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>  WHERE <span class="at">term_type =</span> <span class="st">'sen'</span> AND term_start <span class="sc">&gt;</span> first_term), </span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>age_cuts <span class="fu">AS</span> (</span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>  SELECT cohort,</span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'5 years'</span> </span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>      THEN id_bioguide END) AS rep_and_sen_5_yrs,</span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'10 years'</span></span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a>      THEN id_bioguide END) AS rep_and_sen_10_yrs,</span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(DISTINCT CASE WHEN age <span class="sc">&lt;=</span> INTERVAL <span class="st">'15 years'</span> </span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a>      THEN id_bioguide end) AS rep_and_sen_15_yrs</span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a>  FROM ages</span>
+<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a>  GROUP BY <span class="dv">1</span>),</span>
+<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a>cohort_retention <span class="fu">AS</span> (</span>
+<span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>  SELECT cohort,</span>
+<span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_5_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_5_yrs,</span>
+<span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_10_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_10_yrs,</span>
+<span id="cb38-36"><a href="#cb38-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(rep_and_sen_15_yrs <span class="sc">*</span> <span class="fl">1.0</span> <span class="sc">/</span> reps, <span class="dv">4</span>) AS pct_15_yrs</span>
+<span id="cb38-37"><a href="#cb38-37" aria-hidden="true" tabindex="-1"></a>  FROM cohort_sizes</span>
+<span id="cb38-38"><a href="#cb38-38" aria-hidden="true" tabindex="-1"></a>  LEFT JOIN age_cuts </span>
+<span id="cb38-39"><a href="#cb38-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">USING</span> (cohort))</span>
+<span id="cb38-40"><a href="#cb38-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb38-41"><a href="#cb38-41" aria-hidden="true" tabindex="-1"></a>SELECT <span class="sc">*</span></span>
+<span id="cb38-42"><a href="#cb38-42" aria-hidden="true" tabindex="-1"></a>FROM cohort_retention</span>
+<span id="cb38-43"><a href="#cb38-43" aria-hidden="true" tabindex="-1"></a>ORDER BY cohort;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="references" class="level1 unnumbered">
+
+
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-tanimura2021sql" class="csl-entry" role="listitem">
+Tanimura, C., 2021. <a href="https://books.google.com.au/books?id=ojhCEAAAQBAJ">SQL for data analysis</a>. O’Reilly Media.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Execute <code>install.packages(c("tidyverse", "DBI", "duckdb", "dbplyr")</code> within R to install all the packages you need to run the code in this note.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>I made minor punctuation edits here.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>I put the ugly details of the <code>db_get_csv()</code> function that I use here in <a href="#lst-utility" class="quarto-xref">Listing&nbsp;1</a>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>I edited the query slightly to reflect code style guidelines I use in later queries. I also rename the column <code>cohort_century</code> to <code>cohort</code> throughout. The value of using a more generic name will be seen in <a href="#sec-fun" class="quarto-xref">Section&nbsp;4.2</a>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>My view is that the choice made early in the development <code>dplyr</code> of a de facto default of <code>.groups = "drop_last"</code> is a rather unfortunate one.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Note that <code>if_else(age &lt;= years(5), id_bioguide, NA)</code> would be an alternative way to get the same result as <code>case_when(age &lt;= years(5) ~ id_bioguide)</code> gives.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>An alternative would’ve been to use <code>pct_</code> in place of <code>num_</code> in the <code>age_cuts</code> query.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Strictly speaking, it should be “on or before 31 December 2009”, but legislators never start terms on 31 December.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>See <a href="https://iangow.github.io/cohorts/intermezzo.html" class="uri">https://iangow.github.io/cohorts/intermezzo.html</a> for some discussion on this point.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>This is equivalent to <code>count(DISTINCT id_bioguide) OVER (PARTITION BY cohort ORDER BY event_time)</code>, but we do not need the <code>DISTINCT</code> here because each value of <code>id_bioguide</code> is unique in this query.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>I explain why I think it is a more precise solution in <a href="#sec-rec" class="quarto-xref">Section&nbsp;5</a>.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>I made minor punctuation edits here.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

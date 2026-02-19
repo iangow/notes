@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-02-02">
+
+<title>Working with date and times – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#dates-and-times-the-basics" id="toc-dates-and-times-the-basics" class="nav-link active" data-scroll-target="#dates-and-times-the-basics">Dates and times: The basics</a>
+  <ul class="collapse">
+  <li><a href="#dates" id="toc-dates" class="nav-link" data-scroll-target="#dates">Dates</a></li>
+  <li><a href="#date-times" id="toc-date-times" class="nav-link" data-scroll-target="#date-times">Date-times</a></li>
+  <li><a href="#duckdb-and-time-zones" id="toc-duckdb-and-time-zones" class="nav-link" data-scroll-target="#duckdb-and-time-zones">DuckDB and time zones</a></li>
+  <li><a href="#working-with-sec-filings-data" id="toc-working-with-sec-filings-data" class="nav-link" data-scroll-target="#working-with-sec-filings-data">Working with SEC filings data</a></li>
+  </ul></li>
+  <li><a href="#merging-with-other-data-sets" id="toc-merging-with-other-data-sets" class="nav-link" data-scroll-target="#merging-with-other-data-sets">Merging with other data sets</a>
+  <ul class="collapse">
+  <li><a href="#appendix-postgresql" id="toc-appendix-postgresql" class="nav-link" data-scroll-target="#appendix-postgresql">Appendix: PostgreSQL</a>
+  <ul class="collapse">
+  <li><a href="#getting-data-into-postgresql" id="toc-getting-data-into-postgresql" class="nav-link" data-scroll-target="#getting-data-into-postgresql">Getting data into PostgreSQL</a></li>
+  <li><a href="#re-running-the-analysis-using-postgresql" id="toc-re-running-the-analysis-using-postgresql" class="nav-link" data-scroll-target="#re-running-the-analysis-using-postgresql">Re-running the analysis using PostgreSQL</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="datetimes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Working with date and times</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">2 February 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="abstract">
+<p>The purpose of this note is address the topic of temporal data (dates and times) in more detail than found in the <a href="https://r4ds.hadley.nz/datetimes">“Dates and Times” chapter</a> of <em>R for Data Science</em> <span class="citation" data-cites="Wickham:2023aa">(<a href="#ref-Wickham:2023aa" role="doc-biblioref">Wickham et al., 2023</a>)</span> and to provide a hands-on application of working with them. The application I work with is based on the SEC submissions data I discussed in <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">another recent note</a>. I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.</p>
+</div>
+<p>As discussed in a <a href="https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ">recent post on LinkedIn</a>, one goal of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> <span class="citation" data-cites="gow2024empirical">(<a href="#ref-gow2024empirical" role="doc-biblioref">Gow and Ding, 2024</a>)</span> is to provide a pathway to mastery of the contents of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times. <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">One recent note</a> covered hierarchical data and a forthcoming note will address spreadsheets.</p>
+<p>The purpose of this note is address the gap regarding dates and times in more detail—including a hands-on application—than found in the <a href="https://r4ds.hadley.nz/datetimes">“Dates and Times” chapter</a> of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>. The application I work with is based on the SEC submissions data I discussed in <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">another recent note</a>. I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.</p>
+<p>In writing this note, I use the packages listed below.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/datetimes.qmd">here</a> and the latest version of this PDF is <a href="https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf">here</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(farr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="dates-and-times-the-basics" class="level1">
+<h1>Dates and times: The basics</h1>
+<p><a href="https://r4ds.hadley.nz/datetimes">Chapter 17</a> of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> identifies three data types related to dates and times:</p>
+<ul>
+<li><strong>dates</strong> are specified as a year, month, and day</li>
+<li><strong>times</strong> identify times within a day</li>
+<li><strong>date-times</strong> combine dates and times into a single data type</li>
+</ul>
+<p>Like <em>R for Data Science</em>, I concentrate on dates and date-times.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<section id="dates" class="level2">
+<h2 class="anchored" data-anchor-id="dates">Dates</h2>
+<p>In some respects, dates are relatively straightforward. A constant bane of data analysts is the representation of dates in ambiguous formats. For example, in many parts of the world <code>"11/12/2023"</code> represents 11 December 2023; in other parts of the world (read “the United States of America”), <code>"11/12/2023"</code> represents November 12, 2023. Converting string representations of dates to dates is an important element of the data curation process.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> <em>R for Data Science</em> provides an excellent discussion of issues that arise in converting string data to dates <span class="citation" data-cites="Wickham:2023aa">(<a href="#ref-Wickham:2023aa" role="doc-biblioref">Wickham et al., 2023, pp. 296–302</a>)</span>.</p>
+<p>We might also encounter dates in data sets from other programs, such as SAS, Stata, or Excel. Functions such as <code>read_sas()</code>, <code>read_stata()</code>, and <code>read_excel()</code> will generally detect and convert dates. Otherwise exporting data from those programs to text with dates represented in an unambiguous text format is perhaps the best approach. For example, in my <code>wrds2pg</code> Python package, I apply SAS code that uses <code>format=YYMMDD10.</code> to represent dates using the <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> format discussed in <a href="https://r4ds.hadley.nz/datetimes#during-import"><em>R for Data Science</em></a> before exporting to CSV using SAS’s <code>PROC EXPORT</code> command.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>Dates are generally transferred without any issues from databases such as DuckDB or PostgreSQL to R or vice versa. Once properly encoded as type <code>Date</code>, dates do not present particular difficulties in R in many contexts. The <code>as.Date()</code> function converts an ISO 8601 string to a date (i.e., an object with class class <code>Date</code> in R):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>a_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2024-05-28"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(a_date)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Date"</code></pre>
+</div>
+</div>
+<p>Functions provided by the <code>lubridate</code> package (part of the core Tidyverse) allow us to extract information about dates, such as the year …</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">year</span>(a_date)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2024</code></pre>
+</div>
+</div>
+<p>… the month (as a number) …</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">month</span>(a_date)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+</div>
+<p>… and the month (as a word in the relevant locale; I’m using English).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">month</span>(a_date, <span class="at">label =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] May
+12 Levels: Jan &lt; Feb &lt; Mar &lt; Apr &lt; May &lt; Jun &lt; Jul &lt; Aug &lt; Sep &lt; ... &lt; Dec</code></pre>
+</div>
+</div>
+<p>Much of the complexity surrounding dates and times arises from the existence of time zones. It is important to note that one does not completely avoid this complexity with dates. For example, the date <code>2024-06-28</code> in the <code>America/New_York</code> time zone will include points of time that are associated with the date <code>2024-06-29</code> in the <code>Australia/Sydney</code> time zone. So if a date-time related to Australia is converted to a date based on UTC or <code>America/New_York</code>, then it may end up on a different date that would result if converted to a date using <code>Australia/Melbourne</code>.</p>
+<p>Another aspect of dates that is easy to overlook is that some things that seem simple turn out to be complicated when examined more closely. For example, what date is one month after <code>2024-01-31</code>? Also, what date is one year after <code>2024-02-29</code>? Note that R will return <code>NA</code> as the answer to each of these questions.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
+</section>
+<section id="date-times" class="level2">
+<h2 class="anchored" data-anchor-id="date-times">Date-times</h2>
+<p>A date-time, also known as a <strong>timestamp</strong>, combines a date with a time and thus represents an instant in time. From this perspective, I would argue that a timestamp only has meaning if understood in the context of a time zone, as a date-time with a different time zone represents a different instant in time, as can be seen from the following examples.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ts <span class="ot">&lt;-</span> <span class="st">"2008-06-30 16:52:26"</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>t1 <span class="ot">&lt;-</span> <span class="fu">parse_date_time</span>(ts, <span class="at">orders =</span> <span class="st">"ymdHMS"</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>t2 <span class="ot">&lt;-</span> <span class="fu">parse_date_time</span>(ts, <span class="at">tz =</span> <span class="st">"Australia/Melbourne"</span>, <span class="at">orders =</span> <span class="st">"ymdHMS"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>t3 <span class="ot">&lt;-</span> <span class="fu">parse_date_time</span>(ts, <span class="at">tz =</span> <span class="st">"America/New_York"</span>, <span class="at">orders =</span> <span class="st">"ymdHMS"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>It turns out that <code>t1</code> is a date-time representing <code>2008-12-31 16:52:26 UTC</code>, which is a different point in time from both <code>t2</code>, which is the “same” time in the <code>Australia/Melbourne</code> time zone, and <code>t3</code>, which is the “same” time in the <code>America/New_York</code> time zone.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>t1 <span class="sc">-</span> t2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 10 hours</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>t1 <span class="sc">-</span> t3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of -4 hours</code></pre>
+</div>
+</div>
+<p>To determine the correct string to use for a given time zone, inspect the output of <code>OlsonNames()</code>. Many denizens of US time zone will indicate them using abbreviations such as <code>EST</code> for New York even at times of the year when that time zone does not apply (e.g., in June, when <code>EDT</code> is the applicable time zone). In this regard, using <code>America/New_York</code> obviates the risk of a mismatch such as that implied by <code>2008-06-30 16:52:26 EST</code>.</p>
+</section>
+<section id="duckdb-and-time-zones" class="level2">
+<h2 class="anchored" data-anchor-id="duckdb-and-time-zones">DuckDB and time zones</h2>
+<p>We create a DuckDB instance by connecting to it as follows.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>(), <span class="at">timezone_out =</span><span class="st">"America/New_York"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We specify <code>timezone_out ="America/New_York"</code> so that data returned to R are in the time zone that makes most sense for plotting and such like. Note that this does not change the actual moment in time reflected in the data, just how it is displayed.</p>
+<p>By default, DuckDB does not load information about time zones. These are found in the package <code>icu</code>, which can be installed and loaded using the commands below.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"INSTALL icu"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"LOAD icu"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We will use functions like <code>hour()</code>, <code>minute()</code>, and <code>second()</code> to prepare data for plotting. To understand these functions, we create a table containing just one value.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>a_datetime <span class="ot">&lt;-</span> <span class="st">"2008-12-31 16:52:26 America/New_York"</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>sample <span class="ot">&lt;-</span> <span class="fu">tbl</span>(db, <span class="fu">sql</span>(<span class="fu">str_c</span>(<span class="st">"SELECT '"</span>, a_datetime, <span class="st">"'::TIMESTAMPTZ AS a_datetime"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Intuitively, we would expect <code>hour(a_datetime)</code> to return <code>16</code>, <code>minute(a_datetime)</code> to return <code>52</code>, and <code>second()</code> to return <code>26</code>. However, these functions are interpreted with respect to the time zone setting of the database. The default setting for DuckDB is the local time, but we can set this to UTC using the following command.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"SET TIME ZONE 'UTC'"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Thus we get the value <code>21</code> because UTC was five hours ahead of New York time on 31 December 2008.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sample <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">hour =</span> <span class="fu">hour</span>(a_datetime)) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  a_datetime           hour
+  &lt;dttm&gt;              &lt;dbl&gt;
+1 2008-12-31 16:52:26    21</code></pre>
+</div>
+</div>
+<p>So, we set the DuckDB time zone to New York time …</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"SET TIME ZONE 'America/New_York'"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>… and try again.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sample <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">hour =</span> <span class="fu">hour</span>(a_datetime)) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  a_datetime           hour
+  &lt;dttm&gt;              &lt;dbl&gt;
+1 2008-12-31 16:52:26    16</code></pre>
+</div>
+</div>
+</section>
+<section id="working-with-sec-filings-data" class="level2">
+<h2 class="anchored" data-anchor-id="working-with-sec-filings-data">Working with SEC filings data</h2>
+<p>We start by loading the <code>filings</code> data stored in a parquet file <code>filings.parquet</code> in the <code>data</code> subdirectory of our current project.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>filings <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="at">table =</span> <span class="st">"filings"</span>, <span class="at">data_dir =</span> <span class="st">"../data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC. For example, the original text representation of <code>acceptanceDateTime</code> was of the form <code>2024-04-25T17:04:01.000Z</code>. The <code>Z</code> is meant to indicate that the timestamp is expressed in UTC.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> However, I ignored that in importing the data and interpreted these timestamps as relating to <code>America/New_York</code>. As we will see shortly, this interpretation is correct based on other information.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
+<p>To understand the date-times on <code>filings</code>, I extract some components of the timestamp to create a variable <code>acceptance_time</code> that converts the date component of each <code>acceptanceDateTime</code> to the same date (<code>2000-01-01</code>) as this facilitates plotting the times ignoring the dates.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="ot">&lt;-</span> </span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  filings <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(acceptanceDateTime),</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">hour =</span> <span class="fu">hour</span>(acceptanceDateTime),</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">minute =</span> <span class="fu">minute</span>(acceptanceDateTime),</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">second =</span> <span class="fu">second</span>(acceptanceDateTime),</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">acceptance_time =</span> <span class="fu">make_timestamptz</span>(<span class="dv">2000</span>L, <span class="dv">01</span>L, <span class="dv">01</span>L, </span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>                                            hour, minute, second)) <span class="sc">|&gt;</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, year, accessionNumber, acceptanceDateTime, acceptance_time) <span class="sc">|&gt;</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="#fig-time-all" class="quarto-xref">Figure&nbsp;1</a> plots the acceptance times for all filings in our sample. One observation is that we have over a million filings right around midnight.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="sc">|&gt;</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> acceptance_time)) <span class="sc">+</span> </span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">5</span> <span class="sc">*</span> <span class="dv">60</span>) <span class="sc">+</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(<span class="at">date_breaks =</span> <span class="st">"1 hour"</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">date_labels =</span> <span class="st">"%H:%M"</span>) <span class="sc">+</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-time-all" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-time-all-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-time-all-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-time-all-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Distribution of acceptance time for all filings
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-midnight" class="quarto-xref">Figure&nbsp;2</a> digs into these “midnight” filings based on the year of filing. It appears that the majority of these are from 2002 or earlier. A plausible explanation is that most filings during that earlier period only have filing <em>dates</em> and <code>acceptanceDateTime</code> is expressed as midnight on those filing dates.</p>
+<p>In <a href="#fig-midnight" class="quarto-xref">Figure&nbsp;2</a>, we also see evidence of a small number of filings for years 1980 and 1993. The former value probably relates to errors, but a small number of filings did occur in 1993.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="sc">|&gt;</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">midnight =</span> acceptance_time <span class="sc">==</span> <span class="st">"2000-01-01"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.character</span>(year)) <span class="sc">|&gt;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">fill =</span> midnight)) <span class="sc">+</span> </span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>() <span class="sc">+</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-midnight" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-midnight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-midnight-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-midnight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Year of ‘midnight’ filings
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-time-early-timed" class="quarto-xref">Figure&nbsp;3</a> focuses on cases before 2002 with non-midnight acceptance times. While there are some, these appear to be very few in number, perhaps reflecting a pilot program of some sort.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> Note that—with one stray exception before 07:00—filings appear to occur between 08:00 and 22:00 during this period.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="sc">|&gt;</span> </span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">&lt;</span> <span class="dv">2002</span>,</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>         acceptance_time <span class="sc">!=</span> <span class="st">"2000-01-01"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.character</span>(year)) <span class="sc">|&gt;</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> acceptance_time, <span class="at">fill =</span> year)) <span class="sc">+</span> </span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">5</span> <span class="sc">*</span> <span class="dv">60</span>) <span class="sc">+</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(<span class="at">date_breaks =</span> <span class="st">"1 hour"</span>,</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">date_labels =</span> <span class="st">"%H:%M"</span>) <span class="sc">+</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-time-early-timed" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-time-early-timed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-time-early-timed-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-time-early-timed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Distribution of acceptance time–pre-2002 with times
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-time-later-timed" class="quarto-xref">Figure&nbsp;4</a> focuses on non-midnight filings in 2002 or later, we see that the bulk of filings are between 06:00 and 22:00, consistent with the statement on <a href="https://www.sec.gov/submit-filings">the SEC website</a> that “EDGAR is available to accept filings from 6 a.m. to 10 p.m. ET weekdays (except federal holidays).” In fact, it was this information that allowed me to conclude that the timestamps in the underlying JSON files are in New York times, as interpreting them as UTC times put many filings outside this window.</p>
+<p>However, some pre-08:00 filings appear in <a href="#fig-time-later-timed" class="quarto-xref">Figure&nbsp;4</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="sc">|&gt;</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">&gt;=</span> <span class="dv">2002</span>,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>         acceptance_time <span class="sc">&gt;</span> <span class="st">"2000-01-01"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> acceptance_time)) <span class="sc">+</span> </span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">5</span> <span class="sc">*</span> <span class="dv">60</span>) <span class="sc">+</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(<span class="at">date_breaks =</span> <span class="st">"1 hour"</span>,</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">date_labels =</span> <span class="st">"%H:%M"</span>) <span class="sc">+</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-time-later-timed" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-time-later-timed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-time-later-timed-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-time-later-timed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Distribution of acceptance time–post-2002 with times
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-early-morning" class="quarto-xref">Figure&nbsp;5</a> examines the pre-08:00 filings that appear in <a href="#fig-time-later-timed" class="quarto-xref">Figure&nbsp;4</a>. It appears that these are oddly concentrated at around 00:15 and are perhaps data errors.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="sc">|&gt;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">between</span>(acceptance_time, <span class="st">"2000-01-01 00:00:01"</span>, <span class="st">"2000-01-01 01:00:00"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> acceptance_time)) <span class="sc">+</span> </span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">1</span> <span class="sc">*</span> <span class="dv">60</span>) <span class="sc">+</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(<span class="at">date_breaks =</span> <span class="st">"5 min"</span>,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">date_labels =</span> <span class="st">"%H:%M"</span>) <span class="sc">+</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-early-morning" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-early-morning-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-early-morning-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-early-morning-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Distribution of acceptance time–early-morning outliers
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>While not apparent in <a href="#fig-midnight" class="quarto-xref">Figure&nbsp;2</a>, <a href="#fig-later-midnight" class="quarto-xref">Figure&nbsp;6</a> reveals that there are some post-2003 midnight filings. However, these are all concentrated in 2009 and are perhaps evidence of data issues.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="sc">|&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(acceptanceDateTime)) <span class="sc">|&gt;</span> </span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">&gt;</span> <span class="dv">2003</span>,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>         acceptance_time <span class="sc">==</span> <span class="st">"2000-01-01 00:00:00"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> acceptanceDateTime)) <span class="sc">+</span> </span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">24</span> <span class="sc">*</span> <span class="dv">7</span>) <span class="sc">+</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(<span class="at">date_breaks =</span> <span class="st">"1 month"</span>, <span class="at">date_labels =</span> <span class="st">"%Y-%m-%d"</span>) <span class="sc">+</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-later-midnight" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-later-midnight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-later-midnight-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-later-midnight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Distribution of dates–post-2003 midnight filers
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Given the issues revealed above, <a href="#fig-valid" class="quarto-xref">Figure&nbsp;7</a>—our final plot of acceptance times—focuses on filings after 2003 and with filing times after 05:00 and before 23:00.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">&gt;</span> <span class="dv">2003</span>,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>         <span class="fu">between</span>(acceptance_time,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"2000-01-01 05:00:00"</span>,</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"2000-01-01 23:00:00"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> acceptance_time)) <span class="sc">+</span> </span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">5</span> <span class="sc">*</span> <span class="dv">60</span>) <span class="sc">+</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(<span class="at">date_breaks =</span> <span class="st">"1 hour"</span>,</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">date_labels =</span> <span class="st">"%H:%M"</span>) <span class="sc">+</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-valid" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-valid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-valid-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-valid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Distribution of acceptance times with valid times
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>There are some interesting patterns to be observed in <a href="#fig-valid" class="quarto-xref">Figure&nbsp;7</a>.</p>
+<ul>
+<li>For filings before 10:00, there are spikes in the number of filings on the hour. This may reflect filings that are pre-programmed at specific times in pre-trading hours.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></li>
+<li>These spikes are not apparent during trading hours.</li>
+<li>There is a big spike in the number of filings just after 16:00, consistent with many filings being delayed until the close of trading.</li>
+<li>Putting aside the pre-trading spikes, there is a steady rise int he number of filings until about 12:00, then a flattening out till about 13:30, when filings steadily rise until 16:00.</li>
+<li>There is a sharp drop in the number of filings at about 17:30.</li>
+<li>After 17:30, the number of filings steadily decreases until 22:00.</li>
+<li>There are tiny spike on the hour after 17:00.</li>
+</ul>
+</section>
+</section>
+<section id="merging-with-other-data-sets" class="level1">
+<h1>Merging with other data sets</h1>
+<p>To illustrate how one can merge across data sets we use a small sample related to the timing of earnings conference calls for Apple and Microsoft. The data are stored online, so we make use of the <code>https</code> package to read the data directly into DuckDB.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"INSTALL https"</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"LOAD https"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In this case, we force DuckDB’s <code>read_csv()</code> function to store <code>start_date</code> with a time zone by setting the <code>columns</code> argument.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="st">"https://raw.githubusercontent.com/iangow/notes/main/data/sample_calls.csv"</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="fu">str_c</span>(<span class="st">"read_csv('"</span>, url, <span class="st">"', "</span>, </span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>                <span class="st">"columns = {'ticker': 'TEXT','start_date': 'TIMESTAMPTZ'})"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We create the variable <code>filingDate</code>, as we will merge using this variable and <code>ticker</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>sample_calls <span class="ot">&lt;-</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl</span>(db, sql) <span class="sc">|&gt;</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">filingDate =</span> <span class="fu">as.Date</span>(start_date)) <span class="sc">|&gt;</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>(<span class="at">name =</span> <span class="st">"sample_calls"</span>, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If you compare the output below with underlying data (e.g., <code>browseURL(url)</code>), you can see that the underlying UTC timestamps are displayed below in the New York time zone because of the settings we chose above.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>sample_calls <span class="sc">|&gt;</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>(<span class="at">n =</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 3
+  ticker start_date          filingDate
+  &lt;chr&gt;  &lt;dttm&gt;              &lt;date&gt;    
+1 AAPL   2003-01-15 17:00:00 2003-01-15
+2 AAPL   2003-04-16 17:00:00 2003-04-16
+3 AAPL   2003-07-16 17:30:00 2003-07-16
+4 AAPL   2003-10-15 17:30:00 2003-10-15
+5 AAPL   2004-01-14 17:00:00 2004-01-14</code></pre>
+</div>
+</div>
+<p>If inspect <code>filings</code> for Form 8-K filings, we can see that the <code>items</code> field contains a comma-separated list of the items to which the 8-K relates.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>filings <span class="sc">|&gt;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(form <span class="sc">==</span> <span class="st">"8-K"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, accessionNumber, acceptanceDateTime, items) <span class="sc">|&gt;</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>(<span class="at">n =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 4
+    cik accessionNumber      acceptanceDateTime  items                   
+  &lt;int&gt; &lt;chr&gt;                &lt;dttm&gt;              &lt;chr&gt;                   
+1 93706 0000093706-95-000019 1995-06-29 00:00:00 2,7                     
+2 93706 0000897101-95-000100 1995-04-14 00:00:00 5,7                     
+3 39547 0000950134-07-018752 2007-08-23 08:55:02 3.02,5.01,5.02,5.03,9.01</code></pre>
+</div>
+</div>
+<p>We can use the DuckDB function <code>regexp_split_to_table()</code> to extract each item as a separate row. We will be interested in 8-K filings with item 2.02 (“Results of Operations and Financial Condition”).<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>filings <span class="sc">|&gt;</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(form <span class="sc">==</span> <span class="st">"8-K"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">item =</span> <span class="fu">regexp_split_to_table</span>(items, <span class="st">","</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, accessionNumber, acceptanceDateTime, item) <span class="sc">|&gt;</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>(<span class="at">n =</span> <span class="dv">9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 9 × 4
+    cik accessionNumber      acceptanceDateTime  item 
+  &lt;int&gt; &lt;chr&gt;                &lt;dttm&gt;              &lt;chr&gt;
+1 93706 0000093706-95-000019 1995-06-29 00:00:00 2    
+2 93706 0000093706-95-000019 1995-06-29 00:00:00 7    
+3 93706 0000897101-95-000100 1995-04-14 00:00:00 5    
+4 93706 0000897101-95-000100 1995-04-14 00:00:00 7    
+5 39547 0000950134-07-018752 2007-08-23 08:55:02 3.02 
+6 39547 0000950134-07-018752 2007-08-23 08:55:02 5.01 
+7 39547 0000950134-07-018752 2007-08-23 08:55:02 5.02 
+8 39547 0000950134-07-018752 2007-08-23 08:55:02 5.03 
+9 39547 0000950134-07-018752 2007-08-23 08:55:02 9.01 </code></pre>
+</div>
+</div>
+<p>To merge <code>sample_calls</code> with <code>filings</code>, we need a mapping from tickers to CIKs. We can get the <code>tickers</code> file from Dropbox using the code below.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="fu">str_c</span>(<span class="st">"https://www.dropbox.com/scl/fi/04jv6e1gwx0ngbwgqde5a/"</span>, </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>             <span class="st">"tickers.parquet?rlkey=gic68c86u1rl05hig7j623jpr&amp;dl=1"</span>)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="fu">str_c</span>(<span class="st">"read_parquet('"</span>, url, <span class="st">"')"</span>)</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>tickers <span class="ot">&lt;-</span> </span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl</span>(db, sql) <span class="sc">|&gt;</span> </span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>(<span class="at">name =</span> <span class="st">"tickers"</span>, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can now create the table <code>earnings_filings</code> containing all 8-K filings with item 2.02.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>earnings_filings <span class="ot">&lt;-</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  filings <span class="sc">|&gt;</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(tickers, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">item =</span> <span class="fu">regexp_split_to_table</span>(items, <span class="st">","</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(form <span class="sc">==</span> <span class="st">"8-K"</span>, item <span class="sc">==</span> <span class="st">"2.02"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, ticker, filingDate, acceptanceDateTime, item)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We merge <code>earnings_filings</code> with <code>sample_calls</code> and calculate <code>time_diff</code>, the time between the filing of the 8-K and the start of the conference call.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>sample_merged <span class="ot">&lt;-</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  earnings_filings <span class="sc">|&gt;</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(sample_calls, <span class="fu">join_by</span>(ticker, filingDate)) <span class="sc">|&gt;</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time_diff =</span> start_date <span class="sc">-</span> acceptanceDateTime) <span class="sc">|&gt;</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.387   0.047   0.097 </code></pre>
+</div>
+</div>
+<p>We can now make a plot of <code>time_diff</code>, converting <code>time_diff</code> from seconds to minutes by dividing by 60 and converting to numeric.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>sample_merged <span class="sc">|&gt;</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time_diff =</span> <span class="fu">as.double</span>(time_diff <span class="sc">/</span> <span class="dv">60</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time_diff, <span class="at">fill =</span> ticker)) <span class="sc">+</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-time-diff" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-time-diff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-time-diff-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-time-diff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Distribution of times between 8-K filings and conference calls
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>From <a href="#fig-time-diff" class="quarto-xref">Figure&nbsp;8</a>, we see that Microsoft (MSFT) and Apple (AAPL) have different approaches to filing 8-Ks before conference calls. In most cases, Apple files right around 30 minutes before the call. In contrast, Microsoft has more variation in its filing time, but it is generally gives the market more time to process the 8-K before the start of its call and the modal time is over 80 minutes. That said, there does appear to be one call where the 8-K was made right around the start of the conference call, though there is no discussion of this in the conference call transcript.</p>
+<section id="appendix-postgresql" class="level2">
+<h2 class="anchored" data-anchor-id="appendix-postgresql">Appendix: PostgreSQL</h2>
+<p>At the outset I alluded to using PostgreSQL and DuckDB. In this appendix, I show how one can achieve the same result as shown in <a href="#fig-time-diff" class="quarto-xref">Figure&nbsp;8</a> using PostgreSQL.</p>
+<section id="getting-data-into-postgresql" class="level3">
+<h3 class="anchored" data-anchor-id="getting-data-into-postgresql">Getting data into PostgreSQL</h3>
+<p>If we were starting with data already in PostgreSQL, we could skip this step. However, a big attraction of DuckDB is its ability to glue together data from many different sources and we can use DuckDB to populate PostgreSQL.</p>
+<p>We first need to install and load the <code>postgres</code> extension for DuckDB, which is done with the following lines of code.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"INSTALL postgres"</span>)</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"LOAD postgres"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I have a PostgreSQL database running on my computer, so I can connect to it with an empty connection string. See the <a href="https://duckdb.org/docs/extensions/postgres">documentation</a> for the <code>postgres</code> extension if you need to supply additional information to connect to a PostgreSQL database.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"ATTACH '' AS pg (TYPE POSTGRES)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The first step is to copy the data in <code>filings.parquet</code> to PostgreSQL. We need to go from the parquet file as we did not materialize a table with these data in DuckDB. This step takes some time, but would be a one-off step. I include <code>IF NOT EXISTS</code> to avoid overwriting any existing table you might have.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="st">"CREATE TABLE IF NOT EXISTS pg.filings AS</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT * FROM '../data/filings.parquet'"</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, sql) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+ 36.372   1.023  33.115 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12120262</code></pre>
+</div>
+</div>
+<p>We did materialize named (temporary) tables for <code>tickers</code> and <code>sample_calls</code>, so we can copy directly from those to PostgreSQL. These small tables are populated very quickly.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"CREATE TABLE IF NOT EXISTS pg.tickers AS</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="st">               SELECT * FROM tickers"</span>)</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"CREATE TABLE IF NOT EXISTS pg.sample_calls AS</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="st">               SELECT * FROM sample_calls"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="re-running-the-analysis-using-postgresql" class="level3">
+<h3 class="anchored" data-anchor-id="re-running-the-analysis-using-postgresql">Re-running the analysis using PostgreSQL</h3>
+<p>The first step is to connect to PostgreSQL, again using the <code>timezone</code> argument for the same reasons we discussed above with DuckDB.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>pg <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">timezone =</span> <span class="st">"America/New_York"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We next create remote data tables for each of the three underlying data tables we used above.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>filings <span class="ot">&lt;-</span> <span class="fu">tbl</span>(pg, <span class="st">"filings"</span>)</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>tickers <span class="ot">&lt;-</span> <span class="fu">tbl</span>(pg, <span class="st">"tickers"</span>)</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>sample_calls <span class="ot">&lt;-</span> <span class="fu">tbl</span>(pg, <span class="st">"sample_calls"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Note that DuckDB creates tables with lower-case column names, so we need to adapt the code above to reflect this. This is not an inherent limitation of PostgreSQL, which can support case-sensitive column names. Apart from the lower-case column names, the following query converts <code>hour</code> and <code>minute</code> to integers, as the <code>make_timestamptz()</code> function in PostgreSQL expects integers in those slots. Note that I do not compute the table <code>filing_times</code>, as doing so is unnecessary and actually slows the code down.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="ot">&lt;-</span> </span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  filings <span class="sc">|&gt;</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(acceptanceDateTime),</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">hour =</span> <span class="fu">as.integer</span>(<span class="fu">hour</span>(acceptanceDateTime)),</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">minute =</span> <span class="fu">as.integer</span>(<span class="fu">minute</span>(acceptanceDateTime)),</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">second =</span> <span class="fu">second</span>(acceptanceDateTime),</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">acceptance_time =</span> <span class="fu">make_timestamptz</span>(<span class="dv">2000</span>L, <span class="dv">1</span>L, <span class="dv">1</span>L, </span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>                                            hour, minute, second)) <span class="sc">|&gt;</span></span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, year, accessionNumber, acceptanceDateTime, acceptance_time)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The code for creating <code>earnings_filings</code> is unchanged from above apart from using lower-case column names, as PostgreSQL offers the same <code>regexp_split_to_table()</code> function that we used in DuckDB.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>earnings_filings <span class="ot">&lt;-</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  filings <span class="sc">|&gt;</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(tickers, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">item =</span> <span class="fu">regexp_split_to_table</span>(items, <span class="st">","</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(form <span class="sc">==</span> <span class="st">"8-K"</span>, item <span class="sc">==</span> <span class="st">"2.02"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, ticker, filingDate, acceptanceDateTime, item)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The code creating <code>sample_merged</code> differs slightly (apart from using lower-case column names) because <code>start_date - acceptancedatetime</code> results in a column of type <code>interval</code> in PostgreSQL that R is unable to interpret easily. To address this, I use the <code>date_part('epoch', x)</code> function to convert it to the number of seconds between the two timestamps.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>sample_merged <span class="ot">&lt;-</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  earnings_filings <span class="sc">|&gt;</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(sample_calls, <span class="fu">join_by</span>(ticker, filingDate)) <span class="sc">|&gt;</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time_diff =</span> <span class="fu">date_part</span>(<span class="st">'epoch'</span>, start_date <span class="sc">-</span> acceptanceDateTime)) <span class="sc">|&gt;</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.020   0.000  23.169 </code></pre>
+</div>
+</div>
+<p>Finally, the code to produce <a href="#fig-time-diff-pg" class="quarto-xref">Figure&nbsp;9</a> is unchanged from the equivalent code above. Happily, <a href="#fig-time-diff-pg" class="quarto-xref">Figure&nbsp;9</a> looks identical to <a href="#fig-time-diff" class="quarto-xref">Figure&nbsp;8</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>sample_merged <span class="sc">|&gt;</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time_diff =</span> time_diff <span class="sc">/</span> <span class="dv">60</span>) <span class="sc">|&gt;</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time_diff, <span class="at">fill =</span> ticker)) <span class="sc">+</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-time-diff-pg" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-time-diff-pg-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="datetimes_files/figure-html/fig-time-diff-pg-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-time-diff-pg-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Distribution of times between 8-K filings and conference calls: PostgreSQL version
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>My experience is that DuckDB generally offers better performance than PostgreSQL, but in this case PostgreSQL seems quite performant relative to DuckDB <em>once the data have been loaded into PostgreSQL</em>. PostgreSQL does offer some benefits, including the ease of sharing data with others and avoidance of messy details of data files. For example, I could easily run the code to create data on my server in Massachusetts and access the data from my current location in Melbourne, Australia. In any case, the code above shows that the task can be accomplished in either DuckDB or PostgreSQL, so we are not forced to choose in this case.</p>
+</section>
+</section>
+<section id="references" class="level2 unnumbered">
+
+
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-gow2024empirical" class="csl-entry" role="listitem">
+Gow, I.D., Ding, T., 2024. Empirical research in accounting: Tools and methods. Chapman &amp; Hall/CRC, London, UK. <a href="https://doi.org/10.1201/9781003456230">https://doi.org/10.1201/9781003456230</a>
+</div>
+<div id="ref-Wickham:2023aa" class="csl-entry" role="listitem">
+Wickham, H., Çetinkaya-Rundel, M., Grolemund, G., 2023. <a href="https://books.google.com/books?id=TiLEEAAAQBAJ">R for data science</a>. O’Reilly Media, Sebastopol, CA.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p><span class="citation" data-cites="gow2024empirical">Gow and Ding (<a href="#ref-gow2024empirical" role="doc-biblioref">2024</a>)</span> was published in print form by CRC Press in December 2024 and remains free online.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Execute <code>install.packages(c("tidyverse", "DBI", duckdb", "scales", "farr"))</code> within R to install all the packages you need to run the code in this note.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>It is pointed out in that R does not have a native class for storing times <span class="citation" data-cites="Wickham:2023aa">(<a href="#ref-Wickham:2023aa" role="doc-biblioref">Wickham et al., 2023, p. 296</a>)</span>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>For more on the data curation process as part of the data science workflow, see my note <a href="https://raw.githubusercontent.com/iangow/notes/main/import_sirca.pdf">here</a>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>After rummaging through the depths of the SAS documentation, I <a href="https://github.com/iangow/wrds2pg/blob/565fce4afdee526830b2d5c92aadf20b35cf575b/wrds2pg/wrds2pg.py#L340-L341">landed on</a> <code>format=E8601DT19.</code> as the way to represent date-times being exported by SAS.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>To see this, enter <code>as.Date("2024-01-31") + months(1)</code> and <code>as.Date("2024-02-29") + years(1)</code>, respectively.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>The <code>INSTALL icu</code> command is only needed if you have not already installed it, but it’s harmless to run it if it’s already present.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Adjust <code>data_dir</code> to match the location of the downloaded file on your compute. The process for creating this file is described <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">here</a>. You can obtain a copy of this file <a href="https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&amp;dl=0">here</a>. If you have set up a parquet data repository with this data in the <code>submissions</code> schema, then use <code>filings &lt;- load_parquet(db, table = "filings", schema = "submissions")</code> instead.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>See the <a href="https://en.m.wikipedia.org/wiki/ISO_8601">Wikipedia page for ISO 8601</a>.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Note that the information is stored in parquet files in UTC.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>As mentioned above, R has no native type for times, but a set of date-times with the date fixed on a common date will provide us with what we need.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>Though we might expect a preponderance of these filings to occur in the years just before 2002 in this case, and the filings appear to be fairly spread out over the pre-2002 years.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p><a href="https://www.tradinghours.com/markets/nasdaq">NYSE and NASDAQ trading hours</a> are 09:30–16:00.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>See <a href="https://www.sec.gov/answers/form8k.htm">here</a> for information about each of the items.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>See <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">the note</a> discussed earlier for details on how this file was created from data on SEC EDGAR.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>Note that we don’t strictly “create” this table in the sense of SQL’s <code>CREATE TABLE</code> using <code>compute()</code>, as we will only use a small portion of it and it would be expensive—about 10 seconds and 1.5GB of RAM—to <code>compute()</code> this whole table.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>By default, the result is a <code>difftime</code>, which <code>ggplot2</code> is unsure about.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>Note that you will need to have write access to this database.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
