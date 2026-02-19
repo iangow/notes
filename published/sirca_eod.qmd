@@ -1,7 +1,7 @@
 ---
 title: "SIRCA ASX End of Day (EOD) collection"
 author: 
-  - name: Ian D. Gow^[University of Melbourne, [ian.gow@unimelb.edu.au](mailto:ian.gow@unimelb.edu.au)]
+  - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
 date: 2025-09-11
@@ -18,6 +18,8 @@ format:
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
+execute:
+  freeze: auto
 ---
 
 # Overview
@@ -438,7 +440,9 @@ elapsed_days <-
   si_au_prc_daily |>
   group_by(gcode, seniorsecurity) |>
   window_order(date) |>
-  mutate(days_elapsed = dayssince - lag(dayssince)) 
+  mutate(days_elapsed = dayssince - lag(dayssince)) |>
+  ungroup() |>
+  window_order()
 ```
 
 @fig-cba1-days shows the distribution of `days_elapsed`, the number of elapsed days between trading dates calculated using using the `datesince` column, for Commonwealth Bank.
@@ -448,8 +452,8 @@ Although CBA is a stock that is consistently traded, a less-liquid security may 
 #| label: fig-cba1-days
 #| fig-cap: "Distribution of days between trading dates for Commonwealth Bank"
 elapsed_days |>
-  count(days_elapsed, sort = TRUE) |>
   filter(gcode == 'cba1', seniorsecurity == 1L) |>
+  count(days_elapsed, sort = TRUE) |>
   filter(!is.na(days_elapsed)) |>
   ggplot(aes(x = days_elapsed, y = n)) +
   geom_col() +
@@ -489,7 +493,8 @@ tdays_elapsed_df <-
   mutate(tdays_elapsed = td - lag(td),
          lag_date = lag(date)) |>
   select(gcode, seniorsecurity, date, lag_date, tdays_elapsed) |>
-  ungroup()
+  ungroup() |>
+  window_order()
 ```
 
 @tbl-tdays provides data on our improved measure of trading days between trading dates for both Commonwealth Bank (`cba1`) and a less liquid security (`1st1`).
