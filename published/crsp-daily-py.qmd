@@ -7,11 +7,12 @@ author:
 date: 2025-01-23
 number-sections: true
 format:
+  html:
+    colorlinks: true
   pdf: 
     include-in-header:
       text: |
         \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
-        \usepackage{scrextend}
         \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
         \addtokomafont{disposition}{\rmfamily}
     colorlinks: true
@@ -24,7 +25,9 @@ format:
 bibliography: papers.bib
 execute:
   cache: true
-jupyter: python3
+  freeze: auto
+engine: jupyter
+jupyter: notes_py
 ---
 
 # Introduction
@@ -104,10 +107,7 @@ factors_ff3_daily = (factors_ff3_daily_raw
 
 ```{python}
 #| label: connect-sqlite
-if not os.path.exists("data"):
-  os.makedirs("data")
-
-tidy_finance = sqlite3.connect(database="data/tidy_finance_python.sqlite")
+tidy_finance = sqlite3.connect(database="/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite")
 factors_ff3_daily.to_sql(name="factors_ff3_daily",
                          con=tidy_finance,
                          if_exists="replace",
@@ -274,7 +274,7 @@ The following code is very similar to the above apart from the use of `con.read_
 ```{python}
 #| label: load-ff
 factors_ff3_daily = con.read_sqlite(
-    path="data/tidy_finance_python.sqlite",
+    "/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite",
     table_name="factors_ff3_daily")
 ```
 
@@ -337,7 +337,7 @@ Rather than "downgrading" the data to an SQLite table, I will just export the da
 ```{python}
 #| label: crsp-daily-pq
 #| eval: true
-crsp_daily.to_parquet(path = "data/crsp_daily.parquet")
+crsp_daily.to_parquet("/Users/igow/Dropbox/data/tidy_finance/crsp_daily.parquet")
 ```
 
 ```{python}
@@ -435,7 +435,7 @@ os.environ["DATA_DIR"] = os.path.expanduser(os.environ["DATA_DIR"])
 ```{python}
 #| label: load-ff-again
 factors_ff3_daily = con.read_sqlite(
-    path="data/tidy_finance_python.sqlite",
+    "data/tidy_finance_python.sqlite",
     table_name="factors_ff3_daily")
 ```
 
@@ -480,7 +480,7 @@ crsp_daily = (
 ```{python}
 #| label: crsp-daily-pq-again
 #| eval: true
-crsp_daily.to_parquet(path = "data/crsp_daily_alt.parquet")
+crsp_daily.to_parquet("/Users/igow/Dropbox/data/tidy_finance/crsp_daily_alt.parquet")
 
 toc = timeit.default_timer()
 print(f"Elapsed time: {(toc - tic):.2f} seconds.")

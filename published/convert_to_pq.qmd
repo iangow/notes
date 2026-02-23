@@ -17,7 +17,13 @@ format:
     mainfont: TeX Gyre Pagella
     sansfont: TeX Gyre Pagella
   html:
+    toc: false
+    number-sections: true
     theme: cosmo
+execute:
+  freeze: auto
+engine: jupyter
+jupyter: notes_py
 ---
 
 # Introduction
@@ -40,11 +46,20 @@ I will also use `duckdb` and `RSQLite` packages.
 use `install.packages()` to get any package that you don't already have.
 
 ```{r}
+#| label: setup
+#| include: false
+Sys.setenv(RETICULATE_PYTHON = "../notes_py/bin/python")
+library(reticulate)
+py_config()
+```
+
+```{r}
 #| message: false
 library(DBI)
 library(dplyr)
 library(dbplyr)
 library(farr)
+library(lubridate)
 ```
 
 We will use the following small function to calculate the time taken for steps below.^[Unlike the base R `system.time()`, this function works with assignment.
@@ -62,7 +77,7 @@ system_time <- function(x) {
 I have created an SQLite database comprising data generated from running code in [chapter 2](https://www.tidy-finance.org/python/accessing-and-managing-financial-data.html) and [chapter 3](https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html).^[[Chapter 4](https://www.tidy-finance.org/python/trace-and-fisd.html) covers data that are not needed in the later chapters I am currently looking at.] 
  
 ```{r}
-db_path <- "data/tidy_finance_python.sqlite"
+db_path <- "/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite"
 ```
 
 # Using RSQLite
@@ -81,8 +96,9 @@ tidy_finance <- dbConnect(
 ```{r}
 #| cache: true
 crsp_daily <- tbl(tidy_finance, "crsp_daily") |>
-  select(permno, month, date, ret_excess) |>
+  select(permno, date, ret_excess) |>
   collect() |>
+  mutate(month = floor_date(date, "month")) |>
   system_time()
 ```
 
@@ -96,12 +112,12 @@ import time
 import pandas as pd
 
 tidy_finance = sqlite3.connect(
-  database="data/tidy_finance_python.sqlite"
+  database="/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite"
 )
 
 start = time.time()
 crsp_daily = (pd.read_sql_query(
-    sql=("SELECT permno, month, date, ret_excess "
+    sql=("SELECT permno, strftime('%Y-%m-01', date) AS month, date, ret_excess "
          "FROM crsp_daily"),
     con=tidy_finance,
     parse_dates={"month", "date"})
