@@ -10,19 +10,38 @@ bibliography: papers.bib
 title-block-style: plain
 csl: jfe.csl
 format: 
-    pdf:
-        toc: false
-        number-sections: true
-        colorlinks: true
-        mainfont: TeX Gyre Pagella
-        sansfont: TeX Gyre Pagella
-    docx:
-        number-sections: true
+  pdf:
+    toc: false
+    number-sections: true
+    colorlinks: true
+    mainfont: TeX Gyre Pagella
+    sansfont: TeX Gyre Pagella
+  html:
+    toc: false
+    number-sections: true
+    colorlinks: true
+execute:
+  freeze: auto
 ---
 
 ```{r}
+#| label: setup
 #| include: false
+Sys.setenv(RETICULATE_PYTHON = "../notes_py/bin/python")
 library(reticulate)
+py_config()
+```
+
+```{r}
+#| include: false
+library(tidyverse)
+library(DBI)
+library(dbplyr)
+library(scales)
+```
+
+```{r}
+#| include: false
 library(tidyverse)
 library(DBI)
 library(dbplyr)

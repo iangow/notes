@@ -5,6 +5,8 @@ date: 2024-12-02
 date-format: "D MMMM YYYY"
 format:
   html:
+    toc: false
+    number-sections: true
     colorlinks: true
   pdf: 
     include-in-header:
@@ -19,6 +21,8 @@ format:
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
 csl: jfe.csl
+execute:
+  freeze: auto
 ---
 
 In a [recent note](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), I used XBRL data to identify potentially missing Form AP filings.
@@ -113,12 +117,12 @@ Having set `HTTPUserAgent`, I begin by downloading the file for October 2024.
 file <- "2024_10_notes.zip"
 url <- str_c("https://www.sec.gov/files/dera/data/",
              "financial-statement-notes-data-sets/", file)
-t <- "data/2024_10_notes.zip"
+t <- "../data/2024_10_notes.zip"
 download.file(url, t)
 ```
 ```{r}
 #| include: false
-t <- "data/2024_10_notes.zip"
+t <- "../data/2024_10_notes.zip"
 ```
 
 We can start by simply applying `read_tsv()` to this file.^[Using `unz(t, "sub.tsv")` allows us to unzip just that one file in a way that does not leave detritus in our file system.]
