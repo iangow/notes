@@ -10,14 +10,20 @@ date-format: "D MMMM YYYY"
 bibliography: papers.bib
 title-block-style: plain
 format: 
-    pdf:
-        toc: false
-        number-sections: true
-        colorlinks: true
-        mainfont: TeX Gyre Pagella
-        sansfont: TeX Gyre Pagella
-    html:
-        theme: cosmo
+  pdf:
+    toc: false
+    number-sections: true
+    colorlinks: true
+    mainfont: TeX Gyre Pagella
+    sansfont: TeX Gyre Pagella
+  html:
+    toc: false
+    number-sections: true
+    colorlinks: true
+    theme: cosmo
+execute:
+  cache: true
+  freeze: auto
 ---
 
 This note illustrates how DuckDB can be used to perform calculations with impressively high performance.
@@ -29,6 +35,13 @@ For example, calculating betas is easy because univariate regression is supporte
 It seems that some of the benefits seen here could be achieved if we could use **user-defined functions** (UDFs).
 While there is no support for UDFs in the R API, support for **scalar** UDFs is provided in the Python API and support for **aggregate** UDFs, which is what would be needed here, is on [the DuckDB roadmap](https://duckdb.org/2023/07/07/python-udf.html).^[See [here](https://github.com/iangow/notes/blob/main/py_r_coc.qmd) for an example of using a scalar Python UDF.]
 
+```{r}
+#| label: setup
+#| include: false
+Sys.setenv(RETICULATE_PYTHON = "../notes_py/bin/python")
+library(reticulate)
+py_config()
+```
 
 The code in this note uses the following packages.
 Use `install.packages()` to install any that are not already on your system.
@@ -208,20 +221,6 @@ beta_monthly <-
 Now, let's do daily betas.
 Here *Tidy Finance* uses a three-month window and requires at last fifty observations.
 This requires only a minor tweak to our window definition.
-
-```{r}
-crsp_daily <- tbl(tidy_finance, "crsp_daily") |>
-  select(permno, month, date, ret_excess) |>
-  collect()
-
-factors_ff3_daily <- tbl(tidy_finance, "factors_ff3_daily") |>
-  select(date, mkt_excess) |>
-
-crsp_daily <- crsp_daily |>
-  inner_join(factors_ff3_daily, by = "date") |>
-  select(permno, month, ret_excess, mkt_excess)
-```
-
 
 ```{r}
 #| cache: true

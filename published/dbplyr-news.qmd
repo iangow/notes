@@ -108,8 +108,8 @@ crsp <- tbl(db, I("crsp.dsf"))
 event_rets <-
   crsp |>
   select(permno, date, ret) |>
-  mutate(win_start = date - days(3),
-         win_end = date + days(3)) |>
+  mutate(win_start = date - days(3L),
+         win_end = date + days(3L)) |>
   inner_join(michels_2017 |> select(permno, eventdate),
              join_by(permno, 
                      between(y$eventdate, x$win_start, x$win_end)),

@@ -3,23 +3,31 @@ title: "Data management ideas for researchers"
 author: Ian D. Gow
 date: 2026-02-16
 date-format: "D MMMM YYYY"
-number-sections: true
-format-links: false
-pdf: 
-  colorlinks: true
-  geometry:
-    - left=2cm
-    - right=2cm
-  papersize: a4
-  filters:
-    - abstract.lua
-  include-in-header: preamble.tex
-  mainfont: TeX Gyre Pagella
-  mathfont: TeX Gyre Pagella Math
+format:
+  html:
+    colorlinks: true
+    number-sections: true
+  pdf: 
+    number-sections: true
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    filters:
+      - abstract.lua
+    include-in-header: preamble.tex
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
 csl: jfe.csl
 engine: jupyter
 jupyter: notes_py
+execute:
+  freeze: auto
+keywords:
+  - Python
+  - Polars
 ---
 
 ::: {.abstract}
@@ -94,7 +102,7 @@ For this note, I'm using the very latest version of `db2pq`, which you can insta
 If you do not have pandas or `paramiko` installed, you should do `pip install --upgrade "db2pq[sas,pandas]"`.
 See [the `db2pq` PyPI homepage](https://pypi.org/project/db2pq/) for more details.
 
-Within Python, you can check the version using the following.^[This will not work if you have an older version of `db2pq`, in which case you should reinstall it.]
+Within Python, you can check the version using the following.^[This will not work if you have a version of `db2pq` older than `0.2.0`, in which case you should reinstall it.]
 
 ```{python}
 import db2pq 
@@ -379,7 +387,7 @@ wrds_update_pq("wrds_call_rcfa_1", "bank",
 Now, we see that the data are correct.
 
 ```{python}
-rcfa_1 = load_parquet("wrds_call_rcfa_1", "bank", data_dir = "temp")
+rcfa_1 = load_parquet("wrds_call_rcfa_1", "bank")
 (
     rcfa_1
     .select("rssd9001", "wrdsreportdate", "rssdsubmissiondate")

@@ -28,6 +28,8 @@ execute:
   freeze: auto
 engine: jupyter
 jupyter: notes_py
+keywords:
+  - Python
 ---
 
 # Introduction
@@ -107,7 +109,15 @@ factors_ff3_daily = (factors_ff3_daily_raw
 
 ```{python}
 #| label: connect-sqlite
-tidy_finance = sqlite3.connect(database="/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite")
+from pathlib import Path
+import os
+
+data_dir = Path(os.environ["DATA_DIR"]).expanduser()
+
+db_path = data_dir / "tidy_finance" / "tidy_finance_python.sqlite"
+
+tidy_finance = sqlite3.connect(database=db_path)
+
 factors_ff3_daily.to_sql(name="factors_ff3_daily",
                          con=tidy_finance,
                          if_exists="replace",
@@ -273,9 +283,7 @@ The following code is very similar to the above apart from the use of `con.read_
 
 ```{python}
 #| label: load-ff
-factors_ff3_daily = con.read_sqlite(
-    "/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite",
-    table_name="factors_ff3_daily")
+factors_ff3_daily = con.read_sqlite(db_path, table_name="factors_ff3_daily")
 ```
 
 Again rather than connecting to the WRDS PostgreSQL database directly using `sqlalchemy`, I connect via my DuckDB database.
@@ -337,7 +345,8 @@ Rather than "downgrading" the data to an SQLite table, I will just export the da
 ```{python}
 #| label: crsp-daily-pq
 #| eval: true
-crsp_daily.to_parquet("/Users/igow/Dropbox/data/tidy_finance/crsp_daily.parquet")
+#| 
+crsp_daily.to_parquet(join(data_dir, "tidy_finance", "crsp_daily.parquet"))
 ```
 
 ```{python}
@@ -384,7 +393,7 @@ This requires just the function `wrds_update_pq()` from my Python package `db2pq
 from db2pq import wrds_update_pq
 ```
 
-The `wrds_update_pq()` function keys of the environment variable `DATA_DIR` and stores WRDS tables as files organized into directories that match the schemas in the WRDS PostgreSQL database.
+The `wrds_update_pq()` function keys off the environment variable `DATA_DIR` and stores WRDS tables as files organized into directories that match the schemas in the WRDS PostgreSQL database.
 I start by getting `crsp.dsf_v2`, which is about 29 GB in SAS form and 24 GB in PostgreSQL form on the WRDS servers.
 As can be seen, getting `crsp.dsf_v2` requires a single line of code.^[The lines around this line are there just to record the time needed to do this.]
 
@@ -429,14 +438,11 @@ con = ibis.duckdb.connect()
 #| label: no-progress-bar-again
 #| include: false
 con.raw_sql('SET enable_progress_bar = false')
-os.environ["DATA_DIR"] = os.path.expanduser(os.environ["DATA_DIR"])
 ```
 
 ```{python}
 #| label: load-ff-again
-factors_ff3_daily = con.read_sqlite(
-    "data/tidy_finance_python.sqlite",
-    table_name="factors_ff3_daily")
+factors_ff3_daily = con.read_sqlite(db_path, table_name="factors_ff3_daily")
 ```
 
 The only real difference in the code is in the lines creating `dsf` and `ssih`.
@@ -480,7 +486,7 @@ crsp_daily = (
 ```{python}
 #| label: crsp-daily-pq-again
 #| eval: true
-crsp_daily.to_parquet("/Users/igow/Dropbox/data/tidy_finance/crsp_daily_alt.parquet")
+crsp_daily.to_parquet(join(data_dir, "tidy_finance", "crsp_daily_alt.parquet"))
 
 toc = timeit.default_timer()
 print(f"Elapsed time: {(toc - tic):.2f} seconds.")
