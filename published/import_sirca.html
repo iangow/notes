@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-01-29">
+
+<title>Data curation and the data science workflow – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#possible-data-curation-scenarios" id="toc-possible-data-curation-scenarios" class="nav-link active" data-scroll-target="#possible-data-curation-scenarios"><span class="header-section-number">1</span> Possible data curation scenarios</a></li>
+  <li><a href="#the-service-level-agreement" id="toc-the-service-level-agreement" class="nav-link" data-scroll-target="#the-service-level-agreement"><span class="header-section-number">2</span> The service-level agreement</a>
+  <ul class="collapse">
+  <li><a href="#storage-format" id="toc-storage-format" class="nav-link" data-scroll-target="#storage-format"><span class="header-section-number">2.1</span> Storage format</a></li>
+  <li><a href="#good-database-principles" id="toc-good-database-principles" class="nav-link" data-scroll-target="#good-database-principles"><span class="header-section-number">2.2</span> Good database principles</a></li>
+  <li><a href="#primary-keys" id="toc-primary-keys" class="nav-link" data-scroll-target="#primary-keys"><span class="header-section-number">2.3</span> Primary keys</a></li>
+  <li><a href="#data-types" id="toc-data-types" class="nav-link" data-scroll-target="#data-types"><span class="header-section-number">2.4</span> Data types</a></li>
+  <li><a href="#no-manual-steps" id="toc-no-manual-steps" class="nav-link" data-scroll-target="#no-manual-steps"><span class="header-section-number">2.5</span> No manual steps</a></li>
+  <li><a href="#documentation" id="toc-documentation" class="nav-link" data-scroll-target="#documentation"><span class="header-section-number">2.6</span> Documentation</a></li>
+  <li><a href="#update-process" id="toc-update-process" class="nav-link" data-scroll-target="#update-process"><span class="header-section-number">2.7</span> Update process</a></li>
+  <li><a href="#data-version-control" id="toc-data-version-control" class="nav-link" data-scroll-target="#data-version-control"><span class="header-section-number">2.8</span> Data version control</a></li>
+  </ul></li>
+  <li><a href="#sec-case" id="toc-sec-case" class="nav-link" data-scroll-target="#sec-case"><span class="header-section-number">3</span> A data curation case study: SIRCA ASX EOD data</a>
+  <ul class="collapse">
+  <li><a href="#importing-si_au_ref_names" id="toc-importing-si_au_ref_names" class="nav-link" data-scroll-target="#importing-si_au_ref_names"><span class="header-section-number">3.1</span> Importing <code>si_au_ref_names</code></a>
+  <ul class="collapse">
+  <li><a href="#setting-data-types" id="toc-setting-data-types" class="nav-link" data-scroll-target="#setting-data-types"><span class="header-section-number">3.1.1</span> Setting data types</a></li>
+  <li><a href="#identifying-the-primary-key" id="toc-identifying-the-primary-key" class="nav-link" data-scroll-target="#identifying-the-primary-key"><span class="header-section-number">3.1.2</span> Identifying the primary key</a></li>
+  <li><a href="#writing-the-parquet-file" id="toc-writing-the-parquet-file" class="nav-link" data-scroll-target="#writing-the-parquet-file"><span class="header-section-number">3.1.3</span> Writing the parquet file</a></li>
+  </ul></li>
+  <li><a href="#importing-si_au_ref_trddays" id="toc-importing-si_au_ref_trddays" class="nav-link" data-scroll-target="#importing-si_au_ref_trddays"><span class="header-section-number">3.2</span> Importing <code>si_au_ref_trddays</code></a></li>
+  <li><a href="#importing-si_au_retn_mkt" id="toc-importing-si_au_retn_mkt" class="nav-link" data-scroll-target="#importing-si_au_retn_mkt"><span class="header-section-number">3.3</span> Importing <code>si_au_retn_mkt</code></a></li>
+  <li><a href="#importing-si_au_prc_daily" id="toc-importing-si_au_prc_daily" class="nav-link" data-scroll-target="#importing-si_au_prc_daily"><span class="header-section-number">3.4</span> Importing <code>si_au_prc_daily</code></a>
+  <ul class="collapse">
+  <li><a href="#identifying-the-primary-key-1" id="toc-identifying-the-primary-key-1" class="nav-link" data-scroll-target="#identifying-the-primary-key-1"><span class="header-section-number">3.4.1</span> Identifying the primary key</a></li>
+  </ul></li>
+  <li><a href="#the-final-script" id="toc-the-final-script" class="nav-link" data-scroll-target="#the-final-script"><span class="header-section-number">3.5</span> The final script</a></li>
+  </ul></li>
+  <li><a href="#the-service-level-agreement-revisited" id="toc-the-service-level-agreement-revisited" class="nav-link" data-scroll-target="#the-service-level-agreement-revisited"><span class="header-section-number">4</span> The service-level agreement revisited</a>
+  <ul class="collapse">
+  <li><a href="#storage-format-1" id="toc-storage-format-1" class="nav-link" data-scroll-target="#storage-format-1"><span class="header-section-number">4.1</span> Storage format</a></li>
+  <li><a href="#primary-keys-1" id="toc-primary-keys-1" class="nav-link" data-scroll-target="#primary-keys-1"><span class="header-section-number">4.2</span> Primary keys</a></li>
+  <li><a href="#good-database-principles-1" id="toc-good-database-principles-1" class="nav-link" data-scroll-target="#good-database-principles-1"><span class="header-section-number">4.3</span> Good database principles</a></li>
+  <li><a href="#no-manual-steps-1" id="toc-no-manual-steps-1" class="nav-link" data-scroll-target="#no-manual-steps-1"><span class="header-section-number">4.4</span> No manual steps</a></li>
+  <li><a href="#documentation-1" id="toc-documentation-1" class="nav-link" data-scroll-target="#documentation-1"><span class="header-section-number">4.5</span> Documentation</a></li>
+  <li><a href="#update-process-1" id="toc-update-process-1" class="nav-link" data-scroll-target="#update-process-1"><span class="header-section-number">4.6</span> Update process</a></li>
+  <li><a href="#data-version-control-1" id="toc-data-version-control-1" class="nav-link" data-scroll-target="#data-version-control-1"><span class="header-section-number">4.7</span> Data version control</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="import_sirca.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data curation and the data science workflow</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow <a href="mailto:iandgow@gmail.com" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/0000-0002-6243-8409" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">29 January 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="abstract">
+<p>This note proposes and illustrates an extended version of the data science “whole game” offered by <span class="citation" data-cites="Wickham:2023aa">Wickham, Çetinkaya-Rundel, and Grolemund (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> The extended version divides the data science whole game into two processes: <em>Curate</em> and <em>Understand</em>. Using the case of Australian end-of-day stock price data, I explain what the <em>Curate</em> process is and how it covers important elements of the data science whole game that are neglected in the original version. One feature of <em>Curate</em> is that it requires a set of specialist skills often not possessed by practitioners expert in the <em>Understand</em> phase. As such, I argue that a more effective division of labour might result from better delineating the two data science processes.</p>
+</div>
+<p>The goal of this note is to outline an extended version of the data science model “whole game” proposed in <a href="https://r4ds.hadley.nz/whole-game">R for Data Science</a> <span class="citation" data-cites="Wickham:2023aa">(<a href="#ref-Wickham:2023aa" role="doc-biblioref">Wickham, Çetinkaya-Rundel, and Grolemund 2023</a>)</span>. The original “whole game” comprises three steps. It starts with an <em>Import-and-tidy</em> process (this comprises <em>import</em> and <em>tidy</em> steps), then an <em>Understand</em> process (this involves iteration between <em>transform</em>, <em>visualize</em>, and <em>model</em> steps), followed by a <em>Communicate</em> process.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>My extension of the “whole game”—depicted in <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a> below—gives the name <em>Curate</em> to the original <em>Import-and-tidy</em> process and adds a <em>persist</em> step to it. As a complement to the new <em>persist</em> step, I also add a <em>load</em> step to the <em>Understand</em> process. As will we see, this <em>load</em> step will not generally be an elaborate one, but its inclusion serves to better delineate the boundary between the <em>Curate</em> and <em>Understand</em> processes.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-whole-game" class="quarto-float quarto-figure quarto-figure-center anchored" alt="A diagram displaying the data science workflow.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-whole-game-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/data-science.png" class="img-fluid figure-img" alt="A diagram displaying the data science workflow." width="598">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-whole-game-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: A representation of the data science workflow
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>In this note, I focus on the data curation (<em>Curate</em>) process. My rationale for separating <em>Curate</em> from <em>Understand</em> is that I believe it clarifies certain best practices in the curation of data. In particular, I see a lot of merit in applying the notion of a service-level agreement to delineating roles and responsibilities in the preparation and analysis of data. As discussed below, my conception of <em>Curate</em> encompasses some tasks that are included in the <em>transform</em> step (part of the <em>Understand</em> process) in <a href="https://r4ds.hadley.nz/transform">R for Data Science</a>. The current version of this note uses daily data on Australian stock prices as an application.</p>
+<p>While even a sole analyst who performs all three processes can benefit from thinking about <em>Curate</em> as a separate process from <em>Understand</em>, it is perhaps easiest to conceive of <em>Curate</em> and <em>Understand</em> as involving different individuals or organizational units of the “whole game” of a data analysis workflow.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>Inevitably, the distinction between <em>tidy</em> and <em>transform</em> can be difficult to draw. Nonetheless, I think it is useful to think of some “transform” steps as part of the process of data curation.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> For example, if the raw data express dates as strings (e.g., <code>"25/12/2023"</code>), there is merit in transforming these into parsed dates as part of the <em>tidy</em> step rather than confronting the issues associated with date formatting for each analysis conducted as part of the <em>Understand</em> process.</p>
+<p>This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd">here</a> and the latest PDF version is available <a href="https://raw.githubusercontent.com/iangow/notes/main/import_sirca.pdf">here</a>.</p>
+<section id="possible-data-curation-scenarios" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Possible data curation scenarios</h1>
+<p>In a <em>university</em>, a “data lab” might be responsible for curating datasets for research and teaching, with researchers and students serving as the clients. Notwithstanding the significance of data in a lot of research conducted in universities, my experience in business schools is that, even when they exist, teams that might perform this role often refuse to do so. As a result, almost all data curation is performed by researchers themselves, often at great cost and with little expertise.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>In principle, <em>information vendors</em> are in the business of data curation. Some vendors do an excellent job of data curation and this makes it relatively easy for researchers to work with their data. For example, <a href="https://www.crsp.org">CRSP</a> has long been the gold standard for researchers requiring data on US stock prices. For me, working with CRSP data is mostly a matter of getting it into my PostgreSQL database using <a href="https://github.com/iangow/wrds_pg/tree/master/crsp">a script</a>.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> Often, however, data vendors supply data in a way that requires significant additional data curation.</p>
+<p>I imagine that larger quantitative <em>hedge funds</em> employ specialists to handle data curation tasks, with analysts and portfolio managers focusing on the tasks they are better suited to. No doubt there is iteration between data and IT specialists and those analysts and portfolio managers, as the output of the latter group needs to rigorously back-tested and put into production.</p>
+<p><em>Research assistants</em> might be hired by academic researchers to provide data curation services. In many cases, these research assistants will also do significant work from the <em>Understand</em> process, such as running regressions or other analyses. Even a <em>solo analyst</em> will be doing data curation, though the “client” will be the analyst herself.</p>
+<p>I suspect that some of the principles I outline here will be useful in all of these scenarios.</p>
+</section>
+<section id="the-service-level-agreement" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> The service-level agreement</h1>
+<p>It is perhaps helpful to think of dividing the data science workflow into processes with different teams being responsible for the different processes. From this perspective, the <em>Curate</em> team manufactures data that are delivered to the <em>Understand</em> team.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> While I won’t discuss transfer pricing (i.e., how much the <em>Understand</em> team needs to pay the <em>Curate</em> team for the data), we might consider the analogy of a <a href="https://en.wikipedia.org/wiki/Service-level_agreement">service-level agreement</a> between the two teams.</p>
+<p>One template for a service-level agreement would specify that data from a particular source will be delivered to the <em>Understand</em> team with the following conditions:</p>
+<ol type="1">
+<li>The data will be presented as a set of tables in a modern storage format.</li>
+<li>The division into tables will adhere to a pragmatic version of good database principles.</li>
+<li>The <strong>primary key</strong> of each table will be identified and validated.</li>
+<li>Each variable (column) of each table will be of the correct type.</li>
+<li>There will be no manual steps that cannot be reproduced.</li>
+<li>A process for updating the curated data will be established.</li>
+<li>The entire process will be documented in some way.</li>
+<li>Some process for version control of data will be maintained.</li>
+</ol>
+<section id="storage-format" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="storage-format"><span class="header-section-number">2.1</span> Storage format</h2>
+<p>In principle, the storage format should be a fairly minor detail determined by the needs of the <em>Understand</em> team. For example, if the <em>Understand</em> team works in Stata or Excel, then perhaps they will want the data in some kind of Stata format or as Excel files. However, I think it can be appropriate to push back on notions that data will be delivered in form that involves downgrading the data or otherwise compromises the process in a way that may ultimately add to the cost and complexity of the task for the <em>Curate</em> team. For example, “please send the final data as an Excel file attachment as a reply email” might be a request to be resisted because the process of converting to Excel can entail the degradation of data (e.g., time stamps or encoding of text).<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> Instead it may be better to choose a more robust storage format and supply a script for turning that into a preferred format.</p>
+<p>One storage format that I have used in the past would deliver data as tables in a (PostgreSQL) database. The <em>Understand</em> team could be given access data from a particular source organized as a <strong>schema</strong> in a database. Accessing the data in this form is easy for any modern software package. One virtue of this approach is that the data might be curated using, say, Python even though the client will analyse it using, say, Stata.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
+</section>
+<section id="good-database-principles" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="good-database-principles"><span class="header-section-number">2.2</span> Good database principles</h2>
+<p>I included the word “pragmatic” because I think it’s not necessary in most cases to get particularly fussy about <a href="https://en.wikipedia.org/wiki/Database_normalization">database normalization</a>. That said, it’s probably bad practice to succumb to requests for One Big Table that the <em>Understand</em> team might make. It is reasonable to impose some obligation to merge naturally distinct tables on the client <em>Understand</em> team.</p>
+</section>
+<section id="primary-keys" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="primary-keys"><span class="header-section-number">2.3</span> Primary keys</h2>
+<p>The <em>Curate</em> team should communicate the primary key of each table to the <em>Understand</em> team.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a> A table’s primary key is a set of variables that can be used to uniquely identify each row in that table. In general a primary key will have no missing values. Part of data curation will be confirming that a proposed primary key is in fact a valid primary key.</p>
+</section>
+<section id="data-types" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="data-types"><span class="header-section-number">2.4</span> Data types</h2>
+<p>Each variable of each table should be of the correct type. For example, dates should be of type <code>DATE</code>, variables that only take integer values should be of <code>INTEGER</code> type.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a> Date-times should generally be given with <code>TIMESTAMP WITH TIME ZONE</code> type. <a href="https://r4ds.hadley.nz/logicals">Logical columns</a> should be supplied with type <code>BOOLEAN</code>.</p>
+<p>Note that there is an interaction between this element of the service-level agreement and the storage format. If the data are supplied in a PostgreSQL database or as parquet files, then it is quite feasible to prescribe the data types of each variable. But if the storage format is Excel files (not recommended!) or CSV files, then it is difficult for the data curator to control how each variable is understood by the <em>Understand</em> team.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
+<p>In some cases, it may seem unduly prescriptive to specify the types in a particular way. For example, a logical variable can easily be represented as <code>INTEGER</code> type (<code>0</code> for <code>FALSE</code>, <code>1</code> for <code>TRUE</code>). Even in such cases, I think there is merit in choosing the most logical type (no pun intended) because of the additional information it conveys about the data. For example, a logical type should be checked to ensure that it only takes two values (<code>TRUE</code> or <code>FALSE</code>) plus perhaps <code>NULL</code> and that this checking has occurred is conveyed by the encoding of that variable as <code>BOOLEAN</code>.</p>
+</section>
+<section id="no-manual-steps" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="no-manual-steps"><span class="header-section-number">2.5</span> No manual steps</h2>
+<p>When data vendors are providing well-curated datasets, much about the curation process will be obscure to the user. This makes some sense, as the data curation process has elements of trade secrets. But often data will be supplied by vendors in an imperfect state and significant data curation will be performed by the <em>Curate</em> team working for or within the same organization as the <em>Understand</em> team.</p>
+<p>Focusing on the case where the data curation process transforms an existing dataset—say, one purchased from an outside vendor—into a curated dataset in sense used here, there are a few ground rules regarding manual steps.</p>
+<p>First, <em>the original data files should not be modified in any way</em>. If data are supplied as CSV files, then merely opening them in Excel and saving them can mutilate the original data.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a> I have encountered people whose idea of data curation extended to opening the original files, saving them as Excel files, and then proceeding to manually edit those files. This approach leads to a completely unreproducible set of data files, which is problematic not only in a world in which reproducibility is starting to be expected, but also when a new version of the data will be supplied by the vendor in the future.</p>
+<p>Second, any manual steps should be extensively documented and applied in a transparent automated fashion. For example, if a dataset on financial statement items of US firms contains errors that can be corrected by reviewing original SEC filings, then any corrections should be clearly documented in separate files with links to the original filings and explanations. And the corrections should be implemented through code, not manual steps.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a> For example, there should be code that imports the original data and the corrections and applies the latter to the former to create the final dataset.</p>
+</section>
+<section id="documentation" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="documentation"><span class="header-section-number">2.6</span> Documentation</h2>
+<p>The process of curating the data should be documented sufficiently well that someone else could perform the curation steps should the need arise. Often that need will arise when the vendor provides an updated dataset. Perhaps the best way to understand what I have in mind here is through a case study and I provide one in <a href="#sec-case" class="quarto-xref">Section&nbsp;3</a>.</p>
+</section>
+<section id="update-process" class="level2" data-number="2.7">
+<h2 data-number="2.7" class="anchored" data-anchor-id="update-process"><span class="header-section-number">2.7</span> Update process</h2>
+<p>Part of the rationale for having a well-documented process with no manual steps is that it greatly facilitates updating the data when the data vendor or other data source provides updated data. In some cases, updating the data will entail little more than downloading the new raw data and running a pre-existing script on those data. In other cases, the data may change in significant ways, such as addition of new variables, renaming of existing ones, or reorganization of data into different tables.</p>
+<p>As future changes may be difficult to predict, the analyst might be able to do little more than describe the anticipated update process if no major changes occur. If major changes do subsequently occur, it likely makes sense for the analyst handling the update to extensively document the changes needed to process the new data, especially if earlier versions of the data remain relevant (e.g., they have been used in published research).</p>
+</section>
+<section id="data-version-control" class="level2" data-number="2.8">
+<h2 data-number="2.8" class="anchored" data-anchor-id="data-version-control"><span class="header-section-number">2.8</span> Data version control</h2>
+<p><span class="citation" data-cites="Welch:2019aa">Welch (<a href="#ref-Welch:2019aa" role="doc-biblioref">2019</a>)</span> argues that, to ensure that results can be reproduced, “the author should keep a private copy of the full data set with which the results were obtained.” This imposes a significant cost on the <em>Understand</em> team to maintain archives of datasets that may run to several gigabytes or more and it would seem much more efficient for these obligations to reside with the parties with the relevant expertise.</p>
+<p>Unfortunately, even when data vendors provide curated datasets, they generally provide little in the way of version control. For example, there is no evidence that Wharton Research Data Services (WRDS), perhaps the largest data vendor in academic business research, provides any version control for its datasets, even though it should have much greater expertise for doing this than the users of its services.</p>
+<p>Nonetheless, some notion of version control of data probably has a place in data curation, even if this is little more than archiving of various versions of data supplied to research teams.</p>
+</section>
+</section>
+<section id="sec-case" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> A data curation case study: SIRCA ASX EOD data</h1>
+<p>As an application of the framework above, I will apply it to processing end-of-day (EOD) data on stock prices of shares traded on the Australian Stock Exchange (ASX) from SIRCA. The Securities Industry Research Centre of Asia-Pacific (SIRCA) is a standard source of financial data for academics at universities in Australia and New Zealand.</p>
+<p>In this section, I use the packages listed below, plus the <code>duckdb</code> package.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/import_sirca.qmd">here</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(farr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The tables included with the SIRCA ASX EOD price collection are listed in <a href="#tbl-asx-eod" class="quarto-xref">Table&nbsp;2</a>. Each of these tables is supplied by SIRCA in the form of a compressed comma-separated values (CSV) file. For example, <code>si_au_ref_names</code> is supplied as <code>si_au_ref_names.csv.gz</code>.</p>
+<p>The first step of our process will be to obtain these four CSV files and save them in a subdirectory named <code>sirca</code> on your computer. You should specify the location of that subdirectory by editing the following command, replacing with <code>"~/Library/CloudStorage/Dropbox/raw_data/"</code> with, say, <code>"C:\Data\CSV Files"</code>, if that is where you have created this <code>sirca</code> directory on your computer.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">RAW_DATA_DIR =</span> <span class="st">"~/Dropbox/raw_data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Thus, the CSV files should be stored in the location that we will assign to the variable <code>csv_dir</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>csv_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"RAW_DATA_DIR"</span>), <span class="st">"sirca"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>From <a href="#tbl-csv-files" class="quarto-xref">Table&nbsp;1</a>, we can see that we have three files of fairly modest size and one large file (<code>si_au_prc_daily.csv.gz</code>). Note that the largest file will be about 10 times larger when decompressed. Because larger files present their own issues, we will start with <code>si_au_ref_names</code>, which presents some complexity while being fairly easy to work with.</p>
+<div class="cell">
+<div id="tbl-csv-files" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-csv-files-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Data on supplied CSV files from SIRCA
+</figcaption>
+<div aria-describedby="tbl-csv-files-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 60%">
+<col style="width: 13%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">file_name</th>
+<th style="text-align: left;">size</th>
+<th style="text-align: left;">mtime</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Delisted_MergerAndAcquisition-2025-08.csv.gz</td>
+<td style="text-align: left;">14.29 kB</td>
+<td style="text-align: left;">2025-09-11 02:13:35</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MergerAndAcquisition-2025-08.csv.gz</td>
+<td style="text-align: left;">18.95 kB</td>
+<td style="text-align: left;">2025-09-11 02:13:33</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">si_au_prc_daily.csv.gz</td>
+<td style="text-align: left;">387.72 MB</td>
+<td style="text-align: left;">2025-09-11 01:28:13</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">si_au_ref_names.csv.gz</td>
+<td style="text-align: left;">591.84 kB</td>
+<td style="text-align: left;">2025-09-11 01:27:10</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">si_au_ref_trddays.csv.gz</td>
+<td style="text-align: left;">62.15 kB</td>
+<td style="text-align: left;">2025-09-11 01:25:48</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">si_au_retn_mkt.csv.gz</td>
+<td style="text-align: left;">366.14 kB</td>
+<td style="text-align: left;">2025-09-11 01:26:32</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SIRCA EOD Data Dictionary.xlsx</td>
+<td style="text-align: left;">175.11 kB</td>
+<td style="text-align: left;">2025-09-11 01:36:05</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div id="tbl-asx-eod" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-asx-eod-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: SIRCA ASX EOD price collection
+</figcaption>
+<div aria-describedby="tbl-asx-eod-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 79%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Table</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>si_au_ref_names</code></td>
+<td>Name histories and change dates for companies listed since 1 January 2000</td>
+</tr>
+<tr class="even">
+<td><code>si_au_prc_daily</code></td>
+<td>Complete daily price, volume and value histories, with issued share numbers</td>
+</tr>
+<tr class="odd">
+<td><code>si_au_retn_mkt</code></td>
+<td>Daily value- and equal-weighted whole-market returns</td>
+</tr>
+<tr class="even">
+<td><code>si_au_ref_trddays</code></td>
+<td>Record of ASX trading dates since 1 January 2000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Here we choose parquet files as our target storage format. We will store our data in a <code>sirca</code> subdirectory in a different location from <code>RAW_DATA_DIR</code> specified above. You should specify the location <code>DATA_DIR</code> by editing the line of code below, much as you specified <code>RAW_DATA_DIR</code> above.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">DATA_DIR =</span> <span class="st">"~/Dropbox/pq_data/"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="importing-si_au_ref_names" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="importing-si_au_ref_names"><span class="header-section-number">3.1</span> Importing <code>si_au_ref_names</code></h2>
+<p>As discussed above, we start with <code>si_au_ref_names</code>. We first specify the name of the CSV file <code>si_au_ref_names_csv</code>, then quickly move on to reading the data using the <code>read_csv()</code> function. The displayed output from invoking <code>read_csv()</code> provides a good starting point for the next steps.</p>
+<section id="setting-data-types" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="setting-data-types"><span class="header-section-number">3.1.1</span> Setting data types</h3>
+<p>As can be seen, <code>si_au_ref_names</code> contains 20 columns that <code>read_csv()</code> parses as character columns and 9 columns that <code>read_csv()</code> parses as numeric columns.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names_csv <span class="ot">&lt;-</span> <span class="fu">file.path</span>(csv_dir, <span class="st">"si_au_ref_names.csv.gz"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(si_au_ref_names_csv, <span class="at">guess_max =</span> <span class="dv">10000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 12025 Columns: 29
+── Column specification ───────────────────────────────────────────────────
+Delimiter: ","
+chr (20): Gcode, CompanyTicker, SecurityTicker, SecurityType, Abreviate...
+dbl  (9): SeniorSecurity, ListDate_YMD, DelistDate_YMD, ListDate_DaysSi...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<p>The next step we take is to inspect the columns to determine whether refinement of types makes sense. In practice, we can infer appropriate types by looking at the data.</p>
+<p>We start with three of the numeric columns. The first three appear to be integers, either based on casual inspection of the values displayed or inferences from the variable names (e.g., “days since” seems likely to be an integer).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.numeric) <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span>, <span class="dv">4</span><span class="sc">:</span><span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12,025 × 3
+  SeniorSecurity ListDate_DaysSince DelistDate_DaysSince
+           &lt;dbl&gt;              &lt;dbl&gt;                &lt;dbl&gt;
+1              1              43355                   NA
+2              1              42604                   NA
+3              1              44699                   NA
+4              1              42341                44060
+5              1              45197                   NA
+# ℹ 12,020 more rows</code></pre>
+</div>
+</div>
+<p>We can check that converting these variables to integers using <code>as.integer()</code> does not change any of their values.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.numeric) <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span>, <span class="dv">4</span><span class="sc">:</span><span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), \(x) <span class="fu">all</span>(x <span class="sc">==</span> <span class="fu">as.integer</span>(x), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  SeniorSecurity ListDate_DaysSince DelistDate_DaysSince
+  &lt;lgl&gt;          &lt;lgl&gt;              &lt;lgl&gt;               
+1 TRUE           TRUE               TRUE                </code></pre>
+</div>
+</div>
+<p>We can do the same for four of the remaining numeric columns.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.numeric) <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">6</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), \(x) <span class="fu">all</span>(x <span class="sc">==</span> <span class="fu">as.integer</span>(x), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 4
+  RecordCount GICSIndustry SIRCAIndustryClassCode SIRCASectorCode
+  &lt;lgl&gt;       &lt;lgl&gt;        &lt;lgl&gt;                  &lt;lgl&gt;          
+1 TRUE        TRUE         TRUE                   TRUE           </code></pre>
+</div>
+</div>
+<p>The remaining numeric variables appear to be dates in <code>ymd</code> form read by <code>read_csv()</code> as numeric variables.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.numeric) <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12,025 × 2
+  ListDate_YMD DelistDate_YMD
+         &lt;dbl&gt;          &lt;dbl&gt;
+1     20180912             NA
+2     20160822             NA
+3     20220518             NA
+4     20151203       20200817
+5     20230928             NA
+# ℹ 12,020 more rows</code></pre>
+</div>
+</div>
+<p>We can convert these columns to dates with the <code>ymd()</code> function. In the following code snippet, we convert the numeric variables to the types we determined to be appropriate through the analysis above. Here this code just tests that nothing untoward happens; we will actually implement these type conversions in code below.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.numeric) <span class="sc">|&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(SeniorSecurity, ListDate_DaysSince, DelistDate_DaysSince,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                  RecordCount, GICSIndustry, SIRCAIndustryClassCode, </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                  SIRCASectorCode), as.integer),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"_YMD"</span>), ymd))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12,025 × 9
+  SeniorSecurity ListDate_YMD DelistDate_YMD ListDate_DaysSince
+           &lt;int&gt; &lt;date&gt;       &lt;date&gt;                      &lt;int&gt;
+1              1 2018-09-12   NA                          43355
+2              1 2016-08-22   NA                          42604
+3              1 2022-05-18   NA                          44699
+4              1 2015-12-03   2020-08-17                  42341
+5              1 2023-09-28   NA                          45197
+# ℹ 12,020 more rows
+# ℹ 5 more variables: DelistDate_DaysSince &lt;int&gt;, RecordCount &lt;int&gt;,
+#   GICSIndustry &lt;int&gt;, SIRCAIndustryClassCode &lt;int&gt;,
+#   SIRCASectorCode &lt;int&gt;</code></pre>
+</div>
+</div>
+<p>We can now move onto the 20 columns read as character vectors. The first five character vectors seem correctly identified as such.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.character) <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12,025 × 5
+  Gcode CompanyTicker SecurityTicker SecurityType AbreviatedSecurityDescr…¹
+  &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt;          &lt;chr&gt;        &lt;chr&gt;                    
+1 14d1  14D           14D            01           ordinary                 
+2 1ad1  1AD           1AD            01           ordinary                 
+3 1ae1  1AE           1AE            01           ordinary                 
+4 1al1  1AL           1AL            01           ordinary                 
+5 1gov1 1GO           1GOV           07           etf units                
+# ℹ 12,020 more rows
+# ℹ abbreviated name: ¹​AbreviatedSecurityDescription</code></pre>
+</div>
+</div>
+<p>The same is true for character vectors 8 and 9 …</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.character) <span class="sc">|&gt;</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">8</span><span class="sc">:</span><span class="dv">9</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12,025 × 2
+  FullCompanyName                                AbbrevCompanyName   
+  &lt;chr&gt;                                          &lt;chr&gt;               
+1 1414 DEGREES LIMITED                           1414 DEGREES LIMITED
+2 ADALTA LIMITED                                 ADALTA LIMITED      
+3 AURORA ENERGY METALS LIMITED                   AURORAENERGYMETALS  
+4 ONEALL INTERNATIONAL LIMITED                   ONEALL IN LIMITED   
+5 VANECK 1-5 YEAR AUSTRALIAN GOVERNMENT BOND ETF VANECK 1-5 YR GOV   
+# ℹ 12,020 more rows</code></pre>
+</div>
+</div>
+<p>… and character vectors 14 through 15 …</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.character) <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">14</span><span class="sc">:</span><span class="dv">15</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">if_all</span>(<span class="fu">everything</span>(), \(x) <span class="sc">!</span><span class="fu">is.na</span>(x)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 23 × 2
+  CompanyDelistReasonComment                                    AlteredLink
+  &lt;chr&gt;                                                         &lt;chr&gt;      
+1 converts to a trust by a one-for-one in specie issue in trus… [aqf] is o…
+2 pursuant to scheme of arrangement with arrow pharmaceuticals… {awp2}[awp…
+3 &lt;18/02/2000&gt;. Demerger. {bor1} (bor) boral limited split int… {bor1} (bo…
+4 seven group holdings limited offers 170 cents plus 0.1116 {s… {bor1} (bo…
+5 redomiciled to New Zealand after one for one share exchange … redomicile…
+# ℹ 18 more rows</code></pre>
+</div>
+</div>
+<p>… and character vectors 16 through 20.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.character) <span class="sc">|&gt;</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">16</span><span class="sc">:</span><span class="dv">20</span>) <span class="sc">|&gt;</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">if_all</span>(<span class="fu">everything</span>(), \(x) <span class="sc">!</span><span class="fu">is.na</span>(x)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 5
+  MS_CompanyID MS_SecurityID MS_CompanyID2 MS_SecurityID2 MA_Identifier
+  &lt;chr&gt;        &lt;chr&gt;         &lt;chr&gt;         &lt;chr&gt;          &lt;chr&gt;        
+1 0C00000O7P   0P000188J3    0C0000B4KQ    0P0001887N     MHJ          </code></pre>
+</div>
+</div>
+<p>This leaves character columns 12 and 13. Focusing on the cases where neither is <code>NA</code>, we see that these columns appear to be lists of codes separated by semi-colons (<code>;</code>).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.character) <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">12</span><span class="sc">:</span><span class="dv">13</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">if_all</span>(<span class="fu">everything</span>(), \(x) <span class="sc">!</span><span class="fu">is.na</span>(x)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 494 × 2
+  CompanyDelistReasonCode CompanyRelatedGCode
+  &lt;chr&gt;                   &lt;chr&gt;              
+1 A                       ama2               
+2 S;R;M                   mlb2               
+3 A                       tai1               
+4 A                       wgr1               
+5 N                       aln2; agl1; agk1   
+# ℹ 489 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">CompanyRelatedGCodes =</span> CompanyRelatedGCode) <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(CompanyRelatedGCode <span class="sc">!=</span> <span class="st">""</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">related_gcode =</span> <span class="fu">str_split</span>(CompanyRelatedGCode, <span class="st">"[;</span><span class="sc">\\</span><span class="st">s]+"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Gcode, CompanyRelatedGCode, related_gcode) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 497 × 3
+  Gcode CompanyRelatedGCode related_gcode
+  &lt;chr&gt; &lt;chr&gt;               &lt;list&gt;       
+1 4wd1  ama2                &lt;chr [1]&gt;    
+2 5gn1  mlb2                &lt;chr [1]&gt;    
+3 a1c1  tai1                &lt;chr [1]&gt;    
+4 aag2  wgr1                &lt;chr [1]&gt;    
+5 aan2  aln2; agl1; agk1    &lt;chr [3]&gt;    
+# ℹ 492 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(CompanyRelatedGCode <span class="sc">!=</span> <span class="st">""</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">related_gcode =</span> <span class="fu">str_split</span>(CompanyRelatedGCode, <span class="st">"[;</span><span class="sc">\\</span><span class="st">s]+"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(related_gcode) <span class="sc">|&gt;</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Gcode, CompanyRelatedGCode, related_gcode) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 531 × 3
+  Gcode CompanyRelatedGCode related_gcode
+  &lt;chr&gt; &lt;chr&gt;               &lt;chr&gt;        
+1 4wd1  ama2                ama2         
+2 5gn1  mlb2                mlb2         
+3 a1c1  tai1                tai1         
+4 aag2  wgr1                wgr1         
+5 aan2  aln2; agl1; agk1    aln2         
+# ℹ 526 more rows</code></pre>
+</div>
+</div>
+<div id="tip-friends" class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip&nbsp;1: Friends don’t let friends use Excel
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>From casual observation, it appears that valid <code>Gcode</code> values contain only lower case characters (<code>[a-z]</code> in regular expressions) or numbers (<code>[0-9]</code> in regular expressions). Are there any <code>CompanyRelatedGCode</code> values that contain other characters? It turns out that that there are.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">related_gcode =</span> <span class="fu">str_split</span>(CompanyRelatedGCode, <span class="st">"[;</span><span class="sc">\\</span><span class="st">s]+"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(related_gcode) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(related_gcode, <span class="st">"[^a-z0-9]"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Gcode, related_gcode, CompanyDelistReasonComment) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 3
+  Gcode related_gcode CompanyDelistReasonComment
+  &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt;                     
+1 ahx1  May-01        mayne nickless ltd        
+2 fhf1  May-01        mayne nickless limited    </code></pre>
+</div>
+</div>
+<p>What’s happened here? <code>May-01</code> looks more like a date than a <code>Gcode</code>. This has all the hallmarks of someone having imported data into Microsoft Excel as part of their process. Microsoft Excel has a well-known tendency to mangle values that it aggressively interprets as dates. It seems likely that the <code>Gcode</code> for Mayne Nickless was <code>may1</code> and Excel read this as <code>May-01</code> (a date).<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a> Is it true that <code>Gcode</code> values contain only lower-case characters and numbers?</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>weird_gcodes <span class="ot">&lt;-</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(Gcode, <span class="st">"[^a-z0-9]"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Gcode) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>It seems not; some <code>Gcodes</code> have underscores (<code>_</code>):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str_flatten</span>(<span class="fu">pull</span>(weird_gcodes), <span class="st">", "</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "92e_1, apr_1, aug_1, aug_3, mar_2, may_1, nov_1, oct_1"</code></pre>
+</div>
+</div>
+<p>To see why underscores are used, we can remove the underscore and save the <code>Gcodes</code> in a CSV file.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>weird_gcodes <span class="sc">|&gt;</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Gcode =</span> <span class="fu">str_remove</span>(Gcode, <span class="st">"_"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"weird_gcodes.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Try opening <code>weird_gcodes.csv</code> in Excel. What do you see? (It may help to open <code>weird_gcodes.csv</code> in a text editor to see the original values.) To be frank, I struggle to see any reason why Excel should have any part in the data science workflow.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a></p>
+</div>
+</div>
+<p>We can examine <code>CompanyDelistReasonCode</code> in much the same way we did <code>CompanyRelatedGCode</code>. For reasons of brevity, I spare you the coding details and focus on the processed data, information about which is shown in <a href="#tbl-delist-codes" class="quarto-xref">Table&nbsp;3</a>.</p>
+<p>One problem is evident from <a href="#tbl-delist-codes" class="quarto-xref">Table&nbsp;3</a> and that is the presence of what appears to be junk in the <code>CompanyDelistReasonCode</code> field (e.g., <code>18</code> or <code>R-apx</code>). Another problem is evident only after looking that the documentation for <code>si_au_ref_names</code> and that is that even when the codes appear well-formed (e.g., <code>N</code> or <code>C</code>), we have no information about what these codes mean.</p>
+<div class="cell">
+<div id="tbl-delist-codes" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-delist-codes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Delisting reason codes on <code>si_au_ref_names</code>
+</figcaption>
+<div aria-describedby="tbl-delist-codes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">delist_code</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">delist_code</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">N</td>
+<td style="text-align: right;">3933</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">G</td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C</td>
+<td style="text-align: right;">3646</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">X</td>
+<td style="text-align: right;">13</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">R</td>
+<td style="text-align: right;">1047</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">I</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">736</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">T</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">S</td>
+<td style="text-align: right;">598</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Z</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">M</td>
+<td style="text-align: right;">412</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">294</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">E</td>
+<td style="text-align: right;">291</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Y</td>
+<td style="text-align: right;">187</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">W</td>
+<td style="text-align: right;">49</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">P</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">L</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">p</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">U-x</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">O</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E-x</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Given the issues apparent in both <code>CompanyRelatedGCode</code> and <code>CompanyDelistReasonCode</code>, I have elected to collect those, but keep them as simple character columns.</p>
+<p>For those keeping track, we have four character columns left. It turns out that the name for each of these ends with <code>Date</code>. In the following, I focus on the observations with non-<code>NA</code> values in all of these columns.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_if</span>(is.character) <span class="sc">|&gt;</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">ends_with</span>(<span class="st">"Date"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">if_all</span>(<span class="fu">everything</span>(), \(x) <span class="sc">!</span><span class="fu">is.na</span>(x)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5,400 × 4
+  ListDate   DelistDate EarliestListDate LatestDelistDate
+  &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;            &lt;chr&gt;           
+1 03/12/2015 17/08/2020 03/12/2015       17/08/2020      
+2 14/06/2019 11/04/2023 14/06/2019       11/04/2023      
+3 02/03/2021 16/05/2023 02/03/2021       29/08/2023      
+4 17/05/2023 13/06/2023 02/03/2021       29/08/2023      
+5 14/06/2023 29/08/2023 02/03/2021       29/08/2023      
+# ℹ 5,395 more rows</code></pre>
+</div>
+</div>
+<p>From the above, it seems clear that we have dates in <code>dmy</code> form. It turns out that a couple of observations have the value <code>"0/01/1900"</code>, which is not a valid date and I convert these to missing values using the code below.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">ends_with</span>(<span class="st">"Date"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"Date"</span>), </span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>                \(x) <span class="fu">dmy</span>(<span class="fu">if_else</span>(x <span class="sc">==</span> <span class="st">"0/01/1900"</span>, <span class="cn">NA</span>, x))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 12,025 × 4
+  ListDate   DelistDate EarliestListDate LatestDelistDate
+  &lt;date&gt;     &lt;date&gt;     &lt;date&gt;           &lt;date&gt;          
+1 2018-09-12 NA         2018-09-12       NA              
+2 2016-08-22 NA         2016-08-22       NA              
+3 2022-05-18 NA         2022-05-18       NA              
+4 2015-12-03 2020-08-17 2015-12-03       2020-08-17      
+5 2023-09-28 NA         2023-09-28       NA              
+# ℹ 12,020 more rows</code></pre>
+</div>
+</div>
+<p>At this point, we have two versions of the variables related to listing dates (<code>ListDate_YMD</code> and <code>ListDate</code>) and to delisting dates (<code>DelistDate_YMD</code> and <code>DelistDate</code>) and perhaps it makes sense to keep just one of each. If the values in each of the pair is the same as the other, then there’s no reason to keep both.</p>
+<p>Looking at <code>ListDate_YMD</code> and <code>ListDate</code>, we see that they are always equal and we could drop either one and keep the other.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"ListDate"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"Date"</span>), </span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>                \(x) <span class="fu">dmy</span>(<span class="fu">if_else</span>(x <span class="sc">==</span> <span class="st">"0/01/1900"</span>, <span class="cn">NA</span>, x))),</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"_YMD"</span>), ymd)) <span class="sc">|&gt;</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ListDate_YMD <span class="sc">!=</span> ListDate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 0 × 8
+# ℹ 8 variables: ListDate_YMD &lt;date&gt;, DelistDate_YMD &lt;date&gt;,
+#   ListDate_DaysSince &lt;dbl&gt;, DelistDate_DaysSince &lt;dbl&gt;, ListDate &lt;date&gt;,
+#   DelistDate &lt;date&gt;, EarliestListDate &lt;date&gt;, LatestDelistDate &lt;date&gt;</code></pre>
+</div>
+</div>
+<p>But there is one instance where <code>DelistDate_YMD</code> and <code>DelistDate</code> differ.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^DelistDate"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"Date"</span>), </span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>                \(x) <span class="fu">dmy</span>(<span class="fu">if_else</span>(x <span class="sc">==</span> <span class="st">"0/01/1900"</span>, <span class="cn">NA</span>, x))),</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"_YMD"</span>), ymd)) <span class="sc">|&gt;</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DelistDate_YMD <span class="sc">!=</span> DelistDate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  DelistDate_YMD DelistDate_DaysSince DelistDate
+  &lt;date&gt;                        &lt;dbl&gt; &lt;date&gt;    
+1 2013-06-30                    41455 2016-06-30</code></pre>
+</div>
+</div>
+<p>Which one to choose? One approach would be to look to external sources to verify which date is correct. But for present purposes we will choose the one that keeps our data internally consistent. Specifically, we should choose whichever of <code>DelistDate_YMD</code> and <code>DelistDate</code> that is consistent with <code>DelistDate_DaysSince</code>.</p>
+<p>Looking for other rows where <code>DelistDate_DaysSince == 45051</code>, we see that that value is elsewhere consistent with the value in <code>DelistDate</code>, so here I choose to drop the <code>_YMD</code> variables.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Gcode, <span class="fu">starts_with</span>(<span class="st">"DelistDate"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DelistDate_DaysSince <span class="sc">==</span> <span class="dv">45051</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 4
+  Gcode DelistDate_YMD DelistDate_DaysSince DelistDate
+  &lt;chr&gt;          &lt;dbl&gt;                &lt;dbl&gt; &lt;chr&gt;     
+1 iesg1       20230505                45051 05/05/2023</code></pre>
+</div>
+</div>
+<p>Putting all the pieces above we have the following:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="ot">&lt;-</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(si_au_ref_names_csv, <span class="at">guess_max =</span> <span class="cn">Inf</span>,</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(SeniorSecurity, ListDate_DaysSince, DelistDate_DaysSince,</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>                  RecordCount, GICSIndustry, SIRCAIndustryClassCode, </span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>                  SIRCASectorCode), as.integer),</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"Date"</span>), </span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>                \(x) <span class="fu">dmy</span>(<span class="fu">if_else</span>(x <span class="sc">==</span> <span class="st">"0/01/1900"</span>, <span class="cn">NA</span>, x)))) <span class="sc">|&gt;</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">ends_with</span>(<span class="st">"_YMD"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="identifying-the-primary-key" class="level3" data-number="3.1.2">
+<h3 data-number="3.1.2" class="anchored" data-anchor-id="identifying-the-primary-key"><span class="header-section-number">3.1.2</span> Identifying the primary key</h3>
+<p>Before considering possible primary keys, we first determine if there are any duplicate rows. When there are duplicate rows, no possible combination of columns will work as a primary key.</p>
+<p>The following function returns any rows that are duplicated in a dataset.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>get_dupes <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">count_var =</span> <span class="st">"count"</span>) {</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span> </span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(<span class="fu">pick</span>(<span class="fu">everything</span>()), <span class="at">name =</span> count_var) <span class="sc">|&gt;</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(.data[[count_var]] <span class="sc">&gt;</span> <span class="dv">1</span>)</span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Applying this function to <code>si_au_ref_names</code>, we see that we have one row that appears twice in the dataset.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_dupes</span>() <span class="sc">|&gt;</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Gcode, SecurityTicker, ListDate, count)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 0 × 4
+# ℹ 4 variables: Gcode &lt;chr&gt;, SecurityTicker &lt;chr&gt;, ListDate &lt;date&gt;,
+#   count &lt;int&gt;</code></pre>
+</div>
+</div>
+<p>To address this, we will simply use the <code>distinct()</code> function.</p>
+<p>Moving on to consider potential primary keys, we see immediately that <code>(Gcode, SecurityTicker)</code> is not a valid primary key. As seen in the output below, a given <code>(Gcode, SecurityTicker)</code> combination can appear as many as seven times in the data.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(Gcode, SecurityTicker, <span class="at">name =</span> <span class="st">"num_rows"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(num_rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 7 × 2
+  num_rows     n
+     &lt;int&gt; &lt;int&gt;
+1        1  6345
+2        2  1719
+3        3   469
+4        4   137
+5        5    44
+6        6    10
+7        7     1</code></pre>
+</div>
+</div>
+<p>Looking across the columns, we see that <code>(Gcode, SecurityTicker, ListDate)</code> <em>almost</em> works, as we have just one case where <code>(Gcode, SecurityTicker, ListDate)</code> fails to identify a single row. In this particular case, it seems that we have differences only in <code>GICSIndustry</code> and <code>SIRCAIndustryClassCode</code>. In one row, these variables are missing; in the other there are values.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Gcode, SecurityTicker, ListDate) <span class="sc">|&gt;</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(Gcode, SecurityTicker, ListDate) <span class="sc">|&gt;</span></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Gcode, SecurityTicker, ListDate, GICSIndustry, SIRCAIndustryClassCode)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 0 × 5
+# ℹ 5 variables: Gcode &lt;chr&gt;, SecurityTicker &lt;chr&gt;, ListDate &lt;date&gt;,
+#   GICSIndustry &lt;int&gt;, SIRCAIndustryClassCode &lt;int&gt;</code></pre>
+</div>
+</div>
+<p>If we take the row with non-<code>NA</code> values for <code>GICSIndustry</code> and <code>SIRCAIndustryClassCode</code> to be the correct one, then we should delete the other row.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Gcode <span class="sc">==</span> <span class="st">"rgwb1"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Gcode, GICSIndustry)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  Gcode GICSIndustry
+  &lt;chr&gt;        &lt;int&gt;
+1 rgwb1     99999999</code></pre>
+</div>
+</div>
+<p>It turns out that these are the only two rows where <code>Gcode == "rgwb1"</code>, so if we eliminate the row with <code>NA</code> value in <code>GICSIndustry</code> we should have it that <code>(Gcode, SecurityTicker, ListDate)</code> uniquely identifies each row.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(Gcode <span class="sc">==</span> <span class="st">"rgwb1"</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(GICSIndustry))) <span class="sc">|&gt;</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(Gcode, SecurityTicker, ListDate, <span class="at">name =</span> <span class="st">"num_rows"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(num_rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  num_rows     n
+     &lt;int&gt; &lt;int&gt;
+1        1 12025</code></pre>
+</div>
+</div>
+<p>To confirm that <code>(Gcode, SecurityTicker, ListDate)</code> is a valid primary key for our filtered <code>si_au_ref_names</code>, we also need to check that there are no <code>NA</code> values in any of these fields, which the following code confirms.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="sc">|&gt;</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(Gcode <span class="sc">==</span> <span class="st">"rgwb1"</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(GICSIndustry))) <span class="sc">|&gt;</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">c</span>(Gcode, SecurityTicker, ListDate),</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>                   \(x) <span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  Gcode SecurityTicker ListDate
+  &lt;lgl&gt; &lt;lgl&gt;          &lt;lgl&gt;   
+1 TRUE  TRUE           TRUE    </code></pre>
+</div>
+</div>
+</section>
+<section id="writing-the-parquet-file" class="level3" data-number="3.1.3">
+<h3 data-number="3.1.3" class="anchored" data-anchor-id="writing-the-parquet-file"><span class="header-section-number">3.1.3</span> Writing the parquet file</h3>
+<p>So, we can put the reading of raw data, the conversion of data types, and the filters needed to have a valid primary key together. But we have one final adjustment to make and that is to convert all variable names to lower case, as we will see later that the variable names embedded in <code>si_au_prc_daily.csv.gz</code> are all lower case (e.g., <code>gcode</code>), so we probably make our lives easier my converting our variables here to lower case (e.g., so we can join on <code>gcode</code> without worrying about slight differences in variable names).</p>
+<p>With that final adjustment, we can then write to a parquet file, as we do here. We will use the environment variable <code>DATA_DIR</code> that you set above to specify the location.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>pq_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>), <span class="st">"sirca"</span>)</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(pq_dir)) <span class="fu">dir.create</span>(pq_dir)</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>si_au_ref_names <span class="ot">&lt;-</span></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(si_au_ref_names_csv, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(SeniorSecurity, ListDate_DaysSince, DelistDate_DaysSince,</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>                  RecordCount, GICSIndustry, SIRCAIndustryClassCode, </span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>                  SIRCASectorCode), as.integer),</span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"Date"</span>), </span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a>                \(x) <span class="fu">dmy</span>(<span class="fu">if_else</span>(x <span class="sc">==</span> <span class="st">"0/01/1900"</span>, <span class="cn">NA</span>, x)))) <span class="sc">|&gt;</span></span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">ends_with</span>(<span class="st">"_YMD"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(Gcode <span class="sc">==</span> <span class="st">"rgwb1"</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(GICSIndustry))) <span class="sc">|&gt;</span></span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename_with</span>(str_to_lower) <span class="sc">|&gt;</span></span>
+<span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="at">sink =</span> <span class="fu">file.path</span>(pq_dir, <span class="st">"si_au_ref_names.parquet"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb61-16"><a href="#cb61-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for
+details, e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.064   0.012   0.064 </code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="importing-si_au_ref_trddays" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="importing-si_au_ref_trddays"><span class="header-section-number">3.2</span> Importing <code>si_au_ref_trddays</code></h2>
+<p>A similar process to that used for <code>si_au_ref_names</code> can be applied to <code>si_au_ref_trddays</code>. However, <code>si_au_ref_trddays</code> is a much simpler file and we conclude that the types of the five columns can be specified using <code>col_types = "ciDii"</code>, where <code>c</code> means character, <code>i</code> means integer, and <code>D</code> means date.<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays_csv <span class="ot">&lt;-</span> <span class="fu">file.path</span>(csv_dir, <span class="st">"si_au_ref_trddays.csv.gz"</span>)</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="ot">&lt;-</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(si_au_ref_trddays_csv, <span class="at">col_types =</span> <span class="st">"ciDii"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dateymd =</span> <span class="fu">ymd</span>(dateymd))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can easily confirm that <code>date</code> is a valid primary key:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="sc">|&gt;</span> </span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(date, <span class="at">name =</span> <span class="st">"num_rows"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(num_rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  num_rows     n
+     &lt;int&gt; &lt;int&gt;
+1        1  6326</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="sc">|&gt;</span> </span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(date, \(x) <span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 1
+  date 
+  &lt;lgl&gt;
+1 TRUE </code></pre>
+</div>
+</div>
+<p>We can also confirm that we don’t need <code>dateymd</code>, as it contains the same information as <code>date</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="sc">|&gt;</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(dateymd <span class="sc">!=</span> date) <span class="sc">|&gt;</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">|&gt;</span></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+</div>
+<p>We can specify <code>-</code> in <code>col_types</code> to omit <code>dateymd</code> when we read the data. Since <code>date</code> will be our primary key, we put that column first using the <code>relocate()</code> function.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="ot">&lt;-</span> </span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(si_au_ref_trddays_csv, <span class="at">col_types =</span> <span class="st">"-iDii"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(date)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We also confirm that <code>dayssince</code> simply represents the number of dates since <code>1899-12-30</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="sc">|&gt;</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">some_date =</span> date <span class="sc">-</span> dayssince) <span class="sc">|&gt;</span> </span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(some_date)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  some_date      n
+  &lt;date&gt;     &lt;int&gt;
+1 1899-12-30  6326</code></pre>
+</div>
+</div>
+<p>We can also confirm that <code>weekday</code> represents the day of the week in the US system that starts the week on Sunday.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="sc">|&gt;</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">weekday_calc =</span> <span class="fu">wday</span>(date),</span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">wday =</span> <span class="fu">wday</span>(date, <span class="at">label =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(weekday, weekday_calc, wday)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 4
+  weekday weekday_calc wday      n
+    &lt;int&gt;        &lt;dbl&gt; &lt;ord&gt; &lt;int&gt;
+1       2            2 Mon    1215
+2       3            3 Tue    1278
+3       4            4 Wed    1285
+4       5            5 Thu    1285
+5       6            6 Fri    1263</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>si_au_ref_trddays <span class="ot">&lt;-</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(si_au_ref_trddays_csv,</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">col_types =</span> <span class="st">"-iDii"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="at">sink =</span> <span class="fu">file.path</span>(pq_dir, <span class="st">"si_au_ref_trddays.parquet"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.011   0.003   0.012 </code></pre>
+</div>
+</div>
+</section>
+<section id="importing-si_au_retn_mkt" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="importing-si_au_retn_mkt"><span class="header-section-number">3.3</span> Importing <code>si_au_retn_mkt</code></h2>
+<p>While I omit the details here, I did confirm that much of what we saw with <code>si_au_ref_trddays</code> applies to <code>si_au_retn_mkt</code>:</p>
+<ul>
+<li><code>Date</code> is a valid primary key</li>
+<li><code>DateYMD</code> is redundant</li>
+<li><code>DaysSince</code> represents the number of days since <code>1899-12-30</code></li>
+</ul>
+<p>Again I convert all column names to lower case so that <code>date</code> is a common field across <code>si_au_ref_trddays</code>, <code>si_au_retn_mkt</code>, and <code>si_au_prc_daily</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>si_au_retn_mkt_csv <span class="ot">&lt;-</span> <span class="fu">file.path</span>(csv_dir, <span class="st">"si_au_retn_mkt.csv.gz"</span>)</span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>si_au_retn_mkt <span class="ot">&lt;-</span></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(si_au_retn_mkt_csv,</span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">col_types =</span> <span class="st">"-iDdddddd"</span>,</span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">locale =</span> <span class="fu">locale</span>(<span class="at">date_format =</span> <span class="st">"%d/%m/%Y"</span>),</span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>           <span class="at">name_repair =</span> str_to_lower) <span class="sc">|&gt;</span></span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="at">sink =</span> <span class="fu">file.path</span>(pq_dir, <span class="st">"si_au_retn_mkt.parquet"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.011   0.004   0.009 </code></pre>
+</div>
+</div>
+</section>
+<section id="importing-si_au_prc_daily" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="importing-si_au_prc_daily"><span class="header-section-number">3.4</span> Importing <code>si_au_prc_daily</code></h2>
+<p>By this point, we should be getting the hang of the workflow. I now move on to the largest file in the set, <code>si_au_prc_daily.csv.gz</code>. I start by identifying the CSV source and the parquet destination.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily_csv <span class="ot">&lt;-</span> <span class="fu">file.path</span>(csv_dir, <span class="st">"si_au_prc_daily.csv.gz"</span>)</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily_pq <span class="ot">&lt;-</span> <span class="fu">file.path</span>(pq_dir, <span class="st">"si_au_prc_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Using a process similar to that above, one can identify those columns needing special handling in the import process. Note that I specify <code>guess_max = 1e6</code> because the default value for <code>guess_max</code> reads too few rows to infer the types of some variables that are mostly <code>NA</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="ot">&lt;-</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(si_au_prc_daily_csv,</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">guess_max =</span> <span class="fl">1e6</span>,</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dateymd =</span> <span class="fu">ymd</span>(dateymd),</span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">date =</span> <span class="fu">dmy</span>(date),</span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">weekday =</span> <span class="fu">as.integer</span>(weekday),</span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">monthend =</span> <span class="fu">as.logical</span>(monthend),</span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">seniorsecurity =</span> <span class="fu">as.integer</span>(seniorsecurity)) <span class="sc">|&gt;</span></span>
+<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+ 71.659   7.355  44.749 </code></pre>
+</div>
+</div>
+<p>Again we need to choose between <code>date</code> and <code>dateymd</code>, which are almost always equal.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="sc">|&gt;</span> </span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">!=</span> dateymd) <span class="sc">|&gt;</span> </span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(gcode, securityticker, date, dateymd, dayssince)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 0 × 5
+# ℹ 5 variables: gcode &lt;chr&gt;, securityticker &lt;chr&gt;, date &lt;date&gt;,
+#   dateymd &lt;date&gt;, dayssince &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Again <code>dateymd</code> seems to be the one of the two that is consistent with <code>dayssince</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="sc">|&gt;</span> </span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(dayssince <span class="sc">==</span> <span class="dv">40682</span>) <span class="sc">|&gt;</span></span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(date)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  date           n
+  &lt;date&gt;     &lt;int&gt;
+1 2011-05-19  1513</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="sc">|&gt;</span> </span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(dayssince <span class="sc">==</span> <span class="dv">40682</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(dateymd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  dateymd        n
+  &lt;date&gt;     &lt;int&gt;
+1 2011-05-19  1513</code></pre>
+</div>
+</div>
+<p>So in saving to parquet, I keep <code>dateymd</code>, but rename it to <code>date</code> for consistency across datasets.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="sc">|&gt;</span></span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>date) <span class="sc">|&gt;</span></span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">date =</span> dateymd) <span class="sc">|&gt;</span></span>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="at">sink =</span> si_au_prc_daily_pq) <span class="sc">|&gt;</span></span>
+<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system.time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>One issue with the code above is that it is quite slow and requires the full dataset to be loaded in RAM. Given that <code>si_au_prc_daily</code> occupies 4.31 GB of RAM when loaded, this can be a problem if you have modest computing resources.</p>
+<p>An alternative approach would be to use DuckDB’s facility for reading CSV files and writing to parquet files. The small <code>export_parquet()</code> function accepts a remote data frame in a DuckDB connection and writes it to parquet.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a>export_parquet <span class="ot">&lt;-</span> <span class="cf">function</span>(df, file) {</span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>  db <span class="ot">&lt;-</span> df[[<span class="st">"src"</span>]][[<span class="st">"con"</span>]]</span>
+<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">collapse</span>(df)</span>
+<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a>  sql <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"COPY ("</span>, dbplyr<span class="sc">::</span><span class="fu">remote_query</span>(df),</span>
+<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a>                <span class="st">") TO '"</span>, file, <span class="st">"'"</span>)</span>
+<span id="cb90-6"><a href="#cb90-6" aria-hidden="true" tabindex="-1"></a>  DBI<span class="sc">::</span><span class="fu">dbExecute</span>(db, sql)</span>
+<span id="cb90-7"><a href="#cb90-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">invisible</span>(df)</span>
+<span id="cb90-8"><a href="#cb90-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The following code creates a DuckDB connection, then uses that connection to read the CSV file and then calls <code>export_parquet()</code> to write it the data to a parquet file. This is an order of magnitude faster than the <code>read_csv()</code> code above, yet seems to make no demands on RAM.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="ot">&lt;-</span></span>
+<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl</span>(db, <span class="fu">str_c</span>(<span class="st">"read_csv('"</span>, si_au_prc_daily_csv, <span class="st">"',</span></span>
+<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a><span class="st">                    DateFormat = '%Y%m%d',</span></span>
+<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a><span class="st">                    types = {'dateymd': 'DATE',</span></span>
+<span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a><span class="st">                             'dayssince': 'INTEGER',</span></span>
+<span id="cb91-8"><a href="#cb91-8" aria-hidden="true" tabindex="-1"></a><span class="st">                             'weekday': 'INTEGER',</span></span>
+<span id="cb91-9"><a href="#cb91-9" aria-hidden="true" tabindex="-1"></a><span class="st">                             'monthend': 'BOOLEAN',</span></span>
+<span id="cb91-10"><a href="#cb91-10" aria-hidden="true" tabindex="-1"></a><span class="st">                             'seniorsecurity': 'INTEGER'})"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb91-11"><a href="#cb91-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>() <span class="sc">|&gt;</span></span>
+<span id="cb91-12"><a href="#cb91-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>date) <span class="sc">|&gt;</span></span>
+<span id="cb91-13"><a href="#cb91-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">date =</span> dateymd) <span class="sc">|&gt;</span></span>
+<span id="cb91-14"><a href="#cb91-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">export_parquet</span>(<span class="at">file =</span> si_au_prc_daily_pq) <span class="sc">|&gt;</span></span>
+<span id="cb91-15"><a href="#cb91-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+ 32.362   8.753   9.679 </code></pre>
+</div>
+</div>
+<section id="identifying-the-primary-key-1" class="level3" data-number="3.4.1">
+<h3 data-number="3.4.1" class="anchored" data-anchor-id="identifying-the-primary-key-1"><span class="header-section-number">3.4.1</span> Identifying the primary key</h3>
+<p>Obviously <code>gcode</code> and <code>date</code> are going to be part of any primary key, but one can quickly deduce from the documentation supplied by SIRCA that a single <code>gcode</code> can be associated with multiple securities at one time and that <code>seniorsecurity</code> is used to distinguish these. This suggests <code>(gcode, date, seniorsecurity)</code> as a candidate primary key, so let’s check this.</p>
+<p>First, does each combination of <code>(gcode, date, seniorsecurity)</code> identify a single row?</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="sc">|&gt;</span> </span>
+<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(gcode, date, seniorsecurity, <span class="at">name =</span> <span class="st">"num_rows"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb93-3"><a href="#cb93-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(num_rows) <span class="sc">|&gt;</span></span>
+<span id="cb93-4"><a href="#cb93-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  num_rows       n
+     &lt;dbl&gt;   &lt;dbl&gt;
+1        1 9050690</code></pre>
+</div>
+</div>
+<p>Second, are there no <code>NA</code> values in the <code>(gcode, date, seniorsecurity)</code> combination?</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb95"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a>si_au_prc_daily <span class="sc">|&gt;</span> </span>
+<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">c</span>(gcode, date, seniorsecurity),</span>
+<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>                   \(x) <span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(x), <span class="at">na.rm =</span> <span class="cn">TRUE</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  gcode date  seniorsecurity
+  &lt;lgl&gt; &lt;lgl&gt; &lt;lgl&gt;         
+1 TRUE  TRUE  TRUE          </code></pre>
+</div>
+</div>
+<p>One thing to note here is that I checked the primary key using the DuckDB version of the data rather than the <code>dplyr</code> data frame (or tibble). One reason for this is that the code was much faster using the DuckDB version.</p>
+<p>Now that I am done with the DuckDB connection, I can disconnect from it.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(db)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="the-final-script" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="the-final-script"><span class="header-section-number">3.5</span> The final script</h2>
+<p>I organized the code above (e.g., removed redundant elements) and placed it in a script <a href="https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R">here</a>. With the raw data in <code>RAW_DATA_DIR</code> and the necessary packages installed, I can create parquet data files by simply running the following code:<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a>source_url <span class="ot">&lt;-</span> <span class="fu">str_c</span>(<span class="st">"https://raw.githubusercontent.com/"</span>,</span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"iangow/notes/main/import_sirca.R"</span>)</span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">RAW_DATA_DIR =</span> <span class="st">"~/Dropbox/raw_data"</span>)</span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a>t <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb98-6"><a href="#cb98-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">DATA_DIR =</span> t)</span>
+<span id="cb98-7"><a href="#cb98-7" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(source_url) <span class="sc">|&gt;</span> <span class="fu">system.time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+ 23.908   1.340   5.426 </code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="the-service-level-agreement-revisited" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> The service-level agreement revisited</h1>
+<p>I now return to our service-level agreement (SLA) to take stock of where we are after the above. Given that much of the focus above was on data types, I do not revisit that here and instead focus on those elements of the SLA that I did not address above.</p>
+<section id="storage-format-1" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="storage-format-1"><span class="header-section-number">4.1</span> Storage format</h2>
+<p>We have chosen to use parquet files for our output. <a href="#tbl-pq-files" class="quarto-xref">Table&nbsp;4</a> provides some data on the parquet files we have produced for our hypothetical client (the <em>Understand</em> team). Assuming that the client is a group of colleagues at an institution with access to SIRCA, we (the <em>Curate</em> team) might just send a link to the Dropbox folder where we have stored the parquet files.</p>
+<div class="cell">
+<div id="tbl-pq-files" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-pq-files-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Data on processed parquet files
+</figcaption>
+<div aria-describedby="tbl-pq-files-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">file_name</th>
+<th style="text-align: left;">size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">si_au_prc_daily.parquet</td>
+<td style="text-align: left;">517.71 MB</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">si_au_ref_names.parquet</td>
+<td style="text-align: left;">838.82 kB</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">si_au_ref_trddays.parquet</td>
+<td style="text-align: left;">86.75 kB</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">si_au_retn_mkt.parquet</td>
+<td style="text-align: left;">439.38 kB</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="primary-keys-1" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="primary-keys-1"><span class="header-section-number">4.2</span> Primary keys</h2>
+<p><a href="#tbl-asx-eod-keys" class="quarto-xref">Table&nbsp;5</a> provides a summary of our analysis above of primary keys.</p>
+<div id="tbl-asx-eod-keys" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-asx-eod-keys-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: SIRCA ASX EOD price collection: Primary keys
+</figcaption>
+<div aria-describedby="tbl-asx-eod-keys-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Table</th>
+<th style="text-align: right;">Primary key</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>si_au_ref_names</code></td>
+<td style="text-align: right;"><code>gcode</code>, <code>securityticker</code>, <code>listdate</code></td>
+</tr>
+<tr class="even">
+<td><code>si_au_prc_daily</code></td>
+<td style="text-align: right;"><code>gcode</code>, <code>date</code>, <code>seniorsecurity</code></td>
+</tr>
+<tr class="odd">
+<td><code>si_au_retn_mkt</code></td>
+<td style="text-align: right;"><code>date</code></td>
+</tr>
+<tr class="even">
+<td><code>si_au_ref_trddays</code></td>
+<td style="text-align: right;"><code>date</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="good-database-principles-1" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="good-database-principles-1"><span class="header-section-number">4.3</span> Good database principles</h2>
+<p>In general, I think one wants to be fairly conservative in considering database principles with a data library. If the data are workable and make sense in the form they come in, then it may make most sense to keep them in that form.</p>
+<p>The SIRCA ASX EOD data are organized into four tables with easy-to-understand primary keys and a fairly natural structure. At some level, the two primary tables are <code>si_au_ref_names</code> and <code>si_au_prc_daily</code>.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a> These two tables are naturally distinct, with one about companies and the other about daily security returns.</p>
+<p>While there might be merit in splitting <code>si_au_prc_daily</code> into separate tables to reduce its size, it is actually quite manageable in its current form.</p>
+</section>
+<section id="no-manual-steps-1" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="no-manual-steps-1"><span class="header-section-number">4.4</span> No manual steps</h2>
+<p>There are no manual steps in creating the parquet files except for the initial download of the CSV files from SIRCA. While some data vendors allow users to download files using scripts (e.g., the scripts I have <a href="https://github.com/iangow/wrds_pg/tree/master/crsp">here</a> for WRDS), this does not appear to be an option for SIRCA. But once the data have been downloaded, the subsequent steps are automatic.</p>
+<p>While some of the checks and data-cleaning had manual elements (e.g., identifying the near-duplicate with <code>Gcode=="rgwb1"</code> in <code>si_au_ref_names</code>), the resulting code implements the fix in an automated fashion. So long as the SIRCA data remain unchanged, the fix will continue to work.</p>
+</section>
+<section id="documentation-1" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="documentation-1"><span class="header-section-number">4.5</span> Documentation</h2>
+<p>A important principle here is that the code for processing the data is documentation in its own right. Beyond that the document you are reading now is a form of documentation. If the goal of this document were to provide details explaining the process used to produce the final datasets, then it might make sense to edit this document to reflect that different purpose, but in many ways I hope this document already acts as good documentation.</p>
+</section>
+<section id="update-process-1" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="update-process-1"><span class="header-section-number">4.6</span> Update process</h2>
+<p>In some ways, the update process is straightforward: when new CSV files become available, download them into <code>RAW_DATA_DIR</code> and run the script. However, it would probably be necessary to retrace some of the steps above to ensure that no data issues have crept in (e.g., duplicated keys). It may make sense to document the update process as part of performing it the first time.</p>
+</section>
+<section id="data-version-control-1" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="data-version-control-1"><span class="header-section-number">4.7</span> Data version control</h2>
+<p>I achieve a modest level of data version control by using Dropbox, which offers the ability to restore previous versions of data files. As discussed earlier, version control of data is a knotty problem.</p>
+</section>
+<section id="references" class="level2 unnumbered">
+
+
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Broman:2018aa" class="csl-entry" role="listitem">
+Broman, Karl W., and Kara H. Woo. 2018. <span>“Data Organization in Spreadsheets.”</span> <em>The American Statistician</em> 72 (1): 2–10. <a href="https://doi.org/10.1080/00031305.2017.1375989">https://doi.org/10.1080/00031305.2017.1375989</a>.
+</div>
+<div id="ref-Welch:2019aa" class="csl-entry" role="listitem">
+Welch, Ivo. 2019. <span>“Editorial: An Opinionated FAQ.”</span> <em>Critical Finance Review</em> 8 (1-2): 19–24. <a href="https://doi.org/10.1561/104.00000077">https://doi.org/10.1561/104.00000077</a>.
+</div>
+<div id="ref-Wickham:2023aa" class="csl-entry" role="listitem">
+Wickham, Hadley, Mine Çetinkaya-Rundel, and Garrett Grolemund. 2023. <em>R for Data Science</em>. Sebastopol, CA: O’Reilly Media. <a href="https://books.google.com/books?id=TiLEEAAAQBAJ">https://books.google.com/books?id=TiLEEAAAQBAJ</a>.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>This is a slightly edited version of a document originally made available in September 2025.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>The terms “process” and “step” are my own concoctions here and represent an attempt to group certain things together. I use capitalized verbs to describe what I am calling processes and lower-case verbs to denote steps. The original “whole game” model has just a single step after the <em>Understand</em> process and I upgrade that single step to a process.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>The authors of <em>R for Data Science</em> call the “whole game” a process, but I’ve already used that term to describe the next level down. So I choose <em>workflow</em> to denote the whole shebang here.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>I think it is interesting that <em>R for Data Science</em> places its part on <a href="https://r4ds.hadley.nz/transform"><em>transform</em></a> <em>before</em> its part on <a href="https://r4ds.hadley.nz/import"><em>import</em></a>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Within business schools, my sense is that Chicago offers faculty the best data curation support. While much of this occurs in a fairly decentralized fashion through the employment of <a href="https://www.chicagobooth.edu/faculty/research-staff">research professionals</a> who work closely with one or two faculty members, Chicago Booth also provides excellent research computing infrastructure, such as provisioning PostgreSQL databases for faculty use.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>More recently I have moved to also downloading CRSP data as parquet files using my <a href="https://pypi.org/project/db2pq/"><code>db2pq</code> Python package</a>.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>By “manufacture” I merely mean to connote some notion of a production process, not some idea of <a href="https://datacolada.org/117">untoward processes for producing data</a>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>I discuss some of the issues with Excel as a storage format below.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>One project I worked on involved Python code analysing text and putting results in a PostgreSQL database and a couple of lines of code were sufficient for a co-author in a different city to load these data into Stata.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Sometimes there will be more than one primary key for a table.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>Here I used PostgreSQL data types, but the equivalent types in other formats should be fairly clear.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>SAS and Stata are somewhat loose with their “data types”. In effect SAS has just two data types—fixed-width character and floating-point numeric—and the other types are just formatting overlays over these. These types can be easily upset depending on how the data are used.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>An example where this could happen is provided in <a href="#tip-friends" class="quarto-xref">Tip&nbsp;1</a>.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>Best practices here could be the subject of a separate note, as there are a lot of subtleties and my experience is that people often have bad habits here.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>Execute <code>install.packages(c("tidyverse", "DBI", "duckdb", "arrow", "farr"))</code> within R to install all the packages you need to run the code in this note.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>Using environment variables to specify <code>RAW_DATA_DIR</code> and <code>DATA_DIR</code> may not have an obvious payoff in the context of this note. The benefit comes more from follow-on work using the data and also from applying the approach to managing raw data more broadly.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>Whoever did this also had their computer set to format dates in the US-style <code>Mmm-dd</code> format, rather than the <code>dd-Mmm</code> style I see on my computer.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>You can download this CSV file <a href="https://raw.githubusercontent.com/iangow/notes/main/weird_gcodes.csv">here</a>.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>See <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> for further discussion of some of the issues with using Excel for data science.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>See the help for <code>read_csv()</code> to learn more.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>The ISO 8601 convention is more consistent with the idea that Sunday is at the <em>end</em> of the week—hence “week<em>end</em>”—and starts the week on Monday. But these distinctions are not important here.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>Note that I set <code>DATA_DIR</code> to a different directory to avoid overwriting the files I just created and creating problems with Dropbox having to sync new files before it’s even uploaded old ones.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>It seems possible that <code>si_au_retn_mkt</code> and <code>si_au_ref_trddays</code> are generated from <code>si_au_prc_daily</code>.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

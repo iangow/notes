@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Ian D. Gow">
-<meta name="dcterms.date" content="2026-02-02">
+<meta name="dcterms.date" content="2024-08-13">
 
 <title>Working with date and times – notes</title>
 <style>
@@ -207,7 +207,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2 February 2026</p>
+      <p class="date">13 August 2024</p>
     </div>
   </div>
   
@@ -224,7 +224,7 @@ div.csl-indent {
 </div>
 <p>As discussed in a <a href="https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ">recent post on LinkedIn</a>, one goal of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> <span class="citation" data-cites="gow2024empirical">(<a href="#ref-gow2024empirical" role="doc-biblioref">Gow and Ding, 2024</a>)</span> is to provide a pathway to mastery of the contents of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times. <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">One recent note</a> covered hierarchical data and a forthcoming note will address spreadsheets.</p>
 <p>The purpose of this note is address the gap regarding dates and times in more detail—including a hands-on application—than found in the <a href="https://r4ds.hadley.nz/datetimes">“Dates and Times” chapter</a> of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>. The application I work with is based on the SEC submissions data I discussed in <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">another recent note</a>. I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.</p>
-<p>In writing this note, I use the packages listed below.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/datetimes.qmd">here</a> and the latest version of this PDF is <a href="https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf">here</a>.</p>
+<p>In writing this note, I use the packages listed below.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/published/datetimes.qmd">here</a>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
@@ -349,7 +349,7 @@ div.csl-indent {
 <h2 class="anchored" data-anchor-id="working-with-sec-filings-data">Working with SEC filings data</h2>
 <p>We start by loading the <code>filings</code> data stored in a parquet file <code>filings.parquet</code> in the <code>data</code> subdirectory of our current project.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>filings <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="at">table =</span> <span class="st">"filings"</span>, <span class="at">data_dir =</span> <span class="st">"../data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>filings <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="at">table =</span> <span class="st">"filings"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC. For example, the original text representation of <code>acceptanceDateTime</code> was of the form <code>2024-04-25T17:04:01.000Z</code>. The <code>Z</code> is meant to indicate that the timestamp is expressed in UTC.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> However, I ignored that in importing the data and interpreted these timestamps as relating to <code>America/New_York</code>. As we will see shortly, this interpretation is correct based on other information.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
 <p>To understand the date-times on <code>filings</code>, I extract some components of the timestamp to create a variable <code>acceptance_time</code> that converts the date component of each <code>acceptanceDateTime</code> to the same date (<code>2000-01-01</code>) as this facilitates plotting the times ignoring the dates.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
@@ -674,19 +674,19 @@ Figure&nbsp;8: Distribution of times between 8-K filings and conference calls
 </div>
 <p>I have a PostgreSQL database running on my computer, so I can connect to it with an empty connection string. See the <a href="https://duckdb.org/docs/extensions/postgres">documentation</a> for the <code>postgres</code> extension if you need to supply additional information to connect to a PostgreSQL database.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"ATTACH '' AS pg (TYPE POSTGRES)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="st">"ATTACH 'user=igow' AS pg (TYPE POSTGRES, READ_WRITE)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The first step is to copy the data in <code>filings.parquet</code> to PostgreSQL. We need to go from the parquet file as we did not materialize a table with these data in DuckDB. This step takes some time, but would be a one-off step. I include <code>IF NOT EXISTS</code> to avoid overwriting any existing table you might have.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="st">"CREATE TABLE IF NOT EXISTS pg.filings AS</span></span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT * FROM '../data/filings.parquet'"</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT * FROM 'data/filings.parquet'"</span></span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, sql) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
- 36.372   1.023  33.115 </code></pre>
+  0.005   0.001   0.043 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 12120262</code></pre>
+<pre><code>[1] 0</code></pre>
 </div>
 </div>
 <p>We did materialize named (temporary) tables for <code>tickers</code> and <code>sample_calls</code>, so we can copy directly from those to PostgreSQL. These small tables are populated very quickly.</p>
@@ -740,7 +740,7 @@ Figure&nbsp;8: Distribution of times between 8-K filings and conference calls
 <span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.020   0.000  23.169 </code></pre>
+  0.020   0.001   1.351 </code></pre>
 </div>
 </div>
 <p>Finally, the code to produce <a href="#fig-time-diff-pg" class="quarto-xref">Figure&nbsp;9</a> is unchanged from the equivalent code above. Happily, <a href="#fig-time-diff-pg" class="quarto-xref">Figure&nbsp;9</a> looks identical to <a href="#fig-time-diff" class="quarto-xref">Figure&nbsp;8</a>.</p>

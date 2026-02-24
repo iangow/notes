@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2025-02-14">
+
+<title>Retail sales – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#understanding-the-industries" id="toc-understanding-the-industries" class="nav-link active" data-scroll-target="#understanding-the-industries"><span class="header-section-number">1</span> Understanding the industries</a>
+  <ul class="collapse">
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises"><span class="header-section-number">1.1</span> Exercises</a></li>
+  </ul></li>
+  <li><a href="#panel-data" id="toc-panel-data" class="nav-link" data-scroll-target="#panel-data"><span class="header-section-number">2</span> Panel data</a>
+  <ul class="collapse">
+  <li><a href="#plotting-panel-data" id="toc-plotting-panel-data" class="nav-link" data-scroll-target="#plotting-panel-data"><span class="header-section-number">2.1</span> Plotting panel data</a>
+  <ul class="collapse">
+  <li><a href="#exercises-1" id="toc-exercises-1" class="nav-link" data-scroll-target="#exercises-1"><span class="header-section-number">2.1.1</span> Exercises</a></li>
+  </ul></li>
+  <li><a href="#seasonality" id="toc-seasonality" class="nav-link" data-scroll-target="#seasonality"><span class="header-section-number">2.2</span> Seasonality</a>
+  <ul class="collapse">
+  <li><a href="#exercises-2" id="toc-exercises-2" class="nav-link" data-scroll-target="#exercises-2"><span class="header-section-number">2.2.1</span> Exercises</a></li>
+  </ul></li>
+  <li><a href="#sec-windows" id="toc-sec-windows" class="nav-link" data-scroll-target="#sec-windows"><span class="header-section-number">2.3</span> Time windows</a>
+  <ul class="collapse">
+  <li><a href="#year-to-date-ytd" id="toc-year-to-date-ytd" class="nav-link" data-scroll-target="#year-to-date-ytd"><span class="header-section-number">2.3.1</span> Year-to-date (YTD)</a></li>
+  <li><a href="#fiscal-year-to-date-ytd" id="toc-fiscal-year-to-date-ytd" class="nav-link" data-scroll-target="#fiscal-year-to-date-ytd"><span class="header-section-number">2.3.2</span> Fiscal year-to-date (YTD)</a></li>
+  <li><a href="#moving-averages" id="toc-moving-averages" class="nav-link" data-scroll-target="#moving-averages"><span class="header-section-number">2.3.3</span> Moving averages</a></li>
+  <li><a href="#economic-shocks" id="toc-economic-shocks" class="nav-link" data-scroll-target="#economic-shocks"><span class="header-section-number">2.3.4</span> Economic shocks</a></li>
+  <li><a href="#sec-abs" id="toc-sec-abs" class="nav-link" data-scroll-target="#sec-abs"><span class="header-section-number">2.3.5</span> Where can I get the data?</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="retail-sales.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Retail sales</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow <a href="mailto:iandgow@gmail.com" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/0000-0002-6243-8409" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 14, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div id="tip-pkgs" class="callout callout-style-default callout-tip callout-titled" data-text-align="left">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip&nbsp;1
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The code in this chapter uses the packages listed below. For instructions on how to set up your computer to use the code found in this book, see [TBD].<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> Quarto templates for the exercises below are available on <a href="https://github.com/iangow/far_templates/blob/main/README.md">GitHub</a>.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(modelsummary)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dbplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The data we focus on in this chapter come from the <a href="https://www.abs.gov.au">Australian Bureau of Statistics</a> (ABS). The ABS describes itself as “Australia’s national statistical agency and an official source of independent, reliable information.” We discuss the source of the data in more detail in <a href="#sec-abs" class="quarto-xref">Section&nbsp;2.3.5</a>.</p>
+<p>The data are stored as a <strong>comma-separated value</strong> (CSV) file format in <code>data/retail_sales.csv</code> in the repository you downloaded for this course.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> There is a good chance that, if Microsoft Excel is installed on your computer, double-clicking on this file on your computer will open it in Excel. To understand the contents of the file, it’s actually better to open it in a text editor, such as Notepad (Windows) or TextEdit (MacOS). CSV files are a common format for sharing data, as it is a simple format that many software packages can handle. <a href="https://r4ds.hadley.nz/data-import.html">Chapter 7</a> of <em>R for Data Science</em> discusses CSVs in more detail.</p>
+<p>Here we use <code>read_csv()</code> from the Tidyverse to load the data into R.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/retail_sales.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 96957 Columns: 6
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (3): industry, state, parent_industry
+dbl  (2): sales, ind_level
+date (1): date
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<p>As can be seen in the output above, <code>read_csv()</code> will attempt to infer a number of features of the data. For example, the first row of the CSV file is assumed to provide the names the columns of the resulting data frame:</p>
+<pre><code>industry,state,date,sales,ind_level,parent_industry</code></pre>
+<p>Additionally, <code>read_csv()</code> will guess the appropriate type for each column. From the output above, we can see that <code>industry</code>, <code>state</code>, and <code>parent_industry</code> are imported as character columns, that <code>date</code> has type date, and that <code>sales</code> and <code>ind_level</code> have type <code>dbl</code> (“double” being the R type for storing real numbers).</p>
+<p>The data in <code>retail_sales</code> are monthly estimates of turnover [sales in dollars] and volumes for retail businesses, including store and online sales, by industry group and industry subgroup. According to <a href="https://www.abs.gov.au/methodologies/retail-trade-australia-methodology/dec-2024">the ABS</a>, “estimates of turnover are compiled from the monthly Retail Business Survey. About 700 ‘large’ businesses are included in the survey every month, while a sample of about 2,700 ‘smaller’ businesses is selected.”</p>
+<p>We can take a peek at the first few rows of data by typing <code>retail_sales</code> in the R console:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>retail_sales</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 96,957 × 6
+   industry                     state date       sales ind_level parent_industry
+   &lt;chr&gt;                        &lt;chr&gt; &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;          
+ 1 Cafes, restaurants and cate… Aust… 1982-04-01   4.4         2 Cafes, restaur…
+ 2 Cafes, restaurants and cate… New … 1982-04-01  61.8         2 Cafes, restaur…
+ 3 Cafes, restaurants and cate… Nort… 1982-04-01  NA           2 Cafes, restaur…
+ 4 Cafes, restaurants and cate… Quee… 1982-04-01  18.7         2 Cafes, restaur…
+ 5 Cafes, restaurants and cate… Sout… 1982-04-01  14.3         2 Cafes, restaur…
+ 6 Cafes, restaurants and cate… Tasm… 1982-04-01   1.9         2 Cafes, restaur…
+ 7 Cafes, restaurants and cate… Tota… 1982-04-01 146.          2 Cafes, restaur…
+ 8 Cafes, restaurants and cate… Vict… 1982-04-01  36.4         2 Cafes, restaur…
+ 9 Cafes, restaurants and cate… West… 1982-04-01   8           2 Cafes, restaur…
+10 Cafes, restaurants and take… Aust… 1982-04-01   7.6         1 Total (Industr…
+# ℹ 96,947 more rows</code></pre>
+</div>
+</div>
+<p>We can also get a succinct take on the data using <code>summary()</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(retail_sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   industry            state                date                sales        
+ Length:96957       Length:96957       Min.   :1982-04-01   Min.   :    0.4  
+ Class :character   Class :character   1st Qu.:1992-12-01   1st Qu.:   27.5  
+ Mode  :character   Mode  :character   Median :2003-08-01   Median :  107.8  
+                                       Mean   :2003-08-01   Mean   :  533.4  
+                                       3rd Qu.:2014-04-01   3rd Qu.:  371.1  
+                                       Max.   :2024-12-01   Max.   :45943.1  
+                                                            NA's   :6970     
+   ind_level     parent_industry   
+ Min.   :0.000   Length:96957      
+ 1st Qu.:1.000   Class :character  
+ Median :2.000   Mode  :character  
+ Mean   :1.619                     
+ 3rd Qu.:2.000                     
+ Max.   :2.000                     
+                                   </code></pre>
+</div>
+</div>
+<section id="understanding-the-industries" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Understanding the industries</h1>
+<p>According to <a href="https://www.abs.gov.au/methodologies/retail-trade-australia-methodology/jul-2024#defining-retail-trade">the ABS,</a> the statistics from which <code>retail_sales</code> are derived are presented at two levels of detail: <em>industry group</em>, “the broadest industry level comprising 6 industry groups”, and <em>industry subgroup</em>, which is “the most detailed industry level comprising 15 industry subgroups.” In <code>retail_sales</code>, industry groups are associated with <code>ind_level</code> equal to 1 and industry subgroups are associated with <code>ind_level</code> equal to 2. For each, industry subgroup, the industry group to which it belongs is identified in <code>parent_industry</code>.</p>
+<p>We start by investigating the data in <code>industry</code>, <code>ind_level</code>, and <code>parent_industry</code>. Below we see that <code>Total (Industry)</code> is the parent industry for all industries having <code>ind_level</code> equal to one and that <code>parent_industry</code> is missing whenever <code>ind_level</code> is zero. Note that only five distinct industries are listed under <code>parent_industry</code> when <code>ind_level</code> is two.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="sc">|&gt;</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(parent_industry, ind_level) <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ind_level)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 7 × 3
+  parent_industry                                     ind_level     n
+  &lt;chr&gt;                                                   &lt;dbl&gt; &lt;int&gt;
+1 &lt;NA&gt;                                                        0  4617
+2 Total (Industry)                                            1 27702
+3 Cafes, restaurants and takeaway food services               2  9234
+4 Clothing, footwear and personal accessory retailing         2  9234
+5 Food retailing                                              2 13851
+6 Household goods retailing                                   2 13851
+7 Other retailing                                             2 18468</code></pre>
+</div>
+</div>
+<p>We can identify the missing industry group by using an <strong>anti-join</strong> (<code>anti_join()</code>) and <code>join_by(industry == parent_industry)</code>. The output of following query identifies the problem case as “Department stores”.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="sc">|&gt;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(retail_sales, <span class="at">by =</span> <span class="fu">join_by</span>(industry <span class="sc">==</span> parent_industry)) <span class="sc">|&gt;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(industry)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  industry              n
+  &lt;chr&gt;             &lt;int&gt;
+1 Department stores  4617</code></pre>
+</div>
+</div>
+<p>Because the function <code>anti_join(x, y)</code> returns all rows in <code>x</code> that don’t have a match in <code>y</code>, it is useful for finding <strong>implicit missing values</strong>.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<p>Additionally, while the ABS website describes the data as “comprising 15 industry subgroups”, we see only 14 subgroups in the data:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="sc">|&gt;</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(industry, ind_level) <span class="sc">|&gt;</span> </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(ind_level)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 2
+  ind_level     n
+      &lt;dbl&gt; &lt;int&gt;
+1         0     1
+2         1     6
+3         2    14</code></pre>
+</div>
+</div>
+<p>What explains these discrepancies? The natural explanation is that <em>Department stores</em> is an industry group that has only one subgroup, itself. In effect, <em>Department stores</em> could be considered as having <code>ind_level</code> equal to both one and two.</p>
+<p>A natural question is whether sales of the subgroups add up to the sales of the industry groups.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> To answer this question, I first collect data—the sum of sales by state and year—on industry groups directly and store them in <code>level_1_df</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>level_1_df <span class="ot">&lt;-</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  retail_sales <span class="sc">|&gt;</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>, year <span class="sc">&lt;</span> <span class="dv">2024</span>) <span class="sc">|&gt;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state, year, industry, ind_level) <span class="sc">|&gt;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">no_missing =</span> <span class="fu">as.integer</span>(<span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(sales))),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">sales =</span> <span class="fu">sum</span>(sales, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then collect the same data on industry groups directly by aggregating the applicable industry subgroups and store them in <code>level_2_df</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>level_2_df <span class="ot">&lt;-</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  retail_sales <span class="sc">|&gt;</span> </span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ind_level <span class="sc">==</span> <span class="dv">2</span>, year <span class="sc">&lt;</span> <span class="dv">2024</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state, year, parent_industry, ind_level) <span class="sc">|&gt;</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">no_missing =</span> <span class="fu">as.integer</span>(<span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(sales))),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">sales =</span> <span class="fu">sum</span>(sales, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">industry =</span> parent_industry)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Finally, I combine the data from both of these data frames into one data frame using <code>union_all()</code> and save the result in <code>combined_levels</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>combined_levels <span class="ot">&lt;-</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  level_1_df <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">union_all</span>(level_2_df) <span class="sc">|&gt;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.character</span>(year),</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">ind_level =</span> <span class="fu">as.character</span>(ind_level))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I will use <code>datasummary()</code> from the <code>modelsummary</code> package to display summary statistics. I create <code>pretty_num()</code> to format the numbers in the way that I want.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>pretty_num <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">prettyNum</span>(<span class="fu">as.integer</span>(x), <span class="at">format =</span> <span class="st">"f"</span>, </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">big.mark =</span> <span class="st">","</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I create alternative shorter names for two industries that have names that are too long to fit in the tables I want to display.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>short_names <span class="ot">&lt;-</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tribble</span>(</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>industry, <span class="sc">~</span>short_ind,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Cafes, restaurants and takeaway food services"</span>, <span class="st">"Cafes, restaurants, etc"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Clothing, footwear and personal accessory retailing"</span>, </span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Clothing, footwear, accessories"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In <a href="#tbl-reconc" class="quarto-xref">Table&nbsp;1</a>, I display the total sales for each industry group calculated in two ways: once by summing up the values for the industry group and again by summing up the values for the subgroups comprised by the group.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>combined_levels <span class="sc">|&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(short_names, <span class="at">by =</span> <span class="st">"industry"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">industry =</span> <span class="fu">coalesce</span>(short_ind, industry)) <span class="sc">|&gt;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">&gt;=</span> <span class="dv">2019</span>, </span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>         state <span class="sc">==</span> <span class="st">"Total (State)"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>         industry <span class="sc">!=</span> <span class="st">"Department stores"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datasummary</span>(industry <span class="sc">*</span> ind_level <span class="sc">~</span> sales <span class="sc">*</span> sum <span class="sc">*</span> year,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> _, <span class="at">fmt =</span> pretty_num,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">digits =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-reconc" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-reconc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Reconciliation of sales by group and sub-groups: Total (State)
+</figcaption>
+<div aria-describedby="tbl-reconc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<!-- preamble start -->
+
+    <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script>
+
+    <script>
+      // Create table-specific functions using external factory
+      const tableFns_2mmvfjhmlvs5tzih5tld = TinyTable.createTableFunctions("tinytable_2mmvfjhmlvs5tzih5tld");
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: '10', j: 3 }, { i: '10', j: 4 }, { i: '10', j: 5 }, { i: '10', j: 6 }, { i: '10', j: 7 } ], css_id: 'tinytable_css_h0dd36848fl9mhmzfthv',}, 
+          { positions: [ { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '1', j: 4 }, { i: '2', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 }, { i: '9', j: 4 }, { i: '1', j: 5 }, { i: '2', j: 5 }, { i: '3', j: 5 }, { i: '4', j: 5 }, { i: '5', j: 5 }, { i: '6', j: 5 }, { i: '7', j: 5 }, { i: '8', j: 5 }, { i: '9', j: 5 }, { i: '1', j: 6 }, { i: '2', j: 6 }, { i: '3', j: 6 }, { i: '4', j: 6 }, { i: '5', j: 6 }, { i: '6', j: 6 }, { i: '7', j: 6 }, { i: '8', j: 6 }, { i: '9', j: 6 }, { i: '1', j: 7 }, { i: '2', j: 7 }, { i: '3', j: 7 }, { i: '4', j: 7 }, { i: '5', j: 7 }, { i: '6', j: 7 }, { i: '7', j: 7 }, { i: '8', j: 7 }, { i: '9', j: 7 } ], css_id: 'tinytable_css_yo2zgu1769gfolxrmg16',}, 
+          { positions: [ { i: '0', j: 3 }, { i: '0', j: 4 }, { i: '0', j: 5 }, { i: '0', j: 6 }, { i: '0', j: 7 } ], css_id: 'tinytable_css_9a940mlw45kxf4opftct',}, 
+          { positions: [ { i: '10', j: 1 }, { i: '10', j: 2 } ], css_id: 'tinytable_css_cd05ddqhvigt0sxxbgeb',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 } ], css_id: 'tinytable_css_teb6q2owgmnp66ym4v4r',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 } ], css_id: 'tinytable_css_i7w6bxt87nqql3803bep',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  tableFns_2mmvfjhmlvs5tzih5tld.styleCell(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
+    <style>
+    /* tinytable css entries after */
+    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_h0dd36848fl9mhmzfthv, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_h0dd36848fl9mhmzfthv {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_yo2zgu1769gfolxrmg16, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_yo2zgu1769gfolxrmg16 { text-align: right }
+    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_9a940mlw45kxf4opftct, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_9a940mlw45kxf4opftct {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_cd05ddqhvigt0sxxbgeb, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_cd05ddqhvigt0sxxbgeb {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_teb6q2owgmnp66ym4v4r, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_teb6q2owgmnp66ym4v4r { text-align: left }
+    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_i7w6bxt87nqql3803bep, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_i7w6bxt87nqql3803bep {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    </style>
+    <div class="container">
+      <table class="tinytable" id="tinytable_2mmvfjhmlvs5tzih5tld" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+        
+        <thead>
+              <tr>
+                <th scope="col" data-row="0" data-col="1">industry</th>
+                <th scope="col" data-row="0" data-col="2">ind_level</th>
+                <th scope="col" data-row="0" data-col="3">2019</th>
+                <th scope="col" data-row="0" data-col="4">2020</th>
+                <th scope="col" data-row="0" data-col="5">2021</th>
+                <th scope="col" data-row="0" data-col="6">2022</th>
+                <th scope="col" data-row="0" data-col="7">2023</th>
+              </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                  <td data-row="1" data-col="1">Cafes, restaurants, etc</td>
+                  <td data-row="1" data-col="2">1</td>
+                  <td data-row="1" data-col="3">46,801</td>
+                  <td data-row="1" data-col="4">39,748</td>
+                  <td data-row="1" data-col="5">45,783</td>
+                  <td data-row="1" data-col="6">58,154</td>
+                  <td data-row="1" data-col="7">63,985</td>
+                </tr>
+                <tr>
+                  <td data-row="2" data-col="1"></td>
+                  <td data-row="2" data-col="2">2</td>
+                  <td data-row="2" data-col="3">46,801</td>
+                  <td data-row="2" data-col="4">39,749</td>
+                  <td data-row="2" data-col="5">45,783</td>
+                  <td data-row="2" data-col="6">58,154</td>
+                  <td data-row="2" data-col="7">63,985</td>
+                </tr>
+                <tr>
+                  <td data-row="3" data-col="1">Clothing, footwear, accessories</td>
+                  <td data-row="3" data-col="2">1</td>
+                  <td data-row="3" data-col="3">26,010</td>
+                  <td data-row="3" data-col="4">24,191</td>
+                  <td data-row="3" data-col="5">28,061</td>
+                  <td data-row="3" data-col="6">34,756</td>
+                  <td data-row="3" data-col="7">35,610</td>
+                </tr>
+                <tr>
+                  <td data-row="4" data-col="1"></td>
+                  <td data-row="4" data-col="2">2</td>
+                  <td data-row="4" data-col="3">26,010</td>
+                  <td data-row="4" data-col="4">24,190</td>
+                  <td data-row="4" data-col="5">28,061</td>
+                  <td data-row="4" data-col="6">34,756</td>
+                  <td data-row="4" data-col="7">35,610</td>
+                </tr>
+                <tr>
+                  <td data-row="5" data-col="1">Food retailing</td>
+                  <td data-row="5" data-col="2">1</td>
+                  <td data-row="5" data-col="3">135,269</td>
+                  <td data-row="5" data-col="4">151,545</td>
+                  <td data-row="5" data-col="5">152,866</td>
+                  <td data-row="5" data-col="6">160,936</td>
+                  <td data-row="5" data-col="7">168,448</td>
+                </tr>
+                <tr>
+                  <td data-row="6" data-col="1"></td>
+                  <td data-row="6" data-col="2">2</td>
+                  <td data-row="6" data-col="3">135,269</td>
+                  <td data-row="6" data-col="4">151,545</td>
+                  <td data-row="6" data-col="5">152,866</td>
+                  <td data-row="6" data-col="6">160,936</td>
+                  <td data-row="6" data-col="7">168,448</td>
+                </tr>
+                <tr>
+                  <td data-row="7" data-col="1">Household goods retailing</td>
+                  <td data-row="7" data-col="2">1</td>
+                  <td data-row="7" data-col="3">55,281</td>
+                  <td data-row="7" data-col="4">64,958</td>
+                  <td data-row="7" data-col="5">67,431</td>
+                  <td data-row="7" data-col="6">72,165</td>
+                  <td data-row="7" data-col="7">69,536</td>
+                </tr>
+                <tr>
+                  <td data-row="8" data-col="1"></td>
+                  <td data-row="8" data-col="2">2</td>
+                  <td data-row="8" data-col="3">55,281</td>
+                  <td data-row="8" data-col="4">64,958</td>
+                  <td data-row="8" data-col="5">67,431</td>
+                  <td data-row="8" data-col="6">72,164</td>
+                  <td data-row="8" data-col="7">69,536</td>
+                </tr>
+                <tr>
+                  <td data-row="9" data-col="1">Other retailing</td>
+                  <td data-row="9" data-col="2">1</td>
+                  <td data-row="9" data-col="3">47,401</td>
+                  <td data-row="9" data-col="4">52,152</td>
+                  <td data-row="9" data-col="5">57,263</td>
+                  <td data-row="9" data-col="6">64,159</td>
+                  <td data-row="9" data-col="7">64,758</td>
+                </tr>
+                <tr>
+                  <td data-row="10" data-col="1"></td>
+                  <td data-row="10" data-col="2">2</td>
+                  <td data-row="10" data-col="3">47,400</td>
+                  <td data-row="10" data-col="4">52,152</td>
+                  <td data-row="10" data-col="5">57,263</td>
+                  <td data-row="10" data-col="6">64,160</td>
+                  <td data-row="10" data-col="7">64,757</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- hack to avoid NA insertion in last line -->
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>With any data set it is important to understand the meaning of any explicit missing values. For the five industry groups (excluding <em>Department stores</em> for the reasons discussed above), we have complete information at level 1 for a year if there are 12 months of data for each industry group at level 1. And we have complete information at level 2 for a year if there are 12 months of data for each sub-group at level 2. From <a href="#tbl-non-missing" class="quarto-xref">Table&nbsp;2</a>, we see that larger states have complete data for all five industries at both levels one and two, but that smaller states such as Tasmania and Northern Territory have missing values at both levels.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>combined_levels <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">&gt;=</span> <span class="dv">2019</span>, </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>         industry <span class="sc">!=</span> <span class="st">"Department stores"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datasummary</span>(state <span class="sc">*</span> ind_level <span class="sc">~</span> no_missing <span class="sc">*</span> sum <span class="sc">*</span> year,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> _, <span class="at">fmt =</span> pretty_num)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-non-missing" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-non-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Non-missing values by state and year and industry level
+</figcaption>
+<div aria-describedby="tbl-non-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<!-- preamble start -->
+
+    <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script>
+
+    <script>
+      // Create table-specific functions using external factory
+      const tableFns_uun4024cjwhe5g9dm1pb = TinyTable.createTableFunctions("tinytable_uun4024cjwhe5g9dm1pb");
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: '18', j: 3 }, { i: '18', j: 4 }, { i: '18', j: 5 }, { i: '18', j: 6 }, { i: '18', j: 7 } ], css_id: 'tinytable_css_wlh214f4ivbcxcsuw0ed',}, 
+          { positions: [ { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '10', j: 3 }, { i: '11', j: 3 }, { i: '12', j: 3 }, { i: '13', j: 3 }, { i: '14', j: 3 }, { i: '15', j: 3 }, { i: '16', j: 3 }, { i: '17', j: 3 }, { i: '1', j: 4 }, { i: '2', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 }, { i: '9', j: 4 }, { i: '10', j: 4 }, { i: '11', j: 4 }, { i: '12', j: 4 }, { i: '13', j: 4 }, { i: '14', j: 4 }, { i: '15', j: 4 }, { i: '16', j: 4 }, { i: '17', j: 4 }, { i: '1', j: 5 }, { i: '2', j: 5 }, { i: '3', j: 5 }, { i: '4', j: 5 }, { i: '5', j: 5 }, { i: '6', j: 5 }, { i: '7', j: 5 }, { i: '8', j: 5 }, { i: '9', j: 5 }, { i: '10', j: 5 }, { i: '11', j: 5 }, { i: '12', j: 5 }, { i: '13', j: 5 }, { i: '14', j: 5 }, { i: '15', j: 5 }, { i: '16', j: 5 }, { i: '17', j: 5 }, { i: '1', j: 6 }, { i: '2', j: 6 }, { i: '3', j: 6 }, { i: '4', j: 6 }, { i: '5', j: 6 }, { i: '6', j: 6 }, { i: '7', j: 6 }, { i: '8', j: 6 }, { i: '9', j: 6 }, { i: '10', j: 6 }, { i: '11', j: 6 }, { i: '12', j: 6 }, { i: '13', j: 6 }, { i: '14', j: 6 }, { i: '15', j: 6 }, { i: '16', j: 6 }, { i: '17', j: 6 }, { i: '1', j: 7 }, { i: '2', j: 7 }, { i: '3', j: 7 }, { i: '4', j: 7 }, { i: '5', j: 7 }, { i: '6', j: 7 }, { i: '7', j: 7 }, { i: '8', j: 7 }, { i: '9', j: 7 }, { i: '10', j: 7 }, { i: '11', j: 7 }, { i: '12', j: 7 }, { i: '13', j: 7 }, { i: '14', j: 7 }, { i: '15', j: 7 }, { i: '16', j: 7 }, { i: '17', j: 7 } ], css_id: 'tinytable_css_j3azgkl6vnziue6d2ej7',}, 
+          { positions: [ { i: '0', j: 3 }, { i: '0', j: 4 }, { i: '0', j: 5 }, { i: '0', j: 6 }, { i: '0', j: 7 } ], css_id: 'tinytable_css_kk3jjgnz9c51o70lsial',}, 
+          { positions: [ { i: '18', j: 1 }, { i: '18', j: 2 } ], css_id: 'tinytable_css_19a4bmlpe7k71hrmbw73',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '10', j: 1 }, { i: '11', j: 1 }, { i: '12', j: 1 }, { i: '13', j: 1 }, { i: '14', j: 1 }, { i: '15', j: 1 }, { i: '16', j: 1 }, { i: '17', j: 1 }, { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 }, { i: '10', j: 2 }, { i: '11', j: 2 }, { i: '12', j: 2 }, { i: '13', j: 2 }, { i: '14', j: 2 }, { i: '15', j: 2 }, { i: '16', j: 2 }, { i: '17', j: 2 } ], css_id: 'tinytable_css_uzukmjbj6552ktfibwj0',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 } ], css_id: 'tinytable_css_f25wn5w2ethck9q85w4v',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  tableFns_uun4024cjwhe5g9dm1pb.styleCell(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
+    <style>
+    /* tinytable css entries after */
+    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_wlh214f4ivbcxcsuw0ed, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_wlh214f4ivbcxcsuw0ed {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_j3azgkl6vnziue6d2ej7, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_j3azgkl6vnziue6d2ej7 { text-align: right }
+    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_kk3jjgnz9c51o70lsial, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_kk3jjgnz9c51o70lsial {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_19a4bmlpe7k71hrmbw73, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_19a4bmlpe7k71hrmbw73 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_uzukmjbj6552ktfibwj0, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_uzukmjbj6552ktfibwj0 { text-align: left }
+    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_f25wn5w2ethck9q85w4v, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_f25wn5w2ethck9q85w4v {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    </style>
+    <div class="container">
+      <table class="tinytable" id="tinytable_uun4024cjwhe5g9dm1pb" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+        
+        <thead>
+              <tr>
+                <th scope="col" data-row="0" data-col="1">state</th>
+                <th scope="col" data-row="0" data-col="2">ind_level</th>
+                <th scope="col" data-row="0" data-col="3">2019</th>
+                <th scope="col" data-row="0" data-col="4">2020</th>
+                <th scope="col" data-row="0" data-col="5">2021</th>
+                <th scope="col" data-row="0" data-col="6">2022</th>
+                <th scope="col" data-row="0" data-col="7">2023</th>
+              </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                  <td data-row="1" data-col="1">Australian Capital Territory</td>
+                  <td data-row="1" data-col="2">1</td>
+                  <td data-row="1" data-col="3">5</td>
+                  <td data-row="1" data-col="4">5</td>
+                  <td data-row="1" data-col="5">5</td>
+                  <td data-row="1" data-col="6">5</td>
+                  <td data-row="1" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="2" data-col="1"></td>
+                  <td data-row="2" data-col="2">2</td>
+                  <td data-row="2" data-col="3">5</td>
+                  <td data-row="2" data-col="4">5</td>
+                  <td data-row="2" data-col="5">5</td>
+                  <td data-row="2" data-col="6">5</td>
+                  <td data-row="2" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="3" data-col="1">New South Wales</td>
+                  <td data-row="3" data-col="2">1</td>
+                  <td data-row="3" data-col="3">5</td>
+                  <td data-row="3" data-col="4">5</td>
+                  <td data-row="3" data-col="5">5</td>
+                  <td data-row="3" data-col="6">5</td>
+                  <td data-row="3" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="4" data-col="1"></td>
+                  <td data-row="4" data-col="2">2</td>
+                  <td data-row="4" data-col="3">5</td>
+                  <td data-row="4" data-col="4">5</td>
+                  <td data-row="4" data-col="5">5</td>
+                  <td data-row="4" data-col="6">5</td>
+                  <td data-row="4" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="5" data-col="1">Northern Territory</td>
+                  <td data-row="5" data-col="2">1</td>
+                  <td data-row="5" data-col="3">4</td>
+                  <td data-row="5" data-col="4">3</td>
+                  <td data-row="5" data-col="5">3</td>
+                  <td data-row="5" data-col="6">4</td>
+                  <td data-row="5" data-col="7">4</td>
+                </tr>
+                <tr>
+                  <td data-row="6" data-col="1"></td>
+                  <td data-row="6" data-col="2">2</td>
+                  <td data-row="6" data-col="3">3</td>
+                  <td data-row="6" data-col="4">2</td>
+                  <td data-row="6" data-col="5">2</td>
+                  <td data-row="6" data-col="6">3</td>
+                  <td data-row="6" data-col="7">3</td>
+                </tr>
+                <tr>
+                  <td data-row="7" data-col="1">Queensland</td>
+                  <td data-row="7" data-col="2">1</td>
+                  <td data-row="7" data-col="3">5</td>
+                  <td data-row="7" data-col="4">5</td>
+                  <td data-row="7" data-col="5">5</td>
+                  <td data-row="7" data-col="6">5</td>
+                  <td data-row="7" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="8" data-col="1"></td>
+                  <td data-row="8" data-col="2">2</td>
+                  <td data-row="8" data-col="3">4</td>
+                  <td data-row="8" data-col="4">4</td>
+                  <td data-row="8" data-col="5">4</td>
+                  <td data-row="8" data-col="6">4</td>
+                  <td data-row="8" data-col="7">4</td>
+                </tr>
+                <tr>
+                  <td data-row="9" data-col="1">South Australia</td>
+                  <td data-row="9" data-col="2">1</td>
+                  <td data-row="9" data-col="3">5</td>
+                  <td data-row="9" data-col="4">5</td>
+                  <td data-row="9" data-col="5">5</td>
+                  <td data-row="9" data-col="6">5</td>
+                  <td data-row="9" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="10" data-col="1"></td>
+                  <td data-row="10" data-col="2">2</td>
+                  <td data-row="10" data-col="3">4</td>
+                  <td data-row="10" data-col="4">4</td>
+                  <td data-row="10" data-col="5">4</td>
+                  <td data-row="10" data-col="6">4</td>
+                  <td data-row="10" data-col="7">4</td>
+                </tr>
+                <tr>
+                  <td data-row="11" data-col="1">Tasmania</td>
+                  <td data-row="11" data-col="2">1</td>
+                  <td data-row="11" data-col="3">4</td>
+                  <td data-row="11" data-col="4">3</td>
+                  <td data-row="11" data-col="5">3</td>
+                  <td data-row="11" data-col="6">4</td>
+                  <td data-row="11" data-col="7">4</td>
+                </tr>
+                <tr>
+                  <td data-row="12" data-col="1"></td>
+                  <td data-row="12" data-col="2">2</td>
+                  <td data-row="12" data-col="3">3</td>
+                  <td data-row="12" data-col="4">3</td>
+                  <td data-row="12" data-col="5">3</td>
+                  <td data-row="12" data-col="6">4</td>
+                  <td data-row="12" data-col="7">4</td>
+                </tr>
+                <tr>
+                  <td data-row="13" data-col="1">Total (State)</td>
+                  <td data-row="13" data-col="2">1</td>
+                  <td data-row="13" data-col="3">5</td>
+                  <td data-row="13" data-col="4">5</td>
+                  <td data-row="13" data-col="5">5</td>
+                  <td data-row="13" data-col="6">5</td>
+                  <td data-row="13" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="14" data-col="1"></td>
+                  <td data-row="14" data-col="2">2</td>
+                  <td data-row="14" data-col="3">5</td>
+                  <td data-row="14" data-col="4">5</td>
+                  <td data-row="14" data-col="5">5</td>
+                  <td data-row="14" data-col="6">5</td>
+                  <td data-row="14" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="15" data-col="1">Victoria</td>
+                  <td data-row="15" data-col="2">1</td>
+                  <td data-row="15" data-col="3">5</td>
+                  <td data-row="15" data-col="4">5</td>
+                  <td data-row="15" data-col="5">5</td>
+                  <td data-row="15" data-col="6">5</td>
+                  <td data-row="15" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="16" data-col="1"></td>
+                  <td data-row="16" data-col="2">2</td>
+                  <td data-row="16" data-col="3">5</td>
+                  <td data-row="16" data-col="4">5</td>
+                  <td data-row="16" data-col="5">5</td>
+                  <td data-row="16" data-col="6">5</td>
+                  <td data-row="16" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="17" data-col="1">Western Australia</td>
+                  <td data-row="17" data-col="2">1</td>
+                  <td data-row="17" data-col="3">5</td>
+                  <td data-row="17" data-col="4">5</td>
+                  <td data-row="17" data-col="5">5</td>
+                  <td data-row="17" data-col="6">5</td>
+                  <td data-row="17" data-col="7">5</td>
+                </tr>
+                <tr>
+                  <td data-row="18" data-col="1"></td>
+                  <td data-row="18" data-col="2">2</td>
+                  <td data-row="18" data-col="3">5</td>
+                  <td data-row="18" data-col="4">5</td>
+                  <td data-row="18" data-col="5">5</td>
+                  <td data-row="18" data-col="6">5</td>
+                  <td data-row="18" data-col="7">5</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- hack to avoid NA insertion in last line -->
+</div>
+</div>
+</figure>
+</div>
+</div>
+<section id="exercises" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="exercises"><span class="header-section-number">1.1</span> Exercises</h2>
+<ol type="1">
+<li><p>Describe in words what the query above using <code>anti_join()</code> is doing.</p></li>
+<li><p>What do functions like <code>inner_join()</code> and <code>union_all()</code> have in common? How do they differ?</p></li>
+<li><p>Using the documentation provided for them, explain how <code>union_all()</code> and <code>union()</code> differ. Would you expect different results if we had used <code>union()</code> instead of <code>union_all()</code> in the code above?</p></li>
+<li><p>Suppose we wanted to focus our analysis on industry subgroups, but wanted to retain “Department stores” as part of this. Write code to create <code>ind_sub_groups</code>, a data set comprising data from <code>retail_sales</code> that we could use for this purpose.</p></li>
+<li><p>In creating <a href="#tbl-reconc" class="quarto-xref">Table&nbsp;1</a>, I used <code>left_join()</code> and then <code>coalesce()</code>. Why did I need to use <code>left_join()</code> rather than <code>inner_join()</code>. (<em>Hint:</em> Replace <code>left_join()</code> with <code>inner_join()</code> and see what happens.)</p></li>
+<li><p>What industry group has missing values at level 2 for Queensland, as seen in <a href="#tbl-non-missing" class="quarto-xref">Table&nbsp;2</a>? Which subgroups are affected?</p></li>
+<li><p>Produce a version of <a href="#tbl-reconc" class="quarto-xref">Table&nbsp;1</a> but focused on Queensland instead of all of Australia (<code>Total (State)</code>). Do you see an issue related to the issue flagged in the previous question?</p></li>
+<li><p>Produce a version of <a href="#tbl-reconc" class="quarto-xref">Table&nbsp;1</a> but focused on Tasmania instead of all of Australia (<code>Total (State)</code>). Do you see an issue related to the issue flagged in the previous question?</p></li>
+</ol>
+</section>
+</section>
+<section id="panel-data" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Panel data</h1>
+<p>A very common form of data in business and economics is the <strong>time-series</strong>. Time-series data involve repeated measurements over time, typically at regular intervals. Some examples of time-series data sets are:</p>
+<ul>
+<li>Daily stock prices over time</li>
+<li>Quarterly measures of an economy’s gross domestic product</li>
+<li>Measures of annual profits for a company</li>
+</ul>
+<p>An alternative to time-series data is known as <strong>cross-sectional</strong> data, which involves measures at a point of time for multiple entities. Some examples of cross-sectional data sets are:</p>
+<ul>
+<li>Closing stock prices for multiple companies on a given day</li>
+<li>Measures of the gross domestic product for different economies for a given quarter</li>
+<li>Measures of profits for several companies in a given year</li>
+</ul>
+<p>Often cross-sectional and time-series data will exist in a single data set. Such a data set is often known as a <strong>panel data</strong> set. Some examples of panel data sets are:</p>
+<ul>
+<li>Daily stock prices for multiple companies over time</li>
+<li>Quarterly measures of the gross domestic product for different economies over several periods</li>
+<li>Annual profits for several companies over several year</li>
+</ul>
+<section id="plotting-panel-data" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="plotting-panel-data"><span class="header-section-number">2.1</span> Plotting panel data</h2>
+<p>The <code>retail_sales</code> data set is a panel data set with monthly data on retail sales for several “states” and several industries.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> For a given state and industry, the monthly retail sales series is a time-series. For an initial exploration of <code>retail_sales</code>, I construct <code>df_group_plot</code>, a data set focused on a subset of the available dates and the data for all states combined (<code>state == "Total (State)"</code>) and the industry groups (<code>ind_level == 1</code>).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2010-01-01"</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2024-07-01"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>df_group_plot <span class="ot">&lt;-</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  retail_sales <span class="sc">|&gt;</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(short_names, <span class="at">by =</span> <span class="st">"industry"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">industry =</span> <span class="fu">coalesce</span>(short_ind, industry)) <span class="sc">|&gt;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">==</span> <span class="st">"Total (State)"</span>, ind_level <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>         <span class="fu">between</span>(date, start_date, end_date))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Figures <a href="#fig-all-ind" class="quarto-xref">1</a> and <a href="#fig-all-ind2" class="quarto-xref">2</a> plot sales from January 2010 until July 2024 by industry group. While Figures <a href="#fig-all-ind" class="quarto-xref">1</a> and <a href="#fig-all-ind2" class="quarto-xref">2</a> use the same underlying data, they present the information in two different ways.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df_group_plot <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> sales <span class="sc">/</span> <span class="fl">1e3</span>, <span class="at">colour =</span> industry)) <span class="sc">+</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Sales ($ billion)"</span>) <span class="sc">+</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Month"</span>) <span class="sc">+</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(industry <span class="sc">~</span> ., <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">scales =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-all-ind" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-all-ind-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="retail-sales_files/figure-html/fig-all-ind-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Retail sales by industry using <code>facet_wrap()</code>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>df_group_plot <span class="sc">|&gt;</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> sales <span class="sc">/</span> <span class="fl">1e3</span>, <span class="at">colour =</span> industry)) <span class="sc">+</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Sales ($ billion)"</span>) <span class="sc">+</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Month"</span>) <span class="sc">+</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-all-ind2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-all-ind2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="retail-sales_files/figure-html/fig-all-ind2-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Retail sales by industry
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="exercises-1" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="exercises-1"><span class="header-section-number">2.1.1</span> Exercises</h3>
+<ol type="1">
+<li><p>Identify three patterns in the data observed in Figures <a href="#fig-all-ind" class="quarto-xref">1</a> and <a href="#fig-all-ind2" class="quarto-xref">2</a>. For each pattern, provide a conjecture for what explains the pattern.</p></li>
+<li><p>Describe in words how <a href="#fig-all-ind" class="quarto-xref">Figure&nbsp;1</a> differs from <a href="#fig-all-ind2" class="quarto-xref">Figure&nbsp;2</a>.</p></li>
+<li><p>Describe in words how the code used to create <a href="#fig-all-ind" class="quarto-xref">Figure&nbsp;1</a> was modified to create <a href="#fig-all-ind2" class="quarto-xref">Figure&nbsp;2</a>.</p></li>
+<li><p>In your view, which plot—<a href="#fig-all-ind" class="quarto-xref">Figure&nbsp;1</a> or <a href="#fig-all-ind2" class="quarto-xref">Figure&nbsp;2</a>—best presents the information? Is one better than the other for identifying the patterns you identified in the previous question?</p></li>
+</ol>
+</section>
+</section>
+<section id="seasonality" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="seasonality"><span class="header-section-number">2.2</span> Seasonality</h2>
+<p>One thing you likely noticed about Figures <a href="#fig-all-ind" class="quarto-xref">1</a> and <a href="#fig-all-ind2" class="quarto-xref">2</a> is that retail sales appear to be highly <strong>seasonal</strong>. Seasonality refers to the tendency of some time-series to exhibit recurring patterns over time. For example, ice cream sales tend to be higher in summer, while sales of ski boots probably peak in winter months. To see how we can better understand seasonality, consider <a href="#fig-season" class="quarto-xref">Figure&nbsp;3</a>, which plots sales of <em>Cafes, restaurants and takeaway food services</em> for all states combined in a way that allows us to consider each year separately.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="sc">|&gt;</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(industry <span class="sc">==</span> <span class="st">"Cafes, restaurants and takeaway food services"</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>         state <span class="sc">==</span> <span class="st">"Total (State)"</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">between</span>(date, start_date, end_date)) <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">month =</span> <span class="fu">month</span>(date, <span class="at">label =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">year =</span> <span class="fu">year</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> month, <span class="at">y =</span> sales <span class="sc">/</span> <span class="fl">1e3</span>, <span class="at">fill =</span> month)) <span class="sc">+</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Sales ($ billion)"</span>) <span class="sc">+</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Month"</span>) <span class="sc">+</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(year <span class="sc">~</span> ., <span class="at">ncol =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> \(x) <span class="fu">str_sub</span>(x, <span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-season" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-season-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="retail-sales_files/figure-html/fig-season-1.png" class="img-fluid figure-img" width="576">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-season-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Seasonality
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="exercises-2" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="exercises-2"><span class="header-section-number">2.2.1</span> Exercises</h3>
+<ol type="1">
+<li><p>Looking at <a href="#fig-season" class="quarto-xref">Figure&nbsp;3</a>, which month (if any) generally has the <em>highest</em> sales in each year? Provide a conjecture for the underlying forces causing this month to have the highest sales in most or all years?</p></li>
+<li><p>Looking at <a href="#fig-season" class="quarto-xref">Figure&nbsp;3</a>, which month (if any) generally has the <em>lowest</em> sales in each year? Provide a conjecture for the underlying forces causing this month to have the lowest sales in most or all years?</p></li>
+<li><p>What happens if you omit “<code>, fill = month</code>” from the code creating <a href="#fig-season" class="quarto-xref">Figure&nbsp;3</a>? Does the use of colour add useful information to this plot?</p></li>
+<li><p>What is the line of code “<code>scale_x_discrete(labels = \(x) str_sub(x, 1, 1))</code>” doing here? (<em>Hint:</em> Omit this line and compare the plot produced with <a href="#fig-season" class="quarto-xref">Figure&nbsp;3</a>. Also look at the documentation for <code>str_sub()</code>.)</p></li>
+<li><p>Looking again at Figures <a href="#fig-all-ind" class="quarto-xref">1</a> and <a href="#fig-all-ind2" class="quarto-xref">2</a>, are all industries equally seasonal? Which industry do you consider to be the most seasonal? The least seasonal? How might you measure the seasonality of each industry using data in that plot? What complications do you anticipate in measuring seasonality?</p></li>
+</ol>
+<div id="tip-backends" class="callout callout-style-default callout-tip callout-titled" data-text-align="left">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip&nbsp;2: Alternative engines
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>So far, we have done many calculations using <code>mutate()</code> and <code>summarize()</code>, combined data frames using functions like <code>inner_join()</code>, or focused on certain rows or columns using <code>filter()</code> or <code>select()</code>. We have generally applied the functions to data in data frames, which we understand to comprise vectors of data stored in the memory (RAM) of our computer. However, as you work more with data, you are likely to encounter situations where this approach has limitations.</p>
+<p>For example, you might have the data stored on disk, but it either would take too long to load or simply cannot fit into RAM. It turns out that there are packages that provide alternative <strong>engines</strong> that can help us work with this kind data with little change to how we have done things so far:</p>
+<ul>
+<li>One popular option is <code>data.table</code>, a package that provides a “high-performance version of base R’s <code>data.frame</code> with syntax and feature enhancements for ease of use, convenience and programming speed.”</li>
+<li>Another option is Apache Arrow, “a multi-language toolbox designed for efficient analysis and transport of large datasets.” The <code>arrow</code> R package provides a <code>dplyr</code> backend allowing users to analyze larger-than-memory datasets using familiar syntax.</li>
+<li>Another possibility is that the data you want to work with are stored on a remote computer, such as a database server or a Spark cluster. If the data or interest are stored in a database, the <code>DBI</code> package provides an interface allowing users to connect to most popular databases, execute SQL, and retrieve results.</li>
+</ul>
+<p>The <code>dbplyr</code> package allows users to create <strong>remote data frames</strong> and execute queries using a familiar interface often identical to that offered by <code>dplyr</code>. Using a remote database server offers a number of potential advantages:</p>
+<ul>
+<li>Moving processing to where the data are located</li>
+<li>Moving processing to a more powerful computer</li>
+<li>Avoiding loading of data into RAM</li>
+</ul>
+<p>In this book, in addition to using <code>dplyr</code> with data frames, we explore the use of DuckDB as an analytical engine. DuckDB provides an SQL interface, so working with it is much like working with PostgreSQL or MySQL but, unlike most database server products, DuckDB requires almost no setup and offers significant performance benefits. While we use DuckDB largely for these performance benefits, we also get the happy side-effect of learning how to work with remote databases.</p>
+<p>Another advantage offered by DuckDB is access to more powerful window functions than are offered by <code>dplyr</code> itself. We see these in use in <a href="#sec-windows" class="quarto-xref">Section&nbsp;2.3</a>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-windows" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="sec-windows"><span class="header-section-number">2.3</span> Time windows</h2>
+<p>Many analyses in business and economics involve calculations over <strong>time windows</strong>. Some examples:</p>
+<ul>
+<li>Returns on stocks over the days or months after their initial public offerings (IPOs)</li>
+<li>Comparing sales or profits for the year to date with previous years</li>
+<li>Smoothing sales over time using moving averages</li>
+</ul>
+<p>We will see that working with time windows is greatly facilitated by the use of <strong>window functions</strong> and that the SQL engine offered by DuckDB provides the more-powerful window functions that we will need here.</p>
+<p>To create a DuckDB engine, we simply create a connection.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can then use the function <code>copy_to()</code> to move the data from R into the in-memory DuckDB database we have created.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>retail_sales_db <span class="ot">&lt;-</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  retail_sales <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(db, <span class="at">df =</span> _, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can inspect <code>retail_sales_db</code> at the R console much as we did with <code>retail_sales</code> above.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>retail_sales_db</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A query:  ?? x 6
+# Database: DuckDB 1.4.4 [igow@Darwin 25.4.0:R 4.5.2/:memory:]
+   industry                     state date       sales ind_level parent_industry
+   &lt;chr&gt;                        &lt;chr&gt; &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;          
+ 1 Cafes, restaurants and cate… Aust… 1982-04-01   4.4         2 Cafes, restaur…
+ 2 Cafes, restaurants and cate… New … 1982-04-01  61.8         2 Cafes, restaur…
+ 3 Cafes, restaurants and cate… Nort… 1982-04-01  NA           2 Cafes, restaur…
+ 4 Cafes, restaurants and cate… Quee… 1982-04-01  18.7         2 Cafes, restaur…
+ 5 Cafes, restaurants and cate… Sout… 1982-04-01  14.3         2 Cafes, restaur…
+ 6 Cafes, restaurants and cate… Tasm… 1982-04-01   1.9         2 Cafes, restaur…
+ 7 Cafes, restaurants and cate… Tota… 1982-04-01 146.          2 Cafes, restaur…
+ 8 Cafes, restaurants and cate… Vict… 1982-04-01  36.4         2 Cafes, restaur…
+ 9 Cafes, restaurants and cate… West… 1982-04-01   8           2 Cafes, restaur…
+10 Cafes, restaurants and take… Aust… 1982-04-01   7.6         1 Total (Industr…
+# ℹ more rows</code></pre>
+</div>
+</div>
+<p>The output is almost identical to the output shown above when we typed <code>retail_sales</code> at the R console. The two differences are at the top and bottom of the output. At the top, we now see two lines indicating that the data come from a table inside an in-memory (<code>:memory</code>) DuckDB database and thus represent a <strong>remote data frame</strong> rather than a local data frame.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> At the bottom, we no longer see the numeber of rows. This partly reflects the <strong>lazy</strong> nature of remote data frames: we have to execute a specific query to determine the number of rows.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
+<section id="year-to-date-ytd" class="level3" data-number="2.3.1">
+<h3 data-number="2.3.1" class="anchored" data-anchor-id="year-to-date-ytd"><span class="header-section-number">2.3.1</span> Year-to-date (YTD)</h3>
+<p>Often we will want to compare performance for the current period with that in earlier periods. If we were in the middle of August 2025, it would not make sense to compare total sales for 2025 with total sales for 2024, as this would be comparing seven months (January through July) with twelve months. One standard approach is to calculate <strong>year-to-date</strong> performance and compare that with performance for a comparable period from earlier years.</p>
+<p>For this exercise, I will focus on industry subgroups of <em>Cafes, restaurants and takeaway food services</em> and just two states—Victoria and Western Australia. I create <code>cafes_vic_wa_db</code>, a data frame focused on these observations.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>cafes_vic_wa_db <span class="ot">&lt;-</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  retail_sales_db <span class="sc">|&gt;</span> </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(parent_industry, <span class="st">"^Cafes"</span>),</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>         state <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Victoria"</span>, <span class="st">"Western Australia"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next step is to create <code>ytd_plot_df</code>, the data frame that will contain the data we need to plot year-to-date sales. Here we first calculate <code>year</code> and then group by <code>industry</code>, <code>state</code>, and <code>year</code>. Grouping by <code>industry</code> and <code>state</code> makes sense as it does not make sense to aggregate data across industries and states in this context. Grouping additionally by <code>year</code> reflects the nature of the YTD calculation we are making: only values for a given year should be consider.</p>
+<p>We next use <code>window_order(date)</code> so that the following <code>mutate()</code> command puts the data in the correct order. It is helpful to think of the windows that are being created.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
+<p>The following line invokes <code>cumsum(sum)</code> to calculate the cumulate sales for each <code>(industry, state, year)</code> up to the current row (remember that the rows are order by <code>date</code>) before invoking <code>ungroup()</code> and then <code>filter()</code> to focus on the years we want to plot.</p>
+<p>The <code>collect()</code> command brings the data into R, converting the remote data frame to a local data frame. The last line converts <code>year</code> to a character variable and calculates <code>month</code> using the <code>month()</code> function.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>ytd_plot_df <span class="ot">&lt;-</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  cafes_vic_wa_db <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(industry, state, year) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">window_order</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sales_ytd =</span> <span class="fu">cumsum</span>(sales)) <span class="sc">|&gt;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">between</span>(year, <span class="dv">2018</span>, <span class="dv">2021</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.character</span>(year),</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">month =</span> <span class="fu">month</span>(date, <span class="at">label =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>With <code>ytd_plot_df</code> in hand, creating <a href="#fig-all-ind-ytd" class="quarto-xref">Figure&nbsp;4</a> is quite straightforward:<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ytd_plot_df <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> month, <span class="at">y =</span> sales_ytd <span class="sc">/</span> <span class="fl">1e3</span>,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> year, <span class="at">group =</span> year)) <span class="sc">+</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Sales, year-to-date ($ billion)"</span>) <span class="sc">+</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Month"</span>) <span class="sc">+</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(industry <span class="sc">~</span> state, <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">scales =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-all-ind-ytd" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-all-ind-ytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="retail-sales_files/figure-html/fig-all-ind-ytd-1.png" class="img-fluid figure-img" width="576">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-ytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Year-to-date sales for cafes
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="exercises-3" class="level4" data-number="2.3.1.1">
+<h4 data-number="2.3.1.1" class="anchored" data-anchor-id="exercises-3"><span class="header-section-number">2.3.1.1</span> Exercises</h4>
+<ol type="1">
+<li><p>What patterns do you observe in <a href="#fig-all-ind-ytd" class="quarto-xref">Figure&nbsp;4</a>? Can you suggest explanations for these patterns?</p></li>
+<li><p>Is <code>cafes_vic_wa_db</code> (created by the code above) a remote data frame or a local data frame? How can you tell?</p></li>
+<li><p>Does <code>filter(str_detect(parent_industry, "^Cafes"))</code> produce the same result as <code>filter(parent_industry == "Cafes, restaurants and takeaway food services")</code>? What benefit is there from using the former option rather than the latter?</p></li>
+<li><p>What happens if you replace the function <code>window_order()</code> with function <code>arrange()</code>.</p></li>
+<li><p>As an analogue to <code>cafes_vic_wa_db</code> (created using <code>retail_sales_db</code>), create <code>cafes_vic_wa</code> using <code>retail_sales</code>. Use <code>cafes_vic_wa</code> to create a version of <code>ytd_plot_df</code>. (<em>Hint:</em> You will need to use <code>arrange()</code> in place of <code>window_order()</code>.) Does the plot created using this version of <code>ytd_plot_df</code> look the same as <a href="#fig-all-ind-ytd" class="quarto-xref">Figure&nbsp;4</a>?</p></li>
+<li><p>Do we need both <code>color = year</code> <em>and</em> <code>group = year</code> in creating <a href="#fig-all-ind-ytd" class="quarto-xref">Figure&nbsp;4</a>? How can you tell?</p></li>
+<li><p>What happens if we omit <code>ungroup()</code> from the code creating <code>ytd_plot_df</code>? Is there any effect on <code>ytd_plot_df</code>? Is there any effect on the appearance of <a href="#fig-all-ind-ytd" class="quarto-xref">Figure&nbsp;4</a>?</p></li>
+<li><p>What is the data type for <code>month</code> in <code>ytd_plot_df</code>? (<em>Hint:</em> You may find it helpful to type <code>ytd_plot_df$month</code> at the R console or to use the function <code>class()</code>.)</p></li>
+<li><p>What happens if we move the <code>mutate()</code> code creating <code>year</code> and <code>month</code> in <code>ytd_plot_df</code> <em>before</em> the <code>collect()</code> call? Does the code still run? Does the plot look fine? Can you explain what’s going on? (<em>Hint:</em> Go back to the previous question with the new version of <code>ytd_plot_df</code>.)</p></li>
+<li><p>In creating <code>ytd_plot_df</code>, can we move the application of <code>as.character()</code> to the line <code>mutate(year = year(date))</code>? (That is, can we use <code>as.character(year(date))</code> in that line?) What other code do we need to modify to take this approach? After making the needed modification, does the plot produced look the same as <a href="#fig-all-ind-ytd" class="quarto-xref">Figure&nbsp;4</a>? Why did we not need to use the same type for <code>year</code> as we did for <code>month</code>? (<em>Hint:</em> You may find it helpful to type <code>ytd_plot_df$year</code> at the R console or to use the function <code>class()</code>.)</p></li>
+</ol>
+</section>
+</section>
+<section id="fiscal-year-to-date-ytd" class="level3" data-number="2.3.2">
+<h3 data-number="2.3.2" class="anchored" data-anchor-id="fiscal-year-to-date-ytd"><span class="header-section-number">2.3.2</span> Fiscal year-to-date (YTD)</h3>
+<p>Above we calculated YTD numbers using <em>calendar</em> years. However, for many purposes, most companies in Australia reckon <strong>fiscal years</strong> from 1 July to 30 June and we might want to plot <em>fiscal</em> YTD numbers.</p>
+<p>To make this happen, I do two things. First, I create a function <code>fiscal_month()</code> that behaves a lot like <code>month()</code>, but with an extra argument that allows me to specify the first month of the fiscal year (e.g., <code>first_month = 7</code> would make July the first month of the fiscal year). For present purposes, you don’t need to understand the details of <code>fiscal_month()</code>, but note that this actually borrows elements from the original <code>month()</code> function itself.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fiscal_month <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">first_month =</span> <span class="dv">7</span>, <span class="at">label =</span> <span class="cn">TRUE</span>, <span class="at">abbr =</span> <span class="cn">TRUE</span>) {</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  new_order <span class="ot">&lt;-</span> <span class="fu">c</span>(first_month<span class="sc">:</span><span class="dv">12</span>, <span class="dv">1</span><span class="sc">:</span>(first_month <span class="sc">-</span> <span class="dv">1</span>))</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  labels <span class="ot">&lt;-</span> <span class="fu">levels</span>(<span class="fu">month</span>(x, <span class="at">label =</span> label, <span class="at">abbr =</span> abbr))</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  new_labels <span class="ot">&lt;-</span> labels[new_order]</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ordered</span>(<span class="fu">month</span>(x), <span class="at">levels =</span> new_order, <span class="at">labels =</span> new_labels)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The second thing I do is create <code>fyear</code> to represent fiscal year based on fiscal years starting in July. Below is code creating <code>fytd_plot_df</code> using <code>fyear</code> in place of <code>year</code> used in <code>ytd_plot_df</code> and using <code>fiscal_month()</code> in place of <code>month()</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>fytd_plot_df <span class="ot">&lt;-</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  cafes_vic_wa_db <span class="sc">|&gt;</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(date),</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">fyear =</span> year <span class="sc">+</span> <span class="fu">as.integer</span>(<span class="fu">month</span>(date) <span class="sc">&gt;=</span> <span class="dv">7</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(industry, state, fyear) <span class="sc">|&gt;</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">window_order</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sales_ytd =</span> <span class="fu">cumsum</span>(sales)) <span class="sc">|&gt;</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">between</span>(fyear, <span class="dv">2018</span>, <span class="dv">2021</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fyear =</span> <span class="fu">as.character</span>(fyear),</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">month =</span> <span class="fu">fiscal_month</span>(date))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The following code creates <a href="#fig-all-ind-fytd" class="quarto-xref">Figure&nbsp;5</a> and is essentially identical to that used to create <a href="#fig-all-ind-ytd" class="quarto-xref">Figure&nbsp;4</a> except for changes to reflect use of <code>fyear</code> in place of <code>year</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>fytd_plot_df <span class="sc">|&gt;</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> month, <span class="at">y =</span> sales_ytd <span class="sc">/</span> <span class="fl">1e3</span>,</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> fyear, <span class="at">group =</span> fyear)) <span class="sc">+</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Sales, fiscal year-to-date ($ billion)"</span>) <span class="sc">+</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Month"</span>) <span class="sc">+</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(industry <span class="sc">~</span> state, <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">scales =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-all-ind-fytd" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-all-ind-fytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="retail-sales_files/figure-html/fig-all-ind-fytd-1.png" class="img-fluid figure-img" width="576">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-fytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Fiscal year-to-date sales for cafes
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="exercises-4" class="level4" data-number="2.3.2.1">
+<h4 data-number="2.3.2.1" class="anchored" data-anchor-id="exercises-4"><span class="header-section-number">2.3.2.1</span> Exercises</h4>
+<ol type="1">
+<li><p>In words, what is the code creating <code>fyear</code> in the creation of <code>fytd_plot_df</code> doing? (<em>Hint:</em> You might find it helpful to append <code>count(fyear, date) |&gt; arrange(date)</code> to the first two lines of the code creating <code>fytd_plot_df</code>.)</p></li>
+<li><p>Why is important to <code>filter()</code> using <code>fyear</code> rather than <code>year</code> (i.e., <code>between(fyear, 2018, 2021))</code>)? (<em>Hint:</em> Change the <code>filter()</code> to use <code>year</code> instead and look at the resulting plot.)</p></li>
+<li><p>What happens if the call to <code>fiscal_month()</code> in the creation of <code>fytd_plot_df</code> is replaced by a call to <code>month = month(date, label = TRUE)</code>? (<em>Hint:</em> Change the code and look at the resulting plot.)</p></li>
+<li><p>What features of the variable <code>month</code> in the data frame <code>fytd_plot_df</code> ensure that we get the plot we are looking for?</p></li>
+<li><p>Could we use <code>cafes_vic_wa</code> in place of <code>cafes_vic_wa_db</code> to create <code>fytd_plot_df</code>? What changes do we need to make to the code? Does the resulting plot look the same as <a href="#fig-all-ind-fytd" class="quarto-xref">Figure&nbsp;5</a>?</p></li>
+</ol>
+</section>
+</section>
+<section id="moving-averages" class="level3" data-number="2.3.3">
+<h3 data-number="2.3.3" class="anchored" data-anchor-id="moving-averages"><span class="header-section-number">2.3.3</span> Moving averages</h3>
+<p>Another calculation using time windows that is commonly used is the moving average. A <strong>moving average</strong> can be used to smooth out a volatile time series by replacing the value for period <span class="math inline">\(t\)</span> with the average values for the periods <span class="math inline">\(t - k\)</span> through <span class="math inline">\(t\)</span>, where <span class="math inline">\(k \geq 1\)</span>. With seasonal data, it seems natural to consider twelve-month periods (i.e., <span class="math inline">\(k = 11\)</span>).</p>
+<p>To indicate that we want to use windows from <span class="math inline">\(t - 11\)</span> to <span class="math inline">\(t\)</span>, we can use <code>window_frame(-11, 0)</code>. This causes aggregate functions such as <code>mean()</code> and <code>sum()</code> to be applied as window functions to the resulting data frame.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>group_ma_plot_df <span class="ot">&lt;-</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  retail_sales_db <span class="sc">|&gt;</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(short_names, <span class="at">by =</span> <span class="st">"industry"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">industry =</span> <span class="fu">coalesce</span>(short_ind, industry)) <span class="sc">|&gt;</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(industry, state) <span class="sc">|&gt;</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">window_order</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">window_frame</span>(<span class="sc">-</span><span class="dv">11</span>, <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sales_ma =</span> <span class="fu">mean</span>(sales, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">count_ma =</span> <span class="fu">sum</span>(<span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(sales)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">==</span> <span class="st">"Total (State)"</span>, ind_level <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>         <span class="fu">between</span>(date, start_date, end_date),</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>         count_ma <span class="sc">==</span> <span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="#fig-all-ind-ma" class="quarto-xref">Figure&nbsp;6</a> plots both the underlying time-series and the twelve-month moving average.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>group_ma_plot_df <span class="sc">|&gt;</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> date)) <span class="sc">+</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> sales <span class="sc">/</span> <span class="fl">1e3</span>, <span class="at">colour =</span> <span class="st">"Sales"</span>)) <span class="sc">+</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> sales_ma <span class="sc">/</span> <span class="fl">1e3</span>, <span class="at">colour =</span> <span class="st">"12-month moving average"</span>)) <span class="sc">+</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Sales ($ billion)"</span>) <span class="sc">+</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Month"</span>) <span class="sc">+</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(industry <span class="sc">~</span> ., <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">scales =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-all-ind-ma" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-all-ind-ma-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="retail-sales_files/figure-html/fig-all-ind-ma-1.png" class="img-fluid figure-img" width="576">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-ma-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Retail sales by industry with moving average
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>An alternative approach to constructing the data frame for the plot above would use <code>pivot_longer</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>group_ma_plot_df_alt <span class="ot">&lt;-</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  group_ma_plot_df <span class="sc">|&gt;</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"sales"</span>), </span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"series"</span>, </span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"sales"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="exercises-5" class="level4" data-number="2.3.3.1">
+<h4 data-number="2.3.3.1" class="anchored" data-anchor-id="exercises-5"><span class="header-section-number">2.3.3.1</span> Exercises</h4>
+<ol type="1">
+<li><p>Construct a plot like <a href="#fig-all-ind-ma" class="quarto-xref">Figure&nbsp;6</a> using <code>group_ma_plot_df_alt</code> instead of <code>group_ma_plot_df</code>. (<em>Hint:</em> These code snippets may help: <code>ggplot(aes(x = date, y = sales, colour = series))</code> and <code>geom_line()</code>.) What differences do you see between your plot and <a href="#fig-all-ind-ma" class="quarto-xref">Figure&nbsp;6</a>? Can you remove these differences by modifying <code>group_ma_plot_df_alt</code>? (<em>Hint:</em> Try using <code>mutate()</code> with <code>case_when()</code>.)</p></li>
+<li><p>Does the moving average help you to discern trends or patterns that are more difficult to see with the original time-series? If so, discuss how it helps. If not, why not?</p></li>
+<li><p>Why do you think I included <code>count_ma == 12</code> in the <code>filter()</code> arguments? What happens if you omit this? Suppose I wanted to include the moving average in the plot only when <code>count_ma == 12</code> but wanted to include all values of underlying time-series. How could I achieve this? Construct a plot applying this approach. Do you think that this plot is more informative? (<em>Hint:</em> Try using <code>mutate()</code> with <code>if_else()</code>.)</p></li>
+<li><p>How helpful is the use of the moving average in <a href="#fig-all-ind-ma" class="quarto-xref">Figure&nbsp;6</a>? Are there some features of the data that are highlighted or obscured?</p></li>
+</ol>
+</section>
+</section>
+<section id="economic-shocks" class="level3" data-number="2.3.4">
+<h3 data-number="2.3.4" class="anchored" data-anchor-id="economic-shocks"><span class="header-section-number">2.3.4</span> Economic shocks</h3>
+<p>I guess that one of the observations you had about Figures <a href="#fig-all-ind" class="quarto-xref">1</a> and <a href="#fig-all-ind2" class="quarto-xref">2</a> is the sharp decrease in sales, especially to cafes and restaurants, in early 2020. Assuming you are more than ten years old, you probably attributed this to the Covid-19 pandemic of 2020–2022.</p>
+<p>On 25 February 2020, the federal government of Australia activated an emergency response plan in response to the rising number of cases of Covid-19 around the world. During 2020 and 2021, Australia largely pursued a strategy of eliminating Covid-19.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a> Even entertaining such a strategy was only possible due to special features of Australia, including the absence of any land borders and the fact that the majority of the population is located in urban areas that are largely isolated from each other. Most Australians live in capital cities of Australia’s six states and these cities are far apart from each other. The two state capitals on the Australian mainland that are closest to each other are Melbourne (Victoria) and Adelaide (South Australia), which are 654km apart.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a></p>
+<p>One consequence of Australia’s approach to Covid-19 is that Australians spent a lot more time in lockdowns than did citizens of other developed countries. That said, not all states had the same experience. Victoria had the worst experience with Covid-19, in terms of both the number of cases and total days spent in lockdown. Melbourne spent 262 days in lockdown with the last lockdown ending on 21 October 2021.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a> Western Australia, isolated even by Australian standards, had perhaps the best experience; it had just 13 days in lockdown. These lockdowns were much more rigorous than their equivalents in many other countries, as these were not “advisories” but strictly enforced requirements for people to stay at home with few exceptions.</p>
+<p>There is plenty of anecdotal evidence that alcohol consumption increased during Covid-19.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a> One question might be whether there are differences in consumption patterns between Victoria and Western Australia given their radically different experiences with lockdowns.</p>
+<p>I begin by constructing <code>liquor_df</code>, a data frame with sales for <em>Liquor retailing</em> from 1 January 2018 onwards for Victoria and Western Australia</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>liquor_df <span class="ot">&lt;-</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  retail_sales <span class="sc">|&gt;</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Victoria"</span>, <span class="st">"Western Australia"</span>),</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>         industry <span class="sc">==</span> <span class="st">"Liquor retailing"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">&gt;=</span> <span class="st">"2018-01-01"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I use the data in <code>liquor_df</code> to construct <code>liquor_plot_df</code>, which I will use for a plot. I first construct <code>scale_factor</code> for each state based on average sales in 2018 and then use that to scale <code>sales</code> to calculate <code>sales_normalised</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>liquor_plot_df <span class="ot">&lt;-</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  liquor_df <span class="sc">|&gt;</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">year</span>(date) <span class="sc">==</span> <span class="dv">2018</span>) <span class="sc">|&gt;</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state) <span class="sc">|&gt;</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">scale_factor =</span> <span class="fu">mean</span>(sales, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(liquor_df, <span class="at">by =</span> <span class="st">"state"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(date),</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">month =</span> <span class="fu">month</span>(date, <span class="at">label =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">sales_normalised =</span> sales <span class="sc">/</span> scale_factor)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="#fig-vic-wa-liq" class="quarto-xref">Figure&nbsp;7</a> plots the data in <code>liquor_plot_df</code> by month and state by year.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>liquor_plot_df <span class="sc">|&gt;</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> month, <span class="at">y =</span> sales_normalised, <span class="at">fill =</span> state)) <span class="sc">+</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"dodge"</span>) <span class="sc">+</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(year <span class="sc">~</span> ., <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-vic-wa-liq" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vic-wa-liq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="retail-sales_files/figure-html/fig-vic-wa-liq-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vic-wa-liq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Liquor retailing sales (normalised by 2018 average monthly sales)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Looking at <a href="#fig-vic-wa-liq" class="quarto-xref">Figure&nbsp;7</a>, we can see that Victoria and Western Australia look very similar to each other in 2018. This is to be expected as the mean value of <code>sales_normalised</code> in 2018 is exactly one by construction for both states. However, there is some evidence of greater seasonality in sales in Victoria, with the value <code>sales_normalised</code> in December 2018 being higher there, while values in months in the middle of the year are lower.</p>
+<p>In 2019, we see a pretty similar pattern to that of 2018 even though there is no mechanical requirement for average <code>sales_normalised</code> to be the same across the two states to be the same in that year.</p>
+<p>But from 2020 onwards, we start to see some divergence that is explored in the exercises.</p>
+<section id="exercises-6" class="level4" data-number="2.3.4.1">
+<h4 data-number="2.3.4.1" class="anchored" data-anchor-id="exercises-6"><span class="header-section-number">2.3.4.1</span> Exercises</h4>
+<ol type="1">
+<li><p>What is <code>position ="dodge"</code> doing in <a href="#fig-vic-wa-liq" class="quarto-xref">Figure&nbsp;7</a>? (<em>Hint:</em> Take this out and compare the plot created with <a href="#fig-vic-wa-liq" class="quarto-xref">Figure&nbsp;7</a>.)</p></li>
+<li><p>What patterns do you observe in <a href="#fig-vic-wa-liq" class="quarto-xref">Figure&nbsp;7</a> over time? What do you conjecture explains these patterns?</p></li>
+<li><p>What alternative explanations (other than the one you just gave) could explain the patterns observed in <a href="#fig-vic-wa-liq" class="quarto-xref">Figure&nbsp;7</a>? What data would you need to get to determine which explanation for these patterns is the most plausible?</p></li>
+<li><p>What do you find most surprising about <a href="#fig-vic-wa-liq" class="quarto-xref">Figure&nbsp;7</a>? Does this support your conjectured explanations or raise questions about it?</p></li>
+</ol>
+</section>
+</section>
+<section id="sec-abs" class="level3" data-number="2.3.5">
+<h3 data-number="2.3.5" class="anchored" data-anchor-id="sec-abs"><span class="header-section-number">2.3.5</span> Where can I get the data?</h3>
+<div class="callout callout-style-default callout-caution callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Caution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The material in this section is relatively advanced. You could skip this on a first reading and come back to this material when your skills have developed more or when you are interested in getting and working with other data from ABS.</p>
+</div>
+</div>
+</div>
+<p>As discussed, I got the data used to create <code>retail_sales.csv</code> from the ABS. While the ABS provides an <strong>application programming interface</strong> (<strong>API</strong>), <a href="https://www.abs.gov.au/about/data-services/application-programming-interfaces-apis/data-api-user-guide">this API</a> is difficult to use relative to using community-supplied R packages that extract data from the older spreadsheet formats provided by the ABS. I used the <code>readabs</code> package <span class="citation" data-cites="readabs">(<a href="#ref-readabs" role="doc-biblioref">Cowgill et al. 2025</a>)</span> to download the data. The <code>readabs</code> package downloads spreadsheets into a directory identified using the environment variable <code>R_READABS_PATH</code>, which I set to <code>"~/Downloads/"</code>, a location on <em>my</em> computer.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">R_READABS_PATH =</span> <span class="st">"~/Downloads/"</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readabs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I get data for code <code>8501.0</code>, which is covers retail trade data in Australia. I focus on table 11 from that series.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a> I use regular expressions to split the <code>series</code> column into three columns: <code>label</code>, <code>state</code>, and <code>industry</code>.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>table <span class="ot">&lt;-</span> <span class="st">"TABLE 11. Retail Turnover, State by Industry Subgroup, Original"</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>abs_data <span class="ot">&lt;-</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_abs</span>(<span class="st">"8501.0"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(table_title <span class="sc">==</span> table) <span class="sc">|&gt;</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_wider_regex</span>(series,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">c</span>(<span class="at">label =</span> <span class="st">"^.*"</span>, <span class="st">";</span><span class="sc">\\</span><span class="st">s+"</span>, </span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>                         <span class="at">state =</span> <span class="st">".*?"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">s*;</span><span class="sc">\\</span><span class="st">s*"</span>,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>                         <span class="at">industry =</span> <span class="st">".*?"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">s*;$"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">label =</span> <span class="fu">str_trim</span>(label)) <span class="sc">|&gt;</span></span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(industry, state, date, value) <span class="sc">|&gt;</span></span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">sales =</span> value) <span class="sc">|&gt;</span></span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date, industry, state)</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>abs_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 96,957 × 4
+   industry                                      state          date       sales
+   &lt;chr&gt;                                         &lt;chr&gt;          &lt;date&gt;     &lt;dbl&gt;
+ 1 Cafes, restaurants and catering services      Australian Ca… 1982-04-01   4.4
+ 2 Cafes, restaurants and catering services      New South Wal… 1982-04-01  61.8
+ 3 Cafes, restaurants and catering services      Northern Terr… 1982-04-01  NA  
+ 4 Cafes, restaurants and catering services      Queensland     1982-04-01  18.7
+ 5 Cafes, restaurants and catering services      South Austral… 1982-04-01  14.3
+ 6 Cafes, restaurants and catering services      Tasmania       1982-04-01   1.9
+ 7 Cafes, restaurants and catering services      Total (State)  1982-04-01 146. 
+ 8 Cafes, restaurants and catering services      Victoria       1982-04-01  36.4
+ 9 Cafes, restaurants and catering services      Western Austr… 1982-04-01   8  
+10 Cafes, restaurants and takeaway food services Australian Ca… 1982-04-01   7.6
+# ℹ 96,947 more rows</code></pre>
+</div>
+</div>
+<p>One thing that can be observed in the output above is that there is no indication of which industries are groups and which are subgroups. Also there is no indication of how the subgroups map to groups. To handle this, I created the following data frame to map <code>industry</code> to <code>ind_level</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>retail_industries <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>industry, <span class="sc">~</span>ind_level,</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Supermarket and grocery stores"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Liquor retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other specialised food retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Food retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Furniture, floor coverings, houseware and textile goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Electrical and electronic goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Hardware, building and garden supplies retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Household goods retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Clothing retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Footwear and other personal accessory retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Clothing, footwear and personal accessory retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Department stores"</span>, <span class="dv">1</span>,</span>
+<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Newspaper and book retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other recreational goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Pharmaceutical, cosmetic and toiletry goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other retailing n.e.c."</span>, <span class="dv">2</span>,</span>
+<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Cafes, restaurants and catering services"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Takeaway food services"</span>, <span class="dv">2</span>,</span>
+<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Cafes, restaurants and takeaway food services"</span>, <span class="dv">1</span>,</span>
+<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Total (Industry)"</span>, <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb45-24"><a href="#cb45-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parent_industry =</span> <span class="fu">if_else</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>, industry, <span class="cn">NA</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(parent_industry, <span class="at">.direction =</span> <span class="st">"up"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb45-26"><a href="#cb45-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parent_industry =</span> <span class="fu">if_else</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Total (Industry)"</span>, </span>
+<span id="cb45-27"><a href="#cb45-27" aria-hidden="true" tabindex="-1"></a>                                   parent_industry)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="ot">&lt;-</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  abs_data <span class="sc">|&gt;</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(retail_industries, <span class="fu">join_by</span>(industry)) <span class="sc">|&gt;</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"data/retail_sales.csv"</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="exercises-7" class="level4" data-number="2.3.5.1">
+<h4 data-number="2.3.5.1" class="anchored" data-anchor-id="exercises-7"><span class="header-section-number">2.3.5.1</span> Exercises</h4>
+<ol type="1">
+<li>Describe in words what the <code>mutate()</code>-<code>fill()</code>-<code>mutate()</code> sequence is doing in the creation of <code>retail_industries</code> above? Why do I first populate <code>parent_industry</code> with the value of <code>industry</code> before overwriting that wtih <code>"Total (Industry)"</code> two lines later? What assumptions does the code make about how the data provided by preceding steps?</li>
+</ol>
+</section>
+</section>
+</section>
+<section id="references" class="level2 unnumbered">
+
+
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-readabs" class="csl-entry" role="listitem">
+Cowgill, Matt, Zoe Meers, Jaron Lee, and David Diviny. 2025. <em>Readabs: Download and Tidy Time Series Data from the Australian Bureau of Statistics</em>. <a href="https://github.com/mattcowgill/readabs">https://github.com/mattcowgill/readabs</a>.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>TODO: Add instructions for setting up R. For now, Steps 1 and 2 from <a href="https://iangow.github.io/far_book/intro.html#sec-install">here</a> would probably work. Then run <code>install.packages(c("tidyverse", "modelsummary", "dbplyr", "DBI", "readabs"))</code>.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>TODO: Add templates. Current link goes to templates for a different book.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>TODO: This repository has not yet been set up. For now you can get the data by running the code provided in <a href="#sec-abs" class="quarto-xref">Section&nbsp;2.3.5</a>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>TODO: Discuss <em>implicit missing values</em> in an earlier section on <code>left_join()</code>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Once we recognize that <em>Department stores</em> is its own parent industry, it is trivial that its own sales will “add up” in the sense here, so we don’t need to consider that industry for present purposes.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Of course, Northern Territory is not a <em>state</em>, but a territory.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>I put “states” in scare quotes because it includes territories and also a series for all states combined (<code>Total (State)</code>).<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>TODO: Consider alternative approaches to getting data into DuckDB. Probably choose whichever is simplest pedagogically.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>The terminology “remote” is used even though the data are on the same computer, hence local in a sense. In principle, the data could be on a computer on the other side of the planet (e.g., in a remote PostgreSQL database).<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>TODO: This statement could be tightened up and clarified.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>TODO: Put a fleshed-out example of a window here.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>TODO: Should I scale by <code>1e3</code> throughout?<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>For some reason, <code>cumsum()</code> does not behave correctly if used with <code>window_frame()</code>. This much can be seen if you read the documentation shown when you type <code>? window_order</code> at the R console. I don’t see the reason for this behaviour.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>Using the term “elimination” to describe Australia’s approach was controversial. Nonetheless, it is clear that the approach in Australia differed radically from that in much of Europe and the United States.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>TODO: Tighten up the material here, including fact-checking of the data used herein.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>See <a href="https://en.wikipedia.org/wiki/COVID-19_pandemic_in_Victoria#cite_note-191">Wikipedia</a> for more details.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>See “Australia’s COVID-19 relationship with booze” in <a href="https://pursuit.unimelb.edu.au/articles/australia-s-covid-19-relationship-with-booze">Pursuit</a> for some illustrative statistics from the early part of the pandemic.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>For some reason, supplying <code>tables = 11</code> to <code>read_abs()</code> does not work for me, so I use <code>filter()</code> to focus on the data of interest.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>TODO: Add material to an earlier chapter on regular expression. For now, see the chapter on <em>Importing data</em> at <code>https://iangow.github.io/far_book/web-data.html</code>.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
