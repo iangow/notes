@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-02-25">
+<meta name="keywords" content="R, Arrow, DuckDB">
+
+<title>Data management ideas for researchers (R version) – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#data-management-principles" id="toc-data-management-principles" class="nav-link" data-scroll-target="#data-management-principles"><span class="header-section-number">2</span> Data management principles</a>
+  <ul class="collapse">
+  <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats"><span class="header-section-number">2.1</span> Caveats</a></li>
+  <li><a href="#some-concepts-in-data-management" id="toc-some-concepts-in-data-management" class="nav-link" data-scroll-target="#some-concepts-in-data-management"><span class="header-section-number">2.2</span> Some concepts in data management</a>
+  <ul class="collapse">
+  <li><a href="#scope" id="toc-scope" class="nav-link" data-scroll-target="#scope"><span class="header-section-number">2.2.1</span> Scope</a></li>
+  <li><a href="#version-control" id="toc-version-control" class="nav-link" data-scroll-target="#version-control"><span class="header-section-number">2.2.2</span> Version control</a></li>
+  <li><a href="#storage-formats" id="toc-storage-formats" class="nav-link" data-scroll-target="#storage-formats"><span class="header-section-number">2.2.3</span> Storage formats</a></li>
+  <li><a href="#timestamps" id="toc-timestamps" class="nav-link" data-scroll-target="#timestamps"><span class="header-section-number">2.2.4</span> Timestamps</a></li>
+  </ul></li>
+  <li><a href="#other-ideas" id="toc-other-ideas" class="nav-link" data-scroll-target="#other-ideas"><span class="header-section-number">2.3</span> Other ideas</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="data_mgt_r.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data management ideas for researchers (R version)</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">R</div>
+    <div class="quarto-category">Parquet</div>
+    <div class="quarto-category">db2pq</div>
+    <div class="quarto-category">WRDS</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">25 February 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+<div>
+  <div class="keywords">
+    <div class="block-title">Keywords</div>
+    <p>R, Arrow, DuckDB</p>
+  </div>
+</div>
+
+</header>
+
+
+<div class="abstract">
+<p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While many of the ideas I discuss here are general in nature, for concreteness, I focus on the special case of a WRDS user maintaining a local Parquet data library of the kind discussed in <a href="https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq">Appendix E</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> and provide examples using my R package <code>db2pq</code>.</p>
+</div>
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While data curation is often inextricably linked with data management, in this note I assume that we are working with curated data and just need to “manage” it in some way. A classic example of (mostly) curated data in an academic context is WRDS data, which my R package <code>db2pq</code> provides tools for managing a local library of such data.</p>
+</section>
+<section id="data-management-principles" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Data management principles</h1>
+<section id="caveats" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="caveats"><span class="header-section-number">2.1</span> Caveats</h2>
+<p>At the outset, I should note some limitations to my discussion here.</p>
+<p>First, this note does not data at the scale of multiple terabytes. Researchers working with data at the scale that one starts thinking about Spark clusters and immense cloud storage will not find any answers here. That said, I think the approaches I cover here scale up to a “low terabyte” scale, at least for aggregate data.</p>
+<p>Second, with very few exceptions, I have not really dealt with data with confidentiality issues. Readers dealing with sensitive data would need to overlay the necessary safeguards and protocols associated with such data onto the discussion I provide here.</p>
+</section>
+<section id="some-concepts-in-data-management" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="some-concepts-in-data-management"><span class="header-section-number">2.2</span> Some concepts in data management</h2>
+<section id="scope" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="scope"><span class="header-section-number">2.2.1</span> Scope</h3>
+<p>Many datasets are <strong>project-specific</strong> datasets, meaning that only have use within a single project (e.g., paper). Examples of project-specific would include experimental data generated in a particular study.</p>
+<p>Other datasets are <strong>general-purpose</strong> datasets, meaning that they contain data that might be relevant to many studies. Classic examples in a business-school context would be the <a href="https://iangow.github.io/far_book/identifiers.html#the-crsp-database">US stock price files</a> offered by the Center for Research in Security Prices, LLC (CRSP) or <a href="https://iangow.github.io/far_book/fin-state.html#financial-statement-data">financial statement data</a> provided by Compustat, or economic time-series data provided by various statistical offices around the world.</p>
+<p>Other datasets are <strong>project-level</strong> datasets, meaning that the particular data sets are somehow frozen for a particular project, even though the nature of the data otherwise puts them in the category of general-purpose datasets. For example, I might want to fix on a particular version of <code>comp.g_funda</code>, Compustat’s global dataset for annual financial statements for my project, even though this dataset has relevance beyond a specific project.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>There are two reasons for having project-level that I can think of. The first reason arises in the context of reproducibility. If I have published a paper, then the replication package for that paper should ideally contain the data used to produce the exact results in the paper. For this purpose, if the paper used <code>comp.g_funda</code> data, then the ideal replication package would include the precise <em>project-level</em> version of that data set used to produce the paper. Of course, in reality, one cannot simply post the project-level version of <code>comp.g_funda</code> as part of a public replication package. Nonetheless, the authors themselves should have a project-level version of the dataset that <em>they</em> retain. This much aligns with the views of <span class="citation" data-cites="Welch:2019aa">Welch (<a href="#ref-Welch:2019aa" role="doc-biblioref">2019</a>)</span>, who suggests that “the author should keep a private copy of the full data set with which the results were obtained.”</p>
+<p>The second reason is related to the first, but in some ways opposite in spirit. Some authors do not want their results to be upset by updates to any of datasets used to produce them. On one research project, I was responsible for supplying a curated data set of significant scale and complexity. Unfortunately, my understanding of variable scoping in Perl meant that about 2% of the data were simply corrupted and I felt I had to fix this. At my end, I wanted to manage the data as a general-purpose data set, but my co-author wanted to stick to the earlier project-level data.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>As far as WRDS data are concerned, my <code>db2pq</code> package aims to facilitate managing WRDS data either as general-purpose data or as project-level data.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> On my computers, I have the environment variable <code>DATA_DIR</code> set to a location inside Dropbox. So, by default, new WRDS data will go in the matching schema (i.e., subdirectory) of the directory indicated by <code>DATA_DIR</code>. In R, I can inspect the value in <code>DATA_DIR</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "/Users/igow/Dropbox/pq_data"</code></pre>
+</div>
+</div>
+<p>The <code>db2pq</code> package is not yet on CRAN, so you need to install it from GitHub using <code>pak</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">"iangow/db2pqr"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Within R, you can check the version using the following.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">packageVersion</span>(<span class="st">"db2pq"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] '0.0.1'</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ffiec.pq)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(db2pq)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The core function of <code>db2pq</code> is <code>wrds_update_pq()</code>. If I ask <code>wrds_update_pq()</code> to update my <em>general-purpose</em> version of <code>crsp.dsi</code>, I can see that the latest data on WRDS are no more recent than what I already have, so no update occurs.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"dsi"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>crsp.dsi already up to date.</code></pre>
+</div>
+</div>
+<p>But, if I wanted a <em>project-level</em> version of <code>crsp.dsi</code>, I can specify the project-level data directory (<code>"data"</code>) and WRDS will update the data there. As I don’t have any data in that folder to begin with, an “update” occurs.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"dsi"</span>, <span class="st">"crsp"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updated crsp.dsi is available.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-25 16:39:30 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-25 16:39:30 UTC.</code></pre>
+</div>
+</div>
+</section>
+<section id="version-control" class="level3" data-number="2.2.2">
+<h3 data-number="2.2.2" class="anchored" data-anchor-id="version-control"><span class="header-section-number">2.2.2</span> Version control</h3>
+<p>Version control is a thorny issue with data. As far as I know there is no equivalent of Git for datasets.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> While I am sure that version control of data is a big issue in many contexts (e.g., data for regulated bodies), many data providers, even commercial vendors, often do a poor job of version control.</p>
+<p>Many data sources will provide the current version of any given dataset and nothing else. For example, there is no way to get the version of the data you downloaded from WRDS two years ago if you want to understand why results have changed. In practice, researchers need to do any archiving of WRDS data sets themselves.</p>
+<p>My <code>db2pq</code> R package provides some functions that make it more convenient to maintain archives of previous versions of tables from WRDS. The core function for maintaining a local repository of Parquet files based on WRDS data is <code>wrds_update_pq()</code>. This function has an <code>archive</code> argument that, if set to <code>TRUE</code>, causes any existing data in the repository to be archived when an update is available and is applied:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"company"</span>, <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updated comp.company is available.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-25 16:39:31 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-25 16:39:32 UTC.</code></pre>
+</div>
+</div>
+<p>For most tables on the WRDS database, it appears that “last updated” metadata is included in table comments. The <code>wrds_update_pq()</code> function will, by default, extract that metadata and embed it as metadata in the Parquet files.</p>
+<p>The <code>pq_last_modified()</code> function, if given a <code>table_name</code> argument, will by default return the metadata embedded in the Parquet file.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Company (Updated 2026-02-25)"</code></pre>
+</div>
+</div>
+<p>But if I specify <code>archive = TRUE</code>, then <code>pq_last_modified()</code> will instead return a tibble containing information about (possibly several) files matching the specified <code>table_name</code> in the archive.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> Here, we see that I have four previous versions of <code>comp.company</code> in my archive.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="ot">&lt;-</span> <span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>pq_df[<span class="fu">c</span>(<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 8 × 2
+  file_name                last_mod           
+  &lt;chr&gt;                    &lt;dttm&gt;             
+1 company_20240614T062835Z 2024-06-14 06:28:35
+2 company_20260105T070000Z 2026-01-05 07:00:00
+3 company_20260107T070000Z 2026-01-07 07:00:00
+4 company_20260209T070000Z 2026-02-09 07:00:00
+5 company_20260218T070000Z 2026-02-18 07:00:00
+6 company_20260224T070000Z 2026-02-24 07:00:00
+7 company_20260225T000000Z 2026-02-24 07:00:00
+8 company_20260225T070000Z 2026-02-25 07:00:00</code></pre>
+</div>
+</div>
+<p>I can use the function <code>pq_restore()</code> to make the one from <code>2024-06-14</code> the one that I am using for my data repository.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_restore</span>(<span class="st">"company_20240614T062835Z"</span>, <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Archived to: /Users/igow/Dropbox/pq_data/comp/archive/company_20260225T070000Z.parquet</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Restored to: /Users/igow/Dropbox/pq_data/comp/company.parquet</code></pre>
+</div>
+</div>
+<p>I now see that this is the version used when I look for <code>company</code> in the <code>comp</code> schema:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Last modified: 06/14/2024 02:28:35"</code></pre>
+</div>
+</div>
+<p>One thing you will notice is that the format of the “last modified” string has changed from the one above. This could be for one of three reasons:</p>
+<ol type="1">
+<li>The Parquet file that has been restored was created using my Python package <code>wrds2pg</code>, which extracts data from WRDS’s SAS data files. Naturally, it uses information returned by the SAS command <code>PROC CONTENTS</code>.</li>
+<li>The Parquet file that has been restored was created using an earlier version of the Python version of <code>db2pq</code>. Because WRDS did not initially store “last modified” information with its PostgreSQL tables, earlier versions of the Python version of <code>db2pq</code> retrieved information from the matching SAS file on the assumption that the SAS and PostgreSQL data sets would generally be aligned.</li>
+<li>The Parquet file that has been restored was created using a recent Python version of <code>db2pq</code>, but with <code>use_sas=True</code>. In this case, <code>wrds_update_pq()</code> will retrieve the “last modified” information from the SAS file.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></li>
+</ol>
+<p>Note that the <code>use_sas</code> argument has not yet been implemented in the R version of <code>db2pq</code>.</p>
+<p>By default, the <code>pq_restore()</code> function has <code>archive = TRUE</code>, which means that any existing data file is archived.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> We can see the file that we created just moments ago using <code>wrds_update_pq()</code> is now in the archive:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="ot">&lt;-</span> <span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>pq_df[<span class="fu">c</span>(<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 7 × 2
+  file_name                last_mod           
+  &lt;chr&gt;                    &lt;dttm&gt;             
+1 company_20260105T070000Z 2026-01-05 07:00:00
+2 company_20260107T070000Z 2026-01-07 07:00:00
+3 company_20260209T070000Z 2026-02-09 07:00:00
+4 company_20260218T070000Z 2026-02-18 07:00:00
+5 company_20260224T070000Z 2026-02-24 07:00:00
+6 company_20260225T000000Z 2026-02-24 07:00:00
+7 company_20260225T070000Z 2026-02-25 07:00:00</code></pre>
+</div>
+</div>
+<p>If we update again with <code>archive = TRUE</code>, we will effectively put the <code>2024-06-14</code> version back in the archive and replace it with the current version on WRDS.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"company"</span>, <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updated comp.company is available.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-25 16:39:32 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Archived existing file to: /Users/igow/Dropbox/pq_data/comp/archive/company_20240614T062835Z.parquet</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-25 16:39:33 UTC.</code></pre>
+</div>
+</div>
+<p>Some WRDS PostgreSQL tables appear not (yet) to have “last modified” information. For example, some RavenPack data tables appear not to have this information. In the following, I set <code>obs = 100</code> and <code>data_dir = "data"</code>, as I am doing this “update” purely for the purposes of this note, so only get 100 observations to keep things fast.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, <span class="at">obs =</span> <span class="dv">100</span>, </span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>No comment found for ravenpack_common.rpa_entity_mappings.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ravenpack_common.rpa_entity_mappings already up to date.</code></pre>
+</div>
+</div>
+<p>We can confirm this using <code>pq_last_modified()</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"rpa_entity_mappings"</span>, <span class="at">schema =</span> <span class="st">"ravenpack_common"</span>,</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] ""</code></pre>
+</div>
+</div>
+<p>In such cases, any subsequent call to <code>wrds_update_pq()</code> will not trigger an “update” because there is effectively nothing to allow it to confirm that the local data are not current.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, <span class="at">obs =</span> <span class="dv">100</span>, </span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>No comment found for ravenpack_common.rpa_entity_mappings.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ravenpack_common.rpa_entity_mappings already up to date.</code></pre>
+</div>
+</div>
+<p>In such cases, it may be useful to use SAS data to determine the vintage of the data. However, as noted above, SAS-related functionality (i.e., <code>use_sas</code>) has not yet been implemented in the R package <code>db2pq</code>.</p>
+</section>
+<section id="storage-formats" class="level3" data-number="2.2.3">
+<h3 data-number="2.2.3" class="anchored" data-anchor-id="storage-formats"><span class="header-section-number">2.2.3</span> Storage formats</h3>
+<p>While there are many storage formats available for data, I think a strong case can be made for Parquet being the default storage format for many users. If you use R or Python, I think the case is easy to make. Many software packages can read Parquet data and some of them (e.g., the <code>arrow</code> package or DuckDB) will absolutely fly with Parquet data.</p>
+<p>I believe that recent editions of Stata can read Parquet files, though the way Stata operates means that Stata users are unlikely to see the performance benefits Parquet offers.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> SAS users might find the case for Parquet less compelling, though there are probably benefits in moving to a storage medium that is more compact, less proprietary, and more likely to be supported in a few years’ time.</p>
+<p>Of course, an alternative to using Parquet files would be using a database, such as PostgreSQL. I think such systems have a lot of merit (and I have used PostgreSQL to store WRDS data since 2011), but I think they are more complicated for most users’ needs and their benefits (e.g., shared access to data and rock-solid assurance) are less meaningful for most.</p>
+<p>Another alternative is the CSV file, perhaps compressed. I think if one were sending data on the next Voyager mission, then CSV might be the chosen format.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a> Or if you really, really wanted data novices to inspect your data in Excel or Word, then CSV might be the go-to option. Or perhaps you want to put your data in a written form in a book for users to type in. For any other purpose with serious data needs, I think Parquet dominates.</p>
+<p>One issue with CSV is that one is always dealing with type inference (string, integer, timestamp) and I think that type inference is one of those problems you want to solve once for any given dataset. For the WRDS data that is the focus of this note, I think CSV is to be avoided.</p>
+</section>
+<section id="timestamps" class="level3" data-number="2.2.4">
+<h3 data-number="2.2.4" class="anchored" data-anchor-id="timestamps"><span class="header-section-number">2.2.4</span> Timestamps</h3>
+<p>Speaking of type inference, one bane of the existence of any data analyst might be timestamps. The usual purpose of timestamps is to identify a moment in time. For example, I want to know the precise time at which an earnings conference call happened, so I can turn to a dataset with intra-day data on quotes and trades to see how the market reacted. If the data on earnings conference calls use UTC and the trade-and-quote data use US Eastern time and I ignore these differences, then I will be looking at times that are off by four or five hours (depending on the time of year).</p>
+<p>To examine this issue, I’m going to revisit the Call Report data I wrote about <a href="https://rpubs.com/iangow/call_reports">recently</a>. I have these data in my (general-purpose) data repository and I can use the following code to load it into R using <code>arrow</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In my earlier note, I discussed how I managed to infer that the timestamps on that dataset are in US Eastern time (<code>America/New_York</code>). We can inspect the data I have using the function above, focused on a single observation:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  IDRSSD date       last_date_time_submission_updated_on
+   &lt;int&gt; &lt;date&gt;     &lt;dttm&gt;                              
+1     37 2023-12-31 2024-01-10 18:43:43                 </code></pre>
+</div>
+</div>
+<p>WRDS offers essentially the same data in its <code>bank</code> schema. We can use <code>wrds_update_pq()</code> to get a sample of these data.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">obs =</span> <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updated bank.wrds_call_rcfa_1 is available.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-25 16:39:35 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Applying tz='UTC' to 1 timestamp column(s): rssdsubmissiondate.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-25 16:39:36 UTC.</code></pre>
+</div>
+</div>
+<p>To load the data into R, I will use the following <code>load_parquet()</code> helper function.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>load_parquet <span class="ot">&lt;-</span> <span class="cf">function</span>(table, schema, <span class="at">data_dir =</span> <span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>, <span class="st">"."</span>)) {</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_dir, schema, <span class="fu">paste0</span>(table, <span class="st">".parquet"</span>))</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">open_dataset</span>(path)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>As can be seen from the output below, the timestamp is off by five hours. That is because <code>wrds_update_pq()</code> assumes that timestamps are in UTC, which is a correct assumption for some datasets on WRDS, but is incorrect in this case.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="sc">|&gt;</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rssd9001, wrdsreportdate, rssdsubmissiondate) <span class="sc">|&gt;</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rssd9001 <span class="sc">==</span> <span class="dv">37</span>, wrdsreportdate <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  rssd9001 wrdsreportdate rssdsubmissiondate 
+     &lt;int&gt; &lt;date&gt;         &lt;dttm&gt;             
+1       37 2023-12-31     2024-01-10 13:43:43</code></pre>
+</div>
+</div>
+<p>WRDS generally stores timestamps in PostgreSQL with type <code>TIMESTAMP WITHOUT TIME ZONE</code>, which is equivalent to saying “you figure out the time zone, user.”<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> Because we know that the timestamps provided by the FFIEC are expressed in US Eastern time, we can tell <code>wrds_update_pq()</code> this using the <code>tz</code> argument:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, </span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">obs =</span> <span class="dv">100</span>, </span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">force =</span> <span class="cn">TRUE</span>, <span class="at">tz =</span> <span class="st">"America/New_York"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Forcing update based on user request.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-25 16:39:36 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Applying tz='America/New_York' to 1 timestamp column(s): rssdsubmissiondate.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-25 16:39:37 UTC.</code></pre>
+</div>
+</div>
+<p>Now, we see that the data are correct.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="sc">|&gt;</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rssd9001, wrdsreportdate, rssdsubmissiondate) <span class="sc">|&gt;</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rssd9001 <span class="sc">==</span> <span class="dv">37</span>, wrdsreportdate <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  rssd9001 wrdsreportdate rssdsubmissiondate 
+     &lt;int&gt; &lt;date&gt;         &lt;dttm&gt;             
+1       37 2023-12-31     2024-01-10 18:43:43</code></pre>
+</div>
+</div>
+<p>In other cases, WRDS doesn’t even bother to store the data as <code>TIMESTAMP WITHOUT TIME ZONE</code>, but instead the data are stored as strings. Here’s one example.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">keep =</span> <span class="fu">c</span>(<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>),</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">obs =</span> <span class="dv">5</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updated audit.feed03_audit_fees is available.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-25 16:39:37 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-25 16:39:38 UTC.</code></pre>
+</div>
+</div>
+<p>But here we see that <code>file_accepted</code> is stored as a string (and <code>auditor_fkey</code> is a floating-point value).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load_parquet</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 2
+  auditor_fkey file_accepted      
+         &lt;dbl&gt; &lt;chr&gt;              
+1            5 2001-03-28 00:00:00
+2            5 2002-03-25 00:00:00
+3            4 2003-03-31 09:19:45
+4            6 2004-04-06 14:34:14
+5            6 2005-04-04 11:55:05</code></pre>
+</div>
+</div>
+<p>Fortunately, with <code>wrds_update_pq()</code>, I can specify the (Arrow) data types for selected columns and, in the case of <code>timestamp</code>, the time zone.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">col_types =</span> <span class="fu">list</span>(<span class="at">auditor_fkey =</span> <span class="st">"int32"</span>,</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>                                <span class="at">file_accepted =</span> <span class="st">"timestamp"</span>),</span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">tz =</span> <span class="st">"America/New_York"</span>, <span class="at">force =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">keep =</span> <span class="fu">c</span>(<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>),</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Forcing update based on user request.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-25 16:39:38 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Applying tz='America/New_York' to 1 timestamp column(s): file_accepted.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-25 16:39:39 UTC.</code></pre>
+</div>
+</div>
+<p>Now things look much better.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load_parquet</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 2
+  auditor_fkey file_accepted      
+         &lt;int&gt; &lt;dttm&gt;             
+1            5 2001-03-28 05:00:00
+2            5 2002-03-25 05:00:00
+3            4 2003-03-31 14:19:45
+4            6 2004-04-06 18:34:14
+5            6 2005-04-04 15:55:05
+6            6 2006-03-28 21:32:12</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="other-ideas" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="other-ideas"><span class="header-section-number">2.3</span> Other ideas</h2>
+<p>There are several ideas not covered by this note currently, but that might be added later:</p>
+<ul>
+<li>Back up your data</li>
+<li>Modification of raw data files</li>
+<li>The WRDS web query</li>
+</ul>
+<p>In the last case, don’t use it! (I will explain why, but one issue is reproducibility.)</p>
+
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Welch:2019aa" class="csl-entry" role="listitem">
+Welch, I., 2019. Editorial: An opinionated FAQ. Critical Finance Review 8, 19–24. <a href="https://doi.org/10.1561/104.00000077">https://doi.org/10.1561/104.00000077</a>
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>As academic researchers generally get Compustat data through Wharton Research Data Services (WRDS), I refer to this dataset using the nomenclature used by WRDS. Here “global” means “not the United States (or Canada)”.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>There can be reasonable explanations for my co-author’s stance. From some discussions I’ve had, it seems that many authors are worried about reviewers querying any change in any number in any table. While I do not understand why “because I updated Compustat” wouldn’t be an adequate response to “why did the coefficients change?” query, I guess many authors put a high priority on triggering as few questions as possible in a far-from-perfect review process. Another reason for this stance is that many researchers have a very manual research process, so changing an input data set means changing many other things, including re-typing the coefficients in the Word document containing the paper or re-exporting the data to Excel to make any plots.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>WRDS data are not project-specific data sets pretty much by definition.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>I’d guess that such a thing would amount to the equivalent of SQL’s <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code> commands.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>If <code>table_name</code> is omitted and <code>schema</code> is specified, then the function will return a tibble with information on the files in the data directory for the schema (if <code>archive = FALSE</code>, as is the default) or in the archive directory (if <code>archive = TRUE</code>).<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>The information returned by <code>PROC CONTENTS</code> is assumed to be expressed in US Eastern local time (i.e., <code>America/New_York</code>). The PostgreSQL comments generally only indicate a date, and the <code>db2pq</code> assumes that the update occurred at 02:00 US Eastern time.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>In addition to <code>pq_restore()</code>, the <code>db2pq</code> package also offers <code>pq_archive()</code> functions.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>An update can always be forced using <code>force = TRUE</code>.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Of course, if a user cared about performance with data manipulation, he probably wouldn’t be using Stata to begin with.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Each of the two Voyager spacecraft, launched by NASA in 1977, carry the Voyager Golden Record, a gold-plated copper phonograph record intended as a message to any intelligent extraterrestrial lifeforms that might encounter the probes. If we wanted to give data to such lifeforms, I think it would be (quoted) CSV data and written on paper.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>Because the data appear to be sorted by bank ID, I should retrieve the observation above, even though I’m only getting 100 rows of data.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>The only option that should be used with PostgreSQL is <code>TIMESTAMP WITH TIME ZONE</code>.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>Here I use <code>keep</code> to limit my download to the fields of interest.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

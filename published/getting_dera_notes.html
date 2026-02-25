@@ -409,7 +409,7 @@ character   numeric   POSIXct
 <p>I then do similar work for the remaining tables (<code>dim</code>, <code>num</code>, <code>txt</code>, <code>ren</code>, <code>pre</code>, and <code>cal</code>). I then put all of this inside a function <code>get_notes_data(file)</code> that downloads a <code>.zip</code> file and creates parquet files for each table. I can load this function by running the following code:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">str_c</span>(<span class="st">"https://raw.githubusercontent.com/iangow/"</span>,</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>             <span class="st">"notes/refs/heads/main/get_dera_functions.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>             <span class="st">"notes/refs/heads/main/published/get_dera_functions.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>This code also loads the function <code>get_zip_files_df()</code> that can be used to get the list of <code>.zip</code> files shown on SEC website.</p>
 <div class="cell">
@@ -436,7 +436,7 @@ character   numeric   POSIXct
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(zip_files<span class="sc">$</span>file, get_notes_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Doing this takes me a bit under 38 minutes.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> The resulting files take up about 37 GB of space, likely representing about 10 times that in terms of raw data due to compression.</p>
+<p>Doing this takes me a bit under 38 minutes.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> The resulting files take up about 39 GB of space, likely representing about 10 times that in terms of raw data due to compression.</p>
 </section>
 <section id="doing-incremental-updates" class="level3" data-number="1.3">
 <h3 data-number="1.3" class="anchored" data-anchor-id="doing-incremental-updates"><span class="header-section-number">1.3</span> Doing incremental updates</h3>
@@ -503,7 +503,7 @@ character   numeric   POSIXct
 <span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.044   0.029   0.039 </code></pre>
+  0.042   0.019   0.035 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 18 × 2
