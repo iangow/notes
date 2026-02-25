@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-02-05">
+
+<title>Data collection (with spreadsheets) – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="../site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#spreadsheets-and-data-science" id="toc-spreadsheets-and-data-science" class="nav-link active" data-scroll-target="#spreadsheets-and-data-science"><span class="header-section-number">1</span> Spreadsheets and data science</a>
+  <ul class="collapse">
+  <li><a href="#scenario-1-importing-spreadsheet-data" id="toc-scenario-1-importing-spreadsheet-data" class="nav-link" data-scroll-target="#scenario-1-importing-spreadsheet-data"><span class="header-section-number">1.1</span> Scenario 1: Importing spreadsheet data</a></li>
+  <li><a href="#scenario-2-using-spreadsheets-for-data-collection" id="toc-scenario-2-using-spreadsheets-for-data-collection" class="nav-link" data-scroll-target="#scenario-2-using-spreadsheets-for-data-collection"><span class="header-section-number">1.2</span> Scenario 2: Using spreadsheets for data collection</a></li>
+  <li><a href="#other-use-cases-for-spreadsheets" id="toc-other-use-cases-for-spreadsheets" class="nav-link" data-scroll-target="#other-use-cases-for-spreadsheets"><span class="header-section-number">1.3</span> Other use cases for spreadsheets</a>
+  <ul class="collapse">
+  <li><a href="#spreadsheets-for-modelling" id="toc-spreadsheets-for-modelling" class="nav-link" data-scroll-target="#spreadsheets-for-modelling"><span class="header-section-number">1.3.1</span> Spreadsheets for modelling</a></li>
+  <li><a href="#spreadsheets-for-data-analysis" id="toc-spreadsheets-for-data-analysis" class="nav-link" data-scroll-target="#spreadsheets-for-data-analysis"><span class="header-section-number">1.3.2</span> Spreadsheets for data analysis</a></li>
+  <li><a href="#spreadsheets-for-organizing-output" id="toc-spreadsheets-for-organizing-output" class="nav-link" data-scroll-target="#spreadsheets-for-organizing-output"><span class="header-section-number">1.3.3</span> Spreadsheets for organizing output</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#google-sheets" id="toc-google-sheets" class="nav-link" data-scroll-target="#google-sheets"><span class="header-section-number">2</span> Google Sheets</a></li>
+  <li><a href="#sec-main-case" id="toc-sec-main-case" class="nav-link" data-scroll-target="#sec-main-case"><span class="header-section-number">3</span> Case study: Linking IPOs with auditor IDs</a>
+  <ul class="collapse">
+  <li><a href="#ipo-data" id="toc-ipo-data" class="nav-link" data-scroll-target="#ipo-data"><span class="header-section-number">3.1</span> IPO data</a></li>
+  <li><a href="#form-ap-data" id="toc-form-ap-data" class="nav-link" data-scroll-target="#form-ap-data"><span class="header-section-number">3.2</span> Form AP data</a></li>
+  <li><a href="#creating-the-link-table" id="toc-creating-the-link-table" class="nav-link" data-scroll-target="#creating-the-link-table"><span class="header-section-number">3.3</span> Creating the link table</a>
+  <ul class="collapse">
+  <li><a href="#name-based-links" id="toc-name-based-links" class="nav-link" data-scroll-target="#name-based-links"><span class="header-section-number">3.3.1</span> Name-based links</a></li>
+  <li><a href="#problematic-name-based-links" id="toc-problematic-name-based-links" class="nav-link" data-scroll-target="#problematic-name-based-links"><span class="header-section-number">3.3.2</span> Problematic name-based links</a></li>
+  <li><a href="#manual-links-by-dealid" id="toc-manual-links-by-dealid" class="nav-link" data-scroll-target="#manual-links-by-dealid"><span class="header-section-number">3.3.3</span> Manual links by <code>dealID</code></a></li>
+  <li><a href="#combining-data-to-produce-the-link-table" id="toc-combining-data-to-produce-the-link-table" class="nav-link" data-scroll-target="#combining-data-to-produce-the-link-table"><span class="header-section-number">3.3.4</span> Combining data to produce the link table</a></li>
+  <li><a href="#perfecting-the-matches" id="toc-perfecting-the-matches" class="nav-link" data-scroll-target="#perfecting-the-matches"><span class="header-section-number">3.3.5</span> Perfecting the matches</a></li>
+  <li><a href="#checking-for-gaps" id="toc-checking-for-gaps" class="nav-link" data-scroll-target="#checking-for-gaps"><span class="header-section-number">3.3.6</span> Checking for gaps</a></li>
+  <li><a href="#persisting-the-link-table" id="toc-persisting-the-link-table" class="nav-link" data-scroll-target="#persisting-the-link-table"><span class="header-section-number">3.3.7</span> Persisting the link table</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#tweaking-the-recommendations-of-broman2018aa" id="toc-tweaking-the-recommendations-of-broman2018aa" class="nav-link" data-scroll-target="#tweaking-the-recommendations-of-broman2018aa"><span class="header-section-number">4</span> Tweaking the recommendations of <span class="citation" data-cites="Broman:2018aa">Broman and Woo (2018)</span></a>
+  <ul class="collapse">
+  <li><a href="#no-empty-cells" id="toc-no-empty-cells" class="nav-link" data-scroll-target="#no-empty-cells"><span class="header-section-number">4.1</span> “No Empty Cells”</a></li>
+  <li><a href="#no-calculations-in-the-raw-data-files" id="toc-no-calculations-in-the-raw-data-files" class="nav-link" data-scroll-target="#no-calculations-in-the-raw-data-files"><span class="header-section-number">4.2</span> “No Calculations in the Raw Data Files”</a></li>
+  <li><a href="#do-not-use-font-color-or-highlighting-as-data" id="toc-do-not-use-font-color-or-highlighting-as-data" class="nav-link" data-scroll-target="#do-not-use-font-color-or-highlighting-as-data"><span class="header-section-number">4.3</span> “Do Not Use Font Color or Highlighting as Data”</a></li>
+  <li><a href="#make-backups" id="toc-make-backups" class="nav-link" data-scroll-target="#make-backups"><span class="header-section-number">4.4</span> “Make Backups”</a></li>
+  <li><a href="#save-the-data-in-plain-text-files" id="toc-save-the-data-in-plain-text-files" class="nav-link" data-scroll-target="#save-the-data-in-plain-text-files"><span class="header-section-number">4.5</span> “Save the Data in Plain Text Files”</a></li>
+  <li><a href="#create-a-data-dictionary" id="toc-create-a-data-dictionary" class="nav-link" data-scroll-target="#create-a-data-dictionary"><span class="header-section-number">4.6</span> “Create a Data Dictionary”</a></li>
+  </ul></li>
+  <li><a href="#additional-case-studies" id="toc-additional-case-studies" class="nav-link" data-scroll-target="#additional-case-studies"><span class="header-section-number">5</span> Additional case studies</a>
+  <ul class="collapse">
+  <li><a href="#audit-fee-data" id="toc-audit-fee-data" class="nav-link" data-scroll-target="#audit-fee-data"><span class="header-section-number">5.1</span> Audit fee data</a></li>
+  <li><a href="#activist-directors" id="toc-activist-directors" class="nav-link" data-scroll-target="#activist-directors"><span class="header-section-number">5.2</span> Activist directors</a></li>
+  <li><a href="#director-ethnicities" id="toc-director-ethnicities" class="nav-link" data-scroll-target="#director-ethnicities"><span class="header-section-number">5.3</span> Director ethnicities</a>
+  <ul class="collapse">
+  <li><a href="#database-of-director-photos" id="toc-database-of-director-photos" class="nav-link" data-scroll-target="#database-of-director-photos"><span class="header-section-number">5.3.1</span> Database of director photos</a></li>
+  <li><a href="#classifying-director-photos" id="toc-classifying-director-photos" class="nav-link" data-scroll-target="#classifying-director-photos"><span class="header-section-number">5.3.2</span> Classifying director photos</a></li>
+  <li><a href="#creating-the-final-ethnicities-data-file" id="toc-creating-the-final-ethnicities-data-file" class="nav-link" data-scroll-target="#creating-the-final-ethnicities-data-file"><span class="header-section-number">5.3.3</span> Creating the final ethnicities data file</a></li>
+  </ul></li>
+  <li><a href="#director-biographies" id="toc-director-biographies" class="nav-link" data-scroll-target="#director-biographies"><span class="header-section-number">5.4</span> Director biographies</a></li>
+  <li><a href="#matching-identifiers" id="toc-matching-identifiers" class="nav-link" data-scroll-target="#matching-identifiers"><span class="header-section-number">5.5</span> Matching identifiers</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="spreadsheets.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data collection (with spreadsheets)</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Data curation</div>
+    <div class="quarto-category">Spreadsheets</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">5 February 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="abstract">
+<p>This note also completes the three-part series of notes written to address gaps in the coverage of <span class="citation" data-cites="gow2024empirical">Gow and Ding (<a href="#ref-gow2024empirical" role="doc-biblioref">2024a</a>)</span> relative to <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> Previous notes covered <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">hierarchical data</a> and <a href="https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf">dates and times</a> and this note covers spreadsheets. As discussed in a <a href="https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ">post on LinkedIn</a>, one goal of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> (co-authored with <a href="https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding">Tony Ding</a>) is to provide a pathway to mastery of the contents of <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a>.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+</div>
+<p>In writing about data science there is a definite tendency to emphasize the “sexy” aspects, such as machine learning algorithms or fancy statistics. This is the case even though it seems to be widely understood that a lot of the critical work involves unsexy tasks related to the organization of data. One resource that bucks the trend is <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a> <span class="citation" data-cites="Wickham:2023aa">(<a href="#ref-Wickham:2023aa" role="doc-biblioref">Wickham et al., 2023</a>)</span>, which eschews the sexy stuff in providing excellent materials for learning how to tidy and transform data to generate insights.</p>
+<p>But even <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> draws the line at data collection.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> Figure 1-1 of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> suggests that the “whole game” of data science kicks off with <em>Import</em>.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> But where do these imported data come from? Who collected them? Often data analysts are blessed with ready-to-import data sources. But sometimes the only way to get data is to <em>Collect</em> them ourselves.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>At first impression, it might seem that data collection is too dull a topic for data scientists to think much about and there is not much for writers of educational materials (e.g., textbooks) to say on the topic. But <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> seems to suggest otherwise. While its title is “Data organization in spreadsheets”, <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> could equally well be entitled “Data collection (with spreadsheets)” (and I have used the latter as the title for this note). <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> is a concise, well-written paper that provides a number of best practices for data collection and I highly recommend it.</p>
+<p>However, when I first saw <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> <a href="https://kbroman.org/dataorg/">online</a> in 2016, I had a number of thoughts. I dutifully filed these as (somewhat obnoxious) issues on Karl Broman’s GitHub repository, but had no real expectation that Karl would address these.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> Instead I figured that I would write a short follow-up paper digging more deeply into issues that interested me. This document is that follow-up paper … a mere nine years later! In this note, I provide a different perspective on data collection—albeit one that I hope is complementary to that in <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span>—with a detailed extended case study to illustrate the ideas I discuss.</p>
+<p>This note also completes the three-part series of notes written to address gaps in the coverage of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> <span class="citation" data-cites="Gow_2024">(<a href="#ref-Gow_2024" role="doc-biblioref">Gow and Ding, 2024b</a>)</span> relative to <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a>.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> Previous notes covered <a href="https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf">hierarchical data</a> and <a href="https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf">dates and times</a> and this note covers spreadsheets. As discussed in a <a href="https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ">post on LinkedIn</a>, one goal of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> (co-authored with <a href="https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding">Tony Ding</a>) is to provide a pathway to mastery of the contents of <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a>.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+<p>The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> I also provide brief sketches of the use of spreadsheets in data collection drawing on research projects I have participated in.</p>
+<p>In writing this note, I use the packages listed below.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/spreadsheets.qmd">here</a> and the latest version of this PDF is <a href="https://raw.githubusercontent.com/iangow/notes/main/spreadsheets.pdf">here</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(farr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googlesheets4)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dbplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="spreadsheets-and-data-science" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Spreadsheets and data science</h1>
+<p>My sense is that a lot of the use of spreadsheets in data science falls into one of two scenarios. In the first scenario, the data are provided in a spreadsheet format that is outside the control of the reseacher. In the other scenario, spreadsheets are used by the researcher as part of the data collection process.</p>
+<section id="scenario-1-importing-spreadsheet-data" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="scenario-1-importing-spreadsheet-data"><span class="header-section-number">1.1</span> Scenario 1: Importing spreadsheet data</h2>
+<p><a href="https://r4ds.hadley.nz/spreadsheets">Chapter 20</a> of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> covers spreadsheets with an emphasis on importing data provided in spreadsheet form—either in a Microsoft Excel file or in a Google Sheets document. While the chapter in <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> does cover writing data to Excel or Google Sheets, it does not discuss <em>why</em> you would want to do this.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
+<p>The coverage provided in <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> is excellent and I refer readers to that book for details on importing spreadsheet data. However, a weakness of <a href="https://r4ds.hadley.nz/spreadsheets">Chapter 20</a> of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> is its limited guidance on what I would regard as essential best practices for importing spreadsheet data.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> So I provide some guidance on these here.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-whole-game" class="quarto-float quarto-figure quarto-figure-center anchored" alt="A diagram displaying the data science workfow.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-whole-game-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/data-science-collect.png" class="img-fluid figure-img" alt="A diagram displaying the data science workfow." width="539">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-whole-game-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: An expanded representation of the data science workflow
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>First, the import process should be done as much as possible in a script that allows the whole process to be repeated. Importing spreadsheets falls clearly into the <em>Curate</em> portion of the extended “whole game” of a data analysis workflow depicted in <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a> The whole <em>Curate</em> process should be documented and scripted as much as possible. For example, if the spreadsheet data come from a URL for a Microsoft Excel file, then the download step should be [if possible] part of the script.</p>
+<p>Second, the source data files should not be modified in <em>any</em> way. While this point is closely related to the previous one, I believe that it warrants specific emphasis. Clearly one should not be opening Excel files and modifying data by deleting columns or reformatting values, as these steps are undocumented and not repeatable in an automated fashion. My advice here mirrors that of <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018, p. 7</a>)</span> in a slightly different context: “Your primary data file should be a pristine store of data. Write-protect it, back it up, and do not touch it.”</p>
+<p>Even simply opening the source Excel files in Excel and clicking save can modify the underlying files in ways that affect later parts of the data science workflow. I had one project where the source data appeared to be <code>.xls</code> Excel files, but were in fact simply structured text in HTML format. Scripts written on this basis performed better than ones that read them as Excel data.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a> However, when updated spreadsheets were received from the vendor they first passed through the data team at the institution I then worked at and my scripts no longer worked. The data team had “helpfully” opened the files in Excel and saved them before sending them along to me. I had to insist that the data team pass along the data files <em>exactly</em> as they had received them without “helpful” steps in between.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a></p>
+<p>The deleterious effects of “simply” opening a file in Excel and saving it can be seen by comparing <a href="#tbl-orig" class="quarto-xref">Table&nbsp;1</a> with <a href="#tbl-excel" class="quarto-xref">Table&nbsp;2</a>. <a href="#tbl-orig" class="quarto-xref">Table&nbsp;1</a> shows the original data, while <a href="#tbl-excel" class="quarto-xref">Table&nbsp;2</a> shows the file created by Excel. As can be seen, Excel changed the first column so that the data are no longer in a consistent (<code>d/m/yyyy</code>) format, mangled the first <code>cusip</code> value, and messed up the encoding (and I wasn’t even using Windows!) so that the Korean name in the third row is no longer legible.</p>
+<div id="tbl-orig" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-orig-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Original CSV data
+</figcaption>
+<div aria-describedby="tbl-orig-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>test_date</th>
+<th>cusip</th>
+<th>result</th>
+<th>name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1/7/2006</td>
+<td>“945324E7”</td>
+<td>1.7</td>
+<td>Bob</td>
+</tr>
+<tr class="even">
+<td>8/3/2013</td>
+<td>“12345678”</td>
+<td>2.6</td>
+<td>Sarah</td>
+</tr>
+<tr class="odd">
+<td>28/4/2016</td>
+<td>“23456789”</td>
+<td>NA</td>
+<td>철수</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div id="tbl-excel" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-excel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Excel-exported CSV data
+</figcaption>
+<div aria-describedby="tbl-excel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>test_date</th>
+<th>cusip</th>
+<th>result</th>
+<th>name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1/7/06</td>
+<td>9.45E+12</td>
+<td>1.7</td>
+<td>Bob</td>
+</tr>
+<tr class="even">
+<td>8/3/13</td>
+<td>“12345678”</td>
+<td>2.6</td>
+<td>Sarah</td>
+</tr>
+<tr class="odd">
+<td>28/4/2016</td>
+<td>“23456789”</td>
+<td>NA</td>
+<td>“_Êö÷</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="scenario-2-using-spreadsheets-for-data-collection" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="scenario-2-using-spreadsheets-for-data-collection"><span class="header-section-number">1.2</span> Scenario 2: Using spreadsheets for data collection</h2>
+<p>While Chapter 20 of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> focuses on importing data from spreadsheets, <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> focuses on the use of spreadsheets for data collection. Interestingly, <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> does not discuss primary data collection in any detail and <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> does not <em>explicitly</em> cover the process of importing data into statistical analysis software. However, it does seem implicit in <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> that importing data into such software will be part of the process. For example, <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018, p. 9</a>)</span> suggest that “data rearrangement is best accomplished via code (such as with an R, Python, or Ruby script) so you never lose the record of what you did to the data.” In terms of <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>, <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> is largely about <em>Collect</em> and <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> picks up with <em>Import</em>.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a></p>
+<p>I view this note as building on <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> by adding some additional recommendations, linking data collection with data importation <em>à la</em> <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>, and providing a more comprehensive use case to highlight some issues and ideas not addressed by either <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> or <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>.</p>
+<p><span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> appears to emphasize cases where the user of the data is entering the data directly. However, a very common use case I have encountered is one where I (along with collaborators) will be using the data, but the data are being entered by someone else (perhaps several others).</p>
+<p>Additionally, references in <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> to things such as <code>Serum_batch1_2015-01-30.csv</code>, <code>Mouse153</code> and <code>glucose_6_weeks</code> suggest a setting of collection of observations and measurements from scientific experiments. In contrast, a setting more familiar to me is that of collecting relatively large amounts of somewhat messy data from documents found on the internet. Typically, researchers need other people to collect these data because of time constraints and because either the data are too messy to be collected in an automated fashion with sufficiently low cost and high quality or their collection requires some element of judgement.</p>
+<p>This note aims to expand on and refine the advice provided by <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> for situations where others—such as data entry specialists or research assistants—are entering data into spreadsheets and where the data are coming from messy sources rather than measurements from lab experiments. <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> provide a list of twelve recommendations. In this note, I will provide guidance specific to the setting I examine here and then follow that with comments on the recommendations in <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> in light of the different context.</p>
+<p>Considering this context helps address the question that many users might have at this point: Why use spreadsheets at all? Given that spreadsheets have all these problems, it might seem better to use some other approach. For example, why not use a web form that is used to populate a database? I think the answer lies in a couple of points.</p>
+<p>First, many researchers are collecting data but do not have access to the skills needed to stand up a web page that allows data to be collected and put into a database. For all their problems, using spreadsheets removes the need for such skills.</p>
+<p>Second, many data collection tasks are unclear. Precisely what data will be collected? What values are valid in certain columns? What strange cases need to be addressed and how? In such situations, often the best approach is to just start collecting data and adapt over time. Spreadsheets are often the best tool for such situations. Columns can be added later on. Data validation rules can be tightened and loosened as circumstances dictate. This can be much easier than bringing the web-and-database developer back in to add new fields to the forms and new columns to the database tables.</p>
+<p>Additionally, data collection often needs to be quite free-form. For example, maybe it make sense to drop a link to a document to explain a classification decision made in another column. Spreadsheets allow this easily.</p>
+</section>
+<section id="other-use-cases-for-spreadsheets" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="other-use-cases-for-spreadsheets"><span class="header-section-number">1.3</span> Other use cases for spreadsheets</h2>
+<p>Before moving on to consider data collection using spreadsheets in more detail, I briefly discuss other ways that spreadsheets are often used by data analysts.</p>
+<section id="spreadsheets-for-modelling" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" class="anchored" data-anchor-id="spreadsheets-for-modelling"><span class="header-section-number">1.3.1</span> Spreadsheets for modelling</h3>
+<p>Spreadsheet tools such as Microsoft Excel and Google Sheets are the mainstay of certain kinds of analysis, including financial modelling and valuation. Spreadsheets also allow people who use them for other reasons to easily run Monte Carlo simulations and the like. I view these uses as legitimate, but place them slightly outside the scope of data science in the sense implied by <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>, hence beyond the scope of this note.</p>
+<p>The one word of caution I would offer is that one should not fall into the trap of thinking “I use Excel for modelling, so maybe I should also use Excel for statistical analysis.” The shortcomings of Excel for statistical analysis are well-documented and need not be repeated here <span class="citation" data-cites="Broman:2018aa">(see <a href="#ref-Broman:2018aa" role="doc-biblioref">Broman and Woo, 2018</a> for some leads)</span>.</p>
+<p>I will also note a couple of additional points. First, even if (say) Microsoft Excel is your preferred tool for producing financial or valuation models, there can be value in replicating analysis in something like Python or R. In 2005 or 2006, I was working with Morgan Stanley to produce a valuation model that could be used by institutional investor clients with data generated by Morgan Stanley research analysts. I would produce a version of the model in Excel and programmers would translate it into C++ code. In one conference call, one of the programmers mentioned that they had detected the change in formula after a certain number of years and implemented that in the code. Aargh! This change in formula was simply a spreadsheet error on my part that became all the more obvious when the logic was transcribed from Excel formulas to C++ code. The error was quickly rectified.</p>
+<p>Second, there is a world of best practices to be followed with the use of spreadsheets in financial and valuation modelling that are deserving of (at least) a note of their own. When I worked at corporate finance consulting firm Stern Stewart in the late 1990s, a big part of the training of new analysts and associates was inculculating some of these best practices, such as separating inputs from calculations and documentating data sources and rationales for approaches. A lot of ideas used there are analogues of ideas found in discussions of reproducibility in data science.</p>
+</section>
+<section id="spreadsheets-for-data-analysis" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" class="anchored" data-anchor-id="spreadsheets-for-data-analysis"><span class="header-section-number">1.3.2</span> Spreadsheets for data analysis</h3>
+<p>While <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> does mandate “No Calculations in the Raw Data Files”, this is coupled with a more lenient piece of advice <span class="citation" data-cites="Broman:2018aa">(<a href="#ref-Broman:2018aa" role="doc-biblioref">Broman and Woo, 2018, p. 7</a>)</span>: “If you want to do some analyses in Excel, make a copy of the file and do your calculations and graphs in the copy.” I argue that this is actually not a good idea at all.</p>
+<p>If the idea is that the analysis will be the data analytical form of brainstorming that will not form the basis of anything beyond that, I think that is fine. But if the calculations and graphs in the copy end up going in output of some kind (e.g., a report or a paper), then the data in the copy become the de facto canonical version of the data. If the original data are updated or corrected, there will often be no easy way to incorporate the associated changes into the analysis. Also it will often be difficult to be sure that the raw data have been unchanged. Having the original data as a “pristine store of data” <span class="citation" data-cites="Broman:2018aa">(<a href="#ref-Broman:2018aa" role="doc-biblioref">Broman and Woo, 2018, p. 7</a>)</span> does not help much if the data actually used have been corrupted in some way (e.g., by accidentally typing a value into a cell).<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a></p>
+</section>
+<section id="spreadsheets-for-organizing-output" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" class="anchored" data-anchor-id="spreadsheets-for-organizing-output"><span class="header-section-number">1.3.3</span> Spreadsheets for organizing output</h3>
+<p>The final use case for spreadsheets that I will discuss is the use of spreadsheets for producing output, such as tables and graphs. Many researchers who use statistical packages such as SAS or Stata reach the limits of their skills with those packages when it comes to producing plots or tables of statistical analyses for inclusion in papers or reports. Such users will often turn to packages such as Microsoft Excel to produce this kind of output.</p>
+<p>I would recommend that readers of this note consider working on their data science skills to obviate the use of Excel for this “last mile” of the data analysis journey for a number of reasons.</p>
+<p>First, using spreadsheets for this part of the process inevitably breaks the reproducibility of any analysis. The Excel workflow for making a plot is roughly:</p>
+<ol type="1">
+<li>Save data for analysis</li>
+<li>Open data in Excel spreadsheet.</li>
+<li>Using your mouse, highlight the data to be used in graph.</li>
+<li>Click one of the graph icons.</li>
+<li>Make a number of seclections in various dropdown menus and checkboxes to produce the desired plot.</li>
+<li>Copy plot to Microsoft Word document.</li>
+</ol>
+<p>Now, suppose the data change. The whole process needs to be repeated again and it is very unlikely that any step (save perhaps the first one) is associated with any documentation whatsoever.</p>
+<p>One consequence of using a manual workflow is that analyses can quickly become inconsistent with each other, as it is often seems not worthwhile to update earlier analyses when data change.</p>
+<p>Second, using spreadsheets for this part of the process can lead to errors. Manual steps are easy to mess up and I’ve seen cases where column labels are switched or the signs of coefficients are wrong because they were updated manually.</p>
+<p>Finally, the plotting functionality of Excel will generally pale in comparison to what is available in Python or R (or even Stata).</p>
+<p>A lot of researchers seem unaware that it’s even possible for modern statistical packages to produce production-quality output without manual intervention at every step.</p>
+</section>
+</section>
+</section>
+<section id="google-sheets" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Google Sheets</h1>
+<p>One of my primary recommendations is to use Google Sheets rather than Excel spreadsheets and I explain that recommendation in this section. While it seems somewhat less than ideal to recommend an approach that relies on a product from one company, I am not aware of an equivalent to Google Sheets in terms of functionality at this time.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a></p>
+<p>Google Sheets offers a number of benefits over Excel even for a single user. For example, Google Sheets has some functions (e.g., support for regular expressions) that can greatly facilitate data entry. Also I haven’t had encoding issues with Google Sheets of the kind we saw above with the Korean name <code>철수</code> being mangled into <code>_Êö÷</code>. We saw above that Excel can mangle CSV files in ways that Google Sheets will not. I would go so far as to provide the blanket advice: “Don’t use Excel to handle CSV files.”</p>
+<p>But the benefits of Google Sheets become especially clear when there are several people working with the data, such as multiple researchers and possibly many research assistants.</p>
+<p>One issue I have encountered with Excel is version control and these issues are particularly acute when there are multiple people involved in data collection. In my experience, the standard approach to version control for users of products like Microsoft Word or Microsoft Excel involve two elements. First, there is some implicit shared mental note about who has “the document” at any given time. When Anne has “the document”, Bob and Clara know that they should not be editing it.</p>
+<p>This is imperfect for many reasons. For one, the implicit shared mental note system is not perfect. So problems arise when Bob starts editing the literature review section of document while Anne is busy reworking the introduction: “I didn’t realize that Anne was working on that. I guess we will have to figure out how to combine my changes with hers.” Second, Microsoft Office fans often share versions via email and problems can arise when Clara starts editing <code>ABC_12-24-24_anne_final_v_21.docx</code> rather than the copy Anne sent via email with a “please use this version instead” subject line (<code>ABC_12-25-24_anne_updated_v_23.docx</code>) the next day.</p>
+<p>All these issues are even worse with Microsoft Excel because there are no “track changes” or “compare documents” features to assist with clean-up of messes from Bob-or-Anne-edited-the-wrong-version situations. These issues largely disappear with Google Sheets.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a></p>
+<p>Another benefit of Google Sheets is that access to the data is continuous. In a Google Docs setting, all co-authors can have access to the document and Bob can edit the literature review while Anne punches up the introduction.<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></p>
+<p>Relatedly data access is ensured. There is no risk that the Excel spreadsheet containing the data ends up on the computer of a former research assistant who is no longer available. Knowing that the final data file is <code>C:/Desktop/Best Project Ever/data collection_final_v3_3-4-1997.xls</code> does not help if that computer was wiped when the RA left for a better job.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a></p>
+<p>Having continuous data access can be particularly helpful if research assistants are doing much of the data collection. One does not need to email the research assistant saying “please send me the updated spreadsheet before you go home today, as I’d like to run some numbers.” The spreadsheet is right there.</p>
+<p>Also, one can monitor data entry in real-time. Importing data using <code>googlesheets4</code> and generating plots using <code>ggplot2</code> can happen without bothering the RAs in any way. I have worked on projects where there were dozens of research assistant (RAs). While there were detailed instructions, one cannot be sure that RAs will read them. Nor can one anticipate all the ways that things can go wrong. With Google Sheets, one can import data as it is being collected and discover issues along the way. For example, one can email the relevant RA (e.g., “Please don’t put values like ‘2013-03-23 (need to check)’ in the <code>date</code> column”), and perhaps update instructions according.</p>
+<p>Sometimes data collection tasks involve an initial learning curve for each RA, but the work can be so tedious that productivity declines over time. With Google Sheets, it is relatively straightforward to monitor productivity over time. In one case, we hired RAs on a week-by-week basis and found that RA productivity would decline after two weeks and we would not invite RAs back when that happened.<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a></p>
+<p>Both Excel and Google Sheets offer data validation functionality. But sometimes it is not possible to anticipate the range of valid values. With Google Sheets, adding data validation on the fly is easy. In the example above, we could add a validation rule requiring that <code>date</code> values be valid dates and insert an additional column for notes to store comments like the “need to check” above</p>
+<p>With Google Sheets, multiple people can enter data at once. An alternative might be to have each person have their own Excel file, but this introduces complexity. One approach would work with a single sheet shared by multiple users and have RAs fill in an <code>RA</code> column with their names for any rows for which they collected data.</p>
+<p>With Google Sheets, data access can be added and removed with ease. Almost everyone has a Google ID and this can be used to grant access. Removing access when it is no longer needed is very simple too.</p>
+<p>In short, Google Sheets is simply a superior product to Microsoft Excel for data collection. Still Excel has its fans. In the case of the stranded Excel file I mentioned above, the RA in question chose to download the provided Google Sheets file as an Excel file because he was “more comfortable” with the Excel interface. The RA in question worked for a co-author, not for me, so I wasn’t as insistent as I should’ve been. Today I would configure the Google Sheets document so that downloading would not even be possible.</p>
+</section>
+<section id="sec-main-case" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Case study: Linking IPOs with auditor IDs</h1>
+<p>The best way to illustrate some key points about using spreadsheets to collect data is to explore a specific example in greater depth. The example I study involves collecting data from various sources to facilitate the matching of IPOs of companies on US exchanges with the firms that provided audits for those companies, where an audit firm is identified using the identification number provided by the Public Company Accounting Oversight Board (PCAOB) in the United States.</p>
+<p>The data on IPOs come from the Nasdaq website and the data on audit firms come from the Form AP data discussed in <a href="https://raw.githubusercontent.com/iangow/notes/main/form_ap_names.pdf">an earlier note</a>.</p>
+<p>I will use DuckDB to work with data in this example, so I create a connection to an in-memory database here.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="ipo-data" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="ipo-data"><span class="header-section-number">3.1</span> IPO data</h2>
+<p>Nasdaq provides information about IPOs on its website. I have organized these data in two parquet files: <code>ipos.parquet</code> and <code>ipo_experts.parquet</code>. A copy of the <code>ipos.parquet</code> file can be found at <a href="https://go.unimelb.edu.au/2rq8" class="uri">https://go.unimelb.edu.au/2rq8</a> and a copy of the <code>ipos_experts.parquet</code> file can be found at <a href="https://go.unimelb.edu.au/hrq8" class="uri">https://go.unimelb.edu.au/hrq8</a>. If you want to follow along with the code below, you could download these data files into the <code>nasdaq</code> schema of a data repository organized along the lines of that I discuss in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502"><em>Empirical Research in Accounting: Tools and Methods</em></a> and then load them into a DuckDB database using code like this:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ipo_experts <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipo_experts"</span>, <span class="st">"nasdaq"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>ipos <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipos"</span>, <span class="st">"nasdaq"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Alternatively, you could put these two files in, say <code>~/ipo_auditors</code>, and then load them as follows:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ipo_experts <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipo_experts"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ipos <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipos"</span>, <span class="st">"nasdaq"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>For example, details about the IPO of Galmed Pharmaceuticals Ltd.&nbsp;(GLMD) on 13 March 2014 can be found at <a href="https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581" class="uri">https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581</a> and these data are also found in the <code>ipo.parquet</code> file. There are 4,409 rows in <code>ipos.parquet</code> and each row represents an IPO identified by the primary key column <code>dealID</code>.</p>
+<p>The Nasdaq page also includes information about the “experts” associated with each IPO and this information is contained in <code>ipo_experts.parquet</code>. I collect some statistics on these deals in <code>expert_counts</code> and show the results in <a href="#tbl-expert-stats" class="quarto-xref">Table&nbsp;3</a>. As can be seen from the <code>n_deals</code> column, every IPO has an auditor, a company counsel, and a transfer agent, with some deals having more than one of these. It can be inferred from <a href="#tbl-expert-stats" class="quarto-xref">Table&nbsp;3</a> that the typical IPO has multiple underwriters.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>expert_counts <span class="ot">&lt;-</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  ipo_experts <span class="sc">|&gt;</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(role) <span class="sc">|&gt;</span> </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">n_deals =</span> <span class="fu">n_distinct</span>(dealID), </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_rows =</span> <span class="fu">n</span>(),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(n_deals))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div id="tbl-expert-stats" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-expert-stats-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Statistics for different kinds of experts
+</figcaption>
+<div aria-describedby="tbl-expert-stats-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">role</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">n_deals</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">n_rows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">TransferAgent</td>
+<td style="text-align: right;">4,409</td>
+<td style="text-align: right;">5,901</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Auditor</td>
+<td style="text-align: right;">4,409</td>
+<td style="text-align: right;">4,621</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CompanyCounsel</td>
+<td style="text-align: right;">4,409</td>
+<td style="text-align: right;">4,874</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LeadUnderwriter</td>
+<td style="text-align: right;">4,313</td>
+<td style="text-align: right;">10,110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">UnderwriterCounsel</td>
+<td style="text-align: right;">4,296</td>
+<td style="text-align: right;">4,682</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Underwriter</td>
+<td style="text-align: right;">2,973</td>
+<td style="text-align: right;">13,190</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Not every deal has a lead underwriter, but from <a href="#tbl-no-uws" class="quarto-xref">Table&nbsp;4</a>, it can be seen that all deals without a lead underwriter have at least one underwriter.</p>
+<div class="cell">
+<div id="tbl-no-uws" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-no-uws-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Statistics for IPOs without lead underwriters
+</figcaption>
+<div aria-describedby="tbl-no-uws-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">role</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">n_deals</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">n_rows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Auditor</td>
+<td style="text-align: right;">96</td>
+<td style="text-align: right;">115</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CompanyCounsel</td>
+<td style="text-align: right;">96</td>
+<td style="text-align: right;">109</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Underwriter</td>
+<td style="text-align: right;">96</td>
+<td style="text-align: right;">249</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TransferAgent</td>
+<td style="text-align: right;">96</td>
+<td style="text-align: right;">148</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">UnderwriterCounsel</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The <a href="https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581">information for GLMD</a> in the <code>ipo_experts.parqueet</code> file is shown in <a href="#tbl-glmd-experts" class="quarto-xref">Table&nbsp;5</a>, where we see a number of things.</p>
+<div class="cell">
+<div id="tbl-glmd-experts" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-glmd-experts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: Experts associated with GLMD IPO
+</figcaption>
+<div aria-describedby="tbl-glmd-experts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">expertName</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Brightman Almagor Zohar &amp; Co., a member firm of Deloitte Touc...</td>
+<td style="text-align: left;">Auditor</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Brightman Almagor Zohar &amp; Co., a member firm of Deloitte...</td>
+<td style="text-align: left;">Auditor</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Greenberg Traurig, P.A.</td>
+<td style="text-align: left;">CompanyCounsel</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Maxim Group, LLC</td>
+<td style="text-align: left;">LeadUnderwriter</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">VStock Transfer, LLC</td>
+<td style="text-align: left;">TransferAgent</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feltl and Company, Inc</td>
+<td style="text-align: left;">Underwriter</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MLV &amp; Co. LLC</td>
+<td style="text-align: left;">Underwriter</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ellenoff Grossman &amp; Schole LLP</td>
+<td style="text-align: left;">UnderwriterCounsel</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>First, there appear to be “two auditors”, albeit with names that appear to differ only in the point at which the names are truncated with “<code>...</code>”. Second, there are no identifiers for the experts other than their names. Names are problematic for many reasons. Firms can change names. Names can be abbreviated in different ways or misspelt or change in subtle ways that are not obvious to a human reader, but that make them unusable as identifiers in code. Third, at least for some expert types, there can be more than one expert for a given IPO.</p>
+<p>Before moving onto the data on auditors provided on Form APs, I compile data on auditors and IPOs from the IPO data and store it in <code>ipo_auditors</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ipo_auditors <span class="ot">&lt;-</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  ipos <span class="sc">|&gt;</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, companyName, CIK, pricedDate, CompanyAddress) <span class="sc">|&gt;</span> </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipo_experts, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(role <span class="sc">==</span> <span class="st">"Auditor"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cik =</span> CIK) <span class="sc">|&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>role) <span class="sc">|&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="form-ap-data" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="form-ap-data"><span class="header-section-number">3.2</span> Form AP data</h2>
+<p>According to the <a href="https://pcaobus.org/oversight/standards/implementation-resources-PCAOB-standards-rules/form-ap-auditor-reporting-certain-audit-participants">PCAOB</a>, “registered audit firms are required to submit Form AP, <em>Auditor Reporting of Certain Audit Participants</em>, to disclose the names of engagement partners and other accounting firms that participated in their audits of public companies.” The PCAOB provides a database constructed from Form AP filings on its website and I have written about this in a <a href="https://github.com/iangow/notes/blob/main/form_ap_names.pdf">previous note</a>. The Form AP database is contained in the file <code>form_aps.parquet</code> that I have made available at <a href="https://go.unimelb.edu.au/4iq8" class="uri">https://go.unimelb.edu.au/4iq8</a>.</p>
+<p>Again you could download this data file into the <code>pcaob</code> schema of a data repository organized along the lines of that I discuss in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502"><em>Empirical Research in Accounting: Tools and Methods</em></a> and then load it into a DuckDB database using code like this:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>form_aps <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"form_aps"</span>, <span class="st">"pcaob"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Alternatively, you could put this file in (say) <code>~/ipo_auditors</code> and then load it as follows:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>form_aps <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"form_aps"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can collect auditor IDs associated with each CIK from <code>form_aps</code>. Of course, firms change auditors over time, but if we are interested in the auditors at the time of IPO, it might make sense to pick the first auditor associated with each CIK.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a> I close this subsection by creating <code>first_auditors</code>, a data frame with information on the first auditor for each issuer:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>first_auditors <span class="ot">&lt;-</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(issuer_cik) <span class="sc">|&gt;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(audit_report_date <span class="sc">==</span> <span class="fu">min</span>(audit_report_date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cik =</span> issuer_cik) <span class="sc">|&gt;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cik =</span> <span class="fu">if_else</span>(cik <span class="sc">==</span> <span class="st">"9999999999"</span>, <span class="cn">NA</span>, cik)) <span class="sc">|&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, firm_id, firm_name, firm_country, audit_report_date) <span class="sc">|&gt;</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="creating-the-link-table" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="creating-the-link-table"><span class="header-section-number">3.3</span> Creating the link table</h2>
+<p>I now move onto the task of creating a <strong>link table</strong> between the IPO data and the Form AP data. Even if the ultimate goal is to produce a data set drawing on data on both IPOs and auditors, it is important to view the production of a link table as the final product of the linking task. In its simplest form, a link table contains primary-key values from each of the two data sources with the appropriate primary key being driven by the level at which observations are being linked.<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a> In the current context, we want to link each IPO—identified by <code>dealID</code>—with the auditor in the Form AP database.</p>
+<p>In the Form AP database, an auditor is identified by <code>firm_id</code>. It interesting to note that this is the case even though <code>firm_id</code> is in no way a primary key for the <code>form_aps</code> table. Instead, we might think of <code>firm_id</code> as the primary key of a <em>hypothetical</em> <code>auditors</code> table and we can create this table ourselves as follows:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>auditors <span class="ot">&lt;-</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">window_order</span>(<span class="fu">desc</span>(audit_report_date)) <span class="sc">|&gt;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_name =</span> <span class="fu">first</span>(firm_name),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">firm_country =</span> <span class="fu">first</span>(firm_country)) <span class="sc">|&gt;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(firm_id, firm_name, firm_country) <span class="sc">|&gt;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>By construction, <code>firm_id</code> is the primary key for this <code>auditors</code> table. I include the names and countries for each audit firm to facilitate data collection later on. Because firms can change names over time, I use the latest name on <code>form_aps</code> for each <code>firm_id</code>.<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a></p>
+<section id="name-based-links" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="name-based-links"><span class="header-section-number">3.3.1</span> Name-based links</h3>
+<p>I start by matching the data on IPOs with data on auditors using CIKs. I conjecture that, if a match between <code>expertName</code> (from the IPO data) and <code>firm_id</code> and <code>firm_name</code> (from the Form AP data) shows up many times, there’s a good chance that it’s valid match. In constructing <code>top_matches</code>, I require that a match be present at least five times. This threshold is arbitrary, but it’s just a starting point in two ways. First, I will apply some judgement to the matches before flagging them as valid. Second, I will come back to additional candidate matches in subsequent analyses.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>top_matches <span class="ot">&lt;-</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  ipo_auditors <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(first_auditors, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(firm_name)) <span class="sc">|&gt;</span> </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(firm_id, expertName, firm_name, <span class="at">sort =</span>  <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I will use a Google Sheets document to collect the data. In the past in similar situations, I have often taken data such as that in <code>top_matches</code> and exported it to a CSV file that I then open in Google Sheets. Here I instead chose to create a new Google Sheets file using the <code>gs4_create()</code> from <code>googlesheets4</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">gargle_oauth_email =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors <span class="ot">&lt;-</span> <span class="fu">gs4_create</span>(<span class="at">name =</span> <span class="st">"ipo-auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Typing <code>gs_ipo_auditors</code> at the R console provides some information about the (initially empty) Google Sheets document:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<pre><code>── &lt;googlesheets4_spreadsheet&gt; ─────────────────────────────────────────────────────────────────────────
+Spreadsheet name: ipo-auditors                                
+              ID: 1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8
+          Locale: en_US                                       
+       Time zone: Etc/GMT                                     
+     # of sheets: 1                                           
+
+── &lt;sheets&gt; ────────────────────────────────────────────────────────────────────────────────────────────
+(Sheet name): (Nominal extent in rows x columns)
+      Sheet1: 1000 x 26</code></pre>
+<p>After I’ve created the Google Sheets file, I can access it using the key seen in the output above:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors <span class="ot">&lt;-</span> <span class="fu">as_sheets_id</span>(<span class="st">"1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I can put the data from <code>top_matches</code> in the Google Sheets spreadsheet using <code>write_sheet()</code>. Note that this code will not work for you with my spreadsheet, as I have not given you writexaccess to that spreadsheet.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_sheet</span>(top_matches, <span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"top_matches"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<pre><code>✔ Writing to ipo-auditors.
+✔ Writing to sheet top_matches.</code></pre>
+<p>The next step I took was to open the spreadsheet in a browser:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gs4_browse</span>(gs_ipo_auditors)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then inserted a new column <code>valid</code> to the right of the existing columns. I also renamed the sheet from <code>top_matches</code> to <code>name_matches</code>.<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a> I inspected the matches and classified those rows that looked good as valid by putting the value <code>TRUE</code> in the <code>valid</code> column. Most of the first 30 or so rows looked good. But a match of the <code>expertName</code> of “Ernst &amp; Young LLP” with the <code>firm_name</code> of “KPMG LLP” is clearly not valid, so I put <code>FALSE</code> in the <code>valid</code> column for this case.<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a></p>
+<p>Later I added more candidate matches to the <code>name_matches</code> sheet and marked as valid all those that looked good. In some cases it made sense to use the <a href="https://pcaobus.org/resources/auditorsearch">AuditorSearch</a> functionality provided by the PCAOB or to investigate data in SEC filings or the Form AP database.<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a> Note that I retained all variants of <code>expertName</code> in the IPO data so that name-based matches can be found for such variants.</p>
+</section>
+<section id="problematic-name-based-links" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="problematic-name-based-links"><span class="header-section-number">3.3.2</span> Problematic name-based links</h3>
+<p>The next step I took was to look at cases where <code>expertName</code> was associated with more than one distinct <code>firm_id</code> value.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>top_matches_processed <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"top_matches"</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>top_match_problems <span class="ot">&lt;-</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  top_matches_processed <span class="sc">|&gt;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(expertName) <span class="sc">|&gt;</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(firm_id) <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>valid) <span class="sc">|&gt;</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(expertName, <span class="fu">desc</span>(n))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Looking at <a href="#tbl-top-match-problems" class="quarto-xref">Table&nbsp;6</a>, we see that there are multiple <code>firm_id</code> values for some values of <code>expertName</code> even when we have deemed a match to be valid.<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a></p>
+<div class="cell">
+<div id="tbl-top-match-problems" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-top-match-problems-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Contents of <code>top_match_problems</code>
+</figcaption>
+<div aria-describedby="tbl-top-match-problems-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<!-- preamble start -->
+
+    <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script>
+
+    <script>
+      // Create table-specific functions using external factory
+      const tableFns_q9s03whqzy092nneos2x = TinyTable.createTableFunctions("tinytable_q9s03whqzy092nneos2x");
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: '12', j: 2 }, { i: '12', j: 3 } ], css_id: 'tinytable_css_w0q3g70fh1ljl9gc0n79',}, 
+          { positions: [ { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 }, { i: '10', j: 2 }, { i: '11', j: 2 }, { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '10', j: 3 }, { i: '11', j: 3 } ], css_id: 'tinytable_css_3wxo6gvwt9t6phqeabjd',}, 
+          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_5siqft8nfj95z123y6bw',}, 
+          { positions: [ { i: '12', j: 1 }, { i: '12', j: 4 } ], css_id: 'tinytable_css_3bl5j6wi8r0gqzoslkdh',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '10', j: 1 }, { i: '11', j: 1 }, { i: '1', j: 4 }, { i: '2', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 }, { i: '9', j: 4 }, { i: '10', j: 4 }, { i: '11', j: 4 } ], css_id: 'tinytable_css_ram7l1fhxhq7ifcmv08z',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 4 } ], css_id: 'tinytable_css_4dm0niaexa8fjuk8kdyj',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  tableFns_q9s03whqzy092nneos2x.styleCell(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
+    <style>
+    /* tinytable css entries after */
+    #tinytable_q9s03whqzy092nneos2x td.tinytable_css_w0q3g70fh1ljl9gc0n79, #tinytable_q9s03whqzy092nneos2x th.tinytable_css_w0q3g70fh1ljl9gc0n79 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left; font-size: 0.9em }
+    #tinytable_q9s03whqzy092nneos2x td.tinytable_css_3wxo6gvwt9t6phqeabjd, #tinytable_q9s03whqzy092nneos2x th.tinytable_css_3wxo6gvwt9t6phqeabjd { text-align: left; font-size: 0.9em }
+    #tinytable_q9s03whqzy092nneos2x td.tinytable_css_5siqft8nfj95z123y6bw, #tinytable_q9s03whqzy092nneos2x th.tinytable_css_5siqft8nfj95z123y6bw {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left; font-size: 0.9em }
+    #tinytable_q9s03whqzy092nneos2x td.tinytable_css_3bl5j6wi8r0gqzoslkdh, #tinytable_q9s03whqzy092nneos2x th.tinytable_css_3bl5j6wi8r0gqzoslkdh {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right; font-size: 0.9em }
+    #tinytable_q9s03whqzy092nneos2x td.tinytable_css_ram7l1fhxhq7ifcmv08z, #tinytable_q9s03whqzy092nneos2x th.tinytable_css_ram7l1fhxhq7ifcmv08z { text-align: right; font-size: 0.9em }
+    #tinytable_q9s03whqzy092nneos2x td.tinytable_css_4dm0niaexa8fjuk8kdyj, #tinytable_q9s03whqzy092nneos2x th.tinytable_css_4dm0niaexa8fjuk8kdyj {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right; font-size: 0.9em }
+    </style>
+    <div class="container">
+      <table class="tinytable" id="tinytable_q9s03whqzy092nneos2x" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+        
+        <thead>
+              <tr>
+                <th scope="col" data-row="0" data-col="1">firm_id</th>
+                <th scope="col" data-row="0" data-col="2">expertName</th>
+                <th scope="col" data-row="0" data-col="3">firm_name</th>
+                <th scope="col" data-row="0" data-col="4">n</th>
+              </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                  <td data-row="1" data-col="1">34</td>
+                  <td data-row="1" data-col="2">Deloitte &amp; Touche LLP</td>
+                  <td data-row="1" data-col="3">Deloitte &amp;  Touche LLP</td>
+                  <td data-row="1" data-col="4">368</td>
+                </tr>
+                <tr>
+                  <td data-row="2" data-col="1">1208</td>
+                  <td data-row="2" data-col="2">Deloitte &amp; Touche LLP</td>
+                  <td data-row="2" data-col="3">Deloitte LLP   (French Translation:  Deloitte S.E.N.C.R.L./s.r.l.)</td>
+                  <td data-row="2" data-col="4">8</td>
+                </tr>
+                <tr>
+                  <td data-row="3" data-col="1">1147</td>
+                  <td data-row="3" data-col="2">Deloitte &amp; Touche LLP</td>
+                  <td data-row="3" data-col="3">Deloitte LLP</td>
+                  <td data-row="3" data-col="4">5</td>
+                </tr>
+                <tr>
+                  <td data-row="4" data-col="1">42</td>
+                  <td data-row="4" data-col="2">Ernst &amp; Young LLP</td>
+                  <td data-row="4" data-col="3">Ernst &amp; Young LLP</td>
+                  <td data-row="4" data-col="4">650</td>
+                </tr>
+                <tr>
+                  <td data-row="5" data-col="1">1438</td>
+                  <td data-row="5" data-col="2">Ernst &amp; Young LLP</td>
+                  <td data-row="5" data-col="3">Ernst &amp; Young LLP</td>
+                  <td data-row="5" data-col="4">11</td>
+                </tr>
+                <tr>
+                  <td data-row="6" data-col="1">185</td>
+                  <td data-row="6" data-col="2">KPMG LLP</td>
+                  <td data-row="6" data-col="3">KPMG LLP</td>
+                  <td data-row="6" data-col="4">387</td>
+                </tr>
+                <tr>
+                  <td data-row="7" data-col="1">1118</td>
+                  <td data-row="7" data-col="2">KPMG LLP</td>
+                  <td data-row="7" data-col="3">KPMG LLP</td>
+                  <td data-row="7" data-col="4">10</td>
+                </tr>
+                <tr>
+                  <td data-row="8" data-col="1">85</td>
+                  <td data-row="8" data-col="2">KPMG LLP</td>
+                  <td data-row="8" data-col="3">KPMG LLP</td>
+                  <td data-row="8" data-col="4">8</td>
+                </tr>
+                <tr>
+                  <td data-row="9" data-col="1">5395</td>
+                  <td data-row="9" data-col="2">Marcum Asia CPAs LLP</td>
+                  <td data-row="9" data-col="3">Marcum Asia CPAs LLP</td>
+                  <td data-row="9" data-col="4">18</td>
+                </tr>
+                <tr>
+                  <td data-row="10" data-col="1">711</td>
+                  <td data-row="10" data-col="2">Marcum Asia CPAs LLP</td>
+                  <td data-row="10" data-col="3">Friedman LLP</td>
+                  <td data-row="10" data-col="4">17</td>
+                </tr>
+                <tr>
+                  <td data-row="11" data-col="1">238</td>
+                  <td data-row="11" data-col="2">PricewaterhouseCoopers LLP</td>
+                  <td data-row="11" data-col="3">PricewaterhouseCoopers LLP</td>
+                  <td data-row="11" data-col="4">415</td>
+                </tr>
+                <tr>
+                  <td data-row="12" data-col="1">876</td>
+                  <td data-row="12" data-col="2">PricewaterhouseCoopers LLP</td>
+                  <td data-row="12" data-col="3">PricewaterhouseCoopers LLP</td>
+                  <td data-row="12" data-col="4">11</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- hack to avoid NA insertion in last line -->
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Some additional digging (using data in <code>form_aps</code>) confirms that the main explanation is that the different <code>firm_id</code> values relate to different national partnerships of Big Four audit firms. For example, as seen in <a href="#tbl-top-match-countries" class="quarto-xref">Table&nbsp;7</a>, <code>firm_id</code> of 34 is the US arm of Deloitte, while 1147 and 1208 refer to the UK and Canadian operations, respectively.</p>
+<div class="cell">
+<div id="tbl-top-match-countries" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-top-match-countries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;7: Countries of firms in <code>top_match_problems</code>
+</figcaption>
+<div aria-describedby="tbl-top-match-countries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<!-- preamble start -->
+
+    <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script>
+
+    <script>
+      // Create table-specific functions using external factory
+      const tableFns_cnrgol5fypajtv9o6cpr = TinyTable.createTableFunctions("tinytable_cnrgol5fypajtv9o6cpr");
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: '12', j: 1 }, { i: '12', j: 2 }, { i: '12', j: 3 } ], css_id: 'tinytable_css_2ye1q04vkfr6ewjww0n5',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '10', j: 1 }, { i: '11', j: 1 }, { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 }, { i: '10', j: 2 }, { i: '11', j: 2 }, { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '10', j: 3 }, { i: '11', j: 3 } ], css_id: 'tinytable_css_2ubrtkko9sbc8j7lxjzk',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_n3inv4jhgl11vypk7ez4',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  tableFns_cnrgol5fypajtv9o6cpr.styleCell(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
+    <style>
+    /* tinytable css entries after */
+    #tinytable_cnrgol5fypajtv9o6cpr td.tinytable_css_2ye1q04vkfr6ewjww0n5, #tinytable_cnrgol5fypajtv9o6cpr th.tinytable_css_2ye1q04vkfr6ewjww0n5 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; font-size: 0.9em }
+    #tinytable_cnrgol5fypajtv9o6cpr td.tinytable_css_2ubrtkko9sbc8j7lxjzk, #tinytable_cnrgol5fypajtv9o6cpr th.tinytable_css_2ubrtkko9sbc8j7lxjzk { font-size: 0.9em }
+    #tinytable_cnrgol5fypajtv9o6cpr td.tinytable_css_n3inv4jhgl11vypk7ez4, #tinytable_cnrgol5fypajtv9o6cpr th.tinytable_css_n3inv4jhgl11vypk7ez4 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; font-size: 0.9em }
+    </style>
+    <div class="container">
+      <table class="tinytable" id="tinytable_cnrgol5fypajtv9o6cpr" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+        
+        <thead>
+              <tr>
+                <th scope="col" data-row="0" data-col="1">firm_id</th>
+                <th scope="col" data-row="0" data-col="2">firm_name</th>
+                <th scope="col" data-row="0" data-col="3">firm_country</th>
+              </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                  <td data-row="1" data-col="1">34</td>
+                  <td data-row="1" data-col="2">Deloitte &amp;  Touche LLP</td>
+                  <td data-row="1" data-col="3">United States</td>
+                </tr>
+                <tr>
+                  <td data-row="2" data-col="1">1147</td>
+                  <td data-row="2" data-col="2">Deloitte LLP</td>
+                  <td data-row="2" data-col="3">United Kingdom</td>
+                </tr>
+                <tr>
+                  <td data-row="3" data-col="1">1208</td>
+                  <td data-row="3" data-col="2">Deloitte LLP   (French Translation:  Deloitte S.E.N.C.R.L./s.r.l.)</td>
+                  <td data-row="3" data-col="3">Canada</td>
+                </tr>
+                <tr>
+                  <td data-row="4" data-col="1">1438</td>
+                  <td data-row="4" data-col="2">Ernst &amp; Young LLP</td>
+                  <td data-row="4" data-col="3">United Kingdom</td>
+                </tr>
+                <tr>
+                  <td data-row="5" data-col="1">42</td>
+                  <td data-row="5" data-col="2">Ernst &amp; Young LLP</td>
+                  <td data-row="5" data-col="3">United States</td>
+                </tr>
+                <tr>
+                  <td data-row="6" data-col="1">711</td>
+                  <td data-row="6" data-col="2">Friedman LLP</td>
+                  <td data-row="6" data-col="3">United States</td>
+                </tr>
+                <tr>
+                  <td data-row="7" data-col="1">85</td>
+                  <td data-row="7" data-col="2">KPMG LLP</td>
+                  <td data-row="7" data-col="3">Canada</td>
+                </tr>
+                <tr>
+                  <td data-row="8" data-col="1">185</td>
+                  <td data-row="8" data-col="2">KPMG LLP</td>
+                  <td data-row="8" data-col="3">United States</td>
+                </tr>
+                <tr>
+                  <td data-row="9" data-col="1">1118</td>
+                  <td data-row="9" data-col="2">KPMG LLP</td>
+                  <td data-row="9" data-col="3">United Kingdom</td>
+                </tr>
+                <tr>
+                  <td data-row="10" data-col="1">5395</td>
+                  <td data-row="10" data-col="2">Marcum Asia CPAs LLP</td>
+                  <td data-row="10" data-col="3">United States</td>
+                </tr>
+                <tr>
+                  <td data-row="11" data-col="1">876</td>
+                  <td data-row="11" data-col="2">PricewaterhouseCoopers LLP</td>
+                  <td data-row="11" data-col="3">United Kingdom</td>
+                </tr>
+                <tr>
+                  <td data-row="12" data-col="1">238</td>
+                  <td data-row="12" data-col="2">PricewaterhouseCoopers LLP</td>
+                  <td data-row="12" data-col="3">United States</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- hack to avoid NA insertion in last line -->
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="manual-links-by-dealid" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="manual-links-by-dealid"><span class="header-section-number">3.3.3</span> Manual links by <code>dealID</code></h3>
+<p>One approach to handling these cases would be to get information on countries from the IPO data and use that to distinguish the <code>firm_id</code> values to be used for cases with multiple apparent name-based matches. However, given the relatively small number of non-US matches to be handled, I instead chose to grab the <code>dealID</code> values for those cases and proceed to validate matches on a deal-by-deal basis.</p>
+<p>To start with, I identified the most common <code>firm_id</code> value for each <code>expertName</code>. In effect, I will set these as the default for the name-based matches.<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>top_match_problem_top_ids <span class="ot">&lt;-</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  top_match_problems <span class="sc">|&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(expertName) <span class="sc">|&gt;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">==</span> <span class="fu">max</span>(n, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>()</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>top_match_problem_top_ids</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]   34   42  185 5395  238</code></pre>
+</div>
+</div>
+<p>I then collect data on all other cases where <code>expertName</code> is in <code>top_match_problems</code> and there is some match to Form AP data (i.e., <code>firm_name</code> is present).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>top_match_problems_countries <span class="ot">&lt;-</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  ipo_auditors <span class="sc">|&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(first_auditors, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span>  </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(expertName <span class="sc">%in%</span> top_match_problems<span class="sc">$</span>expertName,</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span>firm_id <span class="sc">%in%</span> top_match_problem_top_ids,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span><span class="fu">is.na</span>(firm_name)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then export data related to these matches to an additional tab <code>deal_matches_add</code> that I can use to verify candidate matches for each <code>dealID</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>top_match_problems_countries <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, cik, CompanyAddress, firm_id, firm_name, </span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>         firm_country, audit_report_date) <span class="sc">|&gt;</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"deal_matches_add"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In this case, I renamed this sheet to <code>deal_matches</code>, added a <code>valid</code> column much as before, and also added additional columns such as <code>sec_filings</code> and <code>notes</code>. I use <code>sec_filings</code> to create a formula-based hyperlink to the SEC filings around the time of the IPO that I can use to check cases where the information in the spreadsheet does not suffice to give me confidence in validating a match. Looking at the formula for cells with “SEC Filings” in the <code>sec_filings</code> column of the <code>deal_matches</code> sheet, you will see that the formula keys off values in <code>cik</code> and <code>pricedDate</code> to make it easy to get to the relevant filings.<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a> When I locate a filing with the necessary supporting information to make a call on whether a candidate match is value, I can include a link to that filing in the <code>notes</code> column of the spreadsheet.<a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a> It is relatively straightforward to inspect the IPO prospectus and look for the auditor’s sign-off, which will mention the office (e.g., “London, United Kingdom”) that applies and the associated value can be entered under <code>firm_id</code> and <code>valid</code> can be set to <code>TRUE</code>.</p>
+<p>I repeated variants on the steps above until the tabs <code>name_matches</code> and <code>deal_matches</code> contained a fairly complete set of data on both name-based and deal-level matches of each IPO with the <code>firm_id</code> value for the auditor at the time of the IPO.</p>
+</section>
+<section id="combining-data-to-produce-the-link-table" class="level3" data-number="3.3.4">
+<h3 data-number="3.3.4" class="anchored" data-anchor-id="combining-data-to-produce-the-link-table"><span class="header-section-number">3.3.4</span> Combining data to produce the link table</h3>
+<p>Haivng populated <code>name_matches</code> and <code>deal_matches</code> with data on valid matches, the next step is to use the data in these sheets to create a link table between IPOs and <code>firm_id</code> values. We can start by loading data from the two key sheets in our Google Sheets file.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>name_matches <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"name_matches"</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>deal_matches <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"deal_matches"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I start by loading the valid deal-level matches of IPOs to auditors. I label these as <code>"manual"</code> matches and store them in <code>deal_matches_processed</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>deal_matches_processed <span class="ot">&lt;-</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  deal_matches <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match_type =</span> <span class="st">"manual"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then process the name-based matches that I will use later on. Note that I give priority to deal-level matches: if an IPO has a valid match in <code>deal_matches</code>, I do not consider a potential match using names in <code>name_matches</code>. This is accomplished by putting all valid matches from <code>deal_matches</code> in <code>deal_matches_processed</code> and then using an anti-join when constructing <code>name_matches_processed</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>name_matches_processed <span class="ot">&lt;-</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  name_matches <span class="sc">|&gt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(firm_id, expertName) <span class="sc">|&gt;</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipo_auditors, <span class="at">by =</span> <span class="st">"expertName"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match_type =</span> <span class="st">"name-based"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(deal_matches_processed, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, firm_id, match_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Having constructed <code>deal_matches_processed</code> and <code>name_matches_processed</code>, we can combine them using <code>union_all()</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>all_matches <span class="ot">&lt;-</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  deal_matches_processed <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">union_all</span>(name_matches_processed) <span class="sc">|&gt;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(<span class="at">dest =</span> db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"all_matches"</span>,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Based on the data in the spreadsheet, <code>all_matches</code> is effectively the final link table.</p>
+</section>
+<section id="perfecting-the-matches" class="level3" data-number="3.3.5">
+<h3 data-number="3.3.5" class="anchored" data-anchor-id="perfecting-the-matches"><span class="header-section-number">3.3.5</span> Perfecting the matches</h3>
+<p>So far we have gone through <code>expertName</code> values and linked them to <code>firm_id</code> values. The results of this work are found in the <code>name_matches</code> data frame, which is based on the <code>name_matches</code> sheet in our <code>ipo-auditors</code> Google Sheets file. We have also manually matched IPOs to <code>firm_id</code> values. Because we manually verified these matches, these should be beyond reproach.</p>
+<p>However, we might want to go back through the name-based matches to check that these are valid. One idea is to look at name-based links of IPO firms with their auditors that do not have corresponding entries in the Form APs database. It is certainly not the case that every IPO firm (i.e., <code>issuer_cik</code>) will have a Form AP filing made by the auditor (<code>firm_id</code>) it had at IPO. Many firms will change auditors after IPO before making filings such as 10-Ks that are expected to trigger a corresponding Form AP filing. Nonetheless, by looking more closely at these non-matches we should be able to identify cases where, for example, we have matched a Canadian firm with a US auditor rather than the Canadian audit firm that makes the relevant filings on Form AP.</p>
+<p>I then compile data on all auditors associated with each issuer CIK, including the names and countries, and store the result in <code>all_ipo_auditors</code>. I store the <code>firm_id</code>, <code>firm_name</code> and <code>firm_country</code> values for each auditor for each firm in list columns.</p>
+<p>List columns in DuckDB are very much like their counterparts in R.<a href="#fn33" class="footnote-ref" id="fnref33" role="doc-noteref"><sup>33</sup></a> Unfortunately, <code>dbplyr</code> does not provide the interface we need to directly invoke the <code>list()</code> aggregate with an <code>ORDER BY</code> clause. Fortunately, we can use <code>sql()</code> to inject precisely the SQL we need.<a href="#fn34" class="footnote-ref" id="fnref34" role="doc-noteref"><sup>34</sup></a></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>all_ipo_auditors <span class="ot">&lt;-</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(issuer_cik, firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(auditors, <span class="at">by =</span> <span class="st">"firm_id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(issuer_cik) <span class="sc">|&gt;</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_ids =</span> <span class="fu">sql</span>(<span class="st">"list(firm_id ORDER BY firm_id)"</span>),</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_names =</span> <span class="fu">sql</span>(<span class="st">"list(firm_name ORDER BY firm_id)"</span>),</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_countries =</span> <span class="fu">sql</span>(<span class="st">"list(firm_country ORDER BY firm_id)"</span>)</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I collect data on all name-based matches where the matched auditor in <code>firm_id</code> is not among the corresponding <code>firm_ids</code> found in <code>all_ipo_auditors</code> and store the result in <code>no_form_ap_matches</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>no_form_ap_matches <span class="ot">&lt;-</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  all_matches <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(match_type <span class="sc">==</span> <span class="st">"name-based"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipos, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, CIK, CompanyAddress, firm_id, pricedDate) <span class="sc">|&gt;</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">issuer_cik =</span> CIK) <span class="sc">|&gt;</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(all_ipo_auditors, <span class="at">by =</span> <span class="st">"issuer_cik"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">list_contains</span>(firm_ids, firm_id)) <span class="sc">|&gt;</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Note that once IPOs have been added to the <code>deal_matches</code> tab, it probably makes sense to exclude them from <code>no_form_ap_matches</code> by adding a line such as <code>anti_join(deal_matches, copy = TRUE, by = "dealID")</code> after the <code>inner_join()</code> above.</p>
+<p>We can dump the data from <code>no_form_ap_matches</code> into a Google Sheets tab so that we can dig into them more deeply.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>no_form_ap_matches <span class="sc">|&gt;</span>  </span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(firm_ids, firm_names, firm_countries), as.character)) <span class="sc">|&gt;</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(dealID) <span class="sc">|&gt;</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"all_ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>To better understand how one can use the data that have been placed in the <code>all_ipo_auditors</code> tab, I describe how I used the data myself. The first thing I did was to copy the data from the <code>all_ipo_auditors</code> sheet over to the bottom of the <code>deal_matches</code> sheet. Initially I retained the column names in the data that I copied over so that I could check that the columns in the pasted data line up with those in the <code>deal_matches</code> tab. I then deleted the unnecessary extra row of column names once I had confirmed this. The next step was to code all these additional rows as invalid (i.e., by putting <code>FALSE</code> in the <code>valid</code> column) because these should not be used until they are confirmed. I now describe how I confirmed the data for two example IPOs.</p>
+<p>The first example IPO I considered was the NYSE IPO of Tamboran Resources Corp (<code>dealID</code> of <code>1295264-109998</code>). I first observed that the company has an Australian address.<a href="#fn35" class="footnote-ref" id="fnref35" role="doc-noteref"><sup>35</sup></a> Given that the <code>expertName</code> value is “Ernst &amp; Young”, a name-based match will associate this IPO with the US operations of Ernst &amp; Young. However, the Form AP filings have been made by the Australian affiliate of Ernst &amp; Young (<code>firm_id</code> of <code>1435</code>). So I put <code>1435</code> under <code>firm_id</code> and set <code>valid</code> to <code>TRUE</code> after doing so. As a result, this IPO will be correctly associated with Ernst &amp; Young Australia in the final link table.</p>
+<p>Another example is the 2015 IPO on Nasdaq of Collegium Pharmaceutical (<code>dealID</code> of <code>600781-78033</code>), where “Grant Thornton LLP” is listed as the auditor on <code>ipo_experts</code>. But all rows in <code>form_aps</code> with <code>issuer_cik == "0001267565"</code> have the auditor as Deloitte &amp; Touche LLP. Looking at <a href="https://www.sec.gov/Archives/edgar/data/1267565/000104746915004524/a2224679z424b4.htm">the prospectus</a>, we can see that Grant Thornton LLP of Boston, Massachusetts was indeed the auditor at the time of IPO and only <a href="https://www.sec.gov/Archives/edgar/data/1267565/000155837017001629/coll-20161231x10k.htm">later</a> did Deloitte &amp; Touche LLP take over. At this point, I have two options. One option would be to leave the <code>valid</code> column as <code>FALSE</code> for this match, so that a name-based match of “Grant Thornton LLP” to <code>firm_id</code> of 248 occurs. The other option is to encode what I have learnt and set <code>firm_id</code> in <code>deal_matches</code> to 248 and set the <code>valid</code> column as <code>TRUE</code>, so that a manual match occurs. The benefits of the latter option are that I would never need to revisit this case in the future and that I would recognize my match as being in the higher-quality “manual” category.</p>
+<p>As I write this, most cases in the <code>deal_matches</code> tab are coded with <code>valid</code> set to <code>FALSE</code>. This means those rows are not used and matches for these deals are based on names. However, if we wanted to “perfect” our matches, we could investigate each row much as we did for the two examples above.</p>
+<p>At this point, some readers might feel that I am being inconsistent regarding the reproducibility of the steps I am taking. How is manually copying data from from the <code>all_ipo_auditors</code> sheet to the <code>deal_matches</code> sheet and then manually moving data around consistent with the “every step should be done using code” mantra I am pushing? The answer is that there are portions of manual data collection that are inherently manual. Clicking links, reading prospectus documents, and typing <code>firm_id</code> values into rows are all inherently manual steps. Nonetheless, these manual steps should be kept to a minimum: anything automatic that can be achieved using code probably should be done in code to make the process as reproducible, transparent, and error-free as possible.</p>
+<p>Because there are inevitably some manual steps, there is the inevitable possibility of bad data being introduced. For example, I could easily have entered “284” instead of “248” as the <code>firm_id</code> for the Collegium Pharmaceutical IPO above. I think there are are three primary safeguards to minimize the risk of this kind of bad data entering the process.</p>
+<p>First, be careful. After entering “284” I could easily search the <code>name_matches</code> tab for “284” to check that I have entered a valid number. I could also reduce the risk of errors by copying “248” from the <code>name_matches</code> tab rather than typing it from scratch.</p>
+<p>Second, make it easy to check the hand-collected data. By documenting my steps with links to supporting information and notes explaining judgments, I make it easier for someone else (perhaps “future me”) to check my work.</p>
+<p>Third, look for ways to check the integrity of data and flag potential issues. For example, if I entered “284” instead of “248” as the <code>firm_id</code> for Grant Thornton LLP in <code>name_matches</code>, the process I described above would flag these cases in a version of <code>no_form_ap_matches</code> and I should quickly observe a lot of cases where “284” is the apparent <code>firm_id</code> while Form AP filings are made by Grant Thornton LLP with <code>firm_id</code> of 248. I might also compare values in <code>firm_id</code> in the matched table with valid values according to the PCAOB.</p>
+</section>
+<section id="checking-for-gaps" class="level3" data-number="3.3.6">
+<h3 data-number="3.3.6" class="anchored" data-anchor-id="checking-for-gaps"><span class="header-section-number">3.3.6</span> Checking for gaps</h3>
+<p>Finally, we look for any deals in <code>ipo_auditors</code> that are not matched in <code>all_matches</code> and add these to our Google Sheets file. One reason for these cases would be new IPO deals being added to the data with <code>expertName</code> values not handled already.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>ipo_auditors <span class="sc">|&gt;</span> </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(all_matches, <span class="at">by =</span> <span class="st">"dealID"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_id =</span> <span class="cn">NA</span>, <span class="at">firm_name =</span> <span class="cn">NA</span>, <span class="at">firm_country =</span> <span class="cn">NA</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, cik, CompanyAddress, firm_id, expertName,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>         firm_name, firm_country, pricedDate) <span class="sc">|&gt;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"extra_deals"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The cases in <code>extra_deals</code> sheet could be handled by adding additional name-based matches to <code>name_matches</code> or additional deal-level matches to <code>deal_matches</code> as seems most appropriate. For the most part I handled cases added to <code>extra_deals</code> by moving them to <code>deal_matches</code> as the first step and processing as I did for other cases above. One this has been done, we can run the “<code>extra_deals</code>” code again and, if all is well, there will be no additional deals in <code>extra_deals</code> after doing so.</p>
+</section>
+<section id="persisting-the-link-table" class="level3" data-number="3.3.7">
+<h3 data-number="3.3.7" class="anchored" data-anchor-id="persisting-the-link-table"><span class="header-section-number">3.3.7</span> Persisting the link table</h3>
+<p>At that point, I can take the data in <code>all_matches</code> and—using the language of <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>—<em>Persist</em> it to disk. In my case, I add <code>ipo_auditors.parquet</code> to the <code>nasdaq</code> “schema” of my parquet-based data repository. More details on this data repository can be found in <a href="https://iangow.github.io/far_book/parquet-wrds.html">an appendix</a> of <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502"><em>Empirical Research in Accounting: Tools and Methods</em></a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>all_matches <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_id =</span> <span class="fu">as.integer</span>(firm_id)) <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="at">sink =</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>), </span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"nasdaq"</span>, <span class="st">"ipo_auditors.parquet"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+</section>
+<section id="tweaking-the-recommendations-of-broman2018aa" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Tweaking the recommendations of <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span></h1>
+<p><span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> contains twelve numbered recommendations regarding best practices to follow when using spreadsheets to collect data. Fundamentally, I don’t disagree with any of these recommendations. However, I feel that some of them need to be tweaked slightly to reflect the slightly different context I focus on here, or to update their recommendations to reflect changes in technology since 2018 (e.g., the increasing use of the cloud storage). I discuss these tweaks in this section.</p>
+<section id="no-empty-cells" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="no-empty-cells"><span class="header-section-number">4.1</span> “No Empty Cells”</h2>
+<p>In the case study above, there are inevitably empty cells before data are collected. In some cases, there are empty cells even after data are collected. For example, the <code>sec_filings</code> column is only populated on an as-needed basis.</p>
+<p>What <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> says about empty cells is valid in general, so I think the recommendation should merely be refined a little. For example, “NA” should be used to flag cases where there is the decision is to code a cell as missing, but this is very different from making a cell blank prior to the RA evaluating the case. It is probably better to view “NA” as reflecting some conscious output of the data collection process and to recognize that sometimes not every value will be relevant (so there is no value in having an RA code a column as “NA” if it wasn’t even examined).</p>
+<p>Other recommendations about blank cells in <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> are completely valid. In general, blank cells should not be used to represent zeros and blank cells should not be implicitly “filled” in a way that is “obvious” if looking at the spreadsheet, but not at all obvious to the data analyst.</p>
+</section>
+<section id="no-calculations-in-the-raw-data-files" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="no-calculations-in-the-raw-data-files"><span class="header-section-number">4.2</span> “No Calculations in the Raw Data Files”</h2>
+<p>The prescription here <span class="citation" data-cites="Broman:2018aa">(<a href="#ref-Broman:2018aa" role="doc-biblioref">Broman and Woo, 2018, p. 7</a>)</span> is that “your primary data files should contain <em>just the data</em> and nothing else: no calculations, no graphs.” I think I would relax this prescription a little in the context of sometimes-messy data collection like the ones I have used spreadsheets for.</p>
+<p>Sometimes the data are the results of calculations and I think it would be fine to use the spreadsheet functionality to support data collection efforts. Suppose I were hand-collecting data on executive compensation and the value in the <code>salary</code> column is almost always found as a single value that can be typed in by the RA. But then one firm reports salary as 12 monthly payments of $132,236. In such a case, I think it would be perfectly appropriate for the RA to type <code>= 12 * 132236</code> in the cell under <code>salary</code> rather than calculating by hand and typing the result in.</p>
+<p>Other situations might go the other way. For example, suppose that <code>director_names</code> contained a list of names of directors, such as <code>['Anne', 'Bob', 'Clara']</code>. It might still make sense to have the RA enter a value under <code>num_directors</code> (3 in this case) even though this could be easily calculated, as this would provide an additional check. For example, if <code>director_names</code> is just <code>['Anne', 'Bob']</code> and <code>num_directors</code> is <code>3</code> then it’s probably worth double-checking the data.</p>
+<p>In other cases, calculations can facilitate the collection of data in the first place. For example, the URL behind the hyperlink for <code>sec_filings</code> used in the case study above is calculated. In other cases, calculations might provide guidelines that help the RA collect data in other fields. For example, <code>total_compensation</code> might be collected by the RA and it might be helpful to calculate this value from components for comparison to allow discrepancies to be flagged and resolved as part of the data collection process.</p>
+</section>
+<section id="do-not-use-font-color-or-highlighting-as-data" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="do-not-use-font-color-or-highlighting-as-data"><span class="header-section-number">4.3</span> “Do Not Use Font Color or Highlighting as Data”</h2>
+<p>I do not disagree with this one, but I would say that it can be fine to use font colour or highlighting to communicate with humans: “Please focus on the cells I have coloured green before moving on to the other cases.” The critical thing is that the colours are not being used as <em>data</em> per se.</p>
+</section>
+<section id="make-backups" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="make-backups"><span class="header-section-number">4.4</span> “Make Backups”</h2>
+<p>“Make regular backups of your data. In multiple locations.” This recommendation <span class="citation" data-cites="Broman:2018aa">(<a href="#ref-Broman:2018aa" role="doc-biblioref">Broman and Woo, 2018, p. 8</a>)</span> has perhaps not aged well. For example, what counts as “multiple locations” in a world in which everything lives in some cloud service like Google Drive or Dropbox? Also, precisely what should be backed up if one is collecting data in Google Sheets? I would need to export data to a different format (e.g., Microsoft Excel) and back <em>that</em> up if my concern is that Google might disappear and take my data with it.</p>
+<p>One idea might be to export the underlying data to CSV and back <em>that</em> up, but this would mean losing a lot of the cell notes and such like that were an integral part of the data collection process.</p>
+<p>Also <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018, p. 8</a>)</span> suggests “keep all versions of the data files” without indicating what counts as a version of a file. If an RA is between entering data in one column and entering data in another column, we probably don’t want to keep that version. Nor is it clear that a backup between each row is necessary. If you’re a researcher working on papers, the sensible view might be that some backup be retained for each version of a paper that is posted or shared with others. In such a case, one could restore the spreadsheet data applicable to a particular version of your paper. But this can be unhelpful in practice if you are using data from other sources and isn’t doing some kind of version control for those other sources.</p>
+<p>Additionally, my experience is that “regular backups … in multiple locations” can be a recipe for complexity and confusion. If I need to go back to an earlier version, how do I decide whether to use the copy of <code>glucose_6_weeks</code> stored on a thumb drive in my drawer or the copy of <code>glucose_6_weeks</code> in Dropbox? Perhaps I would need to add the date on which I made the backup (e.g., <code>glucose_6_weeks_2024-12-31</code>) to allow me to distinguish them. But maybe I don’t always want the latest version of the data (if I did, why keep anything but the last copy?). If the reason for restoring the data is some issue that came up in the last week of 2024 then I’d probably prefer the <code>glucose_6_weeks_2024-12-21</code> version. Of course, I may not even be sure when the issue arose, so versions named just for dates may not be particularly helpful.</p>
+<p>My sense is that if you are collecting data in spreadsheets, you are probably not the lynchpin of some multi-billion dollar Stage III drug trial aimed at getting FDA approval. So accepting the “Google ceases to exist” risk does not seem unreasonable. Even “Google Sheets ceases to exist” seems tolerable (or at least not very different from “I can’t open Microsoft Excel files from 2024” risk) for almost any use case where storing data in a spreadsheet makes sense.</p>
+<p>My recommendation is to rely on version control features embedded in Google Sheets for organization of data somewhat less critical than the codes for the US nuclear arsenal. For example, “name current version” allows you to label a version as something like “qje_submission” and this is likely to suffice for the relatively low stakes of most data collection efforts conducted with spreadsheets.<a href="#fn36" class="footnote-ref" id="fnref36" role="doc-noteref"><sup>36</sup></a></p>
+</section>
+<section id="save-the-data-in-plain-text-files" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="save-the-data-in-plain-text-files"><span class="header-section-number">4.5</span> “Save the Data in Plain Text Files”</h2>
+<p>This one is a little difficult to evaluate, as its rationale is not entirely clear. One reason is perhaps given by the statement that “this sort of nonproprietary file format [CSV] does not and never will require any sort of special software” <span class="citation" data-cites="Broman:2018aa">(<a href="#ref-Broman:2018aa" role="doc-biblioref">Broman and Woo, 2018, p. 8</a>)</span>. But this claim arguably applies to the <code>ipo_auditors.parquet</code> file that I created above.<a href="#fn37" class="footnote-ref" id="fnref37" role="doc-noteref"><sup>37</sup></a></p>
+<p>The “CSV files are easier to handle in code” is arguably false because parquet files include information about data types and the like that are missing from CSV files.</p>
+<p>In short, I am not sure that I fundamentally disagree with this recommendation if it simply means that there should be a “persist” step along the lines of that depicted in <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a> and the persistent format is something “nonproprietary” like CSV or parquet. An implicit assumption in <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a> is that the data are being persisted as part of the <em>Curate</em> process rather than the <em>Curate</em> and <em>Understand</em> processes being tangled messes where it is unclear where one begins and the other ends. I would argue that the spreadsheet plus code should be viewed together as a unit that fosters reproducibility.</p>
+</section>
+<section id="create-a-data-dictionary" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="create-a-data-dictionary"><span class="header-section-number">4.6</span> “Create a Data Dictionary”</h2>
+<p>At some level it is difficult to quibble much with this one. However, it has an air of “eat less; do more exercise” (as advice for losing weight) to it. I would guess that most spreadsheets used for data collection do not come with the kind of data dictionary envisaged by <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018, p. 8</a>)</span>. For example, there is no data dictionary in the Google Sheets document I created for linking IPOs with auditor IDs. That said, it is probably a good idea to make one. In my case, the critical variables are <code>deal_ID</code> and <code>firm_id</code>, which are both defined by other entities (Nasdaq and PCAOB, respectively). Nonetheless, some discussion of the attributes of those variables likely makes sense, as does some discussion of the purpose of linking the tables so that a user of the data can understand the rationale for any decisions made when the links are not entirely clear.<a href="#fn38" class="footnote-ref" id="fnref38" role="doc-noteref"><sup>38</sup></a></p>
+<p>More importantly, I think that the data dictionary is less important than other documentation that can be associated with a spreadsheet, such as discussion of the goals of data collection and scripts used to test features of the data and to create final data sets that are passed along to the <em>Understand</em> process as depicted in <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<p>It may be that the best documentation is something like the document you are reading right now, with discussion of data sources, issues to be addressed, and illustrative code and all stored somewhere like GitHub.</p>
+</section>
+</section>
+<section id="additional-case-studies" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Additional case studies</h1>
+<p>In this section I provide some vignettes describing other cases in which I have used spreadsheets to collect data.</p>
+<section id="audit-fee-data" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="audit-fee-data"><span class="header-section-number">5.1</span> Audit fee data</h2>
+<p>In September 2020, Edmund Tadros of the <em>Australian Financial Review</em> published <a href="https://www.afr.com/companies/professional-services/the-big-four-auditors-are-really-just-the-big-three-20200907-p55t1x?gift=o8Y-RapBPyBm7EeP4nNxP_0LLvgv5I0PuqaS_9FE5lAFodifEl1nNYDFibPAOdO-G3Lhsp20Htrhfm9rWuM4eGVEQ3bRUdqOzUIzqJDardpmjpxhUNvC03M4ro9UeQQgZ_E">an article</a> pointing out that the Big Four audit firms were really more a “Big Three” in Australia. This article was based on research by me and <a href="https://www.linkedin.com/in/thomas-barry-12071211b/">Tom Barry</a> where we found that Deloitte had a much smaller share of the top end of the corporate auditing market in Australia than its Big Four rivals.</p>
+<p>While the primary data source for audit fees for Australian companies is Securities Industry Research Centre of Asia-Pacific (<a href="https://www.sirca.org.au">SIRCA</a>), which in turn appears to get the data from Morningstar, these data are riddled with errors.</p>
+<p>We flagged suspicious values using a number of criteria. For example, audit fees greater than 60 million Australian dollars or less than zero. Observations with changes in audit fees of between more than 50%. Flagged cases were added to a <a href="https://docs.google.com/spreadsheets/d/1l9HtIiR9GeN8wD8s74c86OuSZTasYiQtCGLxOVHCOuQ/edit?usp=sharing">Google Sheets sheet</a> (<code>corrections</code>) including the necessary identifiers and filings with the Australian Stock Exchange (ASX) were used to determine the correct values, which are then entered into the <code>corrections</code> sheet. Links to the filings from which the correct information were obtained are retained so that the data collection process is a transparent as possible.</p>
+<p>Note that the <code>corrections</code> data is combined with the original data much as the deal-level data are combined with the name-based matches for the IPO auditor data above. That is, the observations in the <code>corrections</code> sheet are given priority over the information in the SIRCA data (again an anti-join is used to combine the data).</p>
+<p>Because only values from the original SIRCA data that have been flagged and corrected are used, the majority of the rows of data are still coming from the SIRCA data. This means that the data process is robust to the continual updates that are made as more firms release annual reports with new data on audit fees. However any red flags raised by the new data should be checked much as the older values were.</p>
+</section>
+<section id="activist-directors" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="activist-directors"><span class="header-section-number">5.2</span> Activist directors</h2>
+<p>Google Sheets were used to collect data on activist directors for <span class="citation" data-cites="Gow:2024aa">Gow et al. (<a href="#ref-Gow:2024aa" role="doc-biblioref">2024</a>)</span>.<a href="#fn39" class="footnote-ref" id="fnref39" role="doc-noteref"><sup>39</sup></a> A challenge with that paper is that, because not all activist directors in our sample appear in the Equilar database we used as a main source of data on directors, we could not simply rely on an existing identifer to distinguish one director from another.</p>
+<p>We also hand-collected data on key events associated with activism events and data to match CUSIPs in our activism data with PERMNOs.</p>
+<p>Because data collection for this project began when were were fairly unfamiliar with best practices for such data collection, our Google Sheets are effectively organized in sheets that represent waves of data collection. We used scripts (such as the script to create the key <code>activist_directors</code> data frame) to combine the sheets into single tables for analysis.</p>
+</section>
+<section id="director-ethnicities" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="director-ethnicities"><span class="header-section-number">5.3</span> Director ethnicities</h2>
+<p>An extensive data set on ethnicities of directors was constructed for <span class="citation" data-cites="Gow:2023ab">Gow et al. (<a href="#ref-Gow:2023ab" role="doc-biblioref">2023</a>)</span>. This was a complex endeavour involving multiple steps, so I describe each step in turn.</p>
+<section id="database-of-director-photos" class="level3" data-number="5.3.1">
+<h3 data-number="5.3.1" class="anchored" data-anchor-id="database-of-director-photos"><span class="header-section-number">5.3.1</span> Database of director photos</h3>
+<p>We started with a repository of photos of directors from SEC filings on EDGAR; we later added photos from Equilar. The first step with regard to EDGAR photos was to link these with the director identifier in the Equilar database (<code>executive_id</code>) and for each filing a page was a created to match photos to each <code>executive_id</code>, either by selecting a name from a dropdown list or by writing in a name when the name was not found in the dropdown list. The hand-collection was performed by RAs found through <a href="https://www.fiverr.com">Fiverr</a> and generally only one RA was used at a time.</p>
+<p>Google Sheets were used in two ways for this activity. First, a sheet was created with the list of filings to be processed and the URLs for the RA to click to complete the task. Before clicking on a link, the RA would select her name from the dropdown list in the spreadsheet, then click the link to the data entry site.<a href="#fn40" class="footnote-ref" id="fnref40" role="doc-noteref"><sup>40</sup></a> Once the director photos were mapped to names, the RA would return to the Google Sheets document to flag the status of the row as “DONE” before moving onto the next row.</p>
+<p>Second, the output of the RAs data collection activity was stored in the another sheet of the Google Sheets document. In effect, Google Sheets served as a simple alternative to posting the data in some kind of database.<a href="#fn41" class="footnote-ref" id="fnref41" role="doc-noteref"><sup>41</sup></a></p>
+</section>
+<section id="classifying-director-photos" class="level3" data-number="5.3.2">
+<h3 data-number="5.3.2" class="anchored" data-anchor-id="classifying-director-photos"><span class="header-section-number">5.3.2</span> Classifying director photos</h3>
+<p>The next phase was to present each photo to qualified Mechanical Turkers who would classify each photo based on sex and ethnicity. The results from this task were returned by Mechanical Turk as CSV files. These CSV files were saved to a GitHub respository as is and were never modified in any way.</p>
+<p>Each photo was classified by two Mechanical Turkers. When there was disagreement between the Mechanical Turkers, someone from the research team (either me or someone working at Stanford) would make a final classification in a Google Sheets document (<code>hand_classification</code>), using information from various database to do so. Hyperlinks to the sources used as well as notes on the reasons for each classificaton were stored in the Google Sheets document. In addition to the resolving disagreements between Mechanical Turkers, the <code>hand_classification</code> sheet was used to address potential issues flagged by inconsistencies such as that between a classification of a director in our data and that in other databases.</p>
+</section>
+<section id="creating-the-final-ethnicities-data-file" class="level3" data-number="5.3.3">
+<h3 data-number="5.3.3" class="anchored" data-anchor-id="creating-the-final-ethnicities-data-file"><span class="header-section-number">5.3.3</span> Creating the final ethnicities data file</h3>
+<p>The final step was to combine the data above into a final classification of all directors in our sample. As we have seen before, we needed to prioritize the confirmed matches in <code>hand_classification</code> over the matches in the Mechanical Turk data and this was achieved with code that used an anti-join. The final data set mapped each director (<code>executive_id</code>) to an ethniciy and sex.</p>
+</section>
+</section>
+<section id="director-biographies" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="director-biographies"><span class="header-section-number">5.4</span> Director biographies</h2>
+<p>Google Sheets were used extensively to support data collection for <span class="citation" data-cites="Gow:2018aa">Gow et al. (<a href="#ref-Gow:2018aa" role="doc-biblioref">2018</a>)</span>. Again the data collection process proceeded in steps.<a href="#fn42" class="footnote-ref" id="fnref42" role="doc-noteref"><sup>42</sup></a> The first step was the collection of the relevant SEC filing for our sample. The second step involved <strong>tagging</strong> of the biographies for each director.<a href="#fn43" class="footnote-ref" id="fnref43" role="doc-noteref"><sup>43</sup></a> The third step required the tagging of directorships within biographies.</p>
+<p>Note that none of the tagged data was stored in Google Sheets, as the web-based tagging tool directly populated tables in a PostgreSQL database. Instead the Google Sheets provided a flexible system for assigning filings to RAs and to allow RAs to flag issues with the tagging tool that needed resolution by adjustments to the tagging tool. Often the Google Sheets used to this end were populated by data created using SQL queries against a database.</p>
+</section>
+<section id="matching-identifiers" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="matching-identifiers"><span class="header-section-number">5.5</span> Matching identifiers</h2>
+<p>While the idea of matching identifiers studied in <a href="#sec-main-case" class="quarto-xref">Section&nbsp;3</a> might seem fairly arcane, this is actually one of the most common use cases for data collection with Google Sheets. Whether it is matching CIKs with GVKEYs or matching StreetEvents conference call IDs with PERMNOs, Google Sheets implemented with the kinds of processes and best practices described above has been invaluable in my research efforts.<a href="#fn44" class="footnote-ref" id="fnref44" role="doc-noteref"><sup>44</sup></a></p>
+</section>
+</section>
+<section id="references" class="level1 unnumbered">
+
+
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Broman:2018aa" class="csl-entry" role="listitem">
+Broman, K.W., Woo, K.H., 2018. Data organization in spreadsheets. The American Statistician 72, 2–10. <a href="https://doi.org/10.1080/00031305.2017.1375989">https://doi.org/10.1080/00031305.2017.1375989</a>
+</div>
+<div id="ref-gow2024empirical" class="csl-entry" role="listitem">
+Gow, I.D., Ding, T., 2024a. Empirical research in accounting: Tools and methods. Chapman &amp; Hall/CRC, London, UK. <a href="https://doi.org/10.1201/9781003456230">https://doi.org/10.1201/9781003456230</a>
+</div>
+<div id="ref-Gow_2024" class="csl-entry" role="listitem">
+Gow, I.D., Ding, T., 2024b. Empirical research in accounting: Tools and methods. Chapman &amp; Hall/CRC. <a href="https://doi.org/10.1201/9781003456230">https://doi.org/10.1201/9781003456230</a>
+</div>
+<div id="ref-Gow:2023ab" class="csl-entry" role="listitem">
+Gow, I.D., Larcker, D.F., Watts, E.M., 2023. Board diversity and shareholder voting. Journal of Corporate Finance 83, 102487. <a href="https://doi.org/10.1016/j.jcorpfin.2023.102487">https://doi.org/10.1016/j.jcorpfin.2023.102487</a>
+</div>
+<div id="ref-Gow:2024aa" class="csl-entry" role="listitem">
+Gow, I.D., Shin, S.-P.S., Srinivasan, S., 2024. Activist directors: Determinants and consequences. Review of Accounting Studies 29, 2578–2616. <a href="https://doi.org/10.1007/s11142-023-09767-8">https://doi.org/10.1007/s11142-023-09767-8</a>
+</div>
+<div id="ref-Gow:2018aa" class="csl-entry" role="listitem">
+Gow, I.D., Wahid, A.S., Yu, G., 2018. Managing reputation: Evidence from biographies of corporate directors. Journal of Accounting and Economics 66, 448–469. <a href="https://doi.org/10.1016/j.jacceco.2018.08.009">https://doi.org/10.1016/j.jacceco.2018.08.009</a>
+</div>
+<div id="ref-Wickham:2023aa" class="csl-entry" role="listitem">
+Wickham, H., Çetinkaya-Rundel, M., Grolemund, G., 2023. <a href="https://books.google.com/books?id=TiLEEAAAQBAJ">R for data science</a>. O’Reilly Media, Sebastopol, CA.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>My aim with these notes is not to replace existing resources such as <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>, but to build on them with applied examples using richer data sets.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><em>Empirical Research in Accounting: Tools and Methods</em> was published in <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502">print form</a> by CRC Press in 2024 and remains free online at <a href="https://iangow.github.io/far_book" class="uri">https://iangow.github.io/far_book</a>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>This is not intended to be a criticism of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span>. One needs to draw the line for a book somewhere. Also, based on my experience in writing this note, writing about data collection is surprisingly challenging.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>I capitalize <em>Import</em> and put it in italics to indicate a reference to <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>In <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>, I actually propose an extension of Figure 1-1 of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> that includes a <em>Collect</em> process.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>See issues <a href="https://github.com/kbroman/dataorg/issues/3">#3</a> and <a href="https://github.com/kbroman/dataorg/issues/5">#5</a> there. Hopefully, this note addresses those issues.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>My aim with these notes is not to replace existing resources such as <em>R for Data Science</em>, but to build on them with applied examples using richer data sets.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><em>Empirical Research in Accounting: Tools and Methods</em> was published in <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502">print form</a> by CRC Press in 2024 and remains free online at <a href="https://iangow.github.io/far_book" class="uri">https://iangow.github.io/far_book</a>.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Guidance on downloading the Form AP data is provided in <a href="https://github.com/iangow/notes/blob/main/form_ap_names.pdf">another earlier note</a>.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Execute <code>install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4", "arrow", "dbplyr")</code> within R to install all the packages you need to run the code in this note.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>In general, there are much better formats for exporting data than either of these approaches and I see no good reason to use Excel files as part of a data science workflow.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>To be fair, earlier chapters of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> do discuss issues regarding importing data and scripts, but I think the importance of reproducibility is high enough—and the tendency for many to neglect it in practice—that it really bears repetition and more detailed guidance in each context.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p><a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a> is a slightly expected version of the “whole game” I discussed in <a href="https://github.com/iangow/notes/blob/main/import_sirca.pdf">an earlier note</a> on data curation—itself an extension of the whole game depicted in <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023, p. xii</a>)</span>.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>“Performed better” here means not only that the scripts worked faster, but that the imported data were easier to work with.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>Additional examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in <a href="https://github.com/iangow/notes/blob/main/import_sirca.pdf">my earlier note</a>.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>The original “whole game” in <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> does not even discuss <em>Collect</em>, but I think <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> shows how it is an essential part of the data science process.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>I believe it is possible to lock selected cells in a spreadsheet, but I suspect that few users avail themselves of this functionality.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>If there is an alternative available today—or if such a product becomes available at a later date—hopefully much of what I say here will apply to that product.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>That is, of course, you don’t have dimwitted people coming from a Microsoft Office background replicating their approach to version control by creating copies of Google Sheets documents!<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>That said, while Google Docs is much better than Microsoft Word for collaborative editing, I would not use it for this purpose myself because there are better ways if you have co-authors not trapped in the late 20th century.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>This is not a purely hypothetical scenario!<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>These RAs were members of a pool and presumably these RAs found work, if they wanted it, on a new task for a different faculty member.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>Some firms have SEC filings long before their IPOs, so this is not a perfect approach, but it is good enough for our purposes here.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>In some sense, I really talking about <em>foreign keys</em> here, but it is probably more important to be precise in thinking than it is to be precise in terminology.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>It is easy to confirm that there is only one <code>firm_country</code> value associated with each <code>firm_id</code>, but I leave this as an exercise for the reader.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>For one, the new name is more descriptive of how I will use the data it contains. Additionally, if I rerun the <code>write_sheet()</code> code above, it will not overwrite the sheet that I already have. Note that Google Sheets has excellent support for version history that makes it possible to restore an earlier version if you accidentally overwrite hand-collected data.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>Note that I later deleted entire rows for such clearly bad matches. While a useful maxim for data in 2025 might be <em>never delete data</em> (especially when the incremental storage cost is essentially zero), I view the candidate rows in <code>top_matches</code> as merely tentative data suggestions rather than “real” data.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>This data collection was joint work by me and Stephen Walker.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>Note that further research was required to determine that the match of “Marcum Asia CPAs LLP” with “Friedman LLP” is valid; there was a name change that occurred in 2022.<a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p>I can give effect to this by setting <code>valid</code> to <code>FALSE</code> for the other rows in <code>name_matches</code> (e.g., for matches to <code>firm_id</code> values of 1147 and 1208 for “Deloitte &amp; Touche LLP”) and to <code>TRUE</code> only for the main match (e.g., for <code>firm_id</code> of 34 for “Deloitte &amp; Touche LLP”).<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>While this might appear to violate the “No Calculations in the Raw Data Files” dictum of <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span>, it reflects the different way that I am using the spreadsheet format. In effect, the Google Sheets file is a kind of notebook with supporting information for the data that will be used in analysis.<a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p>For example, the <code>expertName</code> for <code>dealID</code> of “749074-74508” is Deloitte &amp; Touche LLP. But inspection of the associated <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001404644&amp;type=&amp;dateb=20140307&amp;owner=exclude&amp;count=40">SEC filings</a> reveals that the audit report in the <a href="https://www.sec.gov/Archives/edgar/data/1404644/000119312514088912/d619679d424b4.htm">prospectus</a> was signed off by the Canadian firm.<a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn33"><p>In PostgreSQL, lists are called <strong>arrays</strong> and we would use <code>array_agg()</code> to achieve the same result in PostgresSQL. Note that we could have used the alias <code>array_agg()</code> in place of <code>list()</code> in DuckDB.<a href="#fnref33" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn34"><p>The reason for specifying <code>ORDER BY firm_id</code> is to ensure that the values in <code>firm_ids</code> correspond with the respective values in <code>firm_names</code>, etc.<a href="#fnref34" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn35"><p>It was to facilitate this kind of observation that I included <code>CompanyAddress</code> when constructing <code>no_form_ap_matches</code> in the first place.<a href="#fnref35" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn36"><p>o be fair, the topic of version control of data is a knotty one that probably warrants serious discussion, but this note is not the place for it.<a href="#fnref36" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn37"><p>Of course if you were transported back to 1995 with nothing but a single data file, you might prefer CSV to parquet, but it seems exceedingly unlikely that you will be in a situation where you cannot work with a parquet file in 2025.<a href="#fnref37" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn38"><p>For example, the goal might be to identify the auditor at the time of the IPO, even in cases where a change in auditor is in process at that time.<a href="#fnref38" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn39"><p>Code related to this is made available on <a href="https://github.com/iangow/activist_director">GitHub</a>.<a href="#fnref39" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn40"><p>At the time of writing, you can see a page from this site at <a href="https://go.unimelb.edu.au/hiq8" class="uri">https://go.unimelb.edu.au/hiq8</a>.<a href="#fnref40" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn41"><p>This approach was set up by <a href="https://www.linkedin.com/in/masonjiang/">Mason Jiang</a>, a data scientist at Stanford.<a href="#fnref41" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn42"><p>See Appendix 1 of <span class="citation" data-cites="Gow:2018aa">Gow et al. (<a href="#ref-Gow:2018aa" role="doc-biblioref">2018, pp. 466–467</a>)</span> for more details on the data collection process.<a href="#fnref42" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn43"><p>The tagging tool was created by <a href="https://www.linkedin.com/in/andrew-marder/">Andrew Marder</a>, then a data scientist at Harvard Business School.<a href="#fnref43" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn44"><p>To learn about GVKEYs and PERMNOs, see <a href="https://iangow.github.io/far_book/identifiers.html">Chapter 7</a> of <span class="citation" data-cites="Gow_2024">Gow and Ding (<a href="#ref-Gow_2024" role="doc-biblioref">2024b</a>)</span>.<a href="#fnref44" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

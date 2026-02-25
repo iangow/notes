@@ -150,7 +150,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Improving performance of SQLite data</h1>
-</div>
+  <div class="quarto-categories">
+    <div class="quarto-category">Tidy Finance</div>
+    <div class="quarto-category">SQLite</div>
+  </div>
+  </div>
 
 
 
@@ -230,7 +234,7 @@ crsp_daily &lt;- tbl(tidy_finance, "crsp_daily") |&gt;
   mutate(month = floor_date(date, "month")) |&gt;
   system_time()</code></pre>
 <p>That’s more than two minutes just to read one table. And things are no better using Python.</p>
-<div id="8ea82c85" class="cell" data-cache="true" data-execution_count="1">
+<div id="be8974f9" class="cell" data-cache="true" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sqlite3</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -251,7 +255,7 @@ crsp_daily &lt;- tbl(tidy_finance, "crsp_daily") |&gt;
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Loading crsp_daily: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.3f}</span><span class="ss"> seconds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Loading crsp_daily: 112.035 seconds</code></pre>
+<pre><code>Loading crsp_daily: 119.136 seconds</code></pre>
 </div>
 </div>
 <pre class="{r}"><code>dbDisconnect(tidy_finance)</code></pre>
