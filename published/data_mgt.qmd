@@ -175,11 +175,11 @@ pq_df = pq_last_modified(table_name="company", schema="comp", archive=True)
 pq_df[["file_name", "last_mod"]]
 ```
 
-I can use the function `pq_restore()` to make the one from `2025-11-09` the one that I am using for my data repository.
+I can use the function `pq_restore()` to make the one from `2024-06-14` the one that I am using for my data repository.
 
 ```{python}
 from db2pq import pq_restore
-pq_restore("company_20251109T072042Z", "comp")
+pq_restore("company_20240614T062835Z", "comp")
 ```
 
 I now see that this is the version used when I look for `company` in the `comp` schema:
@@ -207,7 +207,7 @@ pq_df = pq_last_modified(table_name="company", schema="comp", archive=True)
 pq_df[["file_name", "last_mod"]]
 ```
 
-If we update again with `archive=True`, we will effectively put the `2025-11-09` back in the archive and replace it with the current version on WRDS.
+If we update again with `archive=True`, we will effectively put the `2024-06-14` back in the archive and replace it with the current version on WRDS.
 
 ```{python}
 from db2pq import pq_archive
@@ -375,7 +375,7 @@ rcfa_1 = load_parquet("wrds_call_rcfa_1", "bank", data_dir = "data")
     .collect()
 )
 ```
-WRDS generally stores timestamps in PostgreSQL with type `TIMESTAMP WITHOUT TIME ZONE`, which is equivalent to saying "you figure out the time zone, user."^[The only option used by PostgreSQL should `TIMESTAMP WITH TIME ZONE`.]
+WRDS generally stores timestamps in PostgreSQL with type `TIMESTAMP WITHOUT TIME ZONE`, which is equivalent to saying "you figure out the time zone, user."^[The only option that should be used with PostgreSQL is `TIMESTAMP WITH TIME ZONE`.]
 Because we know that the timestamps provided by the FFIEC are expressed in US Eastern time, we can tell `wrds_update_pq()` this using the `tz` argument:
 
 ```{python}
