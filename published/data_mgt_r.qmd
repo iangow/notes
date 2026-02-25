@@ -97,8 +97,6 @@ In R, I can inspect the value in `DATA_DIR`:
 Sys.getenv("DATA_DIR")
 ```
 
-
-
 The `db2pq` package is not yet on CRAN, so you need to install it from GitHub using `pak`:
 
 ```r
@@ -117,6 +115,15 @@ library(arrow)
 library(dplyr)
 library(ffiec.pq)
 library(db2pq)
+library(wrds)
+```
+
+The `db2pq` package uses the `wrds` package to get a connection to the WRDS PostgreSQL database.
+So if you have not done so, you will need to set up your credentials using that package.
+
+```{r}
+#| eval: false
+wrds_set_credentials()
 ```
 
 The core function of `db2pq` is `wrds_update_pq()`.
@@ -278,8 +285,8 @@ The usual purpose of timestamps is to identify a moment in time.
 For example, I want to know the precise time at which an earnings conference call happened, so I can turn to a dataset with intra-day data on quotes and trades to see how the market reacted.
 If the data on earnings conference calls use UTC and the trade-and-quote data use US Eastern time and I ignore these differences, then I will be looking at times that are off by four or five hours (depending on the time of year).
 
-To examine this issue, I'm going to revisit the Call Report data I wrote about [recently](https://rpubs.com/iangow/call_reports).
-I have these data in my (general-purpose) data repository and I can use the following code to load it into R using `arrow`.
+To examine this issue, I'm going to revisit the Call Report data I wrote about [recently](curate_call_reports.qmd).
+I have these data in my (general-purpose) data repository and I can use the `ffiec_scan_pqs` from my `ffiec.pq` package to read the data into R.
 
 ```{r}
 db <- DBI::dbConnect(duckdb::duckdb())
