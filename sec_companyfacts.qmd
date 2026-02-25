@@ -167,7 +167,7 @@ filings
 
 ## SEC submissions data
 
-According to the SEC's [webpage](https://www.sec.gov/edgar/sec-api-documentation), "each entity's current filing history is available at the following URL: `https://data.sec.gov/companyfacts/CIK##########.json` where the `##########` is the entity’s 10-digit Central Index Key (CIK), including leading zeros."
+According to the SEC's [webpage](https://www.sec.gov/edgar/sec-api-documentation), "each entity's current filing history is available at the following URL: `https://data.sec.gov/submissions/CIK##########.json` where the `##########` is the entity’s 10-digit Central Index Key (CIK), including leading zeros."
 This means we will use CIKs to identify files to collect.
 Most data sources---including the SEC's own [index files](https://iangow.github.io/far_book/glms.html#sec-edgar)---provide CIKs as integers, but we can easily construct the 10-digit strings with leading zeros using `str_pad()` and construct the desired URL from that.
 To start we focus (arbitrarily) on Agnico Eagle Mines, a Canadian firm with CIK `2809`.
@@ -177,7 +177,7 @@ Running the following code should open a browser tab with the JSON data for subm
 #| cache: false
 cik <- 2809
 json_file <- str_c("CIK", str_pad(cik, width = 10, pad = "0"), ".json")
-url <- paste0("https://data.sec.gov/api/xbrl/companyfacts/", json_file)
+url <- paste0("https://data.sec.gov/submissions/", json_file)
 ```
 
 ```{r}
@@ -190,7 +190,7 @@ The reasons for using the file name rather than the CIK and for the (as-yet-unus
 
 ```{r}
 get_sec_json <- function(json_file, local_file = NULL) {
-  url <- paste0("https://data.sec.gov/api/xbrl/companyfacts/", json_file)
+  url <- paste0("https://data.sec.gov/submissions/", json_file)
   tibble(json = list(read_json(url))) |>
     unnest_wider(json)
 }
@@ -344,6 +344,7 @@ get_sec_json(json_file) |>
   unnest_wider(recent) |>
   unnest_longer(everything())
 ```
+
 This seems to work, as have a rectangular table of filing-level data.
 However, we now need to consider a case where `files` is not `NA`.
 Ashland Inc, a chemicals company with CIK of `7694`, is such a case.
@@ -892,4 +893,3 @@ dbDisconnect(db)
 ```
 
 ## References {-}
-

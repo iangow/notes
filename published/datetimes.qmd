@@ -1,8 +1,9 @@
 ---
 title: "Working with date and times"
 author: Ian D. Gow
-date: 2026-02-02
+date: 2024-08-13
 date-format: "D MMMM YYYY"
+categories: [Datetimes, DuckDB]
 format:
   html:
     colorlinks: true
@@ -29,7 +30,7 @@ The application I work with is based on the SEC submissions data I discussed in 
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 :::
 
-As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@gow2024empirical] is to provide a pathway to mastery of the contents of @Wickham:2023aa.^[@gow2024empirical was published in print form by CRC Press in December 2024 and remains free online.]
+As discussed in a [recent post on LinkedIn](https://www.linken.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@gow2024empirical] is to provide a pathway to mastery of the contents of @Wickham:2023aa.^[@gow2024empirical was published in print form by CRC Press in December 2024 and remains free online.]
 That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times.
 [One recent note](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) covered hierarchical data and a forthcoming note will address spreadsheets.
 
@@ -39,7 +40,7 @@ I study this application not only using R, but also DuckDB and PostgreSQL, as mo
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/datetimes.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/published/datetimes.qmd).
 
 ```{r}
 #| include: false
@@ -202,7 +203,7 @@ sample |> mutate(hour = hour(a_datetime)) |> collect()
 We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). If you have set up a parquet data repository with this data in the `submissions` schema, then use `filings <- load_parquet(db, table = "filings", schema = "submissions")` instead.]
 
 ```{r}
-filings <- load_parquet(db, table = "filings", data_dir = "../data")
+filings <- load_parquet(db, table = "filings", data_dir = "data")
 ```
 
 An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC.
@@ -232,7 +233,6 @@ One observation is that we have over a million filings right around midnight.
 ```{r}
 #| label: fig-time-all
 #| fig-cap: Distribution of acceptance time for all filings
-#| cache: true
 filing_times |>
   ggplot(aes(x = acceptance_time)) + 
   geom_histogram(binwidth = 5 * 60) +
@@ -251,7 +251,6 @@ The former value probably relates to errors, but a small number of filings did o
 ```{r}
 #| label: fig-midnight
 #| fig-cap: "Year of 'midnight' filings"
-#| cache: true
 filing_times |>
   mutate(midnight = acceptance_time == "2000-01-01") |>
   mutate(year = as.character(year)) |>
@@ -267,7 +266,6 @@ Note that---with one stray exception before 07:00---filings appear to occur betw
 ```{r}
 #| label: fig-time-early-timed
 #| fig-cap: "Distribution of acceptance time--pre-2002 with times"
-#| cache: true
 filing_times |> 
   filter(year < 2002,
          acceptance_time != "2000-01-01") |>
@@ -287,7 +285,6 @@ However, some pre-08:00 filings appear in @fig-time-later-timed.
 ```{r}
 #| label: fig-time-later-timed
 #| fig-cap: "Distribution of acceptance time--post-2002 with times"
-#| cache: true
 filing_times |>
   filter(year >= 2002,
          acceptance_time > "2000-01-01") |>
@@ -318,7 +315,6 @@ However, these are all concentrated in 2009 and are perhaps evidence of data iss
 ```{r}
 #| label: fig-later-midnight
 #| fig-cap: "Distribution of dates--post-2003 midnight filers"
-#| cache: true
 filing_times |>
   mutate(year = year(acceptanceDateTime)) |> 
   filter(year > 2003,
@@ -334,7 +330,6 @@ Given the issues revealed above, @fig-valid---our final plot of acceptance times
 ```{r}
 #| label: fig-valid
 #| fig-cap: "Distribution of acceptance times with valid times"
-#| cache: true
 filing_times |>
   filter(year > 2003,
          between(acceptance_time,
@@ -487,7 +482,7 @@ See the [documentation](https://duckdb.org/docs/extensions/postgres) for the `po
 
 ```{r}
 #| results: false
-dbExecute(db, "ATTACH '' AS pg (TYPE POSTGRES)")
+dbExecute(db, "ATTACH 'user=igow' AS pg (TYPE POSTGRES, READ_WRITE)")
 ```
 
 The first step is to copy the data in `filings.parquet` to PostgreSQL.
@@ -496,9 +491,8 @@ This step takes some time, but would be a one-off step.
 I include `IF NOT EXISTS` to avoid overwriting any existing table you might have.
 
 ```{r}
-#| cache: true
 sql <- "CREATE TABLE IF NOT EXISTS pg.filings AS
-        SELECT * FROM '../data/filings.parquet'"
+        SELECT * FROM 'data/filings.parquet'"
 dbExecute(db, sql) |> system_time()
 ```
 

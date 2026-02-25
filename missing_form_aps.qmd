@@ -50,6 +50,15 @@ library(dbplyr)
 #| include: false
 db <- dbConnect(duckdb::duckdb())
 
+load_parquet <- function (conn, table, schema = "", 
+                          data_dir = Sys.getenv("DATA_DIR")) 
+{
+    file_path <- file.path(data_dir, schema, paste0(table, ".parquet"))
+    df_sql <- paste0("SELECT * FROM read_parquet('", file_path, 
+        "', union_by_name=true)")
+    dplyr::tbl(conn, dplyr::sql(df_sql))
+}
+
 sub <- load_parquet(db, "sub_*", "dera_notes")
 txt <- load_parquet(db, "txt_*", "dera_notes")
 form_aps <- load_parquet(db, "form_aps", "pcaob")

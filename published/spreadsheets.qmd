@@ -4,6 +4,7 @@ author: Ian D. Gow
 date: 2026-02-05
 date-format: "D MMMM YYYY"
 number-sections: true
+categories: ["Data curation", Spreadsheets]
 format:
   html:
     colorlinks: true
@@ -20,6 +21,8 @@ format:
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
 csl: jfe.csl
+execute:
+  freeze: auto
 ---
 
 ::: {.abstract}
@@ -834,7 +837,7 @@ no_form_ap_matches <-
   distinct() |>
   rename(issuer_cik = CIK) |>
   inner_join(all_ipo_auditors, by = "issuer_cik") |>
-  filter(!firm_id %in% firm_ids) |>
+  filter(list_contains(firm_ids, firm_id)) |>
   compute()
 ```
 
