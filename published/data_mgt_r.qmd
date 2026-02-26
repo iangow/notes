@@ -231,7 +231,7 @@ In the following, I set `obs = 100` and `data_dir = "data"`, as I am doing this 
 
 ```{r}
 #| include: false
-pq_archive("rpa_entity_mappings", "ravenpack_common", data_dir = "data")
+pq_remove("rpa_entity_mappings", "ravenpack_common", data_dir = "data")
 ```
 
 ```{r}
@@ -253,8 +253,30 @@ wrds_update_pq("rpa_entity_mappings", "ravenpack_common", obs = 100,
                data_dir = "data")
 ```
 
-In such cases, it may be useful to use SAS data to determine the vintage of the data.
-However, as noted above, SAS-related functionality (i.e., `use_sas`) has not yet been implemented in the R package `db2pq`.
+In such cases, it makes sense to use the SAS data to determine the vintage of the data.
+However, a wrinkle in this case is that there is no SAS library called `ravenpack_common`.
+Instead the data are stored in the SAS library named `rpa`.
+So we also need to tell `wrds_update_pq()` where to get the SAS data.
+
+```{r}
+wrds_update_pq("rpa_entity_mappings", "ravenpack_common", obs = 100, 
+               data_dir = "data", use_sas = TRUE, sas_schema = "rpa")
+```
+
+Now we have valid "last modified" data:
+
+```{r}
+pq_last_modified(table_name = "rpa_entity_mappings", "ravenpack_common",
+                 data_dir="data")
+```
+
+So a subsequent call to `wrds_update_pq()` does not trigger an update, but for the correct reasons.
+
+```{r}
+wrds_update_pq("rpa_entity_mappings", "ravenpack_common", obs = 100, 
+               data_dir = "data", use_sas = TRUE, sas_schema = "rpa")
+```
+
 
 ### Storage formats
 
@@ -304,7 +326,7 @@ ffiec_scan_pqs(db, "por") |>
 
 ```{r}
 #| include: false
-pq_archive("wrds_call_rcfa_1", "bank", data_dir = "data")
+pq_remove("wrds_call_rcfa_1", "bank", data_dir = "data")
 ```
 
 WRDS offers essentially the same data in its `bank` schema.
