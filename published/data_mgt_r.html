@@ -266,7 +266,7 @@ div.csl-indent {
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">packageVersion</span>(<span class="st">"db2pq"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] '0.0.1'</code></pre>
+<pre><code>[1] '0.0.2'</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -294,10 +294,10 @@ div.csl-indent {
 <pre><code>Updated crsp.dsi is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-02-25 16:57:07 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-02-26 14:30:17 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-02-25 16:57:07 UTC.</code></pre>
+<pre><code>Completed file download at 2026-02-26 14:30:17 UTC.</code></pre>
 </div>
 </div>
 </section>
@@ -312,10 +312,10 @@ div.csl-indent {
 <pre><code>Updated comp.company is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-02-25 16:57:08 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-02-26 14:30:18 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-02-25 16:57:09 UTC.</code></pre>
+<pre><code>Completed file download at 2026-02-26 14:30:19 UTC.</code></pre>
 </div>
 </div>
 <p>For most tables on the WRDS database, it appears that “last updated” metadata is included in table comments. The <code>wrds_update_pq()</code> function will, by default, extract that metadata and embed it as metadata in the Parquet files.</p>
@@ -323,7 +323,7 @@ div.csl-indent {
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "Company (Updated 2026-02-25)"</code></pre>
+<pre><code>[1] "Company (Updated 2026-02-26)"</code></pre>
 </div>
 </div>
 <p>But if I specify <code>archive = TRUE</code>, then <code>pq_last_modified()</code> will instead return a tibble containing information about (possibly several) files matching the specified <code>table_name</code> in the archive.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> Here, we see that I have four previous versions of <code>comp.company</code> in my archive.</p>
@@ -331,7 +331,7 @@ div.csl-indent {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="ot">&lt;-</span> <span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>pq_df[<span class="fu">c</span>(<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 8 × 2
+<pre><code># A tibble: 9 × 2
   file_name                last_mod           
   &lt;chr&gt;                    &lt;dttm&gt;             
 1 company_20240614T062835Z 2024-06-14 06:28:35
@@ -341,14 +341,15 @@ div.csl-indent {
 5 company_20260218T070000Z 2026-02-18 07:00:00
 6 company_20260224T070000Z 2026-02-24 07:00:00
 7 company_20260225T000000Z 2026-02-24 07:00:00
-8 company_20260225T070000Z 2026-02-25 07:00:00</code></pre>
+8 company_20260225T070000Z 2026-02-25 07:00:00
+9 company_20260226T070000Z 2026-02-26 07:00:00</code></pre>
 </div>
 </div>
 <p>I can use the function <code>pq_restore()</code> to make the one from <code>2024-06-14</code> the one that I am using for my data repository.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_restore</span>(<span class="st">"company_20240614T062835Z"</span>, <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Archived to: /Users/igow/Dropbox/pq_data/comp/archive/company_20260225T070000Z.parquet</code></pre>
+<pre><code>Archived to: /Users/igow/Dropbox/pq_data/comp/archive/company_20260226T070000Z.parquet</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Restored to: /Users/igow/Dropbox/pq_data/comp/company.parquet</code></pre>
@@ -373,7 +374,7 @@ div.csl-indent {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="ot">&lt;-</span> <span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>pq_df[<span class="fu">c</span>(<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 7 × 2
+<pre><code># A tibble: 8 × 2
   file_name                last_mod           
   &lt;chr&gt;                    &lt;dttm&gt;             
 1 company_20260105T070000Z 2026-01-05 07:00:00
@@ -382,7 +383,8 @@ div.csl-indent {
 4 company_20260218T070000Z 2026-02-18 07:00:00
 5 company_20260224T070000Z 2026-02-24 07:00:00
 6 company_20260225T000000Z 2026-02-24 07:00:00
-7 company_20260225T070000Z 2026-02-25 07:00:00</code></pre>
+7 company_20260225T070000Z 2026-02-25 07:00:00
+8 company_20260226T070000Z 2026-02-26 07:00:00</code></pre>
 </div>
 </div>
 <p>If we update again with <code>archive = TRUE</code>, we will effectively put the <code>2024-06-14</code> version back in the archive and replace it with the current version on WRDS.</p>
@@ -392,13 +394,13 @@ div.csl-indent {
 <pre><code>Updated comp.company is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-02-25 16:57:09 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-02-26 14:30:19 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Archived existing file to: /Users/igow/Dropbox/pq_data/comp/archive/company_20240614T062835Z.parquet</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-02-25 16:57:10 UTC.</code></pre>
+<pre><code>Completed file download at 2026-02-26 14:30:20 UTC.</code></pre>
 </div>
 </div>
 <p>Some WRDS PostgreSQL tables appear not (yet) to have “last modified” information. For example, some RavenPack data tables appear not to have this information. In the following, I set <code>obs = 100</code> and <code>data_dir = "data"</code>, as I am doing this “update” purely for the purposes of this note, so only get 100 observations to keep things fast.</p>
@@ -431,7 +433,36 @@ div.csl-indent {
 <pre><code>ravenpack_common.rpa_entity_mappings already up to date.</code></pre>
 </div>
 </div>
-<p>In such cases, it may be useful to use SAS data to determine the vintage of the data. However, as noted above, SAS-related functionality (i.e., <code>use_sas</code>) has not yet been implemented in the R package <code>db2pq</code>.</p>
+<p>In such cases, it makes sense to use the SAS data to determine the vintage of the data. However, a wrinkle in this case is that there is no SAS library called <code>ravenpack_common</code>. Instead the data are stored in the SAS library named <code>rpa</code>. So we also need to tell <code>wrds_update_pq()</code> where to get the SAS data.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, <span class="at">obs =</span> <span class="dv">100</span>, </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">use_sas =</span> <span class="cn">TRUE</span>, <span class="at">sas_schema =</span> <span class="st">"rpa"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updated ravenpack_common.rpa_entity_mappings is available.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Beginning file download at 2026-02-26 14:30:29 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Completed file download at 2026-02-26 14:30:30 UTC.</code></pre>
+</div>
+</div>
+<p>Now we have valid “last modified” data:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>,</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data_dir=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Last modified: 02/09/2026 16:11:10"</code></pre>
+</div>
+</div>
+<p>So a subsequent call to <code>wrds_update_pq()</code> does not trigger an update, but for the correct reasons.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, <span class="at">obs =</span> <span class="dv">100</span>, </span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">use_sas =</span> <span class="cn">TRUE</span>, <span class="at">sas_schema =</span> <span class="st">"rpa"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ravenpack_common.rpa_entity_mappings already up to date.</code></pre>
+</div>
+</div>
 </section>
 <section id="storage-formats" class="level3" data-number="2.2.3">
 <h3 data-number="2.2.3" class="anchored" data-anchor-id="storage-formats"><span class="header-section-number">2.2.3</span> Storage formats</h3>
@@ -446,14 +477,14 @@ div.csl-indent {
 <p>Speaking of type inference, one bane of the existence of any data analyst might be timestamps. The usual purpose of timestamps is to identify a moment in time. For example, I want to know the precise time at which an earnings conference call happened, so I can turn to a dataset with intra-day data on quotes and trades to see how the market reacted. If the data on earnings conference calls use UTC and the trade-and-quote data use US Eastern time and I ignore these differences, then I will be looking at times that are off by four or five hours (depending on the time of year).</p>
 <p>To examine this issue, I’m going to revisit the Call Report data I wrote about <a href="../published/curate_call_reports.html">recently</a>. I have these data in my (general-purpose) data repository and I can use the <code>ffiec_scan_pqs</code> from my <code>ffiec.pq</code> package to read the data into R.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In my earlier note, I discussed how I managed to infer that the timestamps on that dataset are in US Eastern time (<code>America/New_York</code>). We can inspect the data I have using the function above, focused on a single observation:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 3
   IDRSSD date       last_date_time_submission_updated_on
@@ -463,34 +494,34 @@ div.csl-indent {
 </div>
 <p>WRDS offers essentially the same data in its <code>bank</code> schema. We can use <code>wrds_update_pq()</code> to get a sample of these data.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">obs =</span> <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">obs =</span> <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Updated bank.wrds_call_rcfa_1 is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-02-25 16:57:12 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-02-26 14:30:35 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Applying tz='UTC' to 1 timestamp column(s): rssdsubmissiondate.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-02-25 16:57:13 UTC.</code></pre>
+<pre><code>Completed file download at 2026-02-26 14:30:35 UTC.</code></pre>
 </div>
 </div>
 <p>To load the data into R, I will use the following <code>load_parquet()</code> helper function.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>load_parquet <span class="ot">&lt;-</span> <span class="cf">function</span>(table, schema, <span class="at">data_dir =</span> <span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>, <span class="st">"."</span>)) {</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_dir, schema, <span class="fu">paste0</span>(table, <span class="st">".parquet"</span>))</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">open_dataset</span>(path)</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>load_parquet <span class="ot">&lt;-</span> <span class="cf">function</span>(table, schema, <span class="at">data_dir =</span> <span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>, <span class="st">"."</span>)) {</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_dir, schema, <span class="fu">paste0</span>(table, <span class="st">".parquet"</span>))</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">open_dataset</span>(path)</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>As can be seen from the output below, the timestamp is off by five hours. That is because <code>wrds_update_pq()</code> assumes that timestamps are in UTC, which is a correct assumption for some datasets on WRDS, but is incorrect in this case.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="sc">|&gt;</span></span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rssd9001, wrdsreportdate, rssdsubmissiondate) <span class="sc">|&gt;</span></span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rssd9001 <span class="sc">==</span> <span class="dv">37</span>, wrdsreportdate <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="sc">|&gt;</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rssd9001, wrdsreportdate, rssdsubmissiondate) <span class="sc">|&gt;</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rssd9001 <span class="sc">==</span> <span class="dv">37</span>, wrdsreportdate <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 3
   rssd9001 wrdsreportdate rssdsubmissiondate 
@@ -500,29 +531,29 @@ div.csl-indent {
 </div>
 <p>WRDS generally stores timestamps in PostgreSQL with type <code>TIMESTAMP WITHOUT TIME ZONE</code>, which is equivalent to saying “you figure out the time zone, user.”<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> Because we know that the timestamps provided by the FFIEC are expressed in US Eastern time, we can tell <code>wrds_update_pq()</code> this using the <code>tz</code> argument:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, </span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">obs =</span> <span class="dv">100</span>, </span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">force =</span> <span class="cn">TRUE</span>, <span class="at">tz =</span> <span class="st">"America/New_York"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, </span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>, <span class="at">obs =</span> <span class="dv">100</span>, </span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">force =</span> <span class="cn">TRUE</span>, <span class="at">tz =</span> <span class="st">"America/New_York"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Forcing update based on user request.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-02-25 16:57:13 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-02-26 14:30:36 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Applying tz='America/New_York' to 1 timestamp column(s): rssdsubmissiondate.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-02-25 16:57:14 UTC.</code></pre>
+<pre><code>Completed file download at 2026-02-26 14:30:36 UTC.</code></pre>
 </div>
 </div>
 <p>Now, we see that the data are correct.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="sc">|&gt;</span></span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rssd9001, wrdsreportdate, rssdsubmissiondate) <span class="sc">|&gt;</span></span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rssd9001 <span class="sc">==</span> <span class="dv">37</span>, wrdsreportdate <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="sc">|&gt;</span></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rssd9001, wrdsreportdate, rssdsubmissiondate) <span class="sc">|&gt;</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rssd9001 <span class="sc">==</span> <span class="dv">37</span>, wrdsreportdate <span class="sc">==</span> <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 3
   rssd9001 wrdsreportdate rssdsubmissiondate 
@@ -532,22 +563,22 @@ div.csl-indent {
 </div>
 <p>In other cases, WRDS doesn’t even bother to store the data as <code>TIMESTAMP WITHOUT TIME ZONE</code>, but instead the data are stored as strings. Here’s one example.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">keep =</span> <span class="fu">c</span>(<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>),</span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">obs =</span> <span class="dv">5</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">keep =</span> <span class="fu">c</span>(<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>),</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">obs =</span> <span class="dv">5</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Updated audit.feed03_audit_fees is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-02-25 16:57:15 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-02-26 14:30:37 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-02-25 16:57:15 UTC.</code></pre>
+<pre><code>Completed file download at 2026-02-26 14:30:37 UTC.</code></pre>
 </div>
 </div>
 <p>But here we see that <code>file_accepted</code> is stored as a string (and <code>auditor_fkey</code> is a floating-point value).</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load_parquet</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load_parquet</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 2
   auditor_fkey file_accepted      
@@ -561,30 +592,30 @@ div.csl-indent {
 </div>
 <p>Fortunately, with <code>wrds_update_pq()</code>, I can specify the (Arrow) data types for selected columns and, in the case of <code>timestamp</code>, the time zone.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">col_types =</span> <span class="fu">list</span>(<span class="at">auditor_fkey =</span> <span class="st">"int32"</span>,</span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>                                <span class="at">file_accepted =</span> <span class="st">"timestamp"</span>),</span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">tz =</span> <span class="st">"America/New_York"</span>, <span class="at">force =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">keep =</span> <span class="fu">c</span>(<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>),</span>
-<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wrds_update_pq</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">col_types =</span> <span class="fu">list</span>(<span class="at">auditor_fkey =</span> <span class="st">"int32"</span>,</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>                                <span class="at">file_accepted =</span> <span class="st">"timestamp"</span>),</span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">tz =</span> <span class="st">"America/New_York"</span>, <span class="at">force =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">keep =</span> <span class="fu">c</span>(<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>),</span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">data_dir =</span> <span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Forcing update based on user request.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-02-25 16:57:15 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-02-26 14:30:38 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Applying tz='America/New_York' to 1 timestamp column(s): file_accepted.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-02-25 16:57:16 UTC.</code></pre>
+<pre><code>Completed file download at 2026-02-26 14:30:39 UTC.</code></pre>
 </div>
 </div>
 <p>Now things look much better.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load_parquet</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load_parquet</span>(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, <span class="at">data_dir =</span> <span class="st">"data"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 2
   auditor_fkey file_accepted      
