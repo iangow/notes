@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.26">
+<meta name="generator" content="quarto-1.9.35">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,6 +12,9 @@
 
 <title>Using DuckDB with WRDS: Python version – notes</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -70,15 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="../">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-46f66b053e56abd73bb6e954d61a315b.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -225,7 +227,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="general-set-up" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="general-set-up"><span class="header-section-number">2.1</span> General set-up</h2>
 <p>Because this note uses a number of different approaches to a set of problems, there are many packages I need to load:</p>
-<div id="packages" class="cell" data-execution_count="2">
+<div id="packages" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> duckdb</span>
@@ -240,7 +242,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I follow Tidy Finance in focusing on data for the year 1960 to 2023.</p>
-<div id="date-range" class="cell" data-execution_count="3">
+<div id="date-range" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"1960-01-01"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="op">=</span> <span class="st">"2023-12-31"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -249,7 +251,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="2.2" class="anchored" data-anchor-id="fama-french-data"><span class="header-section-number">2.2</span> Fama-French data</h2>
 <p>To keep this note self-contained, here I include code to get the Fama-French data used below. Note that this code is similar to code included in the <a href="https://www.tidy-finance.org/python/accessing-and-managing-financial-data.html#fama-french-data">Chapter 2</a> of <em>Tidy Finance with Python</em>.</p>
 <p>If you are a reader of <em>Tidy Finance with Python</em> and already have the SQLite database created by running the code in Chapter 2 of that book, you can skip ahead to <a href="#sec-orig" class="quarto-xref">Section&nbsp;2.3</a>.</p>
-<div id="ff-data" class="cell" data-cache="true" data-execution_count="4">
+<div id="ff-data" class="cell" data-cache="true" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily_raw <span class="op">=</span> pdr.DataReader(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  name<span class="op">=</span><span class="st">"F-F_Research_Data_Factors_daily"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  data_source<span class="op">=</span><span class="st">"famafrench"</span>,</span>
@@ -263,7 +265,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  .rename(columns<span class="op">=</span>{<span class="st">"mkt-rf"</span>: <span class="st">"mkt_excess"</span>})</span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-connect-sqlite" class="cell" data-execution_count="5">
+<div id="cell-connect-sqlite" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -288,7 +290,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Tidy Finance suggest that “this has two important implications: you cannot hold all the daily return data in your memory (hence it is not possible to copy the entire dataset to your local database), and in our experience, the download usually crashes (or never stops) because it is too much data for the WRDS cloud to prepare and send to your Python session.”</p>
 <p>The solution proposed by Tidy Finance is to “split up the big task into several smaller tasks that are easier to handle.” The following code is more or less copy-pasted from <a href="https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html#daily-crsp-data"><em>Tidy Finance with Python</em></a>. The main change I made was to increase the batch size from 500 to 2,000, as doing so has little impact on performance (for me), but reduces the lines of output.</p>
 <p>Note that I omit the code used to set the <code>WRDS_USER</code> environment variable, but you can set that using code provided by Tidy Finance on <a href="https://www.tidy-finance.org/python/setting-up-your-environment.html">their website</a>.</p>
-<div id="cell-crsp-daily-orig" class="cell" data-cache="true" data-execution_count="7">
+<div id="cell-crsp-daily-orig" class="cell" data-cache="true" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>tic <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>connection_string <span class="op">=</span> (</span>
@@ -409,7 +411,7 @@ Batch 20 out of 21 done (95.24%)
 Batch 21 out of 21 done (100.00%)</code></pre>
 </div>
 <div id="crsp-daily-orig" class="cell-output cell-output-display" data-execution_count="6">
-<pre><code>473.0824100000318</code></pre>
+<pre><code>364.71860287501477</code></pre>
 </div>
 </div>
 <p>So the code takes about 5 minutes and the result is a table <code>crsp_daily</code> inside an SQLite database.</p>
@@ -418,29 +420,29 @@ Batch 21 out of 21 done (100.00%)</code></pre>
 <h2 data-number="2.4" class="anchored" data-anchor-id="sec-ibis"><span class="header-section-number">2.4</span> Daily CRSP data – Ibis/DuckDB version</h2>
 <p>I now generate the same data table, but using Ibis to connect to PostgreSQL instead of using the Python package <code>sqlachemy</code>, which in turn uses the <code>psycopg2</code> package. Note I could use Ibis with a PostgreSQL backend directly, but I instead use a DuckDB backend and (implicitly) use <a href="https://duckdb.org/docs/extensions/postgres">the <code>postgres</code> extension</a> for DuckDB to access PostgreSQL data within DuckDB. I say “implicitly” because the Ibis package is taking care of most of the details for me.</p>
 <p>If you are working through this code interactively, you might find it helpful to set the following option:</p>
-<div id="eadbbc8c" class="cell" data-execution_count="8">
+<div id="c79efbc1" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ibis.options.interactive <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="start-time-duckdb" class="cell" data-execution_count="9">
+<div id="start-time-duckdb" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>tic <span class="op">=</span> timeit.default_timer()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I begin by connecting to an in-memory DuckDB database, which is created with the following command:</p>
-<div id="connect-duckdb" class="cell" data-execution_count="10">
+<div id="connect-duckdb" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>con <span class="op">=</span> ibis.duckdb.<span class="ex">connect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Rather than loading the <code>factors_ff3_daily</code> data from the SQLite database into a Pandas data frame, I load it into my DuckDB database. The following code is very similar to the above apart from the use of <code>con.read_sqlite()</code> in place of <code>pd.read_sql()</code>.</p>
-<div id="load-ff" class="cell" data-execution_count="12">
+<div id="load-ff" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily <span class="op">=</span> con.read_sqlite(db_path, table_name<span class="op">=</span><span class="st">"factors_ff3_daily"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Again rather than connecting to the WRDS PostgreSQL database directly using <code>sqlalchemy</code>, I connect via my DuckDB database. Note that this requires a <em>slightly</em> different form for the URI (i.e., <code>postgres://</code> in place of <code>postgresql+psycopg2://</code>) and using <code>con.read_postgres()</code> in place of <code>pd.read_sql()</code>.</p>
-<div id="wrds-uri" class="cell" data-execution_count="13">
+<div id="wrds-uri" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>wrds_uri <span class="op">=</span> (</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"postgres://"</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a> <span class="ss">f"</span><span class="sc">{</span>os<span class="sc">.</span>getenv(<span class="st">'WRDS_USER'</span>)<span class="sc">}</span><span class="ss">"</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"@wrds-pgdata.wharton.upenn.edu:9737/wrds"</span></span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="connect-pg" class="cell" data-execution_count="14">
+<div id="connect-pg" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>dsf <span class="op">=</span> con.read_postgres(wrds_uri,</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                        table_name<span class="op">=</span><span class="st">"dsf_v2"</span>, database<span class="op">=</span><span class="st">"crsp"</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                        </span>
@@ -449,7 +451,7 @@ Batch 21 out of 21 done (100.00%)</code></pre>
 </div>
 <p>Now the <em>pièce de résistance</em>: I create <code>crsp_daily</code> using the following code. There are a few things to note about this code. First, creating it involves fairly trivial translation of the SQL above. For example, <code>ssih.issuertype IN ('ACOR', 'CORP')</code> becomes the more Pythonic <code>ssih.issuertype.isin(['ACOR', 'CORP'])</code> and <code>ssih.securitytype = 'EQTY'</code> sees the SQL equality operator replaced by the Pythonic <code>==</code>. But if you can read the SQL, you should be able to understand this code quite easily.</p>
 <p>Note that the code above used Pandas to do some calculations that could have been performed using SQL. Specifically, the <code>.clip(lower=-1)</code> could be <code>CASE WHEN ret_excess &lt; -1 THEN -1 ELSE ret_excess</code> and the <code>(_.ret_excess &lt; -1).ifelse(-1, _.ret_excess))</code> is actually implemented by Ibis in this way.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
-<div id="crsp-daily-duckdb" class="cell" data-execution_count="15">
+<div id="crsp-daily-duckdb" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> (</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  dsf</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  .inner_join(ssih, <span class="st">"permno"</span>)</span>
@@ -471,19 +473,19 @@ Batch 21 out of 21 done (100.00%)</code></pre>
 <span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>  .select(<span class="st">"permno"</span>, <span class="st">"date"</span>, <span class="st">"ret_excess"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Rather than “downgrading” the data to an SQLite table, I will just export the data to a parquet file.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
-<div id="crsp-daily-pq" class="cell" data-execution_count="16">
+<div id="crsp-daily-pq" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>crsp_daily.to_parquet(join(data_dir, <span class="st">"tidy_finance"</span>, <span class="st">"crsp_daily.parquet"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="621d902b" class="cell" data-execution_count="17">
+<div id="9c01ae8c" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>toc <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Elapsed time: </span><span class="sc">{</span>(toc <span class="op">-</span> tic)<span class="sc">:.2f}</span><span class="ss"> seconds."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Elapsed time: 109.46 seconds.</code></pre>
+<pre><code>Elapsed time: 69.74 seconds.</code></pre>
 </div>
 </div>
 <p>So one benefit is seen immediately: the code runs in about 2 minutes, or about 2.5 times faster than the original Tidy Finance code. A second benefit is that the code is much simpler (and shorter). There is no need to create <code>permnos</code>, run a <code>for</code>-loop, specify batch sizes, or blend SQL with Python variables using <a href="https://docs.python.org/3/tutorial/inputoutput.html"><strong>f-strings</strong></a>. A final benefit is that this code is more versatile, which we illustrate in a moment.</p>
 <p>While we don’t need <code>permnos</code> here, we could create it easily using the following code:</p>
-<div id="get-permnos-db" class="cell" data-execution_count="18">
+<div id="get-permnos-db" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>permnos <span class="op">=</span> (ssih</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  .select(<span class="st">"permno"</span>)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  .distinct()</span>
@@ -500,53 +502,53 @@ Batch 21 out of 21 done (100.00%)</code></pre>
 <li><p>PostgreSQL database. In 2011, long before WRDS had its own PostgreSQL database, I wrote Perl scripts to export data from SAS files on the WRDS server to tables in a local PostgreSQL database. These Perl scripts eventually became the <code>wrds2pg</code> Python package.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> I wrote more about creating such a database in <a href="https://iangow.github.io/far_book/postgresql.html">Appendix D</a> of <em>Empirical Research in Accounting: Tools and Methods</em>.]</p></li>
 <li><p>Folders of parquet files. More recently I have used a local repository of parquet files as an alternative to the WRDS PostgreSQL database. While I have more about creating such a repository in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <em>Empirical Research in Accounting: Tools and Methods</em>, here I discuss how we can get just the two files we need from WRDS for our current exercise. This requires just the function <code>wrds_update_pq()</code> from my Python package <code>db2pq</code>.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p></li>
 </ol>
-<div id="96ffb01a" class="cell" data-execution_count="19">
+<div id="dcf652d6" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The <code>wrds_update_pq()</code> function keys off the environment variable <code>DATA_DIR</code> and stores WRDS tables as files organized into directories that match the schemas in the WRDS PostgreSQL database. I start by getting <code>crsp.dsf_v2</code>, which is about 29 GB in SAS form and 24 GB in PostgreSQL form on the WRDS servers. As can be seen, getting <code>crsp.dsf_v2</code> requires a single line of code.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
-<div id="86b5dfa8" class="cell" data-cache="true" data-execution_count="20">
+<div id="79a4b7c6" class="cell" data-cache="true" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>tic <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"dsf_v2"</span>, schema<span class="op">=</span><span class="st">'crsp'</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>toc <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Elapsed time: </span><span class="sc">{</span>(toc <span class="op">-</span> tic)<span class="sc">:.2f}</span><span class="ss"> seconds."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>crsp.dsf_v2 already up to date.
-Elapsed time: 0.42 seconds.</code></pre>
+Elapsed time: 0.50 seconds.</code></pre>
 </div>
 </div>
 <p>It takes me about 22 minutes to get the data.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> The resulting parquet file is 4.35 GB due to the compression and efficient storage offered by the parquet format. This compares not too favourably with the 2.7 GB for an SQLite database containing just these two tables, which is a cut-down version of the data created by Tidy Finance to save on space.</p>
 <p>Note that the <code>wrds_update_pq()</code> checks the “last updated” value for the SAS data file on WRDS and compares that with the corresponding metadata in any parquet file in the existing location and only gets data from the PostgreSQL server if the last updated value has changed. The WRDS subscription at my institution only offers annual updates, to the 20-minute download of <code>crsp.dsf_v2</code> only needs to happen once a year. Another feature of <code>wrds_update_pq()</code> from the <code>db2pq</code> package is that I wrote it to be very sparing in its use of RAM in creating the parquet file.</p>
 <p>Getting <code>crsp.stksecurityinfohist</code> takes only a few seconds because the underlying data table is much smaller.</p>
-<div id="581f04ba" class="cell" data-cache="true" data-execution_count="21">
+<div id="88b50c93" class="cell" data-cache="true" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>tic <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"stksecurityinfohist"</span>, schema<span class="op">=</span><span class="st">"crsp"</span>)</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>toc <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Elapsed time: </span><span class="sc">{</span>(toc <span class="op">-</span> tic)<span class="sc">:.2f}</span><span class="ss"> seconds."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>crsp.stksecurityinfohist already up to date.
-Elapsed time: 0.36 seconds.</code></pre>
+Elapsed time: 0.39 seconds.</code></pre>
 </div>
 </div>
 </section>
 <section id="using-local-data-files" class="level2" data-number="2.6">
 <h2 data-number="2.6" class="anchored" data-anchor-id="using-local-data-files"><span class="header-section-number">2.6</span> Using local data files</h2>
 <p>So now that I have local copies of <code>crsp.dsf_v2</code> and <code>crsp.stksecurityinfohist</code>, I can use those rather than going back to the WRDS PostgreSQL server to get data every time. Much of the code is unchanged from that in <a href="#sec-ibis" class="quarto-xref">Section&nbsp;2.4</a>.</p>
-<div id="connect-duckdb-again" class="cell" data-execution_count="22">
+<div id="connect-duckdb-again" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>tic <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>con <span class="op">=</span> ibis.duckdb.<span class="ex">connect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="load-ff-again" class="cell" data-execution_count="24">
+<div id="load-ff-again" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily <span class="op">=</span> con.read_sqlite(db_path, table_name<span class="op">=</span><span class="st">"factors_ff3_daily"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The only real difference in the code is in the lines creating <code>dsf</code> and <code>ssih</code>. Before I used <code>con.read_postgres()</code> to connect to the WRDS PostgreSQL server. Now I use <code>con.read_parquet()</code> to connect to local copies in parquet form.</p>
-<div id="data-load-local" class="cell" data-execution_count="25">
+<div id="data-load-local" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> os.environ[<span class="st">"DATA_DIR"</span>]</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>dsf <span class="op">=</span> con.read_parquet(join(data_dir, <span class="st">"crsp"</span>, <span class="st">"dsf_v2.parquet"</span>))</span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>ssih <span class="op">=</span> con.read_parquet(join(data_dir, <span class="st">"crsp"</span>, <span class="st">"stksecurityinfohist.parquet"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The following code is identical to the code in <a href="#sec-ibis" class="quarto-xref">Section&nbsp;2.4</a>. But now it takes 3 or 4 seconds to run rather than the 120 or so seconds needed earlier.</p>
-<div id="crsp-daily-local" class="cell" data-execution_count="26">
+<div id="crsp-daily-local" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> (</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  dsf</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  .inner_join(ssih, <span class="st">"permno"</span>)</span>
@@ -567,13 +569,13 @@ Elapsed time: 0.36 seconds.</code></pre>
 <span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>  .mutate(ret_excess <span class="op">=</span> (_.ret_excess <span class="op">&lt;</span> <span class="op">-</span><span class="dv">1</span>).ifelse(<span class="op">-</span><span class="dv">1</span>, _.ret_excess))</span>
 <span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>  .select(<span class="st">"permno"</span>, <span class="st">"date"</span>, <span class="st">"ret_excess"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="crsp-daily-pq-again" class="cell" data-execution_count="27">
+<div id="crsp-daily-pq-again" class="cell" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>crsp_daily.to_parquet(join(data_dir, <span class="st">"tidy_finance"</span>, <span class="st">"crsp_daily_alt.parquet"</span>))</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>toc <span class="op">=</span> timeit.default_timer()</span>
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Elapsed time: </span><span class="sc">{</span>(toc <span class="op">-</span> tic)<span class="sc">:.2f}</span><span class="ss"> seconds."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Elapsed time: 1.76 seconds.</code></pre>
+<pre><code>Elapsed time: 2.16 seconds.</code></pre>
 </div>
 </div>
 <p>While the field I know best—empirical accounting research—seems to be somewhere between uninterested and hostile to ideas of reproducibility (perhaps because of the implications for the p-hacking that dominates the field), readers of Tidy Finance are more likely to be in finance, which seems to be embracing reproducibility more enthusiastically. Being able to run code quite quickly (e.g., against local parquet files) that can be then passed along to a data editor who can run the same code against a standard data set (e.g., against the WRDS PostgreSQL server) has a lot to recommend it.</p>

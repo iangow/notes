@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.26">
+<meta name="generator" content="quarto-1.9.35">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,6 +12,9 @@
 
 <title>Improving performance of SQLite data – notes</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -70,15 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="../">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-46f66b053e56abd73bb6e954d61a315b.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-7bfe934728b598ff50c0e2e8d6e038d5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-52d3edc4879e86859cfab57e7fc9f8d6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -202,7 +204,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>In this note, I will load the following R packages. I will also use <code>duckdb</code> and <code>RSQLite</code> packages. use <code>install.packages()</code> to get any package that you don’t already have.</p>
 <pre class="{r}"><code>#| label: setup
 #| include: false
-Sys.setenv(RETICULATE_PYTHON = "../notes_py/bin/python")
+Sys.setenv(RETICULATE_PYTHON = "../.venv/bin/python")
 library(reticulate)
 py_config()</code></pre>
 <pre class="{r}"><code>#| message: false
@@ -234,7 +236,7 @@ crsp_daily &lt;- tbl(tidy_finance, "crsp_daily") |&gt;
   mutate(month = floor_date(date, "month")) |&gt;
   system_time()</code></pre>
 <p>That’s more than two minutes just to read one table. And things are no better using Python.</p>
-<div id="be8974f9" class="cell" data-cache="true" data-execution_count="1">
+<div id="a710928e" class="cell" data-cache="true" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sqlite3</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -255,7 +257,7 @@ crsp_daily &lt;- tbl(tidy_finance, "crsp_daily") |&gt;
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Loading crsp_daily: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.3f}</span><span class="ss"> seconds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Loading crsp_daily: 119.136 seconds</code></pre>
+<pre><code>Loading crsp_daily: 163.013 seconds</code></pre>
 </div>
 </div>
 <pre class="{r}"><code>dbDisconnect(tidy_finance)</code></pre>

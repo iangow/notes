@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.26">
+<meta name="generator" content="quarto-1.9.35">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,6 +12,9 @@
 
 <title>Data curation: The case of Call Reports – notes</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -90,15 +93,14 @@ div.csl-indent {
 <meta name="quarto:offset" content="../">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-46f66b053e56abd73bb6e954d61a315b.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -128,7 +130,7 @@ div.csl-indent {
 }</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -382,10 +384,10 @@ Tip
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add delay between requests to avoid overloading the server</span></span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    time.sleep(<span class="dv">1</span>)  <span class="co"># 1 second delay - adjust as needed</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Downloading 20251231... ✓ (6,402,952 bytes)
-Downloading 20250930... ✓ (5,687,172 bytes)
-Downloading 20250630... ✓ (6,231,175 bytes)
-Downloading 20250331... ✓ (5,704,772 bytes)</code></pre>
+<pre><code>Downloading 20251231... ✓ (6,405,965 bytes)
+Downloading 20250930... ✓ (5,687,423 bytes)
+Downloading 20250630... ✓ (6,231,257 bytes)
+Downloading 20250331... ✓ (5,705,034 bytes)</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>successful <span class="op">=</span> <span class="bu">sum</span>(<span class="dv">1</span> <span class="cf">for</span> r <span class="kw">in</span> results <span class="cf">if</span> r.success)</span>
@@ -402,16 +404,6 @@ Completed: 4/4 downloads</code></pre>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>zipfiles <span class="ot">&lt;-</span> <span class="fu">ffiec_list_zips</span>(<span class="at">type =</span> <span class="st">"xbrl"</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ffiec_process_xbrls</span>(zipfiles<span class="sc">$</span>zipfile[<span class="dv">1</span>]) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-190.595  69.567 261.233 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 4
-  zipfile                               date_raw date       parquet             
-  &lt;chr&gt;                                 &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt;               
-1 FFIEC CDR Call Bulk XBRL 03312001.zip 20010331 2001-03-31 xbrl_20010331.parqu…</code></pre>
-</div>
 </div>
 </section>
 </section>
@@ -421,32 +413,28 @@ Completed: 4/4 downloads</code></pre>
 <p>The easiest way to run the code I used to process the data is to install the <code>ffiec.pq</code> R package I have made available on GitHub. And the easiest way to use the package is to set the locations for the downloaded raw data files from above and for the processed data using the environment variables <code>RAW_DATA_DIR</code> and <code>DATA_DIR</code>, respectively. By default, the <code>ffiec.pq</code> package assumes that the raw data files can be found in a directory <code>ffiec</code> that is a subdirectory of <code>RAW_DATA_DIR</code>. Also, the <code>ffiec.pq</code> package will place the processed data it creates in a directory <code>ffiec</code> that is a subdirectory of <code>DATA_DIR</code>.</p>
 <p>I already have these environment variables set:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.getenv</span>(<span class="st">"RAW_DATA_DIR"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.getenv</span>(<span class="st">"RAW_DATA_DIR"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "/Users/igow/Dropbox/raw_data"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "/Users/igow/Dropbox/pq_data"</code></pre>
 </div>
 </div>
 <p>But, even if I did not, I could set them within R using commands like the following. You should set <code>RAW_DATA_DIR</code> to match what you used above in Python and you should set <code>DATA_DIR</code> to point to the location where you want to put the processed files. The processed files will occupy about 3 GB of disk space, so make sure you have room for these there.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">RAW_DATA_DIR=</span><span class="st">"/Users/igow/Dropbox/raw_data"</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">DATA_DIR=</span><span class="st">"/Users/igow/Dropbox/pq_data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">RAW_DATA_DIR=</span><span class="st">"/Users/igow/Dropbox/raw_data"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">DATA_DIR=</span><span class="st">"/Users/igow/Dropbox/pq_data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Having set these environment variables, I can load my package and run a single command <code>ffiec_process()</code> without any arguments to process <em>all</em> the raw data files.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> This takes about five minutes to run (for me):</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">ffiec_process</span>(<span class="at">use_multicore =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  7.297   2.181 200.868 </code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">ffiec_process</span>(<span class="at">use_multicore =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Note that, behind the scenes, the <code>ffiec_process()</code> extracts the data in two phases. In the first phase, it processes the data for each schedule for each quarter into Parquet file. This results in 3713 Parquet files. In the second phase, <code>ffiec_process()</code> proceeds to organize the data in the 3713 Parquet files by variable type to facilitate working with the data. Once the data have been organized, the 3713 schedule-and-quarter-specific Parquet files are discarded.</p>
 <p>The <code>results</code> table returned by the <code>ffiec_process()</code> function above reflects the outcome of the first phase, as that is when any problems arising from malformed data are expected to arise. If there were any issues in reading the data for a schedule in a quarter, then the variable <code>ok</code> for the corresponding row of <code>results</code> will be <code>FALSE</code>. We can easily confirm that all rows have <code>ok</code> equal to <code>TRUE</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> <span class="fu">count</span>(ok)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> <span class="fu">count</span>(ok)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 2
   ok        n
@@ -456,9 +444,9 @@ Completed: 4/4 downloads</code></pre>
 </div>
 <p>The results table also includes the field <code>repairs</code> that we can inspect to determine if any “repairs” were made to the data as it was processed in the first phase. As can be seen, a minority of the 3713 first-phase files needed repairs. I discuss these repairs in more detail in <a href="#sec-repairs" class="quarto-xref">Section&nbsp;3.1.1</a>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(repairs) <span class="sc">|&gt;</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(repairs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(repairs) <span class="sc">|&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(repairs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 2
   repairs          n
@@ -479,15 +467,15 @@ Completed: 4/4 downloads</code></pre>
 <p>The first file is the <a href="https://cdr.ffiec.gov/CDR/public/cdrhelp/Panel%20Of%20Reporters.htm">“Panel of Reporters” (POR) table</a>, which provides details on the financial institutions filing in the respective quarter.</p>
 <p>To access the data using the <code>ffiec.pq</code> functions, we just need to create a connection to an in-memory DuckDB database, which is a simple one-liner.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>From there we have the option to load a single Parquet file using the <code>pq_file</code> argument of the <code>ffiec_scan_pqs()</code> function:<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="at">pq_file=</span><span class="st">"por_20250930.parquet"</span>)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="sc">|&gt;</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, financial_institution_name, <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="at">pq_file=</span><span class="st">"por_20250930.parquet"</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, financial_institution_name, <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 13
   IDRSSD financial_institution_name    fdic_certificate_num…¹ occ_charter_number
@@ -506,7 +494,7 @@ Completed: 4/4 downloads</code></pre>
 #   financial_institution_filing_type &lt;chr&gt;,
 #   last_date_time_submission_updated_on &lt;dttm&gt;, date &lt;date&gt;</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="sc">|&gt;</span> <span class="fu">count</span>() <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>por_20250930 <span class="sc">|&gt;</span> <span class="fu">count</span>() <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 1
       n
@@ -516,11 +504,11 @@ Completed: 4/4 downloads</code></pre>
 </div>
 <p>But it will generally be more convenient to just read all files in one step, which we can do like this.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>por <span class="sc">|&gt;</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, financial_institution_name, <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>por <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, financial_institution_name, <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 13
   IDRSSD financial_institution_name    fdic_certificate_num…¹ occ_charter_number
@@ -539,12 +527,12 @@ Completed: 4/4 downloads</code></pre>
 #   financial_institution_filing_type &lt;chr&gt;,
 #   last_date_time_submission_updated_on &lt;dttm&gt;, date &lt;date&gt;</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>por <span class="sc">|&gt;</span> <span class="fu">count</span>() <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>por <span class="sc">|&gt;</span> <span class="fu">count</span>() <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 1
        n
    &lt;dbl&gt;
-1 662363</code></pre>
+1 662365</code></pre>
 </div>
 </div>
 </section>
@@ -552,11 +540,11 @@ Completed: 4/4 downloads</code></pre>
 <h3 data-number="2.1.2" class="anchored" data-anchor-id="item-schedules-data"><span class="header-section-number">2.1.2</span> Item-schedules data</h3>
 <p>The second data set is <code>ffiec_schedules</code>. The zip files provided by the FFIEC Bulk Data site comprise several TSV files organized into “schedules” corresponding the particular forms on which the data are submitted by filers. While the <code>ffiec.pq</code> package reorganizes the data by data type, information about the original source files for the data are retained in <code>ffiec_schedules</code>. We can load this using the following code:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_schedules"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_schedules"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>And here are the first 10 rows of this data set.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 3
    item     schedule  date      
@@ -575,25 +563,18 @@ Completed: 4/4 downloads</code></pre>
 </div>
 <p>Focusing on one item, <code>RIAD4230</code>, we can see from the output below that this item was provided on both Schedule RI (<code>ri</code>) and Schedule RI-BII (<code>ribii</code>) from <code>2001-03-31</code> until <code>2018-12-31</code>, but since then has only been provided on Schedule RI-BII.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="sc">|&gt;</span> </span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(item <span class="sc">==</span> <span class="st">"RIAD4230"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">schedule =</span> <span class="fu">unnest</span>(schedule)) <span class="sc">|&gt;</span></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(item, schedule) <span class="sc">|&gt;</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">min_date =</span> <span class="fu">min</span>(date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">max_date =</span> <span class="fu">max</span>(date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 2 × 4
-  item     schedule min_date   max_date  
-  &lt;chr&gt;    &lt;chr&gt;    &lt;date&gt;     &lt;date&gt;    
-1 RIAD4230 ri       2001-03-31 2018-12-31
-2 RIAD4230 ribii    2001-03-31 2025-12-31</code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ffiec_schedules <span class="sc">|&gt;</span> </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(item <span class="sc">==</span> <span class="st">"RIAD4230"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">schedule =</span> <span class="fu">unnest</span>(schedule)) <span class="sc">|&gt;</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(item, schedule) <span class="sc">|&gt;</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">min_date =</span> <span class="fu">min</span>(date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">max_date =</span> <span class="fu">max</span>(date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The next question might be: What is <code>RIAD4230</code>? We can get the answer from <code>ffiec_items</code>, a data set included with the <code>ffiec.pq</code> package:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">filter</span>(item <span class="sc">==</span> <span class="st">"RIAD4230"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">filter</span>(item <span class="sc">==</span> <span class="st">"RIAD4230"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 5
   item     mnemonic item_code item_name                           data_type
@@ -650,7 +631,7 @@ Table&nbsp;1: Table keys, arrow types, and access code
 </div>
 <p>We can use the data set <code>ffiec_items</code> to find out where a variable is located, based on its Arrow type.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>ffiec_items</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ffiec_items</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5,141 × 5
    item     mnemonic item_code item_name                               data_type
@@ -670,7 +651,7 @@ Table&nbsp;1: Table keys, arrow types, and access code
 </div>
 <p>As might be expected, most variables have type <code>Float64</code> and will be found in the <code>ffiec_float</code> tables.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">count</span>(data_type, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">count</span>(data_type, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 2
   data_type     n
@@ -687,12 +668,12 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <h3 data-number="2.1.3" class="anchored" data-anchor-id="example-1-do-bank-balance-sheets-balance"><span class="header-section-number">2.1.3</span> Example 1: Do bank balance sheets balance?</h3>
 <p>If we were experts in Call Report data, we might know that domestic total assets is reported as item <code>RCFD2170</code> (on Schedule RC) for banks reporting on a consolidated basis and as item <code>RCON2170</code> for banks reporting on an unconsolidated basis. We might also know about <code>RCFD2948</code> and <code>RCFD3210</code> and so on. But we don’t need to be experts to see what these items relate to:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>bs_items <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"RCFD2170"</span>, <span class="st">"RCON2170"</span>,</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD2948"</span>, <span class="st">"RCON2948"</span>,</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD3210"</span>, <span class="st">"RCON3210"</span>,</span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD3000"</span>, <span class="st">"RCON3000"</span>)</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">filter</span>(item <span class="sc">%in%</span> bs_items)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>bs_items <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"RCFD2170"</span>, <span class="st">"RCON2170"</span>,</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD2948"</span>, <span class="st">"RCON2948"</span>,</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD3210"</span>, <span class="st">"RCON3210"</span>,</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>              <span class="st">"RCFD3000"</span>, <span class="st">"RCON3000"</span>)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>ffiec_items <span class="sc">|&gt;</span> <span class="fu">filter</span>(item <span class="sc">%in%</span> bs_items)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 8 × 5
   item     mnemonic item_code item_name                                data_type
@@ -709,88 +690,88 @@ Table&nbsp;1: Table keys, arrow types, and access code
 </div>
 <p>The output above suggests we can make a “top level” balance sheet table using these items. The following code uses the DuckDB instance we created above (<code>db</code>) and the code provided in <a href="#tbl-types" class="quarto-xref">Table&nbsp;1</a>, to create <code>ffiec_float</code>, a “lazy” data table. Here “lazy” is a good thing, as it means we have access to all the data without having to load anything into RAM. As a result, this operation takes almost no time.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_float"</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_float"</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.036   0.016   0.015 </code></pre>
+  0.042   0.017   0.017 </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>ffiec_float</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>ffiec_float</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A query:  ?? x 4
-# Database: DuckDB 1.4.4 [igow@Darwin 25.4.0:R 4.5.2/:memory:]
-   IDRSSD date       item        value
-    &lt;int&gt; &lt;date&gt;     &lt;chr&gt;       &lt;dbl&gt;
- 1     37 2001-03-31 RCON3562   0     
- 2     37 2001-03-31 RCON7701   0     
- 3     37 2001-03-31 RCON7702   0     
- 4    242 2001-03-31 RCON3562 329     
- 5    242 2001-03-31 RCON7701   0.08  
- 6    242 2001-03-31 RCON7702   0.085 
- 7    279 2001-03-31 RCON3562  27     
- 8    279 2001-03-31 RCON7701   0.0745
- 9    279 2001-03-31 RCON7702   0.08  
-10    354 2001-03-31 RCON3562   4     
+# Database: DuckDB 1.4.4 [root@Darwin 25.4.0:R 4.5.2/:memory:]
+   IDRSSD date       item      value
+    &lt;int&gt; &lt;date&gt;     &lt;chr&gt;     &lt;dbl&gt;
+ 1  49362 2001-03-31 RIAD4097      0
+ 2  49362 2001-03-31 RIADB525      0
+ 3  63069 2001-03-31 RIADB524      0
+ 4  64619 2001-03-31 RIAD4845      0
+ 5  65513 2001-03-31 RIAD4235      0
+ 6  66015 2001-03-31 RIADB525   3244
+ 7  14409 2001-03-31 RIAD4846      0
+ 8  44134 2001-03-31 RIAD4843      0
+ 9  75633 2001-03-31 RIAD4845    498
+10  75633 2001-03-31 RIAD4846 -25845
 # ℹ more rows</code></pre>
 </div>
 </div>
 <p>As can be seen, the data in <code>ffiec_float</code> are in a <strong>long</strong> format, with each item for each bank for each period being a single row.</p>
 <p>I then <code>filter()</code> to get data on just the items in <code>bs_items</code> and then use the the convenience function <code>ffiec_pivot()</code> from the <code>ffiec.pq</code> package to turn the data into a more customary <strong>wide</strong> form. I then use <code>coalesce()</code> to get the consolidated items (<code>RCFD</code>) where available and the unconsolidated items (<code>RCON</code>) otherwise. Because I <code>compute()</code> this table (i.e., actually calculate the values for each row and column), this step takes a relatively long time, but not too long given that the underlying data files are in the order of tens of gigabytes if loaded in RAM.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>bs_data <span class="ot">&lt;-</span></span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  ffiec_float <span class="sc">|&gt;</span> </span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_pivot</span>(<span class="at">items =</span> bs_items) <span class="sc">|&gt;</span></span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_assets =</span> <span class="fu">coalesce</span>(RCFD2170, RCON2170),</span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_liabilities =</span> <span class="fu">coalesce</span>(RCFD2948, RCON2948),</span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">equity =</span> <span class="fu">coalesce</span>(RCFD3210, RCON3210),</span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">nci =</span> <span class="fu">coalesce</span>(RCFD3000, RCON3000)) <span class="sc">|&gt;</span></span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">eq_liab =</span> total_liabilities <span class="sc">+</span> equity <span class="sc">+</span> nci) <span class="sc">|&gt;</span></span>
-<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>() <span class="sc">|&gt;</span></span>
-<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>bs_data <span class="ot">&lt;-</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  ffiec_float <span class="sc">|&gt;</span> </span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_pivot</span>(<span class="at">items =</span> bs_items) <span class="sc">|&gt;</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_assets =</span> <span class="fu">coalesce</span>(RCFD2170, RCON2170),</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_liabilities =</span> <span class="fu">coalesce</span>(RCFD2948, RCON2948),</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">equity =</span> <span class="fu">coalesce</span>(RCFD3210, RCON3210),</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">nci =</span> <span class="fu">coalesce</span>(RCFD3000, RCON3000)) <span class="sc">|&gt;</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">eq_liab =</span> total_liabilities <span class="sc">+</span> equity <span class="sc">+</span> nci) <span class="sc">|&gt;</span></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>() <span class="sc">|&gt;</span></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  5.341   0.666   0.748 </code></pre>
+  7.051   1.120   1.292 </code></pre>
 </div>
 </div>
 <p>So, do balance sheets balance? Well, not always.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>bs_data <span class="sc">|&gt;</span></span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(<span class="at">bs_balance =</span> eq_liab <span class="sc">==</span> total_assets) <span class="sc">|&gt;</span></span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>bs_data <span class="sc">|&gt;</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(<span class="at">bs_balance =</span> eq_liab <span class="sc">==</span> total_assets) <span class="sc">|&gt;</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 2
   bs_balance      n
   &lt;lgl&gt;       &lt;dbl&gt;
-1 TRUE       640570
+1 TRUE       640572
 2 FALSE       21793</code></pre>
 </div>
 </div>
 <p>What’s going on? Well, one possibility is simply rounding error. So in the following code, I set <code>imbalance_flag</code> to <code>TRUE</code> only if the gap is more than <code>1</code> (these are in thousands of USD).</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="ot">&lt;-</span></span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>  bs_data <span class="sc">|&gt;</span></span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">imbalance =</span> total_assets <span class="sc">-</span> eq_liab,</span>
-<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">imbalance_flag =</span> <span class="fu">abs</span>(total_assets <span class="sc">-</span> eq_liab) <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
-<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">"RC"</span>), <span class="sc">-</span>total_liabilities) <span class="sc">|&gt;</span></span>
-<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="ot">&lt;-</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  bs_data <span class="sc">|&gt;</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">imbalance =</span> total_assets <span class="sc">-</span> eq_liab,</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">imbalance_flag =</span> <span class="fu">abs</span>(total_assets <span class="sc">-</span> eq_liab) <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">"RC"</span>), <span class="sc">-</span>total_liabilities) <span class="sc">|&gt;</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>This helps a lot. Now it seems that balance sheets <em>usually</em> balance, but not always.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(imbalance_flag)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(imbalance_flag)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 2
   imbalance_flag      n
   &lt;lgl&gt;           &lt;int&gt;
-1 FALSE          662164
+1 FALSE          662166
 2 TRUE              199</code></pre>
 </div>
 </div>
 <p>The vast majority of apparent imbalances are small …</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(imbalance_flag) <span class="sc">|&gt;</span></span>
-<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, total_assets, imbalance) <span class="sc">|&gt;</span></span>
-<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(imbalance))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(imbalance_flag) <span class="sc">|&gt;</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, total_assets, imbalance) <span class="sc">|&gt;</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(imbalance))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 199 × 4
     IDRSSD date       total_assets imbalance
@@ -798,36 +779,36 @@ Table&nbsp;1: Table keys, arrow types, and access code
  1 1362246 2002-06-30       278586      5334
  2  664653 2002-03-31        25490       224
  3 2821825 2001-03-31        55220        30
- 4  678931 2001-09-30        31237        10
- 5  178150 2004-03-31       103939        10
- 6  842358 2002-06-30       202388        10
- 7 3097243 2005-06-30        40939        10
- 8  545604 2001-06-30       246223        10
- 9  293053 2002-03-31       314157        10
-10  920733 2001-12-31        48439        10
+ 4 3097243 2005-06-30        40939        10
+ 5  920733 2001-12-31        48439        10
+ 6  647414 2002-12-31        83399        10
+ 7  678931 2001-09-30        31237        10
+ 8  293053 2002-03-31       314157        10
+ 9  842358 2002-06-30       202388        10
+10  178150 2004-03-31       103939        10
 # ℹ 189 more rows</code></pre>
 </div>
 </div>
 <p>… and they’re all at least twenty years ago.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(imbalance_flag) <span class="sc">|&gt;</span></span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, total_assets, imbalance) <span class="sc">|&gt;</span></span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(date))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>balanced <span class="sc">|&gt;</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(imbalance_flag) <span class="sc">|&gt;</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, total_assets, imbalance) <span class="sc">|&gt;</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(date))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 199 × 4
     IDRSSD date       total_assets imbalance
      &lt;int&gt; &lt;date&gt;            &lt;dbl&gt;     &lt;dbl&gt;
- 1   33549 2005-06-30        43865         3
- 2 3097243 2005-06-30        40939        10
- 3   20147 2005-06-30        48130       -10
- 4   22954 2005-06-30        65027       -10
- 5  773546 2005-06-30        97558         2
- 6  475756 2005-06-30        68158         2
- 7  131940 2005-06-30        27432         8
- 8   42037 2005-03-31        60913         2
- 9 2646327 2005-03-31        98814        -8
-10  827953 2005-03-31        50080         5
+ 1 3097243 2005-06-30        40939        10
+ 2  131940 2005-06-30        27432         8
+ 3  475756 2005-06-30        68158         2
+ 4   33549 2005-06-30        43865         3
+ 5   22954 2005-06-30        65027       -10
+ 6   20147 2005-06-30        48130       -10
+ 7  773546 2005-06-30        97558         2
+ 8 2646327 2005-03-31        98814        -8
+ 9   42037 2005-03-31        60913         2
+10  587574 2005-03-31         4705         2
 # ℹ 189 more rows</code></pre>
 </div>
 </div>
@@ -853,7 +834,7 @@ Figure&nbsp;2: Setting my computer to a different time zone
 </div>
 <p>Now, R sees my time zone as <code>Australia/Sydney</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.timezone</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.timezone</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "America/New_York"</code></pre>
 </div>
@@ -861,65 +842,65 @@ Figure&nbsp;2: Setting my computer to a different time zone
 <p>If we look at the underlying zip file for <code>2025-09-30</code>, you will see that <code>last_date_time_submission_updated_on</code> for the bank with <code>IDRSSD</code> of <code>37</code> is <code>"2026-01-13T10:13:21"</code>. In creating the <code>ffiec.pq</code> package, I assumed that this is a timestamp in <code>America/New_York</code> time.</p>
 <p>How does that show up when I look at the processed data in R using DuckDB?</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
-<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>por_default <span class="ot">&lt;-</span></span>
-<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
-<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="st">"2025-09-30"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dttm =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
-<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dttm_text =</span> <span class="fu">as.character</span>(dttm)) <span class="sc">|&gt;</span> </span>
-<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, dttm, dttm_text) <span class="sc">|&gt;</span> </span>
-<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
-<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(db)</span>
-<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a>por_default</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>por_default <span class="ot">&lt;-</span></span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="st">"2025-09-30"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dttm =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dttm_text =</span> <span class="fu">as.character</span>(dttm)) <span class="sc">|&gt;</span> </span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, dttm, dttm_text) <span class="sc">|&gt;</span> </span>
+<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
+<span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-13"><a href="#cb58-13" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(db)</span>
+<span id="cb58-14"><a href="#cb58-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a>por_default</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 4
   IDRSSD date       dttm                dttm_text             
    &lt;int&gt; &lt;date&gt;     &lt;dttm&gt;              &lt;chr&gt;                 
 1     37 2025-09-30 2026-01-13 15:13:21 2026-01-13 15:13:21+00</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>por_default<span class="sc">$</span>dttm[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>por_default<span class="sc">$</span>dttm[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "2026-01-13 15:13:21 UTC"</code></pre>
 </div>
 </div>
 <p>By default, R/DuckDB is showing this to me as UTC. This is fine, but I want to analyse this as a local time. Here is how I can achieve this. First, I set the R variable <code>tz</code> to <code>"America/New_York"</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>tz <span class="ot">&lt;-</span> <span class="st">"America/New_York"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>tz <span class="ot">&lt;-</span> <span class="st">"America/New_York"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Second, I connect to DuckDB anew, but I tell it I want it to use <code>"America/New_York"</code> as the time zone of output. But it’s important to note that this is just a “presentation layer” and doesn’t change how the database itself “thinks about” timestamps.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>(), <span class="at">timezone_out =</span> tz)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>(), <span class="at">timezone_out =</span> tz)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Third, I make DuckDB a “time zone wizard” but installing and loading the <code>icu</code> extension. This extension enables region-dependent collations and time zones. The <code>icu</code> extension is probably not installed and enabled by default because it is large and not all applications need these features. This allows me to set the DuckDB server’s time zone to <code>America/New_York</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="st">"INSTALL icu"</span>)</span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="st">"LOAD icu"</span>)</span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="fu">str_glue</span>(<span class="st">"SET TimeZone TO '{tz}'"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="st">"INSTALL icu"</span>)</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="st">"LOAD icu"</span>)</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>rs <span class="ot">&lt;-</span> <span class="fu">dbExecute</span>(db, <span class="fu">str_glue</span>(<span class="st">"SET TimeZone TO '{tz}'"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Then I run the query from above again.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
-<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>por_ny <span class="ot">&lt;-</span></span>
-<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
-<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="st">"2025-09-30"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dttm =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
-<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dttm_text =</span> <span class="fu">as.character</span>(dttm)) <span class="sc">|&gt;</span> </span>
-<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, dttm, dttm_text) <span class="sc">|&gt;</span></span>
-<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
-<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>por_ny</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>por <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"por"</span>)</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>por_ny <span class="ot">&lt;-</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="dv">37</span>, date <span class="sc">==</span> <span class="st">"2025-09-30"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dttm =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dttm_text =</span> <span class="fu">as.character</span>(dttm)) <span class="sc">|&gt;</span> </span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, dttm, dttm_text) <span class="sc">|&gt;</span></span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>por_ny</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 4
   IDRSSD date       dttm                dttm_text             
    &lt;int&gt; &lt;date&gt;     &lt;dttm&gt;              &lt;chr&gt;                 
 1     37 2025-09-30 2026-01-13 10:13:21 2026-01-13 10:13:21-05</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>por_ny<span class="sc">$</span>dttm[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>por_ny<span class="sc">$</span>dttm[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "2026-01-13 10:13:21 EST"</code></pre>
 </div>
@@ -928,22 +909,22 @@ Figure&nbsp;2: Setting my computer to a different time zone
 <p>Now that we have things working in local time, I will make a couple of plots of submission times. To show times on a single scale, I use the fudge of making them all times on a given day, which I somewhat arbitrarily choose to be <code>2025-01-01</code>.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></p>
 <p>In the first plot—<a href="#fig-times-west" class="quarto-xref">Figure&nbsp;3</a>—I present submission times divided by whether banks are located in “western states” or not. It does seem that western banks file later.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>western_states <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"HI"</span>, <span class="st">"WA"</span>, <span class="st">"CA"</span>, <span class="st">"AK"</span>, <span class="st">"OR"</span>, <span class="st">"NV"</span>)</span>
-<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span></span>
-<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
-<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">last_update =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
-<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">q4 =</span> <span class="fu">quarter</span>(date) <span class="sc">==</span> <span class="dv">4</span>,</span>
-<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">offset =</span> last_update <span class="sc">-</span> <span class="fu">sql</span>(<span class="st">"last_update AT TIME ZONE 'UTC'"</span>),</span>
-<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">offset =</span> <span class="fu">date_part</span>(<span class="st">"epoch"</span>, offset) <span class="sc">/</span> <span class="dv">3600</span>,</span>
-<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">tzone =</span> <span class="fu">if_else</span>(offset <span class="sc">==</span> <span class="sc">-</span><span class="dv">4</span>, <span class="st">"EDT"</span>, <span class="st">"EST"</span>),</span>
-<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">west =</span> financial_institution_state <span class="sc">%in%</span> western_states,</span>
-<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">ref =</span> <span class="fu">sql</span>(<span class="fu">str_glue</span>(<span class="st">"TIMESTAMPTZ '2025-01-01 00:00:00 {tz}'"</span>)),</span>
-<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">sub_date =</span> <span class="fu">date_trunc</span>(<span class="st">'days'</span>, last_update)) <span class="sc">|&gt;</span></span>
-<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time_adj =</span> last_update <span class="sc">-</span> sub_date <span class="sc">+</span> ref) <span class="sc">|&gt;</span></span>
-<span id="cb73-15"><a href="#cb73-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, last_update, time_adj, west, q4, offset, tzone) <span class="sc">|&gt;</span></span>
-<span id="cb73-16"><a href="#cb73-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>western_states <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"HI"</span>, <span class="st">"WA"</span>, <span class="st">"CA"</span>, <span class="st">"AK"</span>, <span class="st">"OR"</span>, <span class="st">"NV"</span>)</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>  por <span class="sc">|&gt;</span> </span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">last_update =</span> last_date_time_submission_updated_on) <span class="sc">|&gt;</span></span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">q4 =</span> <span class="fu">quarter</span>(date) <span class="sc">==</span> <span class="dv">4</span>,</span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">offset =</span> last_update <span class="sc">-</span> <span class="fu">sql</span>(<span class="st">"last_update AT TIME ZONE 'UTC'"</span>),</span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">offset =</span> <span class="fu">date_part</span>(<span class="st">"epoch"</span>, offset) <span class="sc">/</span> <span class="dv">3600</span>,</span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">tzone =</span> <span class="fu">if_else</span>(offset <span class="sc">==</span> <span class="sc">-</span><span class="dv">4</span>, <span class="st">"EDT"</span>, <span class="st">"EST"</span>),</span>
+<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">west =</span> financial_institution_state <span class="sc">%in%</span> western_states,</span>
+<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">ref =</span> <span class="fu">sql</span>(<span class="fu">str_glue</span>(<span class="st">"TIMESTAMPTZ '2025-01-01 00:00:00 {tz}'"</span>)),</span>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">sub_date =</span> <span class="fu">date_trunc</span>(<span class="st">'days'</span>, last_update)) <span class="sc">|&gt;</span></span>
+<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">time_adj =</span> last_update <span class="sc">-</span> sub_date <span class="sc">+</span> ref) <span class="sc">|&gt;</span></span>
+<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, date, last_update, time_adj, west, q4, offset, tzone) <span class="sc">|&gt;</span></span>
+<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
 <div class="cell-output-display">
@@ -985,75 +966,75 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 <p>While pandas is the dominant data frame library in Python, it would struggle to work with Parquet data on the scale of what <code>ffiec.pq</code> has produced, even though it’s a fairly modest amount of data. Loading 50-100 GB of data into RAM is not fun for most people’s computer set-ups. Even if you have RAM in the hundreds of GBs, not loading it will save you time.</p>
 <p>As we shall see, Polars does fine with the data and, if anything, is noticeably faster than DuckDB (using <code>dplyr</code>) for the queries I use in this note.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
-<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Because there is no <code>ffiec.pq</code> package for Python, I mimic the <code>ffiec_scan_pqs()</code> function using the following code.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>, </span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>                   schema<span class="op">=</span><span class="st">"ffiec"</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>        data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
-<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="cf">if</span> schema <span class="cf">else</span> data_dir</span>
-<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> schedule <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"You must supply `schedule`."</span>)</span>
-<span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a>    files <span class="op">=</span> <span class="bu">list</span>(path.glob(<span class="ss">f"</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">_*.parquet"</span>))</span>
-<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> files:</span>
-<span id="cb75-12"><a href="#cb75-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">FileNotFoundError</span>(</span>
-<span id="cb75-13"><a href="#cb75-13" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"No Parquet files found for schedule '</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">' in </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb75-14"><a href="#cb75-14" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb75-15"><a href="#cb75-15" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb75-16"><a href="#cb75-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pl.concat([pl.scan_parquet(f) <span class="cf">for</span> f <span class="kw">in</span> files])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>, </span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>                   schema<span class="op">=</span><span class="st">"ffiec"</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>        data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="cf">if</span> schema <span class="cf">else</span> data_dir</span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> schedule <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"You must supply `schedule`."</span>)</span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>    files <span class="op">=</span> <span class="bu">list</span>(path.glob(<span class="ss">f"</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">_*.parquet"</span>))</span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> files:</span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">FileNotFoundError</span>(</span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"No Parquet files found for schedule '</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">' in </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb71-16"><a href="#cb71-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pl.concat([pl.scan_parquet(f) <span class="cf">for</span> f <span class="kw">in</span> files])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Now I can “load” the data much as I did with R.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="op">=</span> ffiec_scan_pqs(<span class="st">"ffiec_float"</span>)</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>por <span class="op">=</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="st">"por"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="op">=</span> ffiec_scan_pqs(<span class="st">"ffiec_float"</span>)</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>por <span class="op">=</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="st">"por"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>While I am going to focus on total assets in this analysis, I show the parallels between the R code and the Polars code by collecting data on the same items. I don’t need <code>ffiec_pivot()</code> with Polars because the built-in <code>.pivot()</code> method does everything I need. Polars is even faster than R/DuckDB.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
-<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>bs_items <span class="op">=</span> [<span class="st">"RCFD2170"</span>, <span class="st">"RCON2170"</span>,</span>
-<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD2948"</span>, <span class="st">"RCON2948"</span>,</span>
-<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD3210"</span>, <span class="st">"RCON3210"</span>,</span>
-<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD3000"</span>, <span class="st">"RCON3000"</span>]</span>
-<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> time.perf_counter()</span>
-<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>bs_data <span class="op">=</span> (</span>
-<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a>    ffiec_float</span>
-<span id="cb77-10"><a href="#cb77-10" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"item"</span>).is_in(bs_items))</span>
-<span id="cb77-11"><a href="#cb77-11" aria-hidden="true" tabindex="-1"></a>    .pivot(</span>
-<span id="cb77-12"><a href="#cb77-12" aria-hidden="true" tabindex="-1"></a>        on <span class="op">=</span> <span class="st">"item"</span>,</span>
-<span id="cb77-13"><a href="#cb77-13" aria-hidden="true" tabindex="-1"></a>        on_columns <span class="op">=</span> bs_items,</span>
-<span id="cb77-14"><a href="#cb77-14" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span> [<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>],</span>
-<span id="cb77-15"><a href="#cb77-15" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> <span class="st">"value"</span>)</span>
-<span id="cb77-16"><a href="#cb77-16" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
-<span id="cb77-17"><a href="#cb77-17" aria-hidden="true" tabindex="-1"></a>        total_assets <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD2170"</span>), pl.col(<span class="st">"RCON2170"</span>)),</span>
-<span id="cb77-18"><a href="#cb77-18" aria-hidden="true" tabindex="-1"></a>        total_liabs <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD2948"</span>), pl.col(<span class="st">"RCON2948"</span>)),</span>
-<span id="cb77-19"><a href="#cb77-19" aria-hidden="true" tabindex="-1"></a>        equity <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD3210"</span>), pl.col(<span class="st">"RCON3210"</span>)),</span>
-<span id="cb77-20"><a href="#cb77-20" aria-hidden="true" tabindex="-1"></a>        nci <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD3000"</span>), pl.col(<span class="st">"RCON3000"</span>)),</span>
-<span id="cb77-21"><a href="#cb77-21" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb77-22"><a href="#cb77-22" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
-<span id="cb77-23"><a href="#cb77-23" aria-hidden="true" tabindex="-1"></a>        eq_liab <span class="op">=</span> pl.col(<span class="st">"total_liabs"</span>) <span class="op">+</span> pl.col(<span class="st">"equity"</span>) <span class="op">+</span> pl.col(<span class="st">"nci"</span>)</span>
-<span id="cb77-24"><a href="#cb77-24" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb77-25"><a href="#cb77-25" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
-<span id="cb77-26"><a href="#cb77-26" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb77-27"><a href="#cb77-27" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> time.perf_counter()</span>
-<span id="cb77-28"><a href="#cb77-28" aria-hidden="true" tabindex="-1"></a>elapsed <span class="op">=</span> end <span class="op">-</span> start</span>
-<span id="cb77-29"><a href="#cb77-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time taken: </span><span class="sc">{</span>elapsed<span class="sc">:.6f}</span><span class="ss"> seconds'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>bs_items <span class="op">=</span> [<span class="st">"RCFD2170"</span>, <span class="st">"RCON2170"</span>,</span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD2948"</span>, <span class="st">"RCON2948"</span>,</span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD3210"</span>, <span class="st">"RCON3210"</span>,</span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RCFD3000"</span>, <span class="st">"RCON3000"</span>]</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> time.perf_counter()</span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>bs_data <span class="op">=</span> (</span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>    ffiec_float</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"item"</span>).is_in(bs_items))</span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>    .pivot(</span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>        on <span class="op">=</span> <span class="st">"item"</span>,</span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>        on_columns <span class="op">=</span> bs_items,</span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span> [<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>],</span>
+<span id="cb73-15"><a href="#cb73-15" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> <span class="st">"value"</span>)</span>
+<span id="cb73-16"><a href="#cb73-16" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb73-17"><a href="#cb73-17" aria-hidden="true" tabindex="-1"></a>        total_assets <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD2170"</span>), pl.col(<span class="st">"RCON2170"</span>)),</span>
+<span id="cb73-18"><a href="#cb73-18" aria-hidden="true" tabindex="-1"></a>        total_liabs <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD2948"</span>), pl.col(<span class="st">"RCON2948"</span>)),</span>
+<span id="cb73-19"><a href="#cb73-19" aria-hidden="true" tabindex="-1"></a>        equity <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD3210"</span>), pl.col(<span class="st">"RCON3210"</span>)),</span>
+<span id="cb73-20"><a href="#cb73-20" aria-hidden="true" tabindex="-1"></a>        nci <span class="op">=</span> pl.coalesce(pl.col(<span class="st">"RCFD3000"</span>), pl.col(<span class="st">"RCON3000"</span>)),</span>
+<span id="cb73-21"><a href="#cb73-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb73-22"><a href="#cb73-22" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb73-23"><a href="#cb73-23" aria-hidden="true" tabindex="-1"></a>        eq_liab <span class="op">=</span> pl.col(<span class="st">"total_liabs"</span>) <span class="op">+</span> pl.col(<span class="st">"equity"</span>) <span class="op">+</span> pl.col(<span class="st">"nci"</span>)</span>
+<span id="cb73-24"><a href="#cb73-24" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb73-25"><a href="#cb73-25" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb73-26"><a href="#cb73-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb73-27"><a href="#cb73-27" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> time.perf_counter()</span>
+<span id="cb73-28"><a href="#cb73-28" aria-hidden="true" tabindex="-1"></a>elapsed <span class="op">=</span> end <span class="op">-</span> start</span>
+<span id="cb73-29"><a href="#cb73-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time taken: </span><span class="sc">{</span>elapsed<span class="sc">:.6f}</span><span class="ss"> seconds'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time taken: 0.221169 seconds</code></pre>
+<pre><code>Time taken: 1.040794 seconds</code></pre>
 </div>
 </div>
 <p>We can peek at the data. So Polars has processed GBs of data and created a table with over 600,000 rows in well under a second. Don’t try this at home … if you’re using pandas.</p>
 <p>Note that <code>ffiec_float</code> is a <code>pl.LazyFrame</code>, but <code>.collect()</code> creates a non-lazy <code>pl.DataFrame</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars.selectors <span class="im">as</span> cs</span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>bs_data.select(cs.exclude(<span class="st">"^(RCON|RCFD).*$"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars.selectors <span class="im">as</span> cs</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>bs_data.select(cs.exclude(<span class="st">"^(RCON|RCFD).*$"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div><style>
 .dataframe > thead > tr,
@@ -1062,7 +1043,7 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
   white-space: pre-wrap;
 }
 </style>
-<small>shape: (662_363, 7)</small>
+<small>shape: (662_365, 7)</small>
 <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
@@ -1086,49 +1067,49 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 </thead>
 <tbody>
 <tr class="odd">
-<td>3715800</td>
-<td>2011-09-30</td>
-<td>96424.0</td>
-<td>84988.0</td>
-<td>11436.0</td>
+<td>363264</td>
+<td>2010-06-30</td>
+<td>34460.0</td>
+<td>30264.0</td>
+<td>4196.0</td>
 <td>0.0</td>
-<td>96424.0</td>
+<td>34460.0</td>
 </tr>
 <tr class="even">
-<td>490937</td>
-<td>2008-06-30</td>
-<td>114703.0</td>
-<td>103084.0</td>
-<td>11619.0</td>
+<td>536527</td>
+<td>2019-09-30</td>
+<td>425052.0</td>
+<td>387519.0</td>
+<td>37533.0</td>
 <td>0.0</td>
-<td>114703.0</td>
+<td>425052.0</td>
 </tr>
 <tr class="odd">
-<td>570651</td>
-<td>2017-06-30</td>
-<td>53550.0</td>
-<td>47769.0</td>
-<td>5781.0</td>
+<td>968155</td>
+<td>2008-09-30</td>
+<td>73264.0</td>
+<td>66755.0</td>
+<td>6509.0</td>
 <td>0.0</td>
-<td>53550.0</td>
+<td>73264.0</td>
 </tr>
 <tr class="even">
-<td>257756</td>
-<td>2002-09-30</td>
-<td>27819.0</td>
-<td>25752.0</td>
-<td>2067.0</td>
+<td>960533</td>
+<td>2019-09-30</td>
+<td>60506.0</td>
+<td>53786.0</td>
+<td>6720.0</td>
 <td>0.0</td>
-<td>27819.0</td>
+<td>60506.0</td>
 </tr>
 <tr class="odd">
-<td>863362</td>
-<td>2007-09-30</td>
-<td>16172.0</td>
-<td>13820.0</td>
-<td>2352.0</td>
+<td>349343</td>
+<td>2007-03-31</td>
+<td>114536.0</td>
+<td>104691.0</td>
+<td>9845.0</td>
 <td>0.0</td>
-<td>16172.0</td>
+<td>114536.0</td>
 </tr>
 <tr class="even">
 <td>…</td>
@@ -1140,49 +1121,49 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 <td>…</td>
 </tr>
 <tr class="odd">
-<td>858210</td>
+<td>857811</td>
 <td>2011-06-30</td>
-<td>356242.0</td>
-<td>325617.0</td>
-<td>30625.0</td>
+<td>307578.0</td>
+<td>276700.0</td>
+<td>30878.0</td>
 <td>0.0</td>
-<td>356242.0</td>
+<td>307578.0</td>
 </tr>
 <tr class="even">
-<td>54441</td>
-<td>2008-12-31</td>
-<td>120192.0</td>
-<td>108404.0</td>
-<td>11788.0</td>
+<td>121679</td>
+<td>2013-12-31</td>
+<td>430332.0</td>
+<td>395187.0</td>
+<td>35144.0</td>
 <td>0.0</td>
-<td>120192.0</td>
+<td>430331.0</td>
 </tr>
 <tr class="odd">
-<td>374934</td>
-<td>2004-06-30</td>
-<td>235713.0</td>
-<td>214266.0</td>
-<td>21447.0</td>
+<td>792248</td>
+<td>2014-12-31</td>
+<td>54913.0</td>
+<td>49203.0</td>
+<td>5710.0</td>
 <td>0.0</td>
-<td>235713.0</td>
+<td>54913.0</td>
 </tr>
 <tr class="even">
-<td>703039</td>
-<td>2024-09-30</td>
-<td>181001.0</td>
-<td>149305.0</td>
-<td>31696.0</td>
+<td>869663</td>
+<td>2001-12-31</td>
+<td>604909.0</td>
+<td>530028.0</td>
+<td>74881.0</td>
 <td>0.0</td>
-<td>181001.0</td>
+<td>604909.0</td>
 </tr>
 <tr class="odd">
-<td>535931</td>
-<td>2025-06-30</td>
-<td>243730.0</td>
-<td>227707.0</td>
-<td>16023.0</td>
+<td>785147</td>
+<td>2005-03-31</td>
+<td>346437.0</td>
+<td>308222.0</td>
+<td>38215.0</td>
 <td>0.0</td>
-<td>243730.0</td>
+<td>346437.0</td>
 </tr>
 </tbody>
 </table>
@@ -1191,32 +1172,32 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 </div>
 <p>I identify the top 5 banks by assets on <code>2025-09-30</code>. Because I will want to merge this with information on <code>por</code>, which is a lazy data frame (<code>pl.LazyFrame</code>), I make it <code>top_5</code> “lazy” by appending <code>.lazy()</code> at the end.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>top_5 <span class="op">=</span> (</span>
-<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>    bs_data</span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>) <span class="op">==</span> pl.date(<span class="dv">2025</span>, <span class="dv">9</span>, <span class="dv">30</span>))</span>
-<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"total_assets"</span>, descending<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>    .with_row_index(<span class="st">"ta_rank"</span>, offset<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"ta_rank"</span>) <span class="op">&lt;=</span> <span class="dv">5</span>)</span>
-<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>    .lazy()</span>
-<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>top_5 <span class="op">=</span> (</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>    bs_data</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>) <span class="op">==</span> pl.date(<span class="dv">2025</span>, <span class="dv">9</span>, <span class="dv">30</span>))</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"total_assets"</span>, descending<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>    .with_row_index(<span class="st">"ta_rank"</span>, offset<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"ta_rank"</span>) <span class="op">&lt;=</span> <span class="dv">5</span>)</span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>    .lazy()</span>
+<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I then grab the names of the banks from <code>por</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>top_5_names <span class="op">=</span> (</span>
-<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    top_5</span>
-<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>    .join(</span>
-<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>        por.select([<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>, <span class="st">"financial_institution_name"</span>]),</span>
-<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span>[<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>],</span>
-<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>        how<span class="op">=</span><span class="st">"inner"</span>,</span>
-<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"ta_rank"</span>)</span>
-<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>    .select([<span class="st">"IDRSSD"</span>, <span class="st">"financial_institution_name"</span>, <span class="st">"ta_rank"</span>])</span>
-<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a>    .rename({<span class="st">"financial_institution_name"</span>: <span class="st">"bank"</span>})</span>
-<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
-<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>top_5_names <span class="op">=</span> (</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>    top_5</span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>    .join(</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>        por.select([<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>, <span class="st">"financial_institution_name"</span>]),</span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span>[<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>],</span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>        how<span class="op">=</span><span class="st">"inner"</span>,</span>
+<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"ta_rank"</span>)</span>
+<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a>    .select([<span class="st">"IDRSSD"</span>, <span class="st">"financial_institution_name"</span>, <span class="st">"ta_rank"</span>])</span>
+<span id="cb77-10"><a href="#cb77-10" aria-hidden="true" tabindex="-1"></a>    .rename({<span class="st">"financial_institution_name"</span>: <span class="st">"bank"</span>})</span>
+<span id="cb77-11"><a href="#cb77-11" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb77-12"><a href="#cb77-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>top_5_names</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>top_5_names</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div><style>
 .dataframe > thead > tr,
@@ -1272,27 +1253,27 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 </div>
 <p>I can combine the names with <code>bs_data</code> using <code>.join()</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>bs_panel_data <span class="op">=</span> bs_data.join(top_5_names, on<span class="op">=</span><span class="st">"IDRSSD"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>bs_panel_data <span class="op">=</span> bs_data.join(top_5_names, on<span class="op">=</span><span class="st">"IDRSSD"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Users of pandas who are unfamiliar might be impressed by the performance of Polars, but wonder how they can fit it into their workflows. Of course, it is easy enough to call <code>.to_pandas()</code> and create a pandas <code>pd.DataFrame</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> (</span>
-<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>    bs_panel_data</span>
-<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>) <span class="op">&gt;=</span> pl.date(<span class="dv">2020</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
-<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>    .to_pandas()</span>
-<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> (</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>    bs_panel_data</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>) <span class="op">&gt;=</span> pl.date(<span class="dv">2020</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>    .to_pandas()</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>This means a pandas user can use all the familiar tools used for plotting or statistical analysis. Because the names are a little long for plotting purposes, I use a little dictionary to replace them.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>bank_names <span class="op">=</span> {</span>
-<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">476810</span>: <span class="st">"Citibank"</span>,</span>
-<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">504713</span>: <span class="st">"US Bank"</span>,</span>
-<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">852218</span>: <span class="st">"JPMorgan Chase"</span>,</span>
-<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">451965</span>: <span class="st">"Wells Fargo"</span>,</span>
-<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">480228</span>: <span class="st">"Bank of America"</span>,</span>
-<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb85-8"><a href="#cb85-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-9"><a href="#cb85-9" aria-hidden="true" tabindex="-1"></a>pdf[<span class="st">"bank"</span>] <span class="op">=</span> pdf[<span class="st">"IDRSSD"</span>].<span class="bu">map</span>(bank_names)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>bank_names <span class="op">=</span> {</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">476810</span>: <span class="st">"Citibank"</span>,</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">504713</span>: <span class="st">"US Bank"</span>,</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">852218</span>: <span class="st">"JPMorgan Chase"</span>,</span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">451965</span>: <span class="st">"Wells Fargo"</span>,</span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">480228</span>: <span class="st">"Bank of America"</span>,</span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>pdf[<span class="st">"bank"</span>] <span class="op">=</span> pdf[<span class="st">"IDRSSD"</span>].<span class="bu">map</span>(bank_names)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>And then I use Seaborn and Matplotlib to make a small (but uninspiring) plot.</p>
 <div class="cell">
@@ -1321,20 +1302,20 @@ Figure&nbsp;5: Total assets for top 5 banks
 <p>I have seen code that just imports from these individual files (what I call <code>inner_file</code>) in some location on the user’s hard drive. This approach is predicated on the user having downloaded the zip files and unzipped them. While we have downloaded all the zip files—assuming you followed the steps outlined in <a href="#sec-raw-data" class="quarto-xref">Section&nbsp;1.1</a>—I don’t want to be polluting my hard drive (or yours) with thousands of <code>.txt</code> files that won’t be used after reading them once.</p>
 <p>Instead, R allows me to simply say:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">unz</span>(zipfile, inner_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">unz</span>(zipfile, inner_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The resulting <code>con</code> object is a temporary read-only connection to a single text file (<code>inner_file</code>) stored inside the zip file <code>zipfile</code>. The object allows R to stream the file’s contents directly from the zip archive, line by line, without extracting it. Given <code>con</code>, the core function used to read the data into R has the following basic form, where <code>read_tsv()</code> comes from the <code>readr</code> package, part of the Tidyverse:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(</span>
-<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  con,</span>
-<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_names =</span> cols,</span>
-<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> colspec,</span>
-<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">skip =</span> skip,</span>
-<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">quote =</span> <span class="st">""</span>,</span>
-<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"CONF"</span>),</span>
-<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">progress =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
-<span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(</span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>  con,</span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_names =</span> cols,</span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> colspec,</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">skip =</span> skip,</span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">quote =</span> <span class="st">""</span>,</span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"CONF"</span>),</span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">progress =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="sec-repairs" class="level3" data-number="3.1.1">
 <h3 data-number="3.1.1" class="anchored" data-anchor-id="sec-repairs"><span class="header-section-number">3.1.1</span> Handling embedded newlines and tabs</h3>
@@ -1349,28 +1330,28 @@ Figure&nbsp;5: Total assets for top 5 banks
 <p>Let’s look at the earlier file, which turns out to affect the Schedule RIE data for The Traders National Bank (<code>IDRSSD</code> of <code>490937</code>) for June 2004.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a> Traders National Bank in Tennessee was “Tullahoma’s second oldest bank”, until changing its name to Wellworth Bank (seemingly after some mergers), and it listed total assets of $117,335,000 in the affected Call Report.</p>
 <p>Let’s look at the textual data we have in our Parquet files for this case:<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>ffiec_str <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="at">schedule =</span> <span class="st">"ffiec_str"</span>) </span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>ffiec_str <span class="sc">|&gt;</span> </span>
-<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="st">"490937"</span>, date <span class="sc">==</span> <span class="st">"2004-06-30"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, item, value) <span class="sc">|&gt;</span> </span>
-<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)) <span class="sc">|&gt;</span></span>
-<span id="cb88-7"><a href="#cb88-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb88-8"><a href="#cb88-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>ffiec_str <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="at">schedule =</span> <span class="st">"ffiec_str"</span>) </span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>ffiec_str <span class="sc">|&gt;</span> </span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(IDRSSD <span class="sc">==</span> <span class="st">"490937"</span>, date <span class="sc">==</span> <span class="st">"2004-06-30"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(IDRSSD, item, value) <span class="sc">|&gt;</span> </span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)) <span class="sc">|&gt;</span></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.019   0.028   0.021 </code></pre>
+  0.020   0.027   0.022 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3
   IDRSSD item     value                                                   
    &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;                                                   
-1 490937 TEXT4464 ATM Fees, Exam Fees, Dues &amp; Chairitable Cont            
-2 490937 TEXT4467 Telephone, BanClub, Federal Res Fees, NSF and Other Loss
-3 490937 TEXT4468 Courier, Audit Tax, Deff Comp, Other                    
-4 490937 TEXT4469 ns Exp, Bus Dev, P                                      
-5 490937 TEXT3549 IENC SECURITIES                                         
-6 490937 TEXT3550 IENC CD'S                                               </code></pre>
+1 490937 TEXT3549 IENC SECURITIES                                         
+2 490937 TEXT4464 ATM Fees, Exam Fees, Dues &amp; Chairitable Cont            
+3 490937 TEXT4467 Telephone, BanClub, Federal Res Fees, NSF and Other Loss
+4 490937 TEXT3550 IENC CD'S                                               
+5 490937 TEXT4468 Courier, Audit Tax, Deff Comp, Other                    
+6 490937 TEXT4469 ns Exp, Bus Dev, P                                      </code></pre>
 </div>
 </div>
 <p>We can compare this with what we see in the Call Report in <a href="#fig-old-bad" class="quarto-xref">Figure&nbsp;6</a>, where we see that the value of <code>TEXT4468</code> should be something like <code>"Courier, Audit Tax, Deff Comp, Other\tns Exp, Bus Dev, P"</code>. The embedded tab has split this into <code>"Courier, Audit Tax, Deff Comp, Other"</code> for <code>TEXT4468</code> and <code>"ns Exp, Bus Dev, P"</code> for <code>TEXT4469</code>, which should be <code>NA</code>. If the values for <code>TEXT4468</code>and <code>TEXT4469</code> for Traders National Bank in June 2004 are important to your analysis, you could fix this “by hand” easily enough.</p>
@@ -1426,64 +1407,17 @@ Figure&nbsp;6: Extract from June 2004 Call Report for The Traders National Bank
 <section id="primary-keys" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="primary-keys"><span class="header-section-number">4.3</span> Primary keys</h2>
 <p>In <span class="citation" data-cites="Gow:2026aa">Gow (<a href="#ref-Gow:2026aa" role="doc-biblioref">2026</a>)</span>, I suggested that “the <em>Curate</em> team should communicate the primary key of each table to the <em>Understand</em> team. A primary key of a table will be a set of variables that can be used to uniquely identify a row in that table. In general a primary key will have no missing values. Part of data curation will be confirming that a proposed primary key is in fact a valid primary key.”</p>
-<div class="cell">
 <div id="tbl-pkey" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-pkey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;2: Primary key checks
 </figcaption>
 <div aria-describedby="tbl-pkey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output-display">
-<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
-<thead>
-<tr class="header">
-<th style="text-align: left;">Schedule</th>
-<th style="text-align: left;">Primary key</th>
-<th style="text-align: left;">Check</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><code>por</code></td>
-<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code></td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>ffiec_float</code></td>
-<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>ffiec_int</code></td>
-<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>ffiec_str</code></td>
-<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>ffiec_bool</code></td>
-<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>ffiec_date</code></td>
-<td style="text-align: left;"><code>IDRSSD</code>, <code>date</code>, <code>item</code></td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>ffiec_schedules</code></td>
-<td style="text-align: left;"><code>item</code>, <code>date</code></td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-</tbody>
-</table>
+<div>
+
 </div>
 </div>
 </figure>
-</div>
 </div>
 <p>Valid primary keys for each schedule are shown in <a href="#tbl-pkey" class="quarto-xref">Table&nbsp;2</a>. To checking these, I used the function <code>ffiec_check_pq_keys()</code>, which checks the validity of a proposed primary key for a schedule. That every column except <code>value</code> forms part of the primary key is what allows us to use <code>ffiec_pivot()</code> to create unique values in the resulting “wide” tables.</p>
 </section>
@@ -1508,24 +1442,15 @@ Table&nbsp;2: Primary key checks
 <p>If a new zip file appears on the FFIEC Bulk Data website, you can download it using the process outlined in <a href="#sec-raw-data" class="quarto-xref">Section&nbsp;1.1</a>. Just changing the <code>[:4]</code> to <code>[0]</code> and the script downloads the latest file.</p>
 <p>Then run the following code and the data will be updated:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span></span>
-<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_list_zips</span>() <span class="sc">|&gt;</span></span>
-<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">==</span> <span class="fu">max</span>(date)) <span class="sc">|&gt;</span></span>
-<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(zipfile) <span class="sc">|&gt;</span></span>
-<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>() <span class="sc">|&gt;</span></span>
-<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_process</span>() <span class="sc">|&gt;</span></span>
-<span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
- 12.561   1.644  11.427 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> <span class="fu">count</span>(date, ok)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 3
-  date       ok        n
-  &lt;date&gt;     &lt;lgl&gt; &lt;int&gt;
-1 2025-12-31 TRUE     39</code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span></span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_list_zips</span>() <span class="sc">|&gt;</span></span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">==</span> <span class="fu">max</span>(date)) <span class="sc">|&gt;</span></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(zipfile) <span class="sc">|&gt;</span></span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>() <span class="sc">|&gt;</span></span>
+<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ffiec_process</span>() <span class="sc">|&gt;</span></span>
+<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span>
+<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> <span class="fu">count</span>(date, ok)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="data-version-control" class="level2" data-number="4.8">
@@ -1577,7 +1502,7 @@ Wickham, H., Çetinkaya-Rundel, M., Grolemund, G., 2023. <a href="https://books.
 <li id="fn4"><p>At the time of writing, there are 99 files, but each quarter will bring a new file to be processed.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn5"><p>I discovered this package after writing most of this note. In my case, I pointed-and-clicked to get many of the files and <a href="https://people.wgtn.ac.nz/martien.lubberink">Martien Lubberink</a> of Victoria University of Wellington kindly provided the rest.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn6"><p>I recommend that readers follow a similar approach if following along with this note, as it makes subsequent steps easier to implement. A reader can simply specify <code>os.environ['RAW_DATA_DIR'] = "/Users/igow/Dropbox/raw_data"</code>, substituting a location where the data should go on his or her computer.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn7"><p>Note I am using the argument <code>use_multicore = TRUE</code>, which gives me about a five-time improvement in performance, but you will see different results depending on your system. You might test the code on a few files before running the whole thing. The <code>ffiec_process()</code> can accept a list of fully qualified paths to zipfiles, which can be created with the help of <code>ffiec_list_zips()</code>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>Note the using the argument <code>use_multicore = TRUE</code> gives me about a five-time improvement in performance, but you will see different results depending on your system. You might test the code on a few files before running the whole thing. The <code>ffiec_process()</code> can accept a list of fully qualified paths to zipfiles, which can be created with the help of <code>ffiec_list_zips()</code>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn8"><p>Note that nothing is being “loaded” into RAM, the file is merely being scanned by DuckDB.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn9"><p>Parquet files are compressed, so they use less space on disk than they do when they are loaded into RAM.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn10"><p>Note that <code>collect()</code> here actually brings the data into R; <code>compute()</code> merely materializes the data as a table in the DuckDB database.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
