@@ -207,6 +207,7 @@ To illustrate I process just one XBRL zip file.
 
 ```{r}
 #| cache: true
+#| eval: false
 zipfiles <- ffiec_list_zips(type = "xbrl")
 ffiec_process_xbrls(zipfiles$zipfile[1]) |> system_time()
 ```
@@ -241,16 +242,16 @@ Sys.setenv(RAW_DATA_DIR="/Users/igow/Dropbox/raw_data")
 Sys.setenv(DATA_DIR="/Users/igow/Dropbox/pq_data")
 ```
 
-Having set these environment variables, I can load my package and run a single command `ffiec_process()` without any arguments to process *all* the raw data files.^[Note I am using the argument `use_multicore = TRUE`, which gives me about a five-time improvement in performance, but you will see different results depending on your system.
+Having set these environment variables, I can load my package and run a single command `ffiec_process()` without any arguments to process *all* the raw data files.^[Note the using the argument `use_multicore = TRUE` gives me about a five-time improvement in performance, but you will see different results depending on your system.
 You might test the code on a few files before running the whole thing.
 The `ffiec_process()` can accept a list of fully qualified paths to zipfiles, which can be created with the help of `ffiec_list_zips()`.]
 This takes about five minutes to run (for me):
 
 ```{r}
 #| cache: true
-#| eval: true
+#| eval: false
 #| output: true
-results <- ffiec_process(use_multicore = TRUE) |> system_time()
+results <- ffiec_process(use_multicore = FALSE) |> system_time()
 ```
 
 ```{r}
@@ -345,6 +346,7 @@ ffiec_schedules |> head(10) |> collect()
 Focusing on one item, `RIAD4230`, we can see from the output below that this item was provided on both Schedule RI (`ri`) and Schedule RI-BII (`ribii`) from `2001-03-31` until `2018-12-31`, but since then has only been provided on Schedule RI-BII.
 
 ```{r}
+#| eval: false
 ffiec_schedules |> 
   filter(item == "RIAD4230") |>
   mutate(schedule = unnest(schedule)) |>
@@ -1054,6 +1056,7 @@ Part of data curation will be confirming that a proposed primary key is in fact 
 ```{r}
 #| echo: false
 #| cache: true
+#| eval: false
 schedule <- c("por", "ffiec_float", "ffiec_int", 
               "ffiec_str", "ffiec_bool", "ffiec_date",
               "ffiec_schedules")
@@ -1076,6 +1079,7 @@ pkey_checks <-
 #| label: tbl-pkey
 #| tbl-cap: Primary key checks
 #| echo: false
+#| eval: false
 pkey_checks |>
   mutate(schedule = paste0("`", schedule, "`"),
          pkeys = purrr::map(pkeys, \(x) paste0("`", x, "`", collapse = ", "))) |>
@@ -1131,7 +1135,7 @@ Then run the following code and the data will be updated:
 
 ```{r}
 #| cache: true
-#| eval: true
+#| eval: false
 #| output: true
 results <-
   ffiec_list_zips() |>
