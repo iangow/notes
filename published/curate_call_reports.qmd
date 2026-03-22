@@ -33,8 +33,14 @@ keywords:
 
 ```{r}
 #| include: false
-Sys.setenv(RETICULATE_PYTHON = normalizePath("../notes_py/bin/python"))
 library(reticulate)
+python_candidates <- c(
+  file.path(getwd(), ".venv", "bin", "python"),
+  file.path(getwd(), "..", ".venv", "bin", "python")
+)
+python_bin <- normalizePath(python_candidates[file.exists(python_candidates)][1], mustWork = TRUE)
+Sys.setenv(RETICULATE_PYTHON = python_bin)
+use_python(python_bin, required = TRUE)
 py_config()
 knitr::opts_chunk$set(
   cache.path = "curate_call_reports_cache/"
