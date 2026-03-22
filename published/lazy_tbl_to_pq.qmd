@@ -3,7 +3,7 @@ title: "Converting lazy data frames into Parquet files"
 author: Ian D. Gow
 date: 2026-03-22
 date-format: "D MMMM YYYY"
-categories: [R, Parquet, db2pq, WRDS]
+categories: [R, Parquet, db2pq, WRDS, "Tidy Finance"]
 format:
   html:
     colorlinks: true
@@ -27,31 +27,23 @@ execute:
 keywords:
   - R
   - Arrow
-  - DuckDB
+  - db2pq
+  - WRDS
 ---
 
 ::: {.abstract}
 In this short note, I show how my `db2pq` package can be used to turn "lazy data frames" produced by `dbplyr` into Parquet files on disk without needing to load the data into RAM and with minimal RAM requirements.
 :::
 
-```{r}
-#| include: false
-Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
-           PGPORT = 9737L,
-           PGDATABASE = "wrds",
-           PGUSER = "iangow")
-```
-
-Need `pak::pak("iangow/db2pqr")` first
-
 :::{.callout-tip text-align="left"}
 This note was written and rendered with [Quarto](https://quarto.org).
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/lazy_tbl_to_pq.qmd).
 
-In writing the R portions of this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "farr", "DBI", "arrow", "pak", "wrds")` within R to install all the packages [other than `db2pq`] that you will need to run the R code in this note.]
+In writing this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "farr", "DBI", "arrow", "pak", "tidyfinance", "frenchdata", "dbplyr")` within R to install all the packages [other than `db2pq`] that you will need to run the R code in this note.]
 
 I have not submitted `db2pq` to CRAN.
 To install `db2pq`, use `pak` by typing `pak::pak("iangow/db2pqr")` in the R console.
+The `db2pq` is located at [`iangow/db2pqr`](https://github.com/iangow/db2pqr) because [`iangow/db2pq`](https://github.com/iangow/db2pq) was already taken by my Python `db2pq` package.
 :::
 
 ```{r}
@@ -69,9 +61,7 @@ library(dbplyr)
 
 # Motivating example
 
-While many of the ideas I discuss here are general in nature, for concreteness, I focus on the special case of a WRDS user maintaining a local Parquet data library of the kind discussed in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) and provide examples using my R package `db2pq`.
-
-According to Tidy Finance for R
+According to [Tidy Finance for R](https://www.tidy-finance.org/r/wrds-crsp-and-compustat.html#daily-crsp-data):
 
 > The daily CRSP data file is substantially larger than monthly data and can exceed 20 GB.
 > This has two important implications: you cannot hold all the daily return data in your memory (hence it is not possible to save the entire dataset to your local folder), and in our experience, the download usually crashes (or never stops) because it is too much data for the WRDS cloud to prepare and send to your R session.
@@ -80,12 +70,26 @@ According to Tidy Finance for R
 > As with many big data problems, you can split up the big task into several smaller tasks that are easier to handle.
 > That is, instead of downloading data about all stocks at once, download the data in small batches of stocks consecutively.
 
+Below I show how one can simplify the code dramatically (no batches!) and download the data faster (for me, it takes *less than a minute*) and with no significant burden on either the CPU or RAM.
+
+The `lazy_tbl_to_pq()` just uses functions supplied by the `DBI` and `arrow` packages, so should work with any **lazy data frame** using those tools
+Please try out the package and feel free to log a [GitHub issue](https://github.com/iangow/db2pqr/issues) if you have any problems with it.
 
 ## Getting Fama-French data
 
 While the `ff` schema on WRDS seems to have these data, I follow Tidy Finance in using `frenchdata`, which I presume gets the data from Ken French's website.
 
+I use the same date range as I found on the Tidy Finance page.
+
 ```{r}
+start_date <- ymd("1960-01-01")
+end_date <- ymd("2024-12-31")
+```
+
+Like Tidy Finance, I save the data as a Parquet file.
+
+```{r}
+#| output: false
 factors_ff3_daily_raw <- download_french_data("Fama/French 3 Factors [Daily]")
 
 factors_ff3_daily <- 
@@ -97,7 +101,7 @@ factors_ff3_daily <-
   ) |>
   rename_with(str_to_lower) |>
   rename(mkt_excess = `mkt-rf`, risk_free = rf) |>
-  filter(date >= start_date & date <= end_date) |>
+  filter(between(date, start_date, end_date)) |>
   write_parquet("factors_ff3_daily.parquet")
 ```
 
@@ -106,17 +110,15 @@ factors_ff3_daily <-
 Now that I have the daily Fama-French factor data, I can move onto the main query.
 The following is based on code in Tidy Finance.
 
-Apart from a little tidying, I remove the batch infrastructure and just get all data at once and append a `lazy_tbl_to_pq()` at the end (along with a `system_time()` to see how long this all takes).
+Apart from a little tidying, I remove the batch infrastructure and just get all data at once and append a `lazy_tbl_to_pq()` at the end (along with a `system_time()` to see how long this all takes).^[For example, because I don't `collect()` the data I cannot use `drop_na()` and need to use `filter(if_all(everything(), \(x) !is.na(x)))` instead.]
 
-
+Note that I use `dbplyr::copy_inline()` to get the local `factors_ff3_daily` to WRDS.
+I wrote about `copy_inline()` in a [note in December 2025](https://iangow.github.io/notes/published/dbplyr-news.html).
 
 ```{r}
 #| cache: true
 # set_wrds_credentials()
 wrds <- get_wrds_connection()
-
-start_date <- ymd("1960-01-01")
-end_date <- ymd("2024-12-31")
 
 dsf_db <- tbl(wrds, I("crsp.dsf_v2"))
 stksecurityinfohist_db <- tbl(wrds, I("crsp.stksecurityinfohist"))
@@ -132,13 +134,13 @@ crsp_daily <-
     stksecurityinfohist_db |>
       filter(
         sharetype == "NS",
-          securitytype == "EQTY",
-          securitysubtype == "COM",
-          usincflg == "Y",
-          issuertype %in% c("ACOR", "CORP"),
-          primaryexch %in% c("N", "A", "Q"),
-          conditionaltype %in% c("RW", "NW"),
-          tradingstatusflg == "A",
+        securitytype == "EQTY",
+        securitysubtype == "COM",
+        usincflg == "Y",
+        issuertype %in% c("ACOR", "CORP"),
+        primaryexch %in% c("N", "A", "Q"),
+        conditionaltype %in% c("RW", "NW"),
+        tradingstatusflg == "A",
       ) |>
       select(permno, secinfostartdt, secinfoenddt),
     join_by(permno)
@@ -160,10 +162,15 @@ crsp_daily <-
   lazy_tbl_to_pq(out_file = "crsp_daily.parquet") |>
   system_time()
 
-dbDisconnect(db)
+dbDisconnect(wrds)
 ```
+
+Now we have downloaded the data, let's take a look.
 
 ```{r}
 crsp_daily <- read_parquet("crsp_daily.parquet") 
 crsp_daily
 ```
+
+For larger Parquet data files, I would recommend using DuckDB or Arrow's `open_dataset()` function.
+The `parquet` tabs of ["Empirical Research in Accounting: Tools and Methods"](https://iangow.github.io/far_book/) use an in-memory DuckDB database connection to work with Parquet files.
