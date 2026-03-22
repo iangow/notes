@@ -693,7 +693,7 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_float"</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.042   0.017   0.017 </code></pre>
+  0.042   0.021   0.020 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>ffiec_float</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -729,7 +729,7 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  7.051   1.120   1.292 </code></pre>
+  7.114   1.172   1.610 </code></pre>
 </div>
 </div>
 <p>So, do balance sheets balance? Well, not always.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
@@ -779,13 +779,13 @@ Table&nbsp;1: Table keys, arrow types, and access code
  1 1362246 2002-06-30       278586      5334
  2  664653 2002-03-31        25490       224
  3 2821825 2001-03-31        55220        30
- 4 3097243 2005-06-30        40939        10
- 5  920733 2001-12-31        48439        10
- 6  647414 2002-12-31        83399        10
- 7  678931 2001-09-30        31237        10
- 8  293053 2002-03-31       314157        10
- 9  842358 2002-06-30       202388        10
-10  178150 2004-03-31       103939        10
+ 4  178150 2004-03-31       103939        10
+ 5  146533 2004-06-30         8366        10
+ 6 3097243 2005-06-30        40939        10
+ 7  842358 2002-06-30       202388        10
+ 8  678931 2001-09-30        31237        10
+ 9  545604 2001-06-30       246223        10
+10  293053 2002-03-31       314157        10
 # ℹ 189 more rows</code></pre>
 </div>
 </div>
@@ -800,14 +800,14 @@ Table&nbsp;1: Table keys, arrow types, and access code
     IDRSSD date       total_assets imbalance
      &lt;int&gt; &lt;date&gt;            &lt;dbl&gt;     &lt;dbl&gt;
  1 3097243 2005-06-30        40939        10
- 2  131940 2005-06-30        27432         8
- 3  475756 2005-06-30        68158         2
- 4   33549 2005-06-30        43865         3
- 5   22954 2005-06-30        65027       -10
- 6   20147 2005-06-30        48130       -10
+ 2   33549 2005-06-30        43865         3
+ 3   22954 2005-06-30        65027       -10
+ 4   20147 2005-06-30        48130       -10
+ 5  131940 2005-06-30        27432         8
+ 6  475756 2005-06-30        68158         2
  7  773546 2005-06-30        97558         2
- 8 2646327 2005-03-31        98814        -8
- 9   42037 2005-03-31        60913         2
+ 8  178150 2005-03-31       102244        -2
+ 9 2646327 2005-03-31        98814        -8
 10  587574 2005-03-31         4705         2
 # ℹ 189 more rows</code></pre>
 </div>
@@ -1026,7 +1026,7 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 <span id="cb73-28"><a href="#cb73-28" aria-hidden="true" tabindex="-1"></a>elapsed <span class="op">=</span> end <span class="op">-</span> start</span>
 <span id="cb73-29"><a href="#cb73-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time taken: </span><span class="sc">{</span>elapsed<span class="sc">:.6f}</span><span class="ss"> seconds'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time taken: 1.040794 seconds</code></pre>
+<pre><code>Time taken: 0.419728 seconds</code></pre>
 </div>
 </div>
 <p>We can peek at the data. So Polars has processed GBs of data and created a table with over 600,000 rows in well under a second. Don’t try this at home … if you’re using pandas.</p>
@@ -1067,49 +1067,49 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 </thead>
 <tbody>
 <tr class="odd">
-<td>363264</td>
-<td>2010-06-30</td>
-<td>34460.0</td>
-<td>30264.0</td>
-<td>4196.0</td>
+<td>24659</td>
+<td>2018-12-31</td>
+<td>63874.0</td>
+<td>57603.0</td>
+<td>6271.0</td>
 <td>0.0</td>
-<td>34460.0</td>
+<td>63874.0</td>
 </tr>
 <tr class="even">
-<td>536527</td>
-<td>2019-09-30</td>
-<td>425052.0</td>
-<td>387519.0</td>
-<td>37533.0</td>
+<td>481944</td>
+<td>2003-03-31</td>
+<td>148422.0</td>
+<td>129383.0</td>
+<td>19039.0</td>
 <td>0.0</td>
-<td>425052.0</td>
+<td>148422.0</td>
 </tr>
 <tr class="odd">
-<td>968155</td>
-<td>2008-09-30</td>
-<td>73264.0</td>
-<td>66755.0</td>
-<td>6509.0</td>
+<td>2648376</td>
+<td>2011-12-31</td>
+<td>182716.0</td>
+<td>163450.0</td>
+<td>19266.0</td>
 <td>0.0</td>
-<td>73264.0</td>
+<td>182716.0</td>
 </tr>
 <tr class="even">
-<td>960533</td>
-<td>2019-09-30</td>
-<td>60506.0</td>
-<td>53786.0</td>
-<td>6720.0</td>
+<td>862945</td>
+<td>2003-09-30</td>
+<td>19257.0</td>
+<td>17077.0</td>
+<td>2180.0</td>
 <td>0.0</td>
-<td>60506.0</td>
+<td>19257.0</td>
 </tr>
 <tr class="odd">
-<td>349343</td>
-<td>2007-03-31</td>
-<td>114536.0</td>
-<td>104691.0</td>
-<td>9845.0</td>
+<td>105549</td>
+<td>2001-09-30</td>
+<td>692003.0</td>
+<td>648821.0</td>
+<td>43182.0</td>
 <td>0.0</td>
-<td>114536.0</td>
+<td>692003.0</td>
 </tr>
 <tr class="even">
 <td>…</td>
@@ -1121,49 +1121,49 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 <td>…</td>
 </tr>
 <tr class="odd">
-<td>857811</td>
-<td>2011-06-30</td>
-<td>307578.0</td>
-<td>276700.0</td>
-<td>30878.0</td>
+<td>660253</td>
+<td>2002-09-30</td>
+<td>22613.0</td>
+<td>20302.0</td>
+<td>2311.0</td>
 <td>0.0</td>
-<td>307578.0</td>
+<td>22613.0</td>
 </tr>
 <tr class="even">
-<td>121679</td>
-<td>2013-12-31</td>
-<td>430332.0</td>
-<td>395187.0</td>
-<td>35144.0</td>
+<td>3048487</td>
+<td>2008-03-31</td>
+<td>117780.0</td>
+<td>105301.0</td>
+<td>12479.0</td>
 <td>0.0</td>
-<td>430331.0</td>
+<td>117780.0</td>
 </tr>
 <tr class="odd">
-<td>792248</td>
-<td>2014-12-31</td>
-<td>54913.0</td>
-<td>49203.0</td>
-<td>5710.0</td>
+<td>551016</td>
+<td>2022-09-30</td>
+<td>366726.0</td>
+<td>348282.0</td>
+<td>18444.0</td>
 <td>0.0</td>
-<td>54913.0</td>
+<td>366726.0</td>
 </tr>
 <tr class="even">
-<td>869663</td>
-<td>2001-12-31</td>
-<td>604909.0</td>
-<td>530028.0</td>
-<td>74881.0</td>
+<td>378549</td>
+<td>2002-09-30</td>
+<td>97098.0</td>
+<td>89797.0</td>
+<td>7301.0</td>
 <td>0.0</td>
-<td>604909.0</td>
+<td>97098.0</td>
 </tr>
 <tr class="odd">
-<td>785147</td>
-<td>2005-03-31</td>
-<td>346437.0</td>
-<td>308222.0</td>
-<td>38215.0</td>
+<td>732178</td>
+<td>2007-09-30</td>
+<td>209770.0</td>
+<td>192028.0</td>
+<td>17742.0</td>
 <td>0.0</td>
-<td>346437.0</td>
+<td>209770.0</td>
 </tr>
 </tbody>
 </table>
@@ -1340,7 +1340,7 @@ Figure&nbsp;5: Total assets for top 5 banks
 <span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.020   0.027   0.022 </code></pre>
+  0.022   0.036   0.022 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3

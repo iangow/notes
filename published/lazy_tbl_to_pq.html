@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Ian D. Gow">
-<meta name="dcterms.date" content="2023-12-29">
-<meta name="keywords" content="Python">
+<meta name="dcterms.date" content="2026-03-22">
+<meta name="keywords" content="R, Arrow, db2pq, WRDS">
 
-<title>Improving performance of SQLite data – notes</title>
+<title>Converting lazy data frames into Parquet files – notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-46f66b053e56abd73bb6e954d61a315b.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-52d3edc4879e86859cfab57e7fc9f8d6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -145,16 +145,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-    <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="convert_to_pq.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#motivating-example" id="toc-motivating-example" class="nav-link active" data-scroll-target="#motivating-example"><span class="header-section-number">1</span> Motivating example</a>
+  <ul class="collapse">
+  <li><a href="#getting-fama-french-data" id="toc-getting-fama-french-data" class="nav-link" data-scroll-target="#getting-fama-french-data"><span class="header-section-number">1.1</span> Getting Fama-French data</a></li>
+  <li><a href="#getting-crsp-daily-data" id="toc-getting-crsp-daily-data" class="nav-link" data-scroll-target="#getting-crsp-daily-data"><span class="header-section-number">1.2</span> Getting CRSP daily data</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="lazy_tbl_to_pq.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Improving performance of SQLite data</h1>
+<h1 class="title">Converting lazy data frames into Parquet files</h1>
   <div class="quarto-categories">
+    <div class="quarto-category">R</div>
+    <div class="quarto-category">Parquet</div>
+    <div class="quarto-category">db2pq</div>
+    <div class="quarto-category">WRDS</div>
     <div class="quarto-category">Tidy Finance</div>
-    <div class="quarto-category">SQLite</div>
   </div>
   </div>
 
@@ -165,195 +179,171 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
-             <p>Ian D. Gow <a href="mailto:iandgow@gmail.com" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/0000-0002-6243-8409" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+             <p>Ian D. Gow </p>
           </div>
   </div>
     
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">29 December 2023</p>
+      <p class="date">22 March 2026</p>
     </div>
   </div>
   
     
   </div>
   
-<div>
-  <div class="abstract">
-    <div class="block-title">Abstract</div>
-    The <em>Tidy Finance</em> books use SQLite for data storage. However, SQLite appears to have appalling performance for some common tasks. In this note, I discuss some options for dramatically improving on this performance (e.g., reducing time to read data off disk from over two minutes to under one second).
-  </div>
-</div>
 
 <div>
   <div class="keywords">
     <div class="block-title">Keywords</div>
-    <p>Python</p>
+    <p>R, Arrow, db2pq, WRDS</p>
   </div>
 </div>
 
 </header>
 
 
-<section id="introduction" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
-<p><a href="https://www.tidy-finance.org/r/"><em>Tidy Finance with R</em></a> and <a href="https://www.tidy-finance.org/python/"><em>Tidy Finance with Python</em></a> provide excellent introductions to doing data analysis for academic finance. Chapters 2–4 of either book provide code to establish an SQLite database that is used as the data source for the rest of the book. Recently I have been dabbling with the Python version of the book and have found the analyses to be surprisingly sluggish on my computer. This note explores some options for improving this performance while still getting the results found in the book.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
-<p>Here I show how one can easily convert an SQLite database to a set of parquet files. A similar approach could be used to convert, say, a schema of a PostgreSQL database to parquet files.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> I may explore such an approach as an alternative to the <a href="https://pypi.org/project/wrds2pg/"><code>wrds2pg</code> package</a>, which runs SAS code on the WRDS server to generate data used to construct parquet files.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
-<p>A virtue of the approach used in <em>Tidy Finance</em> is that it is flexible. Readers of <a href="https://www.tidy-finance.org/"><em>Tidy Finance</em></a> can easily incorporate the approach used here as they work though the core parts of that book. The source code for this note can be found <a href="https://github.com/iangow/notes/blob/main/convert_to_pq.qmd">here</a>.</p>
-<p>In this note, I will load the following R packages. I will also use <code>duckdb</code> and <code>RSQLite</code> packages. use <code>install.packages()</code> to get any package that you don’t already have.</p>
-<pre class="{r}"><code>#| label: setup
-#| include: false
-Sys.setenv(RETICULATE_PYTHON = "../.venv/bin/python")
-library(reticulate)
-py_config()</code></pre>
-<pre class="{r}"><code>#| message: false
-library(DBI)
-library(dplyr)
-library(dbplyr)
-library(farr)
-library(lubridate)</code></pre>
-<p>We will use the following small function to calculate the time taken for steps below.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
-<pre class="{r}"><code>system_time &lt;- function(x) {
-  print(system.time(x))
-  x
-}</code></pre>
-<p>I have created an SQLite database comprising data generated from running code in <a href="https://www.tidy-finance.org/python/accessing-and-managing-financial-data.html">chapter 2</a> and <a href="https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html">chapter 3</a>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
-<pre class="{r}"><code>db_path &lt;- "/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite"</code></pre>
+<div class="abstract">
+<p>In this short note, I show how my <code>db2pq</code> package can be used to turn “lazy data frames” produced by <code>dbplyr</code> into Parquet files on disk without needing to load the data into RAM and with minimal RAM requirements.</p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" data-text-align="left">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This note was written and rendered with <a href="https://quarto.org">Quarto</a>. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/lazy_tbl_to_pq.qmd">here</a>.</p>
+<p>In writing this note, I used the packages listed below.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>I have not submitted <code>db2pq</code> to CRAN. To install <code>db2pq</code>, use <code>pak</code> by typing <code>pak::pak("iangow/db2pqr")</code> in the R console. The <code>db2pq</code> is located at <a href="https://github.com/iangow/db2pqr"><code>iangow/db2pqr</code></a> because <a href="https://github.com/iangow/db2pq"><code>iangow/db2pq</code></a> was already taken by my Python <code>db2pq</code> package.</p>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(farr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(db2pq)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyfinance)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(frenchdata)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dbplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="motivating-example" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Motivating example</h1>
+<p>According to <a href="https://www.tidy-finance.org/r/wrds-crsp-and-compustat.html#daily-crsp-data">Tidy Finance for R</a>:</p>
+<blockquote class="blockquote">
+<p>The daily CRSP data file is substantially larger than monthly data and can exceed 20 GB. This has two important implications: you cannot hold all the daily return data in your memory (hence it is not possible to save the entire dataset to your local folder), and in our experience, the download usually crashes (or never stops) because it is too much data for the WRDS cloud to prepare and send to your R session.</p>
+<p>There is a solution to this challenge. As with many big data problems, you can split up the big task into several smaller tasks that are easier to handle. That is, instead of downloading data about all stocks at once, download the data in small batches of stocks consecutively.</p>
+</blockquote>
+<p>Below I show how one can simplify the code dramatically (no batches!) and download the data faster (for me, it takes <em>less than a minute</em>) and with no significant burden on either the CPU or RAM.</p>
+<p>The <code>lazy_tbl_to_pq()</code> just uses functions supplied by the <code>DBI</code> and <code>arrow</code> packages, so should work with any <strong>lazy data frame</strong> using those tools Please try out the package and feel free to log a <a href="https://github.com/iangow/db2pqr/issues">GitHub issue</a> if you have any problems with it.</p>
+<section id="getting-fama-french-data" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="getting-fama-french-data"><span class="header-section-number">1.1</span> Getting Fama-French data</h2>
+<p>While the <code>ff</code> schema on WRDS seems to have these data, I follow Tidy Finance in using <code>frenchdata</code>, which I presume gets the data from Ken French’s website.</p>
+<p>I use the same date range as I found on the Tidy Finance page.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="ot">&lt;-</span> <span class="fu">ymd</span>(<span class="st">"1960-01-01"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="ot">&lt;-</span> <span class="fu">ymd</span>(<span class="st">"2024-12-31"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Like Tidy Finance, I save the data as a Parquet file.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily_raw <span class="ot">&lt;-</span> <span class="fu">download_french_data</span>(<span class="st">"Fama/French 3 Factors [Daily]"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily <span class="ot">&lt;-</span> </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  factors_ff3_daily_raw<span class="sc">$</span>subsets<span class="sc">$</span>data[[<span class="dv">1</span>]] <span class="sc">|&gt;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">date =</span> <span class="fu">ymd</span>(date),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(RF, <span class="st">`</span><span class="at">Mkt-RF</span><span class="st">`</span>, SMB, HML), <span class="sc">~</span> <span class="fu">as.numeric</span>(.) <span class="sc">/</span> <span class="dv">100</span>),</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">.keep =</span> <span class="st">"none"</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename_with</span>(str_to_lower) <span class="sc">|&gt;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">mkt_excess =</span> <span class="st">`</span><span class="at">mkt-rf</span><span class="st">`</span>, <span class="at">risk_free =</span> rf) <span class="sc">|&gt;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">between</span>(date, start_date, end_date)) <span class="sc">|&gt;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="st">"factors_ff3_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 </section>
-<section id="using-rsqlite" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Using RSQLite</h1>
-<p>To start with, I follow the approach used in <em>Tidy Finance</em>, which generally involves connecting to the SQLite database before using <code>collect()</code> to read data into memory in R. The following code is pretty much copy-pasted from Chapter 5.</p>
-<pre class="{r}"><code>tidy_finance &lt;- dbConnect(
-  RSQLite::SQLite(),
-  db_path,
-  extended_types = TRUE
-)</code></pre>
-<pre class="{r}"><code>#| cache: true
-crsp_daily &lt;- tbl(tidy_finance, "crsp_daily") |&gt;
-  select(permno, date, ret_excess) |&gt;
-  collect() |&gt;
-  mutate(month = floor_date(date, "month")) |&gt;
-  system_time()</code></pre>
-<p>That’s more than two minutes just to read one table. And things are no better using Python.</p>
-<div id="8b7f2932" class="cell" data-cache="true" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sqlite3</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>tidy_finance <span class="op">=</span> sqlite3.<span class="ex">connect</span>(</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  database<span class="op">=</span><span class="st">"/Users/igow/Dropbox/data/tidy_finance/tidy_finance_python.sqlite"</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> time.time()</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> (pd.read_sql_query(</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    sql<span class="op">=</span>(<span class="st">"SELECT permno, strftime('%Y-%m-01', date) AS month, date, ret_excess "</span></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>         <span class="st">"FROM crsp_daily"</span>),</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    con<span class="op">=</span>tidy_finance,</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    parse_dates<span class="op">=</span>{<span class="st">"month"</span>, <span class="st">"date"</span>})</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  .dropna()</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> time.time()</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Loading crsp_daily: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.3f}</span><span class="ss"> seconds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="getting-crsp-daily-data" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="getting-crsp-daily-data"><span class="header-section-number">1.2</span> Getting CRSP daily data</h2>
+<p>Now that I have the daily Fama-French factor data, I can move onto the main query. The following is based on code in Tidy Finance.</p>
+<p>Apart from a little tidying, I remove the batch infrastructure and just get all data at once and append a <code>lazy_tbl_to_pq()</code> at the end (along with a <code>system_time()</code> to see how long this all takes).<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>Note that I use <code>dbplyr::copy_inline()</code> to get the local <code>factors_ff3_daily</code> to WRDS. I wrote about <code>copy_inline()</code> in a <a href="https://iangow.github.io/notes/published/dbplyr-news.html">note in December 2025</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set_wrds_credentials()</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>wrds <span class="ot">&lt;-</span> <span class="fu">get_wrds_connection</span>()</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>dsf_db <span class="ot">&lt;-</span> <span class="fu">tbl</span>(wrds, <span class="fu">I</span>(<span class="st">"crsp.dsf_v2"</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>stksecurityinfohist_db <span class="ot">&lt;-</span> <span class="fu">tbl</span>(wrds, <span class="fu">I</span>(<span class="st">"crsp.stksecurityinfohist"</span>))</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily <span class="ot">&lt;-</span> </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_parquet</span>(<span class="st">"factors_ff3_daily.parquet"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_inline</span>(wrds, <span class="at">df =</span> _)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="ot">&lt;-</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  dsf_db <span class="sc">|&gt;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">between</span>(dlycaldt, start_date, end_date)) <span class="sc">|&gt;</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    stksecurityinfohist_db <span class="sc">|&gt;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        sharetype <span class="sc">==</span> <span class="st">"NS"</span>,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        securitytype <span class="sc">==</span> <span class="st">"EQTY"</span>,</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        securitysubtype <span class="sc">==</span> <span class="st">"COM"</span>,</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        usincflg <span class="sc">==</span> <span class="st">"Y"</span>,</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        issuertype <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ACOR"</span>, <span class="st">"CORP"</span>),</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        primaryexch <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"N"</span>, <span class="st">"A"</span>, <span class="st">"Q"</span>),</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        conditionaltype <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"RW"</span>, <span class="st">"NW"</span>),</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>        tradingstatusflg <span class="sc">==</span> <span class="st">"A"</span>,</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">|&gt;</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(permno, secinfostartdt, secinfoenddt),</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">join_by</span>(permno)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">between</span>(dlycaldt, secinfostartdt, secinfoenddt)) <span class="sc">|&gt;</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(permno, <span class="at">date =</span> dlycaldt, <span class="at">ret =</span> dlyret) <span class="sc">|&gt;</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">if_all</span>(<span class="fu">everything</span>(), \(x) <span class="sc">!</span><span class="fu">is.na</span>(x))) <span class="sc">|&gt;</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    factors_ff3_daily <span class="sc">|&gt;</span> <span class="fu">select</span>(date, risk_free),</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">join_by</span>(date),</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">ret_excess =</span> ret <span class="sc">-</span> risk_free,</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Note that excess returns are *not* bound below by -1 ...</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ... but I follow Tidy Finance here.</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">ret_excess =</span> <span class="fu">pmax</span>(ret_excess, <span class="sc">-</span><span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(permno, date, ret, ret_excess) <span class="sc">|&gt;</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lazy_tbl_to_pq</span>(<span class="at">out_file =</span> <span class="st">"crsp_daily.parquet"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Loading crsp_daily: 124.256 seconds</code></pre>
+<pre><code>   user  system elapsed 
+ 29.188   3.088  75.932 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(wrds)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now we have downloaded the data, let’s take a look.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="st">"crsp_daily.parquet"</span>) </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>crsp_daily</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 72,394,137 × 4
+   permno date           ret ret_excess
+    &lt;int&gt; &lt;date&gt;       &lt;dbl&gt;      &lt;dbl&gt;
+ 1  10000 1986-01-08 -0.0244    -0.0247
+ 2  10000 1986-01-09  0         -0.0003
+ 3  10000 1986-01-10  0         -0.0003
+ 4  10000 1986-01-13  0.05       0.0497
+ 5  10000 1986-01-14  0.0476     0.0473
+ 6  10000 1986-01-15  0.0455     0.0452
+ 7  10000 1986-01-16  0.0435     0.0432
+ 8  10000 1986-01-17  0         -0.0003
+ 9  10000 1986-01-20  0         -0.0003
+10  10000 1986-01-21  0         -0.0003
+# ℹ 72,394,127 more rows</code></pre>
 </div>
 </div>
-<pre class="{r}"><code>dbDisconnect(tidy_finance)</code></pre>
-<p>These numbers indicate mind-bogglingly bad performance. Mind-boggling because it is not clear how it can take so long to read 4GB of structured data into memory.</p>
-</section>
-<section id="using-duckdb-to-interact-with-sqlite" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Using DuckDB to interact with SQLite</h1>
-<p>Rather than using <code>RSQLite</code> to interact with the <em>Tidy Finance</em> SQLite database, we could use DuckDB. DuckDB is touted as “SQLite for analytics”, as it does not require a separate server process and is easy to install, but has a much more feature-rich SQL dialect and a larger set of data types and offers superior performance. To use DuckDB, we first instantiate an in-memory database.</p>
-<pre class="{r}"><code>db &lt;- dbConnect(duckdb::duckdb())</code></pre>
-<p>Next, we load the <code>sqlite</code> extension and attach the <em>Tidy Finance</em> SQLite database. Note that the <code>INSTALL</code> takes less than a second and happens only once per installation of DuckDB, but the <code>LOAD</code> is needed for each new connection.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> Windows users may need to do more work to install the <code>sqlite</code> extension (see discussion <a href="https://github.com/duckdb/duckdb-r">here</a>).<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p>
-<pre class="{r}"><code>#| output: false
-dbExecute(db, "INSTALL sqlite")
-dbExecute(db, "LOAD sqlite")
-dbExecute(db, paste0("ATTACH '", db_path, "' AS tf"))
-dbExecute(db, "USE tf")</code></pre>
-<p>Now, we could <code>collect()</code> the data from <code>crsp_daily</code> above using DuckDB. As can be seen, it is much faster than using SQLite to do this.</p>
-<pre class="{r}"><code>crsp_daily &lt;- tbl(db, "crsp_daily") |&gt;
-  select(permno, month, date, ret_excess) |&gt;
-  collect() |&gt;
-  system_time()</code></pre>
-<p>While much faster, more than ten seconds is not great. In fact, we may find it better to leave the data in the database and do computations there. For example, we can do a version of the <a href="https://www.tidy-finance.org/r/beta-estimation.html#parallelized-rolling-window-estimation">monthly beta calculations</a> done in <em>Tidy Finance</em> inside the DuckDB database. This calculation requires two tables: <code>crsp_monthly</code> and <code>factors_ff3_monthly</code>.</p>
-<pre class="{r}"><code>crsp_monthly &lt;- tbl(db, "crsp_monthly")
-factors_ff3_monthly &lt;- tbl(db, "factors_ff3_monthly")</code></pre>
-<p>We will also use <strong>window functions</strong></p>
-<pre class="{r}"><code>w &lt;- paste("OVER (PARTITION BY permno",
-           "ORDER BY date",
-           "RANGE BETWEEN INTERVAL '60 MONTHS' PRECEDING AND",
-           "CURRENT ROW)")</code></pre>
-<p>All the calculations below occur in DuckDB with the data not reaching R until the <code>collect()</code> at the end.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
-<pre class="{r}"><code>beta_monthly &lt;-
-  crsp_monthly |&gt;
-  inner_join(factors_ff3_monthly, by = "month") |&gt;
-  mutate(month = as.Date(month)) |&gt;
-  mutate(beta = sql(paste("regr_slope(ret_excess, mkt_excess)", w)),
-         n_rets = sql(paste("regr_count(ret_excess, mkt_excess)", w))) |&gt;
-  filter(n_rets &gt;= 48) |&gt;
-  select(permno, month, beta) |&gt;
-  ungroup() |&gt;
-  collect() |&gt;
-  system_time()</code></pre>
-<p>We have loaded data, calculated <code>r prettyNum(nrow(beta_monthly),  big.mark = ",")</code> betas (each involving a regression) and brought the data into memory in R in about half a second!</p>
-<pre class="{r}"><code>beta_monthly</code></pre>
-</section>
-<section id="converting-the-tidy-finance-database-to-parquet-files" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Converting the <em>Tidy Finance</em> database to parquet files</h1>
-<p>Rather than keeping the data in an SQLite database, we could actually convert the entire <em>Tidy Finance</em> database to parquet files using the following function, which leverages DuckDB’s ability to create parquet files.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
-<pre class="{r}"><code>#| cache: true
-#| label: to_parquet
-to_parquet &lt;- function(con, table, schema = "",
-                       data_dir = "data") {
-  df &lt;- tbl(con, table) |&gt; 
-    mutate(across(any_of(c("month", "date")), as.Date)) |&gt;
-    compute(name = "df", overwrite = TRUE)
-  pq_dir &lt;- file.path(data_dir, schema = schema)
-  if (!dir.exists(pq_dir)) dir.create(pq_dir)
-  pq_file_name &lt;- paste0(table, ".parquet")
-  pq_path &lt;- file.path(pq_dir, pq_file_name)
-  res &lt;- dbExecute(con, paste0("COPY (SELECT * FROM df) TO '",
-                               pq_path, "' (FORMAT PARQUET)"))
-  dbExecute(con, "DROP TABLE df")
-  return(tibble(table = table, rows = res))
-}</code></pre>
-<p>Converting all the tables takes around 20 seconds. While there are now 11 files rather than one, these files use less than a quarter of the disk space of the original database file.</p>
-<pre class="{r}"><code>#| cache: true
-#| dependson: to_parquet
-db |&gt; 
-  dbListTables() |&gt; 
-  lapply(X = _, \(x) to_parquet(db, x)) |&gt; 
-  bind_rows() |&gt;
-  arrange(desc(rows)) |&gt;
-  system_time()</code></pre>
-<p>Now that we have the everything in parquet format, we can read the data even faster than using DuckDB to read SQLite tables. These files can be used equally easily with Python. And R and Python have libraries (e.g., <code>arrow</code> in R) for working with parquet files directly.</p>
-<p>Returning to our original benchmark, how long does it take to load the <code>crsp_daily</code> data into memory in R?</p>
-<pre class="{r}"><code>crsp_daily &lt;- 
-  load_parquet(db, "crsp_daily", data_dir ="data") |&gt;
-  select(permno, month, date, ret_excess) |&gt;
-  collect() |&gt;
-  system_time()</code></pre>
-<p>Less than a second? Here’s a peek at the data.</p>
-<pre class="{r}"><code>crsp_daily</code></pre>
-<section id="calculating-monthly-betasagain" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="calculating-monthly-betasagain"><span class="header-section-number">4.1</span> Calculating monthly betas—again</h2>
-<p>Let’s do the beta calculation again. Everything is as it was above except the first two lines, which point <code>crsp_monthly</code> and <code>factors_ff3_monthly</code> to parquet files in place of SQLite tables. Perhaps unsurprisingly, performance is similar—it would be difficult to beat what we saw earlier by much.</p>
-<pre class="{r}"><code>crsp_monthly &lt;- load_parquet(db, "crsp_monthly", data_dir = "data")
-factors_ff3_monthly &lt;- load_parquet(db, "factors_ff3_monthly", 
-                                    data_dir = "data")</code></pre>
-<pre class="{r}"><code>beta_monthly &lt;-
-  crsp_monthly |&gt;
-  inner_join(factors_ff3_monthly, by = "month") |&gt;
-  mutate(beta = sql(paste("regr_slope(ret_excess, mkt_excess)", w)),
-         n_rets = sql(paste("regr_count(ret_excess, mkt_excess)", w))) |&gt;
-  filter(n_rets &gt;= 48) |&gt;
-  select(permno, month, beta) |&gt;
-  collect() |&gt;
-  system_time()</code></pre>
-<pre class="{r}"><code>dbDisconnect(db, shutdown = TRUE)</code></pre>
+<p>For larger Parquet data files, I would recommend using DuckDB or Arrow’s <code>open_dataset()</code> function. The <code>parquet</code> tabs of <a href="https://iangow.github.io/far_book/">“Empirical Research in Accounting: Tools and Methods”</a> use an in-memory DuckDB database connection to work with Parquet files.</p>
 
 
 </section>
@@ -363,15 +353,8 @@ factors_ff3_monthly &lt;- load_parquet(db, "factors_ff3_monthly",
 <div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
 
 <ol>
-<li id="fn1"><p>I ran the code in this note on an M1 Pro MacBook Pro. Running the same code on an i7-3770K running Linux Mint gave similar relative results. Fast code on an old computer handily beats slow code on a new computer.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>This would involve using the <code>postgres</code> extension to DuckDB.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>Issue to be addressed would be supporting the various arguments to the <code>wrds_update()</code> function in <code>wrds2pg</code>, such as <code>col_types</code> and <code>keep</code>, and addressing memory limitations with large tables.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4"><p>Unlike the base R <code>system.time()</code>, this function works with assignment. If we put <code>system.time()</code> at the end of a pipe, then the value returned by <code>system.time()</code> would be stored rather than the result of the pipeline preceding it. Hadley Wickham explained to me that this function works because of <strong>lazy evaluation</strong>, which is discussed in “Advanced R” <a href="https://adv-r.hadley.nz/environments.html?q=lazy#lazy-call-stack">here</a>. Essentially, <code>x</code> is evaluated just once—inside <code>system.time()</code>—and its value is returned in the next line.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5"><p><a href="https://www.tidy-finance.org/python/trace-and-fisd.html">Chapter 4</a> covers data that are not needed in the later chapters I am currently looking at.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn6"><p>Subsequent calls to <code>INSTALL</code> appear to have no effect.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn7"><p>I don’t have ready access to a Windows computer to check.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn8"><p>Usually one would use <code>group_by()</code>, <code>window_order()</code>, and <code>window_range()</code> to generate the requisite <code>PARTITION BY</code>, <code>ORDER BY</code>, and <code>ROWS BETWEEN</code> SQL clauses. However, a gap in the <code>dbplyr</code> package means that it doesn’t recognize <code>regr_slope()</code> and <code>regr_count()</code> functions as aggregates that require them to be put in a “window context”. I will likely file an issue related to this on the <code>dbplyr</code> GitHub page soon.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn9"><p>Make sure you don’t use this function with a database that already has a table named <code>df</code> in it, especially if you care about that table.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>Execute <code>install.packages(c("tidyverse", "farr", "DBI", "arrow", "pak", "tidyfinance", "frenchdata", "dbplyr")</code> within R to install all the packages [other than <code>db2pq</code>] that you will need to run the R code in this note.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>For example, because I don’t <code>collect()</code> the data I cannot use <code>drop_na()</code> and need to use <code>filter(if_all(everything(), \(x) !is.na(x)))</code> instead.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
