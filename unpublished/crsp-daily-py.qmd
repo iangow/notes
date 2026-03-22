@@ -28,7 +28,7 @@ execute:
   cache: true
   freeze: auto
 engine: jupyter
-jupyter: notes_py
+jupyter: python3
 keywords:
   - Python
 ---
@@ -46,7 +46,7 @@ I show that using Ibis has a number of advantages over the approach used in Tidy
  - Working with the final data is a lot easier and more performant
  
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R and, to some extent, Python.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/crsp-daily-py.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/crsp-daily-py.pdf).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/unpublished/crsp-daily-py.qmd).
 
 # Getting data
 
@@ -64,11 +64,11 @@ Because this note uses a number of different approaches to a set of problems, th
 import pandas as pd
 import numpy as np
 import duckdb
-import pandas_datareader as pdr
 import timeit
 import os
 import sqlite3
 import ibis
+from era_py import get_ff_daily_factors
 from ibis import _
 from os.path import join
 from sqlalchemy import create_engine
@@ -94,15 +94,17 @@ If you are a reader of  *Tidy Finance with Python* and already have the SQLite d
 #| label: ff-data
 #| cache: true
 #| warning: false
-factors_ff3_daily_raw = pdr.DataReader(
-  name="F-F_Research_Data_Factors_daily",
-  data_source="famafrench",
-  start=start_date,
-  end=end_date)[0]
-
-factors_ff3_daily = (factors_ff3_daily_raw
-  .divide(100)
-  .reset_index(names="date")
+factors_ff3_daily = (get_ff_daily_factors(
+    start=start_date,
+    end=end_date,
+  )
+  .pipe(lambda x: x.assign(
+    **{
+      col: x[col] / 100
+      for col in x.columns
+      if col != "date"
+    }
+  ))
   .rename(str.lower, axis="columns")
   .rename(columns={"mkt-rf": "mkt_excess"})
 )
@@ -114,8 +116,13 @@ from pathlib import Path
 import os
 
 data_dir = Path(os.environ["DATA_DIR"]).expanduser()
+scratch_dir = data_dir / "tidy_finance"
+scratch_dir.mkdir(parents=True, exist_ok=True)
 
-db_path = data_dir / "tidy_finance" / "tidy_finance_python.sqlite"
+db_path = scratch_dir / "tidy_finance_python_render.sqlite"
+
+if db_path.exists():
+    db_path.unlink()
 
 tidy_finance = sqlite3.connect(database=db_path)
 
@@ -152,7 +159,7 @@ os.environ["WRDS_ID"] = "iangow"
 tic = timeit.default_timer()
 
 connection_string = (
-  "postgresql+psycopg2://"
+  "postgresql+psycopg://"
  f"{os.getenv('WRDS_USER')}"
   "@wrds-pgdata.wharton.upenn.edu:9737/wrds"
 )
@@ -251,7 +258,7 @@ So the code takes about 5 minutes and the result is a table `crsp_daily` inside 
 
 ## Daily CRSP data -- Ibis/DuckDB version {#sec-ibis}
 
-I now generate the same data table, but using Ibis to connect to PostgreSQL instead of using the Python package `sqlachemy`, which in turn uses the `psycopg2` package.
+I now generate the same data table, but using Ibis to connect to PostgreSQL instead of using the Python package `sqlachemy`, which in turn uses the `psycopg` package.
 Note I could use Ibis with a PostgreSQL backend directly, but I instead use a DuckDB backend and (implicitly) use [the `postgres` extension](https://duckdb.org/docs/extensions/postgres) for DuckDB to access PostgreSQL data within DuckDB.
 I say "implicitly" because the Ibis package is taking care of most of the details for me.
 
@@ -288,7 +295,7 @@ factors_ff3_daily = con.read_sqlite(db_path, table_name="factors_ff3_daily")
 ```
 
 Again rather than connecting to the WRDS PostgreSQL database directly using `sqlalchemy`, I connect via my DuckDB database.
-Note that this requires a *slightly* different form for the URI (i.e., `postgres://` in place of `postgresql+psycopg2://`) and using `con.read_postgres()` in place of `pd.read_sql()`.
+Note that this requires a *slightly* different form for the URI (i.e., `postgres://` in place of `postgresql+psycopg://`) and using `con.read_postgres()` in place of `pd.read_sql()`.
 
 ```{python}
 #| label: wrds-uri
