@@ -44,6 +44,16 @@ Sys.setenv(PGHOST = "wrds-pgdata.wharton.upenn.edu",
 
 Need `pak::pak("iangow/db2pqr")` first
 
+:::{.callout-tip text-align="left"}
+This note was written and rendered with [Quarto](https://quarto.org).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/lazy_tbl_to_pq.qmd).
+
+In writing the R portions of this note, I used the packages listed below.^[Execute `install.packages(c("tidyverse", "farr", "DBI", "arrow", "pak", "wrds")` within R to install all the packages [other than `db2pq`] that you will need to run the R code in this note.]
+
+I have not submitted `db2pq` to CRAN.
+To install `db2pq`, use `pak` by typing `pak::pak("iangow/db2pqr")` in the R console.
+:::
+
 ```{r}
 #| warning: false
 #| message: false
@@ -52,97 +62,108 @@ library(DBI)
 library(arrow)
 library(farr)
 library(db2pq)
-library(wrds)
+library(tidyfinance)
+library(frenchdata)
+library(dbplyr)
 ```
 
 # Motivating example
 
 While many of the ideas I discuss here are general in nature, for concreteness, I focus on the special case of a WRDS user maintaining a local Parquet data library of the kind discussed in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) and provide examples using my R package `db2pq`.
 
-In 
+According to Tidy Finance for R
+
+> The daily CRSP data file is substantially larger than monthly data and can exceed 20 GB.
+> This has two important implications: you cannot hold all the daily return data in your memory (hence it is not possible to save the entire dataset to your local folder), and in our experience, the download usually crashes (or never stops) because it is too much data for the WRDS cloud to prepare and send to your R session.
+> 
+> There is a solution to this challenge. 
+> As with many big data problems, you can split up the big task into several smaller tasks that are easier to handle.
+> That is, instead of downloading data about all stocks at once, download the data in small batches of stocks consecutively.
 
 
+## Getting Fama-French data
+
+While the `ff` schema on WRDS seems to have these data, I follow Tidy Finance in using `frenchdata`, which I presume gets the data from Ken French's website.
 
 ```{r}
-wrds <- wrds_connect()
+factors_ff3_daily_raw <- download_french_data("Fama/French 3 Factors [Daily]")
 
-funda <- tbl(wrds, Id(schema = "comp", table = "funda"))
-
-compustat <- 
-  funda |>
-  filter(indfmt == 'INDL', datafmt == 'STD', 
-         popsrc == 'D', consol == 'C') |>
-  mutate(mkt_cap = prcc_f * csho,
-         size = if_else(mkt_cap > 0, log(mkt_cap), NA),
-         roa = if_else(at > 0, ib / at, NA),
-         mtb = if_else(ceq > 0, mkt_cap / ceq, NA),
-         special_items = if_else(at > 0, coalesce(spi, 0) / at, NA),
-         fas133 = !is.na(aocidergl) & aocidergl != 0,
-         fas157 = !is.na(tfva) & tfva != 0) |>
-  select(gvkey, iid, datadate, mkt_cap, size, roa, mtb,
-         special_items, fas133, fas157) |>
-  filter(mkt_cap > 0) |>
+factors_ff3_daily <- 
+  factors_ff3_daily_raw$subsets$data[[1]] |>
   mutate(
-    eomonth = dbplyr::sql(
-      "(date_trunc('month', datadate) + interval '1 month - 1 day')::date"
-    )
-  )
+    date = ymd(date),
+    across(c(RF, `Mkt-RF`, SMB, HML), ~ as.numeric(.) / 100),
+    .keep = "none"
+  ) |>
+  rename_with(str_to_lower) |>
+  rename(mkt_excess = `mkt-rf`, risk_free = rf) |>
+  filter(date >= start_date & date <= end_date) |>
+  write_parquet("factors_ff3_daily.parquet")
 ```
 
-```{r}
-compustat
-```
+## Getting CRSP daily data
 
-To facilitate the creation of a data repository for the empirical example in that chapter, we created `save_parquet()`, which takes a (possibly remote) data frame and uses the `write_parquet()` function from the `arrow` library to save it as a Parquet file.^[The Parquet format is described in *R for Data Science* [@Wickham:2023aa, p. 393] as "an open standards-based format widely used by big data systems."
-Parquet files provide a format optimized for data analysis, with a rich type system.
-More details on the Parquet format can be found in [Chapter 22](https://r4ds.hadley.nz/arrow) of *R for Data Science*.]
+Now that I have the daily Fama-French factor data, I can move onto the main query.
+The following is based on code in Tidy Finance.
 
-```{r}
-save_parquet <- function(df, name, schema = "", path = data_dir) {
-  file_path <- file.path(path, schema, str_c(name, ".parquet"))
-  write_parquet(collect(df), sink = file_path)
-}
-```
+Apart from a little tidying, I remove the batch infrastructure and just get all data at once and append a `lazy_tbl_to_pq()` at the end (along with a `system_time()` to see how long this all takes).
 
-```{r}
-data_dir <- Sys.getenv("DATA_DIR")
-
-compustat_pq <-
-    save_parquet(compustat, "compustat", "glms") |>
-    system_time()
-```
 
 
 ```{r}
-save_parquet <- function(df, name, schema = "", path = data_dir) {
-  file_path <- file.path(path, schema, str_c(name, ".parquet"))
-  lazy_tbl_to_pq(df, out_file = file_path)
-}
-```
+#| cache: true
+# set_wrds_credentials()
+wrds <- get_wrds_connection()
 
-```{r}
-compustat_path <-
-    save_parquet(compustat, "compustat", "glms") |>
-    system_time()
-```
+start_date <- ymd("1960-01-01")
+end_date <- ymd("2024-12-31")
 
-```{r}
-compustat_pq <- open_dataset(compustat_path)
-```
+dsf_db <- tbl(wrds, I("crsp.dsf_v2"))
+stksecurityinfohist_db <- tbl(wrds, I("crsp.stksecurityinfohist"))
 
-```{r}
-compustat_pq |> 
-    filter(gvkey == "001161") |>
-    collect()
-```
+factors_ff3_daily <- 
+  read_parquet("factors_ff3_daily.parquet") |>
+  copy_inline(wrds, df = _)
 
-```{r}
-db <- dbConnect(duckdb::duckdb())
-
-compustat_db <- load_parquet(db, "compustat", "glms")
-compustat_db |> 
-    filter(gvkey == "001161") |>
-    collect()
+crsp_daily <-
+  dsf_db |>
+  filter(between(dlycaldt, start_date, end_date)) |>
+  inner_join(
+    stksecurityinfohist_db |>
+      filter(
+        sharetype == "NS",
+          securitytype == "EQTY",
+          securitysubtype == "COM",
+          usincflg == "Y",
+          issuertype %in% c("ACOR", "CORP"),
+          primaryexch %in% c("N", "A", "Q"),
+          conditionaltype %in% c("RW", "NW"),
+          tradingstatusflg == "A",
+      ) |>
+      select(permno, secinfostartdt, secinfoenddt),
+    join_by(permno)
+  ) |>
+  filter(between(dlycaldt, secinfostartdt, secinfoenddt)) |>
+  select(permno, date = dlycaldt, ret = dlyret) |>
+  filter(if_all(everything(), \(x) !is.na(x))) |>
+  left_join(
+    factors_ff3_daily |> select(date, risk_free),
+    join_by(date),
+  ) |>
+  mutate(
+    ret_excess = ret - risk_free,
+    # Note that excess returns are *not* bound below by -1 ...
+    # ... but I follow Tidy Finance here.
+    ret_excess = pmax(ret_excess, -1, na.rm = TRUE)
+  ) |>
+  select(permno, date, ret, ret_excess) |>
+  lazy_tbl_to_pq(out_file = "crsp_daily.parquet") |>
+  system_time()
 
 dbDisconnect(db)
+```
+
+```{r}
+crsp_daily <- read_parquet("crsp_daily.parquet") 
+crsp_daily
 ```
