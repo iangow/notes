@@ -82,8 +82,11 @@ compustat <-
   select(gvkey, iid, datadate, mkt_cap, size, roa, mtb,
          special_items, fas133, fas157) |>
   filter(mkt_cap > 0) |>
-  mutate(eomonth = floor_date(datadate, "month") + months(1) - days(1)) |>
-  mutate(eomonth = as.Date(eomonth))
+  mutate(
+    eomonth = dbplyr::sql(
+      "(date_trunc('month', datadate) + interval '1 month - 1 day')::date"
+    )
+  )
 ```
 
 ```{r}
