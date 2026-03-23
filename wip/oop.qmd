@@ -1,0 +1,64 @@
+---
+title: "Writing to learn: Object-oriented programming"
+author: Ian D. Gow
+date: 2026-022-18
+date-format: "D MMMM YYYY"
+number-sections: true
+format-links: false
+format:
+  html:
+    colorlinks: true
+  pdf: 
+    colorlinks: true
+    geometry:
+      - left=2cm
+      - right=2cm
+    papersize: a4
+    mainfont: TeX Gyre Pagella
+    mathfont: TeX Gyre Pagella Math
+bibliography: ../papers.bib
+csl: ../jfe.csl
+engine: jupyter
+---
+
+About two years ago I saw a video on YouTube that raved about the book *Writing to Learn* [@zinsser1988writing].
+I ordered a copy and read a few chapters.
+While the author clearly had a passion (and talent) for writing, it didn't really contain what was written on the tin.
+I suspect that @zinsser1988writing was mostly a recapitulation of @zinsser2006on, which I know to be highly regarded but I haven't read.
+Bruce Ivar Gudmundsson has a nice [blog post](https://extramuros.substack.com/p/writing-to-learn-d96) in which he recounts seeing the same YouTube video that I saw and came to the same realization about @zinsser1988writing as I had, namely that while it was a "blatant violation of the Trade Descriptions Act of 1968", what Gudmundsson found more frustrating was "Zinsser’s failure to showcase a point that ought to be written, in letters of fire, on the blackboard of every college classroom in the English-speaking world."
+
+In a comment on Gudmundsson's blog, I opined that "Zinsser's greatest crime might be stealing the perfect title for a book that really *should* be written."
+While I don't in any way believe I am the person to write that book, today I'm going to write to learn a little about object-oriented programming.
+
+```{python}
+import requests
+import io
+from pypdf import PdfReader
+from num_lines import NumberedLines
+```
+
+
+```{python}
+url = (
+    "https://site.warrington.ufl.edu/ritter/files/"
+    "money-left-on-the-table-in-IPOs.pdf"
+)
+
+# download PDF into memory
+resp = requests.get(url)
+resp.raise_for_status()
+
+reader = PdfReader(io.BytesIO(resp.content))
+```
+
+
+```{python}
+pdf_lines = NumberedLines(
+    line
+    for page in pages[1:]
+    for line in page.extract_text().splitlines())
+```
+
+```{python}
+pdf_lines
+```
