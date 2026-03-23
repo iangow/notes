@@ -200,9 +200,17 @@ sample |> mutate(hour = hour(a_datetime)) |> collect()
 
 ## Working with SEC filings data
 
-We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). If you have set up a parquet data repository with this data in the `submissions` schema, then use `filings <- load_parquet(db, table = "filings", schema = "submissions")` instead.]
+We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). 
+If you have set up a parquet data repository with this data in the `submissions` schema, then use `filings <- load_parquet(db, table = "filings", schema = "submissions")` instead.]
 
 ```{r}
+#| include: false
+filings <- load_parquet(db, table = "filings", schema = "edgar")
+```
+
+
+```{r}
+#| eval: false
 filings <- load_parquet(db, table = "filings", data_dir = "data")
 ```
 
@@ -491,6 +499,16 @@ This step takes some time, but would be a one-off step.
 I include `IF NOT EXISTS` to avoid overwriting any existing table you might have.
 
 ```{r}
+#| include: false
+data_dir <- Sys.getenv("DATA_DIR")
+sql <- str_glue("CREATE TABLE IF NOT EXISTS pg.filings AS ",
+                "SELECT * FROM '{data_dir}/edgar/filings.parquet'")
+dbExecute(db, sql) |> system_time()
+```
+
+
+```{r}
+#| eval: false
 sql <- "CREATE TABLE IF NOT EXISTS pg.filings AS
         SELECT * FROM 'data/filings.parquet'"
 dbExecute(db, sql) |> system_time()
@@ -532,13 +550,13 @@ Note that I do not compute the table `filing_times`, as doing so is unnecessary 
 ```{r}
 filing_times <- 
   filings |>
-  mutate(year = year(acceptanceDateTime),
-         hour = as.integer(hour(acceptanceDateTime)),
-         minute = as.integer(minute(acceptanceDateTime)),
-         second = second(acceptanceDateTime),
+  mutate(year = year(acceptancedatetime),
+         hour = as.integer(hour(acceptancedatetime)),
+         minute = as.integer(minute(acceptancedatetime)),
+         second = second(acceptancedatetime),
          acceptance_time = make_timestamptz(2000L, 1L, 1L, 
                                             hour, minute, second)) |>
-  select(cik, year, accessionNumber, acceptanceDateTime, acceptance_time)
+  select(cik, year, accessionnumber, acceptancedatetime, acceptance_time)
 ```
 
 The code for creating `earnings_filings` is unchanged from above apart from using lower-case column names, as PostgreSQL offers the same `regexp_split_to_table()` function that we used in DuckDB.
@@ -549,7 +567,7 @@ earnings_filings <-
   inner_join(tickers, by = "cik") |>
   mutate(item = regexp_split_to_table(items, ",")) |>
   filter(form == "8-K", item == "2.02") |>
-  select(cik, ticker, filingDate, acceptanceDateTime, item)
+  select(cik, ticker, filingdate, acceptancedatetime, item)
 ```
 
 The code creating `sample_merged` differs slightly (apart from using lower-case column names) because `start_date - acceptancedatetime` results in a column of type `interval` in PostgreSQL that R is unable to interpret easily.
@@ -558,8 +576,8 @@ To address this, I use the `date_part('epoch', x)` function to convert it to the
 ```{r}
 sample_merged <-
   earnings_filings |>
-  inner_join(sample_calls, join_by(ticker, filingDate)) |>
-  mutate(time_diff = date_part('epoch', start_date - acceptanceDateTime)) |>
+  inner_join(sample_calls, join_by(ticker, filingdate)) |>
+  mutate(time_diff = date_part('epoch', start_date - acceptancedatetime)) |>
   collect() |>
   system_time()
 ```
