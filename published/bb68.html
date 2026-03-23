@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.35">
+<meta name="generator" content="quarto-1.9.36">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -97,7 +97,7 @@ div.csl-indent {
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-46f66b053e56abd73bb6e954d61a315b.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
@@ -289,7 +289,7 @@ Tip
 <p>The imports below load the packages used throughout the note. More general setup instructions will be provided in Chapter 1 of the book. Quarto templates for the exercises below will be made available on GitHub.</p>
 </div>
 </div>
-<div id="a9ca1ea0" class="cell" data-execution_count="1">
+<div id="51030c81" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> zipfile</span>
@@ -376,7 +376,7 @@ Note
 </div>
 </div>
 <p> </p>
-<div id="9a58dab9" class="cell" data-execution_count="2">
+<div id="eef9c4a4" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> ptime():</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    msi <span class="op">=</span> load_parquet(<span class="st">"msi"</span>, <span class="st">"crsp"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    msf <span class="op">=</span> load_parquet(<span class="st">"msf"</span>, <span class="st">"crsp"</span>)</span>
@@ -386,7 +386,7 @@ Note
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    funda <span class="op">=</span> load_parquet(<span class="st">"funda"</span>, <span class="st">"comp"</span>)</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    fundq <span class="op">=</span> load_parquet(<span class="st">"fundq"</span>, <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 0.77 ms</p>
+<p><strong>Wall time:</strong> 5.23 ms</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-note callout-titled" data-text-align="left">
@@ -424,7 +424,7 @@ Note
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        .with_columns(annc_month<span class="op">=</span>pl.col(<span class="st">"rdq"</span>).dt.truncate(<span class="st">"1mo"</span>))</span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div id="annc_events" class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 0.12 ms</p>
+<p><strong>Wall time:</strong> 1.30 ms</p>
 </div>
 </div>
 <p>To compile returns for months <span class="math inline">\(t-11\)</span> through <span class="math inline">\(t+6\)</span> for each earnings announcement date (<span class="math inline">\(t\)</span>) (as <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> and <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span> do), we will need the <code>date</code> values on CRSP associated with each of those months. We will create a table <code>td_link</code> that will provide the link between announcement events in <code>annc_events</code> and dates on CRSP’s monthly stock file (<code>crsp.msf</code>).</p>
@@ -441,7 +441,7 @@ Note
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="b01afebe" class="cell" data-execution_count="5">
+<div id="f47cdf17" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>crsp_dates.limit(<span class="dv">10</span>).collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <div><style>
@@ -547,7 +547,7 @@ Note
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Here are the data for one <code>annc_month</code>:</p>
-<div id="76526a9a" class="cell" data-execution_count="8">
+<div id="8dd48bee" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    td_link</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"annc_month"</span>) <span class="op">==</span> pl.date(<span class="dv">2001</span>, <span class="dv">4</span>, <span class="dv">1</span>))</span>
@@ -653,7 +653,7 @@ Note
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The following code creates <code>events_linked</code>, which links the events (<code>gvkey</code> and <code>rdq</code>) with PERMNOs and return dates.</p>
-<div id="5137ee9e" class="cell" data-execution_count="10">
+<div id="3669578c" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>events_linked <span class="op">=</span> (</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    annc_events</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    .join(td_link, on<span class="op">=</span><span class="st">"annc_month"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
@@ -724,7 +724,7 @@ Note
 <p>That is useful here because we need to locate sections of Ken French’s text file without hard-coding row numbers. Once we find a heading such as <code>"Value Weight"</code> or <code>"Equal Weight"</code>, we can use the associated line numbers to identify where the relevant block of data starts and ends.</p>
 </div>
 </div>
-<div id="6ab72b47" class="cell" data-execution_count="14">
+<div id="8822370d" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zip_url_to_text(url):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    resp <span class="op">=</span> requests.get(url)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    resp.raise_for_status()</span>
@@ -733,14 +733,14 @@ Note
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> zf.read(inner_name).decode(<span class="st">"latin1"</span>)</span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> NumberedLines(raw.splitlines())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="476e33c1" class="cell" data-execution_count="15">
+<div id="b381fdda" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> (<span class="st">"https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>       <span class="st">"Portfolios_Formed_on_ME_CSV.zip"</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> zip_url_to_text(url)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s look at the first few rows of <code>text</code>.</p>
-<div id="8edc2a0b" class="cell" data-execution_count="16">
+<div id="72623130" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>text[:<span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
 <pre><code>NumberedLines([
@@ -768,7 +768,7 @@ Note
 </div>
 </div>
 <p>The next question would seem to be: Where is the last row of data (<code>vw_end</code>)? Before answering that question, notice that the data rows start with dates in <code>yyyymm</code> form (or in <code>yyyy</code> form for annual data) and header rows seem to start with commas (<code>,</code>), so let’s look at all rows that do <em>not</em> start with any of these forms.</p>
-<div id="086de94e" class="cell" data-execution_count="18">
+<div id="d94f4881" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>text[vw_start:].filter_out(re.<span class="bu">compile</span>(<span class="vs">r"</span><span class="dv">^</span><span class="kw">(</span><span class="dv">\s</span><span class="op">*</span><span class="dv">\d</span><span class="op">{4,6}</span><span class="cf">|</span><span class="vs">,</span><span class="kw">)</span><span class="vs">"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <pre><code>NumberedLines([
@@ -782,7 +782,7 @@ Note
 </div>
 </div>
 <p>Presumably the <code>"Average Value Weight Returns -- Monthly"</code> data end somewhere before the row containing <code>"Average Equal Weighted Returns -- Monthly"</code>, so let’s look at the rows just before that row.</p>
-<div id="ae2acc81" class="cell" data-execution_count="19">
+<div id="a7b47eb7" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>text[<span class="dv">1197</span>:<span class="dv">1203</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="19">
 <pre><code>NumberedLines([
@@ -797,7 +797,7 @@ Note
 </div>
 <p>From the output above, it seems that the data rows continue right up to the row before the row containing <code>"Average Equal Weighted Returns -- Monthly"</code>. Because of how slicing works in Python, we can set <code>vw_end</code> to the index of that row.</p>
 <p>Having done so, we can check that we have the right rows. The output below confirms that we do (we will want that header row in working with the data).</p>
-<div id="226da37d" class="cell" data-execution_count="20">
+<div id="e181a3ff" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>vw_end_regex <span class="op">=</span> re.<span class="bu">compile</span>(<span class="vs">r"Equal Weight</span><span class="dv">.</span><span class="op">*</span><span class="vs">Monthly"</span>)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>vw_end <span class="op">=</span> text.<span class="bu">filter</span>(vw_end_regex).index[<span class="dv">0</span>]</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>vw_lines <span class="op">=</span> text[vw_start:vw_end].reset_index()</span>
@@ -819,7 +819,7 @@ Note
 </div>
 </div>
 <p>Now we move on to equal-weight returns. Based on what we saw above, we might guess that the header row comes right after the row containing <code>"Average Equal Weighted Returns -- Monthly"</code> (i.e., row number <code>vw_end</code>), but let’s check by looking at the first few rows from that point.</p>
-<div id="35397465" class="cell" data-execution_count="21">
+<div id="a87b3609" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>text[vw_end:(vw_end <span class="op">+</span> <span class="dv">5</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="21">
 <pre><code>NumberedLines([
@@ -832,7 +832,7 @@ Note
 </div>
 </div>
 <p>Based on this, we can set <code>ew_start = vw_end + 1</code>. Can we use line 2400 (i.e., the line we saw above as containing <code>"Value Weight Returns -- Annual from January to December"</code> to determine <code>ew_end</code>? From the output below, we see that again the data run up to just before that line.</p>
-<div id="7bae0d24" class="cell" data-execution_count="22">
+<div id="d0a375af" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>text[<span class="dv">2397</span>:<span class="dv">2401</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
 <pre><code>NumberedLines([
@@ -844,13 +844,13 @@ Note
 </div>
 </div>
 <p>So we can use a regular expression to identify the index of that line and set <code>ew_end</code> to that value.</p>
-<div id="fc6de765" class="cell" data-execution_count="23">
+<div id="8e3807ec" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ew_end_regex <span class="op">=</span> re.<span class="bu">compile</span>(<span class="vs">r"</span><span class="dv">^\s</span><span class="op">+</span><span class="vs">Value Weight</span><span class="dv">.</span><span class="op">*</span><span class="vs">Annual"</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>ew_end <span class="op">=</span> text.<span class="bu">filter</span>(ew_end_regex).index[<span class="dv">0</span>]</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>ew_start <span class="op">=</span> vw_end <span class="op">+</span> <span class="dv">1</span></span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>ew_lines <span class="op">=</span> text[ew_start:ew_end].reset_index()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="ff637896" class="cell" data-execution_count="24">
+<div id="1e7b2252" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lines_to_df(lines, header<span class="op">=</span><span class="st">"infer"</span>):</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    block <span class="op">=</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(lines)</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    has_header <span class="op">=</span> header <span class="op">==</span> <span class="st">"infer"</span></span>
@@ -872,7 +872,7 @@ Note
 <span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df_raw.rename({df_raw.columns[<span class="dv">0</span>]: <span class="st">"date"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="b668ff40" class="cell" data-execution_count="25">
+<div id="e69dec44" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> read_data(lines):</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> (</span>
@@ -905,13 +905,13 @@ Note
 <span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="a171a85d" class="cell" data-execution_count="26">
+<div id="930ee0b8" class="cell" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ew_rets <span class="op">=</span> read_data(ew_lines)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="7d6f3927" class="cell" data-execution_count="27">
+<div id="51406bc3" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>vw_rets <span class="op">=</span> read_data(vw_lines)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="6064fb4f" class="cell" data-execution_count="28">
+<div id="2da0cf24" class="cell" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>size_rets <span class="op">=</span> (</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    ew_rets</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"month"</span>, <span class="st">"decile"</span>, pl.col(<span class="st">"ret"</span>).alias(<span class="st">"ew_ret"</span>))</span>
@@ -1016,7 +1016,7 @@ Note
 </div>
 </div>
 <p>The second set of data we need to get from Ken French’s website is data on the cut-offs we will use in assigning firms to decile portfolios in calculating size-adjusted returns:</p>
-<div id="56991b6a" class="cell" data-execution_count="29">
+<div id="e4fc2960" class="cell" data-execution_count="29">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>url_bp <span class="op">=</span> (<span class="st">"https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>          <span class="st">"ME_Breakpoints_CSV.zip"</span>)</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1360,7 +1360,7 @@ Note
 </div>
 </div>
 </div>
-<div id="c71bae44" class="cell" data-execution_count="31">
+<div id="c486e2bc" class="cell" data-execution_count="31">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>me_breakpoints_raw <span class="op">=</span> (</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    df_raw</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
@@ -1382,7 +1382,7 @@ Note
 <span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Finally, we organize the data to facilitate their use in joining with other data. Specifically, we create variables for the range of values covered by each decile (from <code>me_min</code> to <code>me_max</code>). We specify the minimum value for the first decile as zero and the maximum value for the tenth decile to infinity (<code>inf</code>).</p>
-<div id="1d47eac3" class="cell" data-execution_count="32">
+<div id="912ff0a3" class="cell" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>me_breakpoints <span class="op">=</span> (</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    me_breakpoints_raw</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    .sort([<span class="st">"month"</span>, <span class="st">"decile"</span>])</span>
@@ -1558,7 +1558,7 @@ Note
 <span id="cb46-30"><a href="#cb46-30" aria-hidden="true" tabindex="-1"></a>        .collect()</span>
 <span id="cb46-31"><a href="#cb46-31" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div id="plot_data" class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 375.17 ms</p>
+<p><strong>Wall time:</strong> 369.58 ms</p>
 </div>
 </div>
 <p>Figure 1 of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> confirms that a picture is worth a thousand words. We produce our analogue of Figure 1 in <a href="#fig-bb-1" class="quarto-xref">Figure&nbsp;1</a>.</p>
@@ -1608,7 +1608,7 @@ Figure&nbsp;1: Replication of Figure 1 of Ball and Brown (1968).
 <ol type="1">
 <li>From the data below, we see that the upper bound for the tenth decile is about US$544 billion. How can we reconcile this with the existence of firms with market capitalizations over US$1 trillion? <em>Bonus</em>: Using data from <code>crsp.msf</code>, identify the firm whose market capitalization was US$544 billion in December 2020? (<em>Hint</em>: For the bonus question, you can add a <code>.filter()</code> to code in the template to obtain the answer. Why do we need to group by <code>permco</code>, not <code>permno</code>, to find the answer?)</li>
 </ol>
-<div id="35b7e80d" class="cell" data-execution_count="40">
+<div id="986639ec" class="cell" data-execution_count="40">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    me_breakpoints_raw</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"month"</span>) <span class="op">==</span> pl.date(<span class="dv">2020</span>, <span class="dv">12</span>, <span class="dv">1</span>))</span>
