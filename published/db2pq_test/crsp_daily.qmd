@@ -1,0 +1,192 @@
+---
+jupyter: python3
+---
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:01:37.211886Z', iopub.status.busy: '2026-03-23T12:01:37.211526Z', iopub.status.idle: '2026-03-23T12:01:37.228632Z', shell.execute_reply: '2026-03-23T12:01:37.227258Z', shell.execute_reply.started: '2026-03-23T12:01:37.211864Z'}
+from sqlalchemy import create_engine
+import os
+from dotenv import load_dotenv
+
+connection_string = (
+    "postgresql+psycopg://"
+    f"{os.getenv('WRDS_ID')}"
+    "@wrds-pgdata.wharton.upenn.edu:9737/wrds"
+)
+
+wrds = create_engine(connection_string, pool_pre_ping=True)
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T11:48:16.513413Z', iopub.status.busy: '2026-03-23T11:48:16.513080Z', iopub.status.idle: '2026-03-23T11:48:17.155197Z', shell.execute_reply: '2026-03-23T11:48:17.154741Z', shell.execute_reply.started: '2026-03-23T11:48:16.513391Z'}
+import polars as pl
+import ibis
+from ibis import _
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:02:22.693029Z', iopub.status.busy: '2026-03-23T12:02:22.692535Z', iopub.status.idle: '2026-03-23T12:02:23.172771Z', shell.execute_reply: '2026-03-23T12:02:23.170913Z', shell.execute_reply.started: '2026-03-23T12:02:22.692999Z'}
+db = ibis.postgres.from_connection(wrds.connect().connection.driver_connection)
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:03:23.912580Z', iopub.status.busy: '2026-03-23T12:03:23.912047Z', iopub.status.idle: '2026-03-23T12:03:24.210420Z', shell.execute_reply: '2026-03-23T12:03:24.208383Z', shell.execute_reply.started: '2026-03-23T12:03:23.912549Z'}
+dsf = db.table("dsf_v2", database="crsp")
+stksecurityinfohist = db.table("stksecurityinfohist", database="crsp")
+ff3 = db.table("factors_daily", database="ff")
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:03:30.864625Z', iopub.status.busy: '2026-03-23T12:03:30.864302Z', iopub.status.idle: '2026-03-23T12:03:30.876214Z', shell.execute_reply: '2026-03-23T12:03:30.872787Z', shell.execute_reply.started: '2026-03-23T12:03:30.864603Z'}
+ibis.options.interactive = True
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:03:31.989501Z', iopub.status.busy: '2026-03-23T12:03:31.988980Z', iopub.status.idle: '2026-03-23T12:03:32.405268Z', shell.execute_reply: '2026-03-23T12:03:32.404616Z', shell.execute_reply.started: '2026-03-23T12:03:31.989470Z'}
+ff3
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:03:33.519385Z', iopub.status.busy: '2026-03-23T12:03:33.518798Z', iopub.status.idle: '2026-03-23T12:03:33.527269Z', shell.execute_reply: '2026-03-23T12:03:33.525723Z', shell.execute_reply.started: '2026-03-23T12:03:33.519351Z'}
+start_date = "1960-01-01"
+end_date = "2024-12-31"
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:03:34.469393Z', iopub.status.busy: '2026-03-23T12:03:34.468835Z', iopub.status.idle: '2026-03-23T12:03:34.490087Z', shell.execute_reply: '2026-03-23T12:03:34.488959Z', shell.execute_reply.started: '2026-03-23T12:03:34.469362Z'}
+security = (
+    stksecurityinfohist
+    .filter(
+        _.sharetype == "NS",
+        _.securitytype == "EQTY",
+        _.securitysubtype == "COM",
+        _.usincflg == "Y",
+        _.issuertype.isin(["ACOR", "CORP"]),
+        _.primaryexch.isin(["N", "A", "Q"]),
+        _.conditionaltype.isin(["RW", "NW"]),
+        _.tradingstatusflg == "A",
+    ).select(
+        "permno",
+        "secinfostartdt",
+        "secinfoenddt",
+    )
+)
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:03:53.578182Z', iopub.status.busy: '2026-03-23T12:03:53.577865Z', iopub.status.idle: '2026-03-23T12:03:53.601975Z', shell.execute_reply: '2026-03-23T12:03:53.600977Z', shell.execute_reply.started: '2026-03-23T12:03:53.578156Z'}
+crsp_daily = (
+    dsf
+    .filter(_.dlycaldt.between(start_date, end_date))
+    .inner_join(security,
+                dsf.permno == security.permno)
+    .filter(_.dlycaldt.between(_.secinfostartdt, _.secinfoenddt))
+    .select(
+        permno=_.permno,
+        date=_.dlycaldt,
+        ret=_.dlyret,
+    )
+    .filter(
+        _.permno.notnull(),
+        _.date.notnull(),
+        _.ret.notnull(),
+    )
+    .left_join(
+        ff3.select(date=ff3.date, risk_free=ff3.rf),
+        _.date == ff3.date,
+    )
+    .mutate(
+        ret_excess=ibis.greatest(_.ret - _.risk_free, -1)
+    )
+    .select(
+        "permno", "date", 
+        ret=_.ret.cast("float64"),
+        ret_excess=_.ret_excess.cast("float64"),
+    )
+)
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:22:16.217023Z', iopub.status.busy: '2026-03-23T12:22:16.216608Z', iopub.status.idle: '2026-03-23T12:22:16.377151Z', shell.execute_reply: '2026-03-23T12:22:16.376435Z', shell.execute_reply.started: '2026-03-23T12:22:16.216996Z'}
+crsp_daily
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:04:39.527198Z', iopub.status.busy: '2026-03-23T12:04:39.525747Z', iopub.status.idle: '2026-03-23T12:04:39.540177Z', shell.execute_reply: '2026-03-23T12:04:39.539576Z', shell.execute_reply.started: '2026-03-23T12:04:39.527114Z'}
+from db2pq import ibis_to_pq
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:19:56.986090Z', iopub.status.busy: '2026-03-23T12:19:56.984889Z', iopub.status.idle: '2026-03-23T12:20:24.682126Z', shell.execute_reply: '2026-03-23T12:20:24.681628Z', shell.execute_reply.started: '2026-03-23T12:19:56.986012Z'}
+%%time
+ibis_to_pq(crsp_daily.limit(1_000_000), "crsp_daily.parquet")
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:22:21.452658Z', iopub.status.busy: '2026-03-23T12:22:21.452034Z', iopub.status.idle: '2026-03-23T12:22:21.647220Z', shell.execute_reply: '2026-03-23T12:22:21.645676Z', shell.execute_reply.started: '2026-03-23T12:22:21.452606Z'}
+ff3
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:20:54.251806Z', iopub.status.busy: '2026-03-23T12:20:54.251484Z', iopub.status.idle: '2026-03-23T12:21:17.644097Z', shell.execute_reply: '2026-03-23T12:21:17.643408Z', shell.execute_reply.started: '2026-03-23T12:20:54.251784Z'}
+%%time
+ibis_to_pq(ff3, "factors_ff3_daily.parquet")
+```
+
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:23:22.136581Z', iopub.status.busy: '2026-03-23T12:23:22.135987Z', iopub.status.idle: '2026-03-23T12:23:22.157417Z', shell.execute_reply: '2026-03-23T12:23:22.156443Z', shell.execute_reply.started: '2026-03-23T12:23:22.136537Z'}
+factors_ff3_daily.head().collect()
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:23:28.560068Z', iopub.status.busy: '2026-03-23T12:23:28.559494Z', iopub.status.idle: '2026-03-23T12:23:28.567224Z', shell.execute_reply: '2026-03-23T12:23:28.566088Z', shell.execute_reply.started: '2026-03-23T12:23:28.560034Z'}
+crsp_daily = pl.scan_parquet("crsp_daily.parquet")
+factors_ff3_daily = pl.scan_parquet("factors_ff3_daily.parquet")
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:33:49.918485Z', iopub.status.busy: '2026-03-23T12:33:49.917824Z', iopub.status.idle: '2026-03-23T12:33:50.231528Z', shell.execute_reply: '2026-03-23T12:33:50.231106Z', shell.execute_reply.started: '2026-03-23T12:33:49.918450Z'}
+%%time
+min_obs = 1000
+
+betas = (
+    crsp_daily
+    .join(factors_ff3_daily, on="date", how="inner")
+    .with_columns(
+        pl.col("mktrf", "rf").cast(pl.Float64)
+    )
+    .with_columns(
+        mkt_excess=pl.col("mktrf") - pl.col("rf")
+    )
+    .sort("permno", "date")
+    .group_by_dynamic(
+        "date",
+        every="1mo",
+        period="60mo",
+        offset="-60mo",
+        group_by="permno",
+        closed="left",
+        label="right",
+    )
+    .agg(
+        beta=pl.cov("mkt_excess", "ret_excess") / pl.col("mkt_excess").var(),
+        mean_ret=pl.col("ret_excess").mean(),
+        mean_mkt=pl.col("mkt_excess").mean(),
+        n=pl.len(),
+    )
+    .with_columns(
+        alpha=pl.col("mean_ret") - pl.col("beta") * pl.col("mean_mkt")
+    )
+    .filter(pl.col("n") >= min_obs)
+    .drop("mean_ret", "mean_mkt")
+    .collect()
+)
+```
+
+```{python}
+#| execution: {iopub.execute_input: '2026-03-23T12:33:50.905489Z', iopub.status.busy: '2026-03-23T12:33:50.904988Z', iopub.status.idle: '2026-03-23T12:33:50.921510Z', shell.execute_reply: '2026-03-23T12:33:50.920409Z', shell.execute_reply.started: '2026-03-23T12:33:50.905459Z'}
+betas
+```
+
+
