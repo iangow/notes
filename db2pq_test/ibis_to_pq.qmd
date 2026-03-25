@@ -29,7 +29,7 @@ keywords:
   - Arrow
   - db2pq
   - WRDS
-jupyter: db2pq-test
+jupyter: python3
 ---
 
 ::: {.abstract}
@@ -267,18 +267,9 @@ But if you're reading *Tidy Finance with Python*, it seems reasonable to assume 
 Unfortunately, it turns out that we will be calculating about 2.5 million betas over windows of up to about 1,250 days each and that will be a lot of data even for Polars!^[There will be a lot of overlap in these windows and I had thought that Polars would just take the data and just process the windows at the start of each month as it passed through for each `permno`, but it seems it literally stacks copies of data for each window and I quickly ran out of RAM when I tried this.]
 
 So I ended up using batches of 500, just as *Tidy Finance* do.
-I make a function that calculates $\beta$ for 500 `permno` values at a time.
-The key element here is `group_by_dynamic()`: For each `permno`, this creates a sequence of monthly time windows over date, then aggregates within each window.
-More specifically:
-
- - `group_by="permno"` means each stock is handled separately.
- - `every="1mo"` means start a new window every 1 month.
- - `period="60mo"` means each window spans 60 months.
- - `offset="-60mo"` shifts each window backward by 60 months relative to its label/start schedule, so each monthly output row looks back over the previous 60 months rather than forward.
- - `closed="left"` means the left endpoint is included and the right endpoint is excluded.
- - `label="right"` means the output date attached to each aggregated window is the right edge of the window.
-
-So in plain English: For each stock, every month, compute summary statistics using up to 60 months of prior data, and label the result with the date at the right edge of that lookback window.
+The trick is to keep using rolling windows, but to define them over **month labels** rather than over raw daily dates.
+Each daily observation is assigned to its month, and the rolling window then spans the current month and the prior 59 months.
+This gives a 60-month lookback while still ensuring that a stock-month appears in the output only if the stock actually traded in that month.
 
 *Tidy Finance* do not provide any indication of how long their code takes to run, but let's see how long this takes to run:
 
@@ -288,7 +279,7 @@ min_obs = 1000
 batch_size = 500
 
 def get_betas_batch(permno_batch: pl.DataFrame) -> pl.LazyFrame:
-    return (
+    daily = (
         crsp_daily
         .join(permno_batch.lazy(), on="permno", how="semi")
         .select("permno", "date", "ret_excess")
@@ -307,12 +298,23 @@ def get_betas_batch(permno_batch: pl.DataFrame) -> pl.LazyFrame:
             "ret_excess",
             mkt_excess=pl.col("mktrf") - pl.col("rf"),
         )
-        .sort("permno", "date")
+        .with_columns(month=pl.col("date").dt.truncate("1mo"))
+    )
+
+    firm_months = (
+        daily
+        .select("permno", "month")
+        .unique()
+    )
+
+    return (
+        daily
+        .sort("permno", "month", "date")
         .group_by_dynamic(
-            "date",
+            "month",
             every="1mo",
             period="60mo",
-            offset="-60mo",
+            offset="-59mo",
             group_by="permno",
             closed="left",
             label="right",
@@ -323,11 +325,17 @@ def get_betas_batch(permno_batch: pl.DataFrame) -> pl.LazyFrame:
             mean_mkt=pl.col("mkt_excess").mean(),
             n=pl.len(),
         )
-        .filter(pl.col("n") >= min_obs)
+        .with_columns(month=pl.col("month").dt.offset_by("-1mo"))
+        .join(firm_months, on=["permno", "month"], how="semi")
+        .filter(
+            pl.col("n") >= min_obs,
+        )
         .with_columns(
+            date=pl.col("month"),
             alpha=pl.col("mean_ret") - pl.col("beta") * pl.col("mean_mkt")
         )
-        .drop("mean_ret", "mean_mkt")
+        .select("permno", "date", "beta", "n", "alpha")
+        .sort("permno", "date")
     )
 
 permnos = (
@@ -343,13 +351,96 @@ betas = pl.concat(
         for i in range(0, permnos.height, batch_size)
     ),
     rechunk=True,
-)
+).sort("permno", "date")
 ```
 
-So about 15 seconds for the whole lot.
+So about 15-20 seconds for the whole lot.
 
 And let's take a peek at the data:
 
 ```{python}
 betas
+```
+
+## The same analysis with Ibis and DuckDB
+
+An obvious alternative is to let DuckDB do the rolling-window work directly.
+Ibis makes this straightforward: we can connect to its default DuckDB backend, query the Parquet files in place, and then get the result as Polars table.
+
+Here I use the same idea as above.
+I label each daily row with its month, define rolling windows over those month labels, and then keep only the first daily row for each `permno`/month.
+The window spans the current month and the prior 59 months, which seems closest to the pandas implementation.
+
+```{python}
+duck = ibis.duckdb.connect()
+```
+
+```{python}
+%%time
+min_obs = 1000
+
+crsp_daily = duck.read_parquet(
+    "crsp_daily.parquet", 
+    table_name="crsp_daily")
+    
+factors_ff3_daily = duck.read_parquet(
+    "factors_ff3_daily.parquet",
+    table_name="factors_ff3_daily",
+)
+
+daily = (
+    crsp_daily
+    .select("permno", "date", "ret_excess")
+    .join(
+        factors_ff3_daily.select(
+            "date",
+            mkt_excess=(
+                _["mktrf"].cast("float64") - _["rf"].cast("float64")
+            ),
+        ),
+        "date",
+    )
+    .mutate(month=_.date.truncate("M"))
+)
+
+w_beta = ibis.trailing_range_window(
+    ibis.interval(months=59),
+    group_by=_.permno,
+    order_by=_.month,
+)
+
+w_month = ibis.window(
+    group_by=[_.permno, _.month]
+)
+
+betas_duckdb = (
+    daily
+    .mutate(
+        beta=(
+            _.mkt_excess.cov(_.ret_excess, how="sample").over(w_beta)
+            / _.mkt_excess.var(how="sample").over(w_beta)
+        ),
+        mean_ret=_.ret_excess.mean().over(w_beta),
+        mean_mkt=_.mkt_excess.mean().over(w_beta),
+        n=_.permno.count().over(w_beta),
+        first_month_date=_.date.min().over(w_month),
+    )
+    .filter(_.date == _.first_month_date, _.n >= min_obs)
+    .select(
+        "permno",
+        "month",
+        "beta",
+        "n",
+        alpha=_.mean_ret - _.beta * _.mean_mkt,
+    )
+    .rename(date="month")
+    .order_by("permno", "date")
+    .to_polars()
+)
+```
+
+And here are the resulting betas:
+
+```{python}
+betas_duckdb
 ```
