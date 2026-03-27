@@ -78,6 +78,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+<script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@*/dist/embed-amd.js" crossorigin="anonymous"></script>
 
 
 </head>
@@ -174,7 +175,7 @@ WRDS_PASSWORD=password</code></pre>
 <p>Below I show how one can simplify the code dramatically (no batches!) and download the data faster (for me, it takes <em>less than a minute</em>) and with no significant burden on either the CPU or RAM.</p>
 <p>An issue with translating the <code>lazy_tbl_to_pq()</code> function from the R version of my <code>db2pq</code> package is that there is no equivalent of <code>dbplyr</code> for Python. While Python Polars has its <code>LazyFrame</code>, the Tidy Finance task involves extracting data from a PostgreSQL database and Polars has no way of creating lazy data frames from database connections. The closest analogue is surely Ibis. So I added a function <code>ibis_to_pq()</code> to my Python package <code>db2pq</code> and in this note I take it for a spin.</p>
 <p>I start by creating a connection to the WRDS PostgreSQL database. Here I follow the <a href="https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html#accessing-wrds"><em>Tidy Finance</em> approach</a> closely. But so long as <code>wrds</code> is a <code>psycopg</code>-backed SQLAlchemy engine for the WRDS PostgreSQL database, you should be able to use whatever approach you are used to.</p>
-<div id="c1fd5991" class="cell" data-execution_count="2">
+<div id="88b7abc5" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sqlalchemy <span class="im">import</span> create_engine</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dotenv <span class="im">import</span> load_dotenv</span>
@@ -190,32 +191,32 @@ WRDS_PASSWORD=password</code></pre>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>wrds <span class="op">=</span> create_engine(connection_string, pool_pre_ping<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Having established <code>wrds</code>, I load in the packages I will be using.</p>
-<div id="49502139" class="cell" data-execution_count="3">
+<div id="5adb4a05" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> ibis</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> ibis <span class="im">import</span> _</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> ibis_to_pq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Then I turn <code>wrds</code> into an Ibis instance with WRDS PostgreSQL as its <strong>backend</strong>. You can learn more about Ibis <a href="https://ibis-project.org">here</a>.</p>
-<div id="01e0a572" class="cell" data-execution_count="4">
+<div id="a6895917" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> ibis.postgres.from_connection(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    wrds.<span class="ex">connect</span>().connection.driver_connection</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I then set up Ibis <strong>lazy tables</strong> for the three tables I will use here.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
-<div id="0dc4687e" class="cell" data-execution_count="5">
+<div id="62592644" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dsf <span class="op">=</span> db.table(<span class="st">"dsf_v2"</span>, database<span class="op">=</span><span class="st">"crsp"</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>stksecurityinfohist <span class="op">=</span> db.table(<span class="st">"stksecurityinfohist"</span>, database<span class="op">=</span><span class="st">"crsp"</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>factors_daily <span class="op">=</span> db.table(<span class="st">"factors_daily"</span>, database<span class="op">=</span><span class="st">"ff"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Ibis offers an “interactive” option that makes it easier to work with lazy tables.</p>
-<div id="ddac0bf0" class="cell" data-execution_count="6">
+<div id="37b66771" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ibis.options.interactive <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s look at <code>ff3</code>:</p>
-<div id="5a58a097" class="cell" data-execution_count="7">
+<div id="92d2878e" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>factors_daily</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="6">
+<div class="cell-output cell-output-display" data-execution_count="18">
 <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
 ┃<span style="font-weight: bold"> date       </span>┃<span style="font-weight: bold"> mktrf         </span>┃<span style="font-weight: bold"> smb           </span>┃<span style="font-weight: bold"> hml           </span>┃<span style="font-weight: bold"> rf            </span>┃<span style="font-weight: bold"> umd           </span>┃
 ┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
@@ -237,9 +238,9 @@ WRDS_PASSWORD=password</code></pre>
 </div>
 </div>
 <p>And then <code>dsf</code>:</p>
-<div id="fcb56828" class="cell" data-execution_count="8">
+<div id="1775135b" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dsf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="7">
+<div class="cell-output cell-output-display" data-execution_count="19">
 <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━┓
 ┃<span style="font-weight: bold"> permno </span>┃<span style="font-weight: bold"> hdrcusip  </span>┃<span style="font-weight: bold"> permco </span>┃<span style="font-weight: bold"> siccd </span>┃<span style="font-weight: bold"> nasdissuno </span>┃<span style="font-weight: bold"> yyyymmdd </span>┃<span style="font-weight: bold"> sharetype </span>┃<span style="font-weight: bold"> securitytype </span>┃<span style="font-weight: bold"> securitysubtype </span>┃<span style="font-weight: bold"> usincflg  </span>┃<span style="font-weight: bold"> issuertype </span>┃<span style="font-weight: bold"> primaryexch </span>┃<span style="font-weight: bold"> conditionaltype </span>┃<span style="font-weight: bold"> tradingstatusflg </span>┃<span style="font-weight: bold"> dlycaldt   </span>┃<span style="font-weight: bold"> dlydelflg </span>┃<span style="font-weight: bold"> dlyprc         </span>┃<span style="font-weight: bold"> dlyprcflg </span>┃<span style="font-weight: bold"> dlycap         </span>┃<span style="font-weight: bold"> dlycapflg </span>┃<span style="font-weight: bold"> dlyprevprc     </span>┃<span style="font-weight: bold"> dlyprevprcflg </span>┃<span style="font-weight: bold"> dlyprevdt  </span>┃<span style="font-weight: bold"> dlyprevcap     </span>┃<span style="font-weight: bold"> dlyprevcapflg </span>┃<span style="font-weight: bold"> dlyret         </span>┃<span style="font-weight: bold"> dlyretx        </span>┃<span style="font-weight: bold"> dlyreti        </span>┃<span style="font-weight: bold"> dlyretmissflg </span>┃<span style="font-weight: bold"> dlyretdurflg </span>┃<span style="font-weight: bold"> dlyorddivamt   </span>┃<span style="font-weight: bold"> dlynonorddivamt </span>┃<span style="font-weight: bold"> dlyfacprc      </span>┃<span style="font-weight: bold"> dlydistretflg </span>┃<span style="font-weight: bold"> dlyvol         </span>┃<span style="font-weight: bold"> dlyclose       </span>┃<span style="font-weight: bold"> dlylow         </span>┃<span style="font-weight: bold"> dlyhigh        </span>┃<span style="font-weight: bold"> dlybid         </span>┃<span style="font-weight: bold"> dlyask         </span>┃<span style="font-weight: bold"> dlyopen        </span>┃<span style="font-weight: bold"> dlynumtrd </span>┃<span style="font-weight: bold"> dlymmcnt </span>┃<span style="font-weight: bold"> dlyprcvol      </span>┃<span style="font-weight: bold"> dlycumfacpr     </span>┃<span style="font-weight: bold"> dlycumfacshr    </span>┃<span style="font-weight: bold"> cusip     </span>┃<span style="font-weight: bold"> ticker    </span>┃<span style="font-weight: bold"> exchangetier </span>┃<span style="font-weight: bold"> shrout </span>┃
 ┡━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━┩
@@ -260,12 +261,12 @@ WRDS_PASSWORD=password</code></pre>
 </pre>
 </div>
 </div>
-<div id="83108ffb" class="cell" data-execution_count="9">
+<div id="abbaafe1" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"1960-01-01"</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="op">=</span> <span class="st">"2024-12-31"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>For clarity, in translating the original <em>Tidy Finance</em> query, I break out the <code>security</code> sub-query from the main query.</p>
-<div id="80ecc3fd" class="cell" data-execution_count="10">
+<div id="b3f36e04" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>security <span class="op">=</span> (</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    stksecurityinfohist</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(</span>
@@ -285,7 +286,7 @@ WRDS_PASSWORD=password</code></pre>
 <span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I next construct the main <code>crsp_daily</code> query.</p>
-<div id="c334facc" class="cell" data-execution_count="11">
+<div id="a5af4d00" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> (</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    dsf</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.dlycaldt.between(start_date, end_date))</span>
@@ -315,9 +316,9 @@ WRDS_PASSWORD=password</code></pre>
 <span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s take a peek at <code>crsp_daily</code>, which is still a lazy table:</p>
-<div id="04453cdc" class="cell" data-execution_count="12">
+<div id="890c183c" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>crsp_daily</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="11">
+<div class="cell-output cell-output-display" data-execution_count="23">
 <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┓
 ┃<span style="font-weight: bold"> permno </span>┃<span style="font-weight: bold"> date       </span>┃<span style="font-weight: bold"> ret       </span>┃<span style="font-weight: bold"> ret_excess </span>┃
 ┡━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━┩
@@ -339,26 +340,26 @@ WRDS_PASSWORD=password</code></pre>
 </div>
 </div>
 <p>The next step is to create a Parquet file from <code>crsp_daily</code> using <code>ibis_to_pq()</code>.</p>
-<div id="97e29f00" class="cell" data-cache="true" data-execution_count="13">
+<div id="709e243c" class="cell" data-cache="true" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>ibis_to_pq(crsp_daily, <span class="st">"crsp_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 2min 33s, sys: 10.1 s, total: 2min 43s
-Wall time: 4min 20s</code></pre>
+<pre><code>CPU times: user 1min 14s, sys: 34.7 s, total: 1min 49s
+Wall time: 12min 28s</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="12">
+<div class="cell-output cell-output-display" data-execution_count="24">
 <pre><code>'crsp_daily.parquet'</code></pre>
 </div>
 </div>
 <p>For some reason, <code>ibis_to_pq()</code> does not perform quite as well as its sibling <code>lazy_tbl_to_pq()</code> in the R version of <code>db2pq</code>.</p>
-<div id="1c6b135f" class="cell" data-cache="true" data-execution_count="14">
+<div id="de838c4c" class="cell" data-cache="true" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ibis_to_pq(factors_daily, <span class="st">"factors_ff3_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 227 ms, sys: 18.1 ms, total: 245 ms
-Wall time: 644 ms</code></pre>
+<pre><code>CPU times: user 10.7 s, sys: 862 ms, total: 11.5 s
+Wall time: 34 s</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="13">
+<div class="cell-output cell-output-display" data-execution_count="25">
 <pre><code>'factors_ff3_daily.parquet'</code></pre>
 </div>
 </div>
@@ -370,7 +371,7 @@ Wall time: 644 ms</code></pre>
 <p>We then create a connection to the daily CRSP data, but we don’t load the whole table into our memory. We only extract all distinct <code>permno</code> because we loop the beta estimation over batches of stocks with size 500. To estimate the CAPM over a consistent lookback window while accommodating different return frequencies, we adjust the minimum required number of observations accordingly. Specifically, we require at least 1,000 daily returns over a five‑year period for a valid estimation. This threshold is consistent with the monthly requirement of 48 observations out of 60 months, given that there are roughly 252 trading days in a year.</p>
 </blockquote>
 <p>The <em>Tidy Finance</em> code uses pandas, but I will use Python Polars, which does much better with larger data sets. I start by creating <code>LazyFrame</code> instances of the two tables that are used in calculating betas.</p>
-<div id="98cf7f04" class="cell" data-execution_count="15">
+<div id="35419919" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> pl.scan_parquet(<span class="st">"crsp_daily.parquet"</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily <span class="op">=</span> pl.scan_parquet(<span class="st">"factors_ff3_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -378,7 +379,7 @@ Wall time: 644 ms</code></pre>
 <p>Unfortunately, it turns out that we will be calculating about 2.5 million betas over windows of up to about 1,250 days each and that will be a lot of data even for Polars!<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
 <p>So I ended up using batches of 500, just as <em>Tidy Finance</em> do. The trick is to keep using rolling windows, but to define them over <strong>month labels</strong> rather than over raw daily dates. Each daily observation is assigned to its month, and the rolling window then spans the current month and the prior 59 months. This gives a 60-month lookback while still ensuring that a stock-month appears in the output only if the stock actually traded in that month.</p>
 <p><em>Tidy Finance</em> do not provide any indication of how long their code takes to run, but let’s see how long this takes to run:</p>
-<div id="403532c6" class="cell" data-execution_count="16">
+<div id="4045d80f" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>min_obs <span class="op">=</span> <span class="dv">1000</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>batch_size <span class="op">=</span> <span class="dv">500</span></span>
@@ -458,15 +459,15 @@ Wall time: 644 ms</code></pre>
 <span id="cb21-77"><a href="#cb21-77" aria-hidden="true" tabindex="-1"></a>    rechunk<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb21-78"><a href="#cb21-78" aria-hidden="true" tabindex="-1"></a>).sort(<span class="st">"permno"</span>, <span class="st">"date"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 33 s, sys: 14.8 s, total: 47.8 s
-Wall time: 17.8 s</code></pre>
+<pre><code>CPU times: user 31.9 s, sys: 13.3 s, total: 45.2 s
+Wall time: 18.3 s</code></pre>
 </div>
 </div>
 <p>So about 15-20 seconds for the whole lot.</p>
 <p>And let’s take a peek at the data:</p>
-<div id="138c30ed" class="cell" data-execution_count="17">
+<div id="151cef6f" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>betas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="16">
+<div class="cell-output cell-output-display" data-execution_count="28">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -580,10 +581,10 @@ Wall time: 17.8 s</code></pre>
 <h2 data-number="1.2" class="anchored" data-anchor-id="the-same-analysis-with-ibis-and-duckdb"><span class="header-section-number">1.2</span> The same analysis with Ibis and DuckDB</h2>
 <p>An obvious alternative is to let DuckDB do the rolling-window work directly. Ibis makes this straightforward: we can connect to its default DuckDB backend, query the Parquet files in place, and then get the result as Polars table.</p>
 <p>Here I use the same idea as above. I label each daily row with its month, define rolling windows over those month labels, and then keep only the first daily row for each <code>permno</code>/month. The window spans the current month and the prior 59 months, which seems closest to the pandas implementation.</p>
-<div id="ed83baf1" class="cell" data-execution_count="18">
+<div id="b9bfc79b" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>duck <span class="op">=</span> ibis.duckdb.<span class="ex">connect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cf3a4d41" class="cell" data-execution_count="19">
+<div id="e581e620" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>min_obs <span class="op">=</span> <span class="dv">1000</span></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -645,15 +646,20 @@ Wall time: 17.8 s</code></pre>
 <span id="cb25-59"><a href="#cb25-59" aria-hidden="true" tabindex="-1"></a>    .order_by(<span class="st">"permno"</span>, <span class="st">"date"</span>)</span>
 <span id="cb25-60"><a href="#cb25-60" aria-hidden="true" tabindex="-1"></a>    .to_polars()</span>
 <span id="cb25-61"><a href="#cb25-61" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"a84c1c4e437643bebde385a2c0b00aba","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 2min 30s, sys: 6.8 s, total: 2min 37s
-Wall time: 14.8 s</code></pre>
+<pre><code>CPU times: user 2min 20s, sys: 17.1 s, total: 2min 37s
+Wall time: 14.7 s</code></pre>
 </div>
 </div>
 <p>And here are the resulting betas:</p>
-<div id="f97a9b55" class="cell" data-execution_count="20">
+<div id="abed06ad" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>betas_duckdb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="19">
+<div class="cell-output cell-output-display" data-execution_count="31">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -775,6 +781,9 @@ Wall time: 14.8 s</code></pre>
 </ol>
 </section></div></main>
 <!-- /main column -->
+<script type="application/vnd.jupyter.widget-state+json">
+{"state":{"27038cb029e54738875a7392c643e5be":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":"auto"}},"a84c1c4e437643bebde385a2c0b00aba":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"","description":"","description_allow_html":false,"layout":"IPY_MODEL_27038cb029e54738875a7392c643e5be","max":100,"min":0,"orientation":"horizontal","style":"IPY_MODEL_ec611dcee54147709c1af6679f93eede","tabbable":null,"tooltip":null,"value":100}},"ec611dcee54147709c1af6679f93eede":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":"black","description_width":""}}},"version_major":2,"version_minor":0}
+</script>
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
