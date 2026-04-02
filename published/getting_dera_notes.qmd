@@ -9,27 +9,29 @@ format:
     number-sections: true
     colorlinks: true
     csl: jfe.csl
+    fig-format: png
   typst:
     toc: false
     number-sections: true
     colorlinks: true
     linkcolor: "#0000FF"
     bibliographystyle: harvard-cite-them-right
+    fig-format: pdf
     margin:
       x: 2cm
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
     monofont: Menlo
 bibliography: papers.bib
 execute:
   freeze: auto
 ---
 
-In a [recent note](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), I used XBRL data to identify potentially missing Form AP filings.
+In a [recent note](../missing_form_aps.html), I used XBRL data to identify potentially missing Form AP filings.
 In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data.
 However, I provided no real information on how to get the XBRL data from SEC EDGAR.
-This note aims to provide this missing information.^[Guidance on downloading the Form AP data is provided in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf) I wrote.]
+This note aims to provide this missing information.^[Guidance on downloading the Form AP data is provided in [an earlier note](../form_ap_names.html) I wrote.]
 
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/getting_dera_notes.qmd) and the latest version of this PDF is [here](https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf).
@@ -55,7 +57,7 @@ library(tinytable)
 ## Getting *Financial Statement and Notes* files
 
 There are two XBRL bulk data sets made available on SEC EDGAR: the [*Financial Statements*](https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets) and [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) data sets, with the latter being roughly ten times as large as the former.
-For the task considered in the [note discussed above](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf), we needed the *Financial Statement and Notes* data set, so I focus on that data set here.
+For the task considered in the [note discussed above](../missing_form_aps.html), we needed the *Financial Statement and Notes* data set, so I focus on that data set here.
 
 ### Structure of processed data
 

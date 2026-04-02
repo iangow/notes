@@ -9,16 +9,18 @@ number-sections: true
 categories: ["Data curation", dbplyr, SQL, DuckDB]
 format:
   html:
-    default
+    colorlinks: true
+    fig-format: png
   typst:
     colorlinks: true
     linkcolor: "#0000FF"
     bibliographystyle: harvard-cite-them-right
+    fig-format: pdf
     margin:
       x: 2cm
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
     monofont: Menlo
 bibliography: papers.bib
 execute:
@@ -252,7 +254,7 @@ CREATE TYPE band AS ENUM ('1 to 4', '5 to 10', '11 to 20', '21+')
 ```
 
 The following is a modified version of the SQL query found on page 173 of Chapter 4 of *SQL for Data Analysis*.^[Apart from formatting changes, the main modification I made to the query was the use of **common-table expressions** (**CTEs**) in place of subqueries. 
-I discuss the merits of CTEs (and of using `dbplyr` to write SQL) [here](https://github.com/iangow/notes/blob/main/ctes.pdf).]
+I discuss the merits of CTEs (and of using `dbplyr` to write SQL) [here](ctes.html).]
 As can be seen, because of how we defined the `band` data type, it is meaningful to sort by `tenure` (check what happens if you omit the casting of `tenure` to type `band` using `::band`).
 
 ```{sql}

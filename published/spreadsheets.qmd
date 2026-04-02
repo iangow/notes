@@ -23,8 +23,8 @@ format:
     margin:
       x: 2cm
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
     monofont: Menlo
 bibliography: papers.bib
 execute:
@@ -54,11 +54,11 @@ This document is that follow-up paper ... a mere nine years later!
 In this note, I provide a different perspective on data collection---albeit one that I hope is complementary to that in @Broman:2018aa---with a detailed extended case study to illustrate the ideas I discuss.
 
 This note also completes the three-part series of notes written to address gaps in the coverage of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@Gow_2024] relative to [*R for Data Science*](https://r4ds.hadley.nz).^[My aim with these notes is not to replace existing resources such as *R for Data Science*, but to build on them with applied examples using richer data sets.]
-Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
+Previous notes covered [hierarchical data](../sec_submissions.html) and [dates and times](../unpublished/datetimes.html) and this note covers spreadsheets.
 As discussed in a [post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* was published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press in 2024 and remains free online at <https://iangow.github.io/far_book>.]
 
 
-The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [another earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
+The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.^[Guidance on downloading the Form AP data is provided in [another earlier note](../form_ap_names.html).]
 I also provide brief sketches of the use of spreadsheets in data collection drawing on research projects I have participated in.
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "farr", "googlesheets4", "arrow", "dbplyr")` within R to install all the packages you need to run the code in this note.]
@@ -116,7 +116,7 @@ knitr::include_graphics("images/data-science-collect.png", dpi = 300)
 ```
 
 First, the import process should be done as much as possible in a script that allows the whole process to be repeated.
-Importing spreadsheets falls clearly into the *Curate* portion of the extended "whole game" of a data analysis workflow depicted in @fig-whole-game.^[@fig-whole-game is a slightly expected version of the "whole game" I discussed in [an earlier note](https://github.com/iangow/notes/blob/main/import_sirca.pdf) on data curation---itself an extension of the whole game depicted in @Wickham:2023aa [p. xii].]
+Importing spreadsheets falls clearly into the *Curate* portion of the extended "whole game" of a data analysis workflow depicted in @fig-whole-game.^[@fig-whole-game is a slightly expected version of the "whole game" I discussed in [an earlier note](import_sirca.html) on data curation---itself an extension of the whole game depicted in @Wickham:2023aa [p. xii].]
 The whole *Curate* process should be documented and scripted as much as possible.
 For example, if the spreadsheet data come from a URL for a Microsoft Excel file, then the download step should be [if possible] part of the script.
 
@@ -130,7 +130,7 @@ I had one project where the source data appeared to be `.xls` Excel files, but w
 Scripts written on this basis performed better than ones that read them as Excel data.^["Performed better" here means not only that the scripts worked faster, but that the imported data were easier to work with.]
 However, when updated spreadsheets were received from the vendor they first passed through the data team at the institution I then worked at and my scripts no longer worked.
 The data team had "helpfully" opened the files in Excel and saved them before sending them along to me.
-I had to insist that the data team pass along the data files *exactly* as they had received them without "helpful" steps in between.^[Additional examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in [my earlier note](https://github.com/iangow/notes/blob/main/import_sirca.pdf).]
+I had to insist that the data team pass along the data files *exactly* as they had received them without "helpful" steps in between.^[Additional examples of what can go wrong if one opens a structured text data file in Excel and saves it are provided in [my earlier note](import_sirca.html).]
 
 The deleterious effects of "simply" opening a file in Excel and saving it can be seen by comparing @tbl-orig with @tbl-excel.
 @tbl-orig shows the original data, while @tbl-excel shows the file created by Excel.
@@ -477,7 +477,7 @@ ipo_auditors <-
 ## Form AP data
 
 According to the [PCAOB](https://pcaobus.org/oversight/standards/implementation-resources-PCAOB-standards-rules/form-ap-auditor-reporting-certain-audit-participants), "registered audit firms are required to submit Form AP, *Auditor Reporting of Certain Audit Participants*, to disclose the names of engagement partners and other accounting firms that participated in their audits of public companies."
-The PCAOB provides a database constructed from Form AP filings on its website and I have written about this in a [previous note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).
+The PCAOB provides a database constructed from Form AP filings on its website and I have written about this in a [previous note](../form_ap_names.html).
 The Form AP database is contained in the file `form_aps.parquet` that I have made available at <https://go.unimelb.edu.au/4iq8>.
 
 Again you could download this data file into the `pcaob` schema of a data repository organized along the lines of that I discuss in [Appendix E](https://iangow.github.io/far_book/parquet-wrds.html) of [*Empirical Research in Accounting: Tools and Methods*](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) and then load it into a DuckDB database using code like this:

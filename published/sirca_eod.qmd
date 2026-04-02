@@ -7,18 +7,21 @@ author:
 date: 2025-09-11
 categories: [Australia, SIRCA, ASX, CSV, Parquet, dbplyr]
 date-format: "D MMMM YYYY"
+number-sections: true
 format:
   html:
     colorlinks: true
+    fig-format: png
   typst:
     colorlinks: true
     linkcolor: "#0000FF"
     bibliographystyle: harvard-cite-them-right
+    fig-format: pdf
     margin:
       x: 2.5cm
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
     monofont: Menlo
 bibliography: papers.bib
 execute:
@@ -31,7 +34,7 @@ SIRCA's ASX EOD (end of day) collection provides daily prices for ASX-listed com
 This note, based on SIRCA's own `Guide to ASX End of Day Prices.pdf`, provides an introduction to the SIRCA ASX EOD collection.
 
 The SIRCA ASX EOD collection includes the tables listed in @tbl-asx-eod-keys.
-More details can be found in my separate document on importing SIRCA ASX EOF data [here](https://github.com/iangow/notes/blob/main/import_sirca.pdf).
+More details can be found in my separate document on importing SIRCA ASX EOF data [here](import_sirca.html).
 
 | Table               | Description  | Primary key                            |
 |---------------------|--------------|-------------------------:|
@@ -139,12 +142,12 @@ Sys.setenv(DATA_DIR = t)
 
 With the needed packages installed, and `RAW_DATA_DIR` and `DATA_DIR` set, we can run the script to process the SIRCA raw data with the following line.
 On my computer, this script takes about 6 seconds to run.
-If you wish to learn more about what the script is doing, please see the separate document on importing SIRCA ASX EOF data [here](https://github.com/iangow/notes/blob/main/import_sirca.pdf).
+If you wish to learn more about what the script is doing, please see the separate document on importing SIRCA ASX EOF data [here](import_sirca.html).
 
 ```{r}
 #| cache: true
 #| message: false
-source("https://raw.githubusercontent.com/iangow/notes/main/import_sirca.R", 
+source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/published/import_sirca.R", 
        echo = FALSE) |>
   system.time()
 ```
