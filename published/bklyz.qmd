@@ -6,12 +6,14 @@ date-format: "D MMMM YYYY"
 categories: [Research methods, Machine learning]
 format:
   html:
-    default
-  pdf: 
+    fig-format: svg
+  typst:
     colorlinks: true
-    geometry:
-      - left=2.5cm
-      - right=2.5cm
+    linkcolor: "#0000FF"
+    bibliographystyle: harvard-cite-them-right
+    fig-format: pdf
+    margin:
+      x: 2.5cm
     papersize: a4
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
@@ -263,7 +265,7 @@ As such, we use the "final" data set used by @Bao:2020aa and reconstruct the rel
 ```{r}
 jar_data <-
     read_csv(paste0("https://raw.githubusercontent.com/JarFraud/",
-                    "FraudDetection/master/",
+                    "FraudDetection/refs/heads/master/",
                     "data_FraudDetection_JAR2020.csv"),
              col_types = "d") |>
     mutate(gvkey = str_pad(gvkey, 6, side = "left", pad = "0"),
