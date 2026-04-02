@@ -4,37 +4,34 @@ author: Ian D. Gow
 date: 2026-03-26
 date-format: "D MMMM YYYY"
 categories: [Python, Parquet, db2pq, benchmarks, PostgreSQL]
+abstract: |
+  The Arrow Parquet file format has emerged in recent years as a key enabler of several technologies that have the potential to revolutionalize data analysis.
+  For example, Polars is a "next-generation" data frame library that is much faster and more memory-efficient than pandas, the dominant data frame library for Python.
+  However, the performance and efficiency of Polars depends on having the data in an efficient form such as is offered by the Parquet format.
+  Polars really loses its edge when the data it wants are located in a relational database.
+  In such a case, a natural question is: How do get data out of the database and into Parquet files?
+
+  This note explores a few ways of getting Parquet files from a PostgreSQL database, showing how to use them and comparing them with each other.
 format:
   html:
     colorlinks: true
     number-sections: true
-  pdf:
+  typst:
     number-sections: true
     colorlinks: true
-    geometry:
-      - left=2cm
-      - right=2cm
+    linkcolor: "#0000FF"
+    fig-format: pdf
+    margin:
+      x: 2cm
     papersize: a4
-    filters:
-      - ../abstract.lua
-    include-in-header: ../preamble.tex
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    monofont: Menlo
 execute:
   cache: true
   freeze: auto
-jupyter: python3
+jupyter: db2pq-test
 ---
-
-::: {.abstract}
-The Arrow Parquet file format has emerged in recent years as a key enabler of several technologies that have the potential to revolutionalize data analysis.
-For example, Polars is a "next-generation" data frame library that is much faster and more memory-inefficient than pandas, the dominant data frame library for Python.
-However, the performance and efficiency of Polars depends on having the data in an efficient form such as is offered by the Parquet format.
-Polars really loses its edge when the data it wants are located in a relational database.
-In such a case, a natural question is: How do get data out of the database and into Parquet files?
-
-This note explores a few ways of getting Parquet files from a PostgreSQL database, showing how to use them and comparing them with each other.
-:::
 
 # PostgreSQL
 

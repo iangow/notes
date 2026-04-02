@@ -4,22 +4,25 @@ author: Ian D. Gow
 date: 2026-03-23
 date-format: "D MMMM YYYY"
 categories: [Python, Parquet, db2pq, WRDS, "Tidy Finance"]
+abstract: |
+  In a note I published yesterday ([*Converting lazy data frames into Parquet files*](../published/lazy_tbl_to_pq.html)), I showed how my `db2pq` R package can be used to turn “lazy data frames” produced by the R package `dbplyr` into Parquet files on disk without needing to load the data into memory.
+  Today, I wondered if I could do the same with my `db2pq` *Python* package.
+  In this note, I turn "lazy data frames" produced by Ibis into Parquet files on disk.
 format:
   html:
     colorlinks: true
     number-sections: true
-  pdf: 
+  typst: 
     number-sections: true
     colorlinks: true
-    geometry:
-      - left=2cm
-      - right=2cm
+    linkcolor: "#0000FF"
+    fig-format: pdf
+    margin:
+      x: 2cm
     papersize: a4
-    filters:
-      - ../abstract.lua
-    include-in-header: ../preamble.tex
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    monofont: Menlo
 execute:
   cache: true
   freeze: auto
@@ -29,14 +32,8 @@ keywords:
   - Arrow
   - db2pq
   - WRDS
-jupyter: python3
+jupyter: db2pq-test
 ---
-
-::: {.abstract}
-In a note I published yesterday ([*Converting lazy data frames into Parquet files*](../published/lazy_tbl_to_pq.html)), I showed how my `db2pq` R package can be used to turn “lazy data frames” produced by the R package `dbplyr` into Parquet files on disk without needing to load the data into memory.
-Today, I wondered if I could do the same with my `db2pq` *Python* package.
-In this note, I turn "lazy data frames" produced by Ibis into Parquet files on disk.
-:::
 
 ::: {.callout-note}
 The source for this note is available in [a folder on GitHub](https://github.com/iangow/notes/tree/main/db2pq_test) that contains two files:
@@ -228,9 +225,7 @@ The next step is to create a Parquet file from `crsp_daily` using `ibis_to_pq()`
 ibis_to_pq(crsp_daily, "crsp_daily.parquet")
 ```
 
-For some reason, `ibis_to_pq()` does not perform as well as its sibling `lazy_tbl_to_pq()` in the R version of `db2pq`.
-This performance is a bit disappointing given that I had  `ibis_to_pq()` use the ADBC driver rather than the default `psycopg` driver used by Ibis.
-I was surprised that Ibis did not support the Arrow driver.
+For some reason, `ibis_to_pq()` does not perform quite as well as its sibling `lazy_tbl_to_pq()` in the R version of `db2pq`.
 
 ```{python}
 #| eval: true
