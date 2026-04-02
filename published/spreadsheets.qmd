@@ -5,31 +5,31 @@ date: 2026-02-05
 date-format: "D MMMM YYYY"
 number-sections: true
 categories: ["Data curation", Spreadsheets]
+abstract: |
+  This note discusses data collection with spreadsheets, focusing on situations where researchers use Google Sheets to organize and monitor collaborative data collection.
+  It uses a case study linking US IPO data with auditor identifiers to illustrate practical issues in spreadsheet-based workflows and how to address them.
 format:
   html:
     colorlinks: true
-  pdf: 
+    csl: jfe.csl
+  typst: 
     colorlinks: true
-    geometry:
-      - left=2cm
-      - right=2cm
+    linkcolor: "#0000FF"
+    bibliographystyle: harvard-cite-them-right
+    fig-format: pdf
+    include-in-header:
+      text: |
+        #set text(font: ("TeX Gyre Pagella", "Apple SD Gothic Neo"))
+    margin:
+      x: 2cm
     papersize: a4
-    filters:
-      - ../abstract.lua
-    include-in-header: ../preamble.tex
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
+    monofont: Menlo
 bibliography: papers.bib
-csl: jfe.csl
 execute:
   freeze: auto
 ---
-
-::: {.abstract}
-This note also completes the three-part series of notes written to address gaps in the coverage of @gow2024empirical relative to @Wickham:2023aa.^[My aim with these notes is not to replace existing resources such as @Wickham:2023aa, but to build on them with applied examples using richer data sets.]
-Previous notes covered [hierarchical data](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.pdf) and [dates and times](https://raw.githubusercontent.com/iangow/notes/main/datetimes.pdf) and this note covers spreadsheets.
-As discussed in a [post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) (co-authored with [Tony Ding](https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding)) is to provide a pathway to mastery of the contents of [*R for Data Science*](https://r4ds.hadley.nz).^[*Empirical Research in Accounting: Tools and Methods* was published in [print form](https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502) by CRC Press in 2024 and remains free online at <https://iangow.github.io/far_book>.]
-:::
 
 In writing about data science there is a definite tendency to emphasize the "sexy" aspects, such as machine learning algorithms or fancy statistics.
 This is the case even though it seems to be widely understood that a lot of the critical work involves unsexy tasks related to the organization of data.
@@ -410,9 +410,7 @@ expert_counts <-
 #| tbl-cap: Statistics for different kinds of experts
 expert_counts |>
   collect() |>
-  kableExtra::kbl(format.args = list(big.mark = ","),
-                  linesep = "",
-                  booktabs = TRUE)
+  knitr::kable(format.args = list(big.mark = ","))
 ```
 
 ```{r}
@@ -440,10 +438,7 @@ Not every deal has a lead underwriter, but from @tbl-no-uws, it can be seen that
 #| tbl-cap: Statistics for IPOs without lead underwriters
 expert_counts_wo_lead |>
   collect() |>
-  kableExtra::kbl(format.args = list(big.mark = ","),
-               # longtable = FALSE,
-                   position = "h", 
-                    booktabs = TRUE)
+  knitr::kable(format.args = list(big.mark = ","))
 ```
 
 The [information for GLMD](https://www.nasdaq.com/market-activity/ipos/experts?dealId=926632-74581) in the `ipo_experts.parqueet` file is shown in @tbl-glmd-experts, where we see a number of things.
@@ -456,10 +451,7 @@ ipo_experts |>
   filter(dealID == "926632-74581") |>
   select(-dealID) |>
   collect() |>
-  kableExtra::kbl(format.args = list(big.mark = ","),
-                  position = "!h", 
-                  linesep = "",
-                  booktabs = TRUE)
+  knitr::kable(format.args = list(big.mark = ","))
 ```
 
 First, there appear to be "two auditors", albeit with names that appear to differ only in the point at which the names are truncated with "`...`".
@@ -666,10 +658,7 @@ Looking at @tbl-top-match-problems, we see that there are multiple `firm_id` val
 #| tbl-cap: Contents of `top_match_problems`
 top_match_problems |>
   collect() |>
-  tt() |>
-  format_tt(escape = TRUE) |>
-  style_tt(fontsize = 0.9,
-           align = "rllr")
+  knitr::kable()
 ```
 
 Some additional digging (using data in `form_aps`) confirms that the main explanation is that the different `firm_id` values relate to different national partnerships of Big Four audit firms.
@@ -685,10 +674,9 @@ form_aps |>
                select(firm_id, firm_name), by = "firm_id", copy = TRUE) |>
   select(firm_id, firm_name, firm_country) |>
   arrange(firm_name) |>
-  collect() |> 
-  tt() |>
-  format_tt(escape = TRUE) |>
-  style_tt(fontsize = 0.9)
+  collect() |>
+  mutate(firm_name = stringr::str_wrap(firm_name, width = 22)) |>
+  knitr::kable()
 ```
 
 ### Manual links by `dealID`
@@ -1122,7 +1110,5 @@ Often the Google Sheets used to this end were populated by data created using SQ
 
 ## Matching identifiers
 
-While the idea of matching identifiers studied in @sec-main-case might seem fairly arcane, this is actually one of the most common use cases for data collection with Google Sheets.
+While the idea of matching identifiers in the case study above might seem fairly arcane, this is actually one of the most common use cases for data collection with Google Sheets.
 Whether it is matching CIKs with GVKEYs or matching StreetEvents conference call IDs with PERMNOs, Google Sheets implemented with the kinds of processes and best practices described above has been invaluable in my research efforts.^[To learn about GVKEYs and PERMNOs, see [Chapter 7](https://iangow.github.io/far_book/identifiers.html) of @Gow_2024.]
-
-# References {-}

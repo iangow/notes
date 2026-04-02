@@ -15,16 +15,21 @@ format:
     toc-location: right
     toc-depth: 3
     colorlinks: true
-  pdf:
+    csl: ../jfe.csl
+  typst:
     colorlinks: true
-    geometry:
-    - left=2.5cm
-    - right=2.5cm
+    linkcolor: "#0000FF"
+    bibliographystyle: harvard-cite-them-right
+    fig-format: pdf
+    margin:
+      x: 2.5cm
+    toc: true
+    toc-depth: 3
     papersize: a4
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
-bibliography: ../papers.bib
-csl: ../jfe.csl
+    monofont: Menlo
+bibliography: papers.bib
 execute:
   freeze: auto
 keywords:
@@ -34,6 +39,8 @@ keywords:
 
 ```{r}
 #| include: false
+Sys.setenv(RETICULATE_USE_MANAGED_VENV = "no")
+Sys.setenv(RETICULATE_PYTHON = "../.venv/bin/python")
 library(reticulate)
 knitr::opts_chunk$set(
   cache.path = "curate_call_reports_cache/"
@@ -1169,5 +1176,3 @@ I think ChatGPT did not understand that this code is not being put into a produc
 In effect, I have the population of zip files and, because of how I wrote the code, any errors in reading would've have just stopped the code.
 Using that one-liner allowed me to delete 700 lines of sloppy AI code.
 That said, I'm not sure I would have attempted this task if AI weren't along for the ride.
-
-# References {-}
