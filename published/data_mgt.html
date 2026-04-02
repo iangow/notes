@@ -186,7 +186,7 @@ div.csl-indent {
   <li><a href="#other-ideas" id="toc-other-ideas" class="nav-link" data-scroll-target="#other-ideas"><span class="header-section-number">2.3</span> Other ideas</a></li>
   </ul></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="data_mgt.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="data_mgt.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -223,6 +223,12 @@ div.csl-indent {
     
   </div>
   
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While many of the ideas I discuss here are general in nature, for concreteness, I focus on the special case of a WRDS user maintaining a local Parquet data library of the kind discussed in <a href="https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq">Appendix E</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> and provide examples using my Python package <code>db2pq</code>.</p>
+  </div>
+</div>
 
 <div>
   <div class="keywords">
@@ -234,9 +240,6 @@ div.csl-indent {
 </header>
 
 
-<div class="abstract">
-<p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While many of the ideas I discuss here are general in nature, for concreteness, I focus on the special case of a WRDS user maintaining a local Parquet data library of the kind discussed in <a href="https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq">Appendix E</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> and provide examples using my Python package <code>db2pq</code>.</p>
-</div>
 <section id="introduction" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
 <p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While data curation is often inextricably linked with data management, in this note I assume that we are working with curated data and just need to “manage” it in some way. A classic example of (mostly) curated data in an academic context is WRDS data, which my Python package <code>db2pq</code> provides tools for managing a local library of such data.</p>
@@ -259,7 +262,7 @@ div.csl-indent {
 <p>There are two reasons for having project-level that I can think of. The first reason arises in the context of reproducibility. If I have published a paper, then the replication package for that paper should ideally contain the data used to produce the exact results in the paper. For this purpose, if the paper used <code>comp.g_funda</code> data, then the ideal replication package would include the precise <em>project-level</em> version of that data set used to produce the paper. Of course, in reality, one cannot simply post the project-level version of <code>comp.g_funda</code> as part of a public replication package. Nonetheless, the authors themselves should have a project-level version of the dataset that <em>they</em> retain. This much aligns with the views of <span class="citation" data-cites="Welch:2019aa">Welch (<a href="#ref-Welch:2019aa" role="doc-biblioref">2019</a>)</span>, who suggests that “the author should keep a private copy of the full data set with which the results were obtained.”</p>
 <p>The second reason is related to the first, but in some ways opposite in spirit. Some authors do not want their results to be upset by updates to any of datasets used to produce them. On one research project, I was responsible for supplying a curated data set of significant scale and complexity. Unfortunately, my understanding of variable scoping in Perl meant that about 2% of the data were simply corrupted and I felt I had to fix this. At my end, I wanted to manage the data as a general-purpose data set, but my co-author wanted to stick to the earlier project-level data.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
 <p>As far as WRDS data are concerned, my <code>db2pq</code> package aims to facilitate managing WRDS data either as general-purpose data or as project-level data.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> On my computers, I have the environment variable <code>DATA_DIR</code> set to a location inside Dropbox. So, by default, new WRDS data will go in the matching schema (i.e., subdirectory) of the directory indicated by <code>DATA_DIR</code>. In Python, I can inspect the value in <code>DATA_DIR</code>:</p>
-<div id="84861764" class="cell" data-execution_count="1">
+<div id="99333da0" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">'DATA_DIR'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="1">
@@ -268,15 +271,15 @@ div.csl-indent {
 </div>
 <p>For this note, I’m using the very latest version of <code>db2pq</code>, which you can install by running <code>pip install --upgrade db2pq</code> from the command line. If you do not have pandas or <code>paramiko</code> installed, you should do <code>pip install --upgrade "db2pq[sas,pandas]"</code>. See <a href="https://pypi.org/project/db2pq/">the <code>db2pq</code> PyPI homepage</a> for more details.</p>
 <p>Within Python, you can check the version using the following.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
-<div id="e9d30a75" class="cell" data-execution_count="2">
+<div id="2e055ed2" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> importlib.metadata <span class="im">import</span> version</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>version(<span class="st">"db2pq"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="2">
-<pre><code>'0.2.3'</code></pre>
+<pre><code>'0.2.10'</code></pre>
 </div>
 </div>
 <p>The core function of <code>db2pq</code> is <code>wrds_update_pq()</code> If I ask <code>wrds_update_pq()</code> to update my <em>general-purpose</em> version <code>crsp.dsi</code>, I can see that the latest data on WRDS are no more recent than what I already have, so no update occurs.</p>
-<div id="17ad3d71" class="cell" data-execution_count="3">
+<div id="38de1a98" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"dsi"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -284,13 +287,16 @@ div.csl-indent {
 </div>
 </div>
 <p>But, if I wanted a <em>project-level</em> version of <code>crsp.dsi</code>, I can specify the project-level data directory (<code>"data"</code>) and WRDS will update the data there. As I don’t have any data in that folder to begin with, an “update” occurs.</p>
-<div id="9fb03c99" class="cell" data-execution_count="5">
+<div id="8c258041" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"dsi"</span>, <span class="st">"crsp"</span>, data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Updated crsp.dsi is available.
-Beginning file download at 2026-03-23 16:55:09 UTC.
-Completed file download at 2026-03-23 16:55:12 UTC.</code></pre>
+Beginning file download at 2026-04-02 22:38:54 UTC.
+Completed file download at 2026-04-02 22:38:56 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<pre><code>'data/crsp/dsi.parquet'</code></pre>
 </div>
 </div>
 </section>
@@ -299,27 +305,30 @@ Completed file download at 2026-03-23 16:55:12 UTC.</code></pre>
 <p>Version control is a thorny issue with data. As far as I know there is no equivalent of Git for datasets.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> While I am sure that version control of data is a big issue in many contexts (e.g., data for regulated bodies), many data providers, even commercial vendors, often do a poor job of version control.</p>
 <p>Many data sources will provide the current version of any given dataset and nothing else. For example, there is no way to get the version of the data you downloaded from WRDS two years ago if you want to understand why results have changed. In practice, researchers need to do any archiving of WRDS data sets themselves.</p>
 <p>My <code>db2pq</code> Python package provides some functions that make it more convenient to maintain archives of previous version of tables from WRDS. The core function for maintaining a local repository of Parquet files based on WRDS data is <code>wrds_update_pq()</code>. This function has an <code>archive</code> argument that, if set to <code>True</code>, causes any existing data in the repository to be archived when an update is available and is applied:</p>
-<div id="923a39c8" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"company"</span>, <span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1e738aff" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"company"</span>, <span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Updated comp.company is available.
-Beginning file download at 2026-03-23 16:55:13 UTC.
-Completed file download at 2026-03-23 16:55:15 UTC.</code></pre>
+Beginning file download at 2026-04-02 22:38:57 UTC.
+Completed file download at 2026-04-02 22:38:58 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre><code>'/Users/igow/Dropbox/pq_data/comp/company.parquet'</code></pre>
 </div>
 </div>
 <p>For most tables on the WRDS database, it appears that “last updated” metadata is included in table comments. The <code>wrds_update_pq()</code> function will, by default, extract that metadata and embed it as metadata in the Parquet files.</p>
 <p>The <code>pq_last_modified()</code> function, if given a <code>table_name</code> argument, will by default return the metadata embedded in the Parquet file.</p>
-<div id="e7c31e2b" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> pq_last_modified</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b31f6037" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> pq_last_modified</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
-<pre><code>'Company (Updated 2026-03-23)'</code></pre>
+<pre><code>'Company (Updated 2026-04-02)'</code></pre>
 </div>
 </div>
 <p>But if I specify <code>archive=True</code>, then <code>pq_last_modified()</code> will instead return a pandas data frame containing information about (possibly several) files matching the specified <code>table_name</code> in the archive.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> Here, we see that I have four previous versions of <code>comp.company</code> in my archive.</p>
-<div id="80b64e66" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="op">=</span> pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>pq_df[[<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="14cb805e" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="op">=</span> pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>pq_df[[<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <div>
 
@@ -388,6 +397,21 @@ Completed file download at 2026-03-23 16:55:15 UTC.</code></pre>
 <td>company_20260322T060000Z</td>
 <td>2026-03-22 02:00:00-04:00</td>
 </tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>company_20260323T060000Z</td>
+<td>2026-03-23 02:00:00-04:00</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">12</th>
+<td>company_20260331T060000Z</td>
+<td>2026-03-31 02:00:00-04:00</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">13</th>
+<td>company_20260402T060000Z</td>
+<td>2026-04-02 02:00:00-04:00</td>
+</tr>
 </tbody>
 </table>
 
@@ -395,18 +419,18 @@ Completed file download at 2026-03-23 16:55:15 UTC.</code></pre>
 </div>
 </div>
 <p>I can use the function <code>pq_restore()</code> to make the one from <code>2024-06-14</code> the one that I am using for my data repository.</p>
-<div id="61015d6e" class="cell" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> pq_restore</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>pq_restore(<span class="st">"company_20240614T062835Z"</span>, <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ea1fffae" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> pq_restore</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>pq_restore(<span class="st">"company_20240614T062835Z"</span>, <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Archived file not found: /Users/igow/Dropbox/pq_data/comp/archive/company_20240614T062835Z.parquet</code></pre>
 </div>
 </div>
 <p>I now see that this is the version used when I look for <code>company</code> in the <code>comp</code> schema:</p>
-<div id="797d9e9f" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="392c85b7" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
-<pre><code>'Company (Updated 2026-03-23)'</code></pre>
+<pre><code>'Company (Updated 2026-04-02)'</code></pre>
 </div>
 </div>
 <p>One thing you will notice is that the format of the “last modified” string has changed from the one above. This could be for one of three reasons:</p>
@@ -416,9 +440,9 @@ Completed file download at 2026-03-23 16:55:15 UTC.</code></pre>
 <li>The Parquet file that has been restored was created using a recent version of <code>db2pq</code>, but with <code>use_sas=True</code>. In this case, <code>wrds_update_pq()</code> will retrieve the “last modified” information from the SAS file.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></li>
 </ol>
 <p>By default, the <code>pq_restore()</code> function has <code>archive=True</code>, which means that any existing data file is archived.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> We can see that the file that we created just moments ago using <code>wrds_update_pq()</code> is now in the archive:</p>
-<div id="1012a6b6" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="op">=</span> pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>pq_df[[<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f1c18388" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="op">=</span> pq_last_modified(table_name<span class="op">=</span><span class="st">"company"</span>, schema<span class="op">=</span><span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>pq_df[[<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="12">
 <div>
 
@@ -487,6 +511,21 @@ Completed file download at 2026-03-23 16:55:15 UTC.</code></pre>
 <td>company_20260322T060000Z</td>
 <td>2026-03-22 02:00:00-04:00</td>
 </tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>company_20260323T060000Z</td>
+<td>2026-03-23 02:00:00-04:00</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">12</th>
+<td>company_20260331T060000Z</td>
+<td>2026-03-31 02:00:00-04:00</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">13</th>
+<td>company_20260402T060000Z</td>
+<td>2026-04-02 02:00:00-04:00</td>
+</tr>
 </tbody>
 </table>
 
@@ -494,61 +533,66 @@ Completed file download at 2026-03-23 16:55:15 UTC.</code></pre>
 </div>
 </div>
 <p>If we update again with <code>archive=True</code>, we will effectively put the <code>2024-06-14</code> back in the archive and replace it with the current version on WRDS.</p>
-<div id="b880cc47" class="cell" data-execution_count="13">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> pq_archive</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"company"</span>, <span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="49d8b616" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> pq_archive</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"company"</span>, <span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>comp.company already up to date.</code></pre>
 </div>
 </div>
 <p>Some WRDS PostgreSQL tables appear not (yet) to have “last modified” information. For example, some RavenPack data tables appear not to have this information. In the following, I set <code>obs=100</code> and <code>data_dir="data"</code>, as I am doing this “update” purely for the purposes of this note, so only get 100 observations to keep things fast.</p>
-<div id="4d7ae761" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1c405c3e" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>No comment found for ravenpack_common.rpa_entity_mappings.
-ravenpack_common.rpa_entity_mappings already up to date.</code></pre>
+Could not determine whether ravenpack_common.rpa_entity_mappings needs an update because the source table has no parseable last-modified comment.
+Set `force=True` to export the table anyway.</code></pre>
 </div>
 </div>
 <p>We can confirm this using <code>pq_last_modified()</code>:</p>
-<div id="f1009e4b" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"rpa_entity_mappings"</span>, schema<span class="op">=</span><span class="st">"ravenpack_common"</span>,</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                 data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="df2aa335" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"rpa_entity_mappings"</span>, schema<span class="op">=</span><span class="st">"ravenpack_common"</span>,</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                 data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
 <pre><code>''</code></pre>
 </div>
 </div>
 <p>In such cases, any subsequent call to <code>wrds_update_pq()</code> will not trigger an “update” because there is effectively nothing to allow it to confirm that the local data are not current.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
-<div id="e743d5c2" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f0043e33" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>No comment found for ravenpack_common.rpa_entity_mappings.
-ravenpack_common.rpa_entity_mappings already up to date.</code></pre>
+Could not determine whether ravenpack_common.rpa_entity_mappings needs an update because the source table has no parseable last-modified comment.
+Set `force=True` to export the table anyway.</code></pre>
 </div>
 </div>
 <p>In such cases, it makes sense to use the SAS data to determine the vintage of the data. However, a wrinkle in this case is that there is no SAS library called <code>ravenpack_common</code>. Instead the data are stored in the SAS library named <code>rpa</code>. So we also need to tell <code>wrds_update_pq()</code> where to get the SAS data.</p>
-<div id="0116e640" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>, use_sas<span class="op">=</span><span class="va">True</span>, sas_schema<span class="op">=</span><span class="st">"rpa"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ffa28035" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>, use_sas<span class="op">=</span><span class="va">True</span>, sas_schema<span class="op">=</span><span class="st">"rpa"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Updated ravenpack_common.rpa_entity_mappings is available.
-Beginning file download at 2026-03-23 16:55:21 UTC.
-Completed file download at 2026-03-23 16:55:24 UTC.</code></pre>
+Beginning file download at 2026-04-02 22:39:05 UTC.
+Completed file download at 2026-04-02 22:39:07 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="18">
+<pre><code>'data/ravenpack_common/rpa_entity_mappings.parquet'</code></pre>
 </div>
 </div>
 <p>Now we have valid “last modified” data:</p>
-<div id="8b270ece" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"rpa_entity_mappings"</span>, schema<span class="op">=</span><span class="st">"ravenpack_common"</span>,</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>                 data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e812a84d" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pq_last_modified(table_name<span class="op">=</span><span class="st">"rpa_entity_mappings"</span>, schema<span class="op">=</span><span class="st">"ravenpack_common"</span>,</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>                 data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="19">
 <pre><code>'Last modified: 03/05/2026 12:45:09'</code></pre>
 </div>
 </div>
 <p>So a subsequent call to <code>wrds_update_pq()</code> does not trigger an update, but for the correct reasons.</p>
-<div id="0540cecf" class="cell" data-execution_count="20">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>, use_sas<span class="op">=</span><span class="va">True</span>, sas_schema<span class="op">=</span><span class="st">"rpa"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="6fc8ed2c" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"rpa_entity_mappings"</span>, <span class="st">"ravenpack_common"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>, use_sas<span class="op">=</span><span class="va">True</span>, sas_schema<span class="op">=</span><span class="st">"rpa"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>ravenpack_common.rpa_entity_mappings already up to date.</code></pre>
 </div>
@@ -565,38 +609,38 @@ Completed file download at 2026-03-23 16:55:24 UTC.</code></pre>
 <section id="timestamps" class="level3" data-number="2.2.4">
 <h3 data-number="2.2.4" class="anchored" data-anchor-id="timestamps"><span class="header-section-number">2.2.4</span> Timestamps</h3>
 <p>Speaking of type inference, one bane of the existence of any data analyst might be timestamps. The usual purpose of timestamps is to identify a moment in time. For example, I want to know the precise time at which an earnings conference call happened, so I can turn to a dataset with intra-day data on quotes and trades to see how the market reacted. If the data on earnings conference call use UTC and the trade-and-quote data use US Eastern time and I ignore these differences, then I will be looking at times that are off by four or five hours (depending on the time of year).</p>
-<p>To examine this issue, I’m going to look revisit the Call Report data I wrote about <a href="../published/curate_call_reports.html">recently</a>. I have these data in my (general-purpose) data repository and I can use the following function to load it into Polars.</p>
-<div id="02da45fd" class="cell" data-execution_count="21">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>, </span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>                   schema<span class="op">=</span><span class="st">"ffiec"</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>        data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="cf">if</span> schema <span class="cf">else</span> data_dir</span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> schedule <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"You must supply `schedule`."</span>)</span>
-<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>    files <span class="op">=</span> <span class="bu">list</span>(path.glob(<span class="ss">f"</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">_*.parquet"</span>))</span>
-<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> files:</span>
-<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">FileNotFoundError</span>(</span>
-<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"No Parquet files found for schedule '</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">' in </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pl.concat([pl.scan_parquet(f) <span class="cf">for</span> f <span class="kw">in</span> files])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>To examine this issue, I’m going to look revisit the Call Report data I wrote about <a href="curate_call_reports.html">recently</a>. I have these data in my (general-purpose) data repository and I can use the following function to load it into Polars.</p>
+<div id="9c38b7bb" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ffiec_scan_pqs(schedule<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>, </span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>                   schema<span class="op">=</span><span class="st">"ffiec"</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>        data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="cf">if</span> schema <span class="cf">else</span> data_dir</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> schedule <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"You must supply `schedule`."</span>)</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    files <span class="op">=</span> <span class="bu">list</span>(path.glob(<span class="ss">f"</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">_*.parquet"</span>))</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> files:</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">FileNotFoundError</span>(</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"No Parquet files found for schedule '</span><span class="sc">{</span>schedule<span class="sc">}</span><span class="ss">' in </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pl.concat([pl.scan_parquet(f) <span class="cf">for</span> f <span class="kw">in</span> files])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In my earlier note, I discussed how I managed to infer that the timestamps on that dataset are in US Eastern time (<code>America/New_York</code>). We can inspect the data I have using the function above and focused on a single observation:</p>
-<div id="c1f1b9d8" class="cell" data-execution_count="22">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>(</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    ffiec_scan_pqs(<span class="st">"por"</span>)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>, <span class="st">"last_date_time_submission_updated_on"</span>)</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"IDRSSD"</span>) <span class="op">==</span> <span class="dv">37</span>, </span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"date"</span>) <span class="op">==</span> pl.date(<span class="dv">2023</span> , <span class="dv">12</span>, <span class="dv">31</span>))</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="a48b50e5" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    ffiec_scan_pqs(<span class="st">"por"</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"IDRSSD"</span>, <span class="st">"date"</span>, <span class="st">"last_date_time_submission_updated_on"</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"IDRSSD"</span>) <span class="op">==</span> <span class="dv">37</span>, </span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"date"</span>) <span class="op">==</span> pl.date(<span class="dv">2023</span> , <span class="dv">12</span>, <span class="dv">31</span>))</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
 <div><style>
 .dataframe > thead > tr,
@@ -631,35 +675,38 @@ Completed file download at 2026-03-23 16:55:24 UTC.</code></pre>
 </div>
 </div>
 <p>WRDS offers essentially the same data in its <code>bank</code> schema. We can use <code>wrds_update_pq()</code> to get a sample of these data.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
-<div id="0da70121" class="cell" data-cache="false" data-execution_count="24">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, data_dir <span class="op">=</span> <span class="st">"data"</span>, obs<span class="op">=</span><span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="13a74d20" class="cell" data-cache="false" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, data_dir <span class="op">=</span> <span class="st">"data"</span>, obs<span class="op">=</span><span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Updated bank.wrds_call_rcfa_1 is available.
-Beginning file download at 2026-03-23 16:55:29 UTC.
-Completed file download at 2026-03-23 16:55:31 UTC.</code></pre>
+Beginning file download at 2026-04-02 22:39:12 UTC.
+Completed file download at 2026-04-02 22:39:13 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="24">
+<pre><code>'data/bank/wrds_call_rcfa_1.parquet'</code></pre>
 </div>
 </div>
 <p>To load the data into Polars, I will use the following small function:</p>
-<div id="bfc898e9" class="cell" data-execution_count="25">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_parquet(table, schema, <span class="op">*</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span>:</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">=</span> Path(data_dir)</span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>table<span class="sc">}</span><span class="ss">.parquet"</span></span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> pl.scan_parquet(path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1efd20b2" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_parquet(table, schema, <span class="op">*</span>, data_dir<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> data_dir <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">=</span> Path(os.environ[<span class="st">"DATA_DIR"</span>]).expanduser()</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span>:</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">=</span> Path(data_dir)</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  path <span class="op">=</span> data_dir <span class="op">/</span> schema <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>table<span class="sc">}</span><span class="ss">.parquet"</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> pl.scan_parquet(path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>As can be seen from the output below, the timestamp is off by five hours. That is because <code>wrds_update_pq()</code> assumes that timestamps are in UTC, which is a correct assumption for some data sets on WRDS, but is incorrect in this case.</p>
-<div id="bfedd59e" class="cell" data-execution_count="26">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="op">=</span> load_parquet(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, data_dir <span class="op">=</span> <span class="st">"data"</span>)</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>(</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    rcfa_1</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"rssd9001"</span>, <span class="st">"wrdsreportdate"</span>, <span class="st">"rssdsubmissiondate"</span>)</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"rssd9001"</span>) <span class="op">==</span> <span class="dv">37</span>, </span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"wrdsreportdate"</span>) <span class="op">==</span> pl.date(<span class="dv">2023</span>, <span class="dv">12</span>, <span class="dv">31</span>))</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="514880cc" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="op">=</span> load_parquet(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, data_dir <span class="op">=</span> <span class="st">"data"</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    rcfa_1</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"rssd9001"</span>, <span class="st">"wrdsreportdate"</span>, <span class="st">"rssdsubmissiondate"</span>)</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"rssd9001"</span>) <span class="op">==</span> <span class="dv">37</span>, </span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"wrdsreportdate"</span>) <span class="op">==</span> pl.date(<span class="dv">2023</span>, <span class="dv">12</span>, <span class="dv">31</span>))</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="26">
 <div><style>
 .dataframe > thead > tr,
@@ -694,26 +741,29 @@ Completed file download at 2026-03-23 16:55:31 UTC.</code></pre>
 </div>
 </div>
 <p>WRDS generally stores timestamps in PostgreSQL with type <code>TIMESTAMP WITHOUT TIME ZONE</code>, which is equivalent to saying “you figure out the time zone, user.”<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a> Because we know that the timestamps provided by the FFIEC are expressed in US Eastern time, we can tell <code>wrds_update_pq()</code> this using the <code>tz</code> argument:</p>
-<div id="7fda4d5d" class="cell" data-execution_count="27">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache: true</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, </span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>               data_dir <span class="op">=</span> <span class="st">"data"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>               force<span class="op">=</span><span class="va">True</span>, tz<span class="op">=</span><span class="st">"America/New_York"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e4effae0" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache: true</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>, </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>               data_dir <span class="op">=</span> <span class="st">"data"</span>, obs<span class="op">=</span><span class="dv">100</span>, </span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>               force<span class="op">=</span><span class="va">True</span>, tz<span class="op">=</span><span class="st">"America/New_York"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Forcing update based on user request.
-Completed file download at 2026-03-23 16:55:33 UTC.</code></pre>
+Completed file download at 2026-04-02 22:39:15 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="27">
+<pre><code>'data/bank/wrds_call_rcfa_1.parquet'</code></pre>
 </div>
 </div>
 <p>Now, we see that the data are correct.</p>
-<div id="8ae5e36c" class="cell" data-execution_count="28">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="op">=</span> load_parquet(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>)</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>(</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    rcfa_1</span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"rssd9001"</span>, <span class="st">"wrdsreportdate"</span>, <span class="st">"rssdsubmissiondate"</span>)</span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"rssd9001"</span>) <span class="op">==</span> <span class="dv">37</span>, </span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"wrdsreportdate"</span>) <span class="op">==</span> pl.date(<span class="dv">2023</span>, <span class="dv">12</span>, <span class="dv">31</span>))</span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cf57f55f" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>rcfa_1 <span class="op">=</span> load_parquet(<span class="st">"wrds_call_rcfa_1"</span>, <span class="st">"bank"</span>)</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    rcfa_1</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"rssd9001"</span>, <span class="st">"wrdsreportdate"</span>, <span class="st">"rssdsubmissiondate"</span>)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"rssd9001"</span>) <span class="op">==</span> <span class="dv">37</span>, </span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"wrdsreportdate"</span>) <span class="op">==</span> pl.date(<span class="dv">2023</span>, <span class="dv">12</span>, <span class="dv">31</span>))</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="28">
 <div><style>
 .dataframe > thead > tr,
@@ -748,21 +798,24 @@ Completed file download at 2026-03-23 16:55:33 UTC.</code></pre>
 </div>
 </div>
 <p>In other cases, WRDS doesn’t even bother to store the data as <code>TIMESTAMP WITHOUT TIME ZONE</code>, but instead the data are stored as strings. Here’s one example.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p>
-<div id="83fb8b46" class="cell" data-execution_count="30">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache: true</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>               keep<span class="op">=</span>[<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>],</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>               obs<span class="op">=</span><span class="dv">5</span>, data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="d5f958a8" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache: true</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>               keep<span class="op">=</span>[<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>],</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>               obs<span class="op">=</span><span class="dv">5</span>, data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Updated audit.feed03_audit_fees is available.
-Beginning file download at 2026-03-23 16:55:33 UTC.
-Completed file download at 2026-03-23 16:55:35 UTC.</code></pre>
+Beginning file download at 2026-04-02 22:39:16 UTC.
+Completed file download at 2026-04-02 22:39:17 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="30">
+<pre><code>'data/audit/feed03_audit_fees.parquet'</code></pre>
 </div>
 </div>
 <p>But here we see that <code>file_accepted</code> is stored as a string (and <code>auditor_fkey</code> is a floating-point value).</p>
-<div id="37a445ef" class="cell" data-execution_count="31">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>load_parquet(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>             data_dir<span class="op">=</span><span class="st">"data"</span>).collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="29869e94" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>load_parquet(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>             data_dir<span class="op">=</span><span class="st">"data"</span>).collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="31">
 <div><style>
 .dataframe > thead > tr,
@@ -810,22 +863,25 @@ Completed file download at 2026-03-23 16:55:35 UTC.</code></pre>
 </div>
 </div>
 <p>Fortunately, with <code>wrds_update_pq()</code>, I can specify the (Arrow) data types for selected columns and, in the case of <code>timestamp</code>, the time zone.</p>
-<div id="5ac6543b" class="cell" data-cache="true" data-execution_count="32">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>               col_types<span class="op">=</span>{<span class="st">"auditor_fkey"</span>: <span class="st">"int32"</span>,</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"file_accepted"</span>: <span class="st">"timestamp"</span>},</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>               tz<span class="op">=</span><span class="st">"America/New_York"</span>, force<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>               keep<span class="op">=</span>[<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>],</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f67f54d4" class="cell" data-cache="true" data-execution_count="32">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>               col_types<span class="op">=</span>{<span class="st">"auditor_fkey"</span>: <span class="st">"int32"</span>,</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"file_accepted"</span>: <span class="st">"timestamp"</span>},</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>               tz<span class="op">=</span><span class="st">"America/New_York"</span>, force<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>               keep<span class="op">=</span>[<span class="st">"auditor_fkey"</span>, <span class="st">"file_accepted"</span>],</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>               data_dir<span class="op">=</span><span class="st">"data"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Forcing update based on user request.
-Completed file download at 2026-03-23 16:55:38 UTC.</code></pre>
+Completed file download at 2026-04-02 22:39:21 UTC.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="32">
+<pre><code>'data/audit/feed03_audit_fees.parquet'</code></pre>
 </div>
 </div>
 <p>Now things look much better.</p>
-<div id="3023cfe3" class="cell" data-execution_count="33">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>load_parquet(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>             data_dir<span class="op">=</span><span class="st">"data"</span>).head().collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="0cbb6ea7" class="cell" data-execution_count="33">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>load_parquet(<span class="st">"feed03_audit_fees"</span>, <span class="st">"audit"</span>, </span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>             data_dir<span class="op">=</span><span class="st">"data"</span>).head().collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="33">
 <div><style>
 .dataframe > thead > tr,

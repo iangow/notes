@@ -240,9 +240,8 @@ window.Quarto = {
   <li><a href="#data-version-control" id="toc-data-version-control" class="nav-link" data-scroll-target="#data-version-control"><span class="header-section-number">4.8</span> Data version control</a></li>
   </ul></li>
   <li><a href="#the-future-of-data-curation" id="toc-the-future-of-data-curation" class="nav-link" data-scroll-target="#the-future-of-data-curation"><span class="header-section-number">5</span> The future of data curation</a></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="curate_call_reports.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="curate_call_reports.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -342,7 +341,7 @@ Tip
 <section id="sec-raw-data" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="sec-raw-data"><span class="header-section-number">1.1</span> Getting the raw data</h2>
 <p>The FFIEC <a href="https://cdr.ffiec.gov/public/pws/downloadbulkdata.aspx">Bulk Data Download site</a> provides the Call Report data in two forms. The first is as zipped tab-delimited data files, one for each quarter. The second is as zipped XBRL data files, one for each quarter. At the time of writing, the standard approach to getting the complete data archive amounts to pointing and clicking to download each of the roughly 100 files for each format.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
-<p>The FFIEC data sets are not as amenable to automated downloading as those offered by other government agencies such as the SEC (see my earlier <a href="https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf">note on XBRL data</a>), the PCAOB (see my <a href="https://github.com/iangow/notes/blob/main/form_ap_names.pdf">note on Form AP data</a>), or even the Federal Reserve itself (I used data from the <a href="https://www.federalreserve.gov/apps/mdrm/">MDRM site</a> in preparing this note). However, a group of individuals has contributed the Python package <code>ffiec_data_collector</code> that we can use to collect the data.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>The FFIEC data sets are not as amenable to automated downloading as those offered by other government agencies such as the SEC (see my earlier <a href="getting_dera_notes.html">note on XBRL data</a>), the PCAOB (see my <a href="../form_ap_names.html">note on Form AP data</a>), or even the Federal Reserve itself (I used data from the <a href="https://www.federalreserve.gov/apps/mdrm/">MDRM site</a> in preparing this note). However, a group of individuals has contributed the Python package <code>ffiec_data_collector</code> that we can use to collect the data.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
 <p>To install this Python package, you first need to <a href="https://www.python.org/downloads/">install Python</a> and then install the <code>ffiec_data_collector</code> using a command like <code>pip install ffiec_data_collector</code>.</p>
 <p>As discussed in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <span class="citation" data-cites="Gow_2024">Gow and Ding (<a href="#ref-Gow_2024" role="doc-biblioref">2024</a>)</span>, I organize my raw and processed data in a repository comprising a single parent directory and several sub-directories corresponding to various data sources and projects. For some data sets, this approach to organization facilitates switching code from using (say) data sources provided by Wharton Research Data Services (WRDS) to using local data in my data repository. I will adopt that approach for the purposes of this note.</p>
 <p>As the location of my “raw data” repository is found in the the environment variable <code>RAW_DATA_DIR</code>, I can identify that location in Python easily. The following code specifies the download directory as the directory <code>ffiec</code> within my raw data repository.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
@@ -693,12 +692,12 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>ffiec_float <span class="ot">&lt;-</span> <span class="fu">ffiec_scan_pqs</span>(db, <span class="st">"ffiec_float"</span>) <span class="sc">|&gt;</span> <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.040   0.015   0.017 </code></pre>
+  0.042   0.017   0.019 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>ffiec_float</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A query:  ?? x 4
-# Database: DuckDB 1.4.4 [root@Darwin 25.4.0:R 4.5.2/:memory:]
+# Database: DuckDB 1.5.1 [root@Darwin 25.4.0:R 4.5.3/:memory:]
    IDRSSD date       item      value
     &lt;int&gt; &lt;date&gt;     &lt;chr&gt;     &lt;dbl&gt;
  1  49362 2001-03-31 RIAD4097      0
@@ -729,7 +728,7 @@ Table&nbsp;1: Table keys, arrow types, and access code
 <span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  7.103   1.357   1.545 </code></pre>
+  7.070   1.272   1.401 </code></pre>
 </div>
 </div>
 <p>So, do balance sheets balance? Well, not always.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
@@ -779,13 +778,13 @@ Table&nbsp;1: Table keys, arrow types, and access code
  1 1362246 2002-06-30       278586      5334
  2  664653 2002-03-31        25490       224
  3 2821825 2001-03-31        55220        30
- 4  545604 2001-06-30       246223        10
- 5  293053 2002-03-31       314157        10
- 6  647414 2002-12-31        83399        10
- 7   83151 2003-12-31        97324        10
- 8  178150 2004-03-31       103939        10
- 9 3097243 2005-06-30        40939        10
-10  920733 2001-12-31        48439        10
+ 4  178150 2004-03-31       103939        10
+ 5  545604 2001-06-30       246223        10
+ 6  536554 2001-03-31         4624        10
+ 7  842358 2002-06-30       202388        10
+ 8 3097243 2005-06-30        40939        10
+ 9   83151 2003-12-31        97324        10
+10  293053 2002-03-31       314157        10
 # ℹ 189 more rows</code></pre>
 </div>
 </div>
@@ -801,14 +800,14 @@ Table&nbsp;1: Table keys, arrow types, and access code
      &lt;int&gt; &lt;date&gt;            &lt;dbl&gt;     &lt;dbl&gt;
  1  131940 2005-06-30        27432         8
  2  475756 2005-06-30        68158         2
- 3 3097243 2005-06-30        40939        10
- 4   33549 2005-06-30        43865         3
- 5   20147 2005-06-30        48130       -10
- 6  773546 2005-06-30        97558         2
- 7   22954 2005-06-30        65027       -10
- 8  827953 2005-03-31        50080         5
- 9 2646327 2005-03-31        98814        -8
-10  776752 2005-03-31        34680        -7
+ 3  773546 2005-06-30        97558         2
+ 4 3097243 2005-06-30        40939        10
+ 5   33549 2005-06-30        43865         3
+ 6   22954 2005-06-30        65027       -10
+ 7   20147 2005-06-30        48130       -10
+ 8  776752 2005-03-31        34680        -7
+ 9  587574 2005-03-31         4705         2
+10 2646327 2005-03-31        98814        -8
 # ℹ 189 more rows</code></pre>
 </div>
 </div>
@@ -1026,7 +1025,7 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 <span id="cb73-28"><a href="#cb73-28" aria-hidden="true" tabindex="-1"></a>elapsed <span class="op">=</span> end <span class="op">-</span> start</span>
 <span id="cb73-29"><a href="#cb73-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time taken: </span><span class="sc">{</span>elapsed<span class="sc">:.6f}</span><span class="ss"> seconds'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time taken: 0.694621 seconds</code></pre>
+<pre><code>Time taken: 0.417845 seconds</code></pre>
 </div>
 </div>
 <p>We can peek at the data. So Polars has processed GBs of data and created a table with over 600,000 rows in well under a second. Don’t try this at home … if you’re using pandas.</p>
@@ -1067,49 +1066,49 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 </thead>
 <tbody>
 <tr class="odd">
-<td>528858</td>
-<td>2004-09-30</td>
-<td>80445.0</td>
-<td>73882.0</td>
-<td>6563.0</td>
+<td>605133</td>
+<td>2002-09-30</td>
+<td>201048.0</td>
+<td>184067.0</td>
+<td>16981.0</td>
 <td>0.0</td>
-<td>80445.0</td>
+<td>201048.0</td>
 </tr>
 <tr class="even">
-<td>273550</td>
-<td>2025-06-30</td>
-<td>424226.0</td>
-<td>372624.0</td>
-<td>51602.0</td>
+<td>479839</td>
+<td>2001-12-31</td>
+<td>351687.0</td>
+<td>322308.0</td>
+<td>29379.0</td>
 <td>0.0</td>
-<td>424226.0</td>
+<td>351687.0</td>
 </tr>
 <tr class="odd">
-<td>2855866</td>
-<td>2025-06-30</td>
-<td>571248.0</td>
-<td>518920.0</td>
-<td>52328.0</td>
+<td>3464827</td>
+<td>2013-03-31</td>
+<td>196409.0</td>
+<td>175933.0</td>
+<td>20476.0</td>
 <td>0.0</td>
-<td>571248.0</td>
+<td>196409.0</td>
 </tr>
 <tr class="even">
-<td>739430</td>
-<td>2009-03-31</td>
-<td>259973.0</td>
-<td>237134.0</td>
-<td>22839.0</td>
+<td>1007659</td>
+<td>2012-03-31</td>
+<td>79907.0</td>
+<td>71783.0</td>
+<td>8124.0</td>
 <td>0.0</td>
-<td>259973.0</td>
+<td>79907.0</td>
 </tr>
 <tr class="odd">
-<td>658072</td>
-<td>2013-09-30</td>
-<td>63595.0</td>
-<td>59099.0</td>
-<td>4496.0</td>
+<td>865674</td>
+<td>2004-12-31</td>
+<td>166499.0</td>
+<td>151078.0</td>
+<td>15421.0</td>
 <td>0.0</td>
-<td>63595.0</td>
+<td>166499.0</td>
 </tr>
 <tr class="even">
 <td>…</td>
@@ -1121,49 +1120,49 @@ Figure&nbsp;4: Submission times by year and US/Eastern time zone
 <td>…</td>
 </tr>
 <tr class="odd">
-<td>712956</td>
+<td>259956</td>
+<td>2007-03-31</td>
+<td>107420.0</td>
+<td>96479.0</td>
+<td>10941.0</td>
+<td>0.0</td>
+<td>107420.0</td>
+</tr>
+<tr class="even">
+<td>491653</td>
+<td>2004-12-31</td>
+<td>19318.0</td>
+<td>17176.0</td>
+<td>2142.0</td>
+<td>0.0</td>
+<td>19318.0</td>
+</tr>
+<tr class="odd">
+<td>300009</td>
+<td>2016-12-31</td>
+<td>652565.0</td>
+<td>580526.0</td>
+<td>72039.0</td>
+<td>0.0</td>
+<td>652565.0</td>
+</tr>
+<tr class="even">
+<td>799359</td>
 <td>2019-06-30</td>
-<td>204070.0</td>
-<td>174557.0</td>
-<td>29513.0</td>
+<td>38654.0</td>
+<td>34247.0</td>
+<td>4407.0</td>
 <td>0.0</td>
-<td>204070.0</td>
-</tr>
-<tr class="even">
-<td>926959</td>
-<td>2004-03-31</td>
-<td>89795.0</td>
-<td>77693.0</td>
-<td>12102.0</td>
-<td>0.0</td>
-<td>89795.0</td>
+<td>38654.0</td>
 </tr>
 <tr class="odd">
-<td>460341</td>
-<td>2008-12-31</td>
-<td>102033.0</td>
-<td>86613.0</td>
-<td>15420.0</td>
+<td>2607412</td>
+<td>2022-03-31</td>
+<td>82272.0</td>
+<td>50980.0</td>
+<td>31292.0</td>
 <td>0.0</td>
-<td>102033.0</td>
-</tr>
-<tr class="even">
-<td>276159</td>
-<td>2018-06-30</td>
-<td>122706.0</td>
-<td>110802.0</td>
-<td>11904.0</td>
-<td>0.0</td>
-<td>122706.0</td>
-</tr>
-<tr class="odd">
-<td>529855</td>
-<td>2007-09-30</td>
-<td>93315.0</td>
-<td>84165.0</td>
-<td>9150.0</td>
-<td>0.0</td>
-<td>93315.0</td>
+<td>82272.0</td>
 </tr>
 </tbody>
 </table>
@@ -1340,7 +1339,7 @@ Figure&nbsp;5: Total assets for top 5 banks
 <span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.022   0.027   0.024 </code></pre>
+  0.024   0.032   0.020 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3
@@ -1465,9 +1464,6 @@ Table&nbsp;2: Primary key checks
 <p>Data science seems to be in a strange state at the moment. On the one hand, things must be a little depressing. Many data scientists must be wondering about their future in a world in which AI can handle many tasks formerly done by people. On the other hand, data science has come leaps and bounds in the last fifteen years or so <span class="citation" data-cites="janert2010data">(pandas doesn’t even rate a mention in <a href="#ref-janert2010data" role="doc-biblioref">Janert, 2010</a>)</span> and things like Polars, and Arrow, and DuckDB, not to mention things like the Tidyverse are truly exciting developments.</p>
 <p>My sense from working on this data curation task is that humans will continue to be essential for data curation for the foreseeable future. In fact, the value of data curation might have gone up, as AI increase the population of people whose modest coding skills no longer prevent them from trying their hand at data analysis.</p>
 <p>While I used OpenAI’s ChatGPT 5.2 on this project, there were some “open the pod-bay doors, please, HAL” moments along the way. The one-line <code>txt2 &lt;- gsub("(?&lt;!\\t)\\n", " ", txt, perl = TRUE)</code> fix was deemed “unsafe” and ChatGPT even passive-aggressively suggested that “I think you want to use <code>txt</code>, not <code>txt2</code> in <code>read_tsv()</code>” at one point. I think ChatGPT did not understand that this code is not being put into a production system in which users load random zip files at all hours of the day. In effect, I have the population of zip files and, because of how I wrote the code, any errors in reading would’ve have just stopped the code. Using that one-liner allowed me to delete 700 lines of sloppy AI code. That said, I’m not sure I would have attempted this task if AI weren’t along for the ride.</p>
-</section>
-<section id="references" class="level1 unnumbered">
-
 
 
 

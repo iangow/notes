@@ -221,7 +221,7 @@ window.Quarto = {
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="retail-sales.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="retail-sales.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -282,7 +282,7 @@ Tip&nbsp;1
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/retail_sales.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Rows: 96957 Columns: 6
+<pre><code>Rows: 98091 Columns: 6
 ── Column specification ────────────────────────────────────────────────────────
 Delimiter: ","
 chr  (3): industry, state, parent_industry
@@ -301,7 +301,7 @@ date (1): date
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>retail_sales</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 96,957 × 6
+<pre><code># A tibble: 98,091 × 6
    industry                     state date       sales ind_level parent_industry
    &lt;chr&gt;                        &lt;chr&gt; &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;          
  1 Cafes, restaurants and cate… Aust… 1982-04-01   4.4         2 Cafes, restaur…
@@ -314,7 +314,7 @@ date (1): date
  8 Cafes, restaurants and cate… Vict… 1982-04-01  36.4         2 Cafes, restaur…
  9 Cafes, restaurants and cate… West… 1982-04-01   8           2 Cafes, restaur…
 10 Cafes, restaurants and take… Aust… 1982-04-01   7.6         1 Total (Industr…
-# ℹ 96,947 more rows</code></pre>
+# ℹ 98,081 more rows</code></pre>
 </div>
 </div>
 <p>We can also get a succinct take on the data using <code>summary()</code>:</p>
@@ -322,15 +322,15 @@ date (1): date
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(retail_sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   industry            state                date                sales        
- Length:96957       Length:96957       Min.   :1982-04-01   Min.   :    0.4  
- Class :character   Class :character   1st Qu.:1992-12-01   1st Qu.:   27.5  
- Mode  :character   Mode  :character   Median :2003-08-01   Median :  107.8  
-                                       Mean   :2003-08-01   Mean   :  533.4  
-                                       3rd Qu.:2014-04-01   3rd Qu.:  371.1  
-                                       Max.   :2024-12-01   Max.   :45943.1  
-                                                            NA's   :6970     
+ Length:98091       Length:98091       Min.   :1982-04-01   Min.   :    0.4  
+ Class :character   Class :character   1st Qu.:1993-01-01   1st Qu.:   27.8  
+ Mode  :character   Mode  :character   Median :2003-11-01   Median :  108.9  
+                                       Mean   :2003-10-31   Mean   :  541.0  
+                                       3rd Qu.:2014-09-01   3rd Qu.:  376.0  
+                                       Max.   :2025-06-01   Max.   :45943.1  
+                                                            NA's   :7042     
    ind_level     parent_industry   
- Min.   :0.000   Length:96957      
+ Min.   :0.000   Length:98091      
  1st Qu.:1.000   Class :character  
  Median :2.000   Mode  :character  
  Mean   :1.619                     
@@ -351,13 +351,13 @@ date (1): date
 <pre><code># A tibble: 7 × 3
   parent_industry                                     ind_level     n
   &lt;chr&gt;                                                   &lt;dbl&gt; &lt;int&gt;
-1 &lt;NA&gt;                                                        0  4617
-2 Total (Industry)                                            1 27702
-3 Cafes, restaurants and takeaway food services               2  9234
-4 Clothing, footwear and personal accessory retailing         2  9234
-5 Food retailing                                              2 13851
-6 Household goods retailing                                   2 13851
-7 Other retailing                                             2 18468</code></pre>
+1 &lt;NA&gt;                                                        0  4671
+2 Total (Industry)                                            1 28026
+3 Cafes, restaurants and takeaway food services               2  9342
+4 Clothing, footwear and personal accessory retailing         2  9342
+5 Food retailing                                              2 14013
+6 Household goods retailing                                   2 14013
+7 Other retailing                                             2 18684</code></pre>
 </div>
 </div>
 <p>We can identify the missing industry group by using an <strong>anti-join</strong> (<code>anti_join()</code>) and <code>join_by(industry == parent_industry)</code>. The output of following query identifies the problem case as “Department stores”.</p>
@@ -370,7 +370,7 @@ date (1): date
 <pre><code># A tibble: 1 × 2
   industry              n
   &lt;chr&gt;             &lt;int&gt;
-1 Department stores  4617</code></pre>
+1 Department stores  4671</code></pre>
 </div>
 </div>
 <p>Because the function <code>anti_join(x, y)</code> returns all rows in <code>x</code> that don’t have a match in <code>y</code>, it is useful for finding <strong>implicit missing values</strong>.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
@@ -458,23 +458,23 @@ Table&nbsp;1: Reconciliation of sales by group and sub-groups: Total (State)
 
     <script>
       // Create table-specific functions using external factory
-      const tableFns_2mmvfjhmlvs5tzih5tld = TinyTable.createTableFunctions("tinytable_2mmvfjhmlvs5tzih5tld");
+      const tableFns_4pfddcowzxhj6e3k7tv2 = TinyTable.createTableFunctions("tinytable_4pfddcowzxhj6e3k7tv2");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '10', j: 3 }, { i: '10', j: 4 }, { i: '10', j: 5 }, { i: '10', j: 6 }, { i: '10', j: 7 } ], css_id: 'tinytable_css_h0dd36848fl9mhmzfthv',}, 
-          { positions: [ { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '1', j: 4 }, { i: '2', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 }, { i: '9', j: 4 }, { i: '1', j: 5 }, { i: '2', j: 5 }, { i: '3', j: 5 }, { i: '4', j: 5 }, { i: '5', j: 5 }, { i: '6', j: 5 }, { i: '7', j: 5 }, { i: '8', j: 5 }, { i: '9', j: 5 }, { i: '1', j: 6 }, { i: '2', j: 6 }, { i: '3', j: 6 }, { i: '4', j: 6 }, { i: '5', j: 6 }, { i: '6', j: 6 }, { i: '7', j: 6 }, { i: '8', j: 6 }, { i: '9', j: 6 }, { i: '1', j: 7 }, { i: '2', j: 7 }, { i: '3', j: 7 }, { i: '4', j: 7 }, { i: '5', j: 7 }, { i: '6', j: 7 }, { i: '7', j: 7 }, { i: '8', j: 7 }, { i: '9', j: 7 } ], css_id: 'tinytable_css_yo2zgu1769gfolxrmg16',}, 
-          { positions: [ { i: '0', j: 3 }, { i: '0', j: 4 }, { i: '0', j: 5 }, { i: '0', j: 6 }, { i: '0', j: 7 } ], css_id: 'tinytable_css_9a940mlw45kxf4opftct',}, 
-          { positions: [ { i: '10', j: 1 }, { i: '10', j: 2 } ], css_id: 'tinytable_css_cd05ddqhvigt0sxxbgeb',}, 
-          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 } ], css_id: 'tinytable_css_teb6q2owgmnp66ym4v4r',}, 
-          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 } ], css_id: 'tinytable_css_i7w6bxt87nqql3803bep',}, 
+          { positions: [ { i: '10', j: 3 }, { i: '10', j: 4 }, { i: '10', j: 5 }, { i: '10', j: 6 }, { i: '10', j: 7 } ], css_id: 'tinytable_css_ul5fv0h4w4w8x80zv2en',}, 
+          { positions: [ { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '1', j: 4 }, { i: '2', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 }, { i: '9', j: 4 }, { i: '1', j: 5 }, { i: '2', j: 5 }, { i: '3', j: 5 }, { i: '4', j: 5 }, { i: '5', j: 5 }, { i: '6', j: 5 }, { i: '7', j: 5 }, { i: '8', j: 5 }, { i: '9', j: 5 }, { i: '1', j: 6 }, { i: '2', j: 6 }, { i: '3', j: 6 }, { i: '4', j: 6 }, { i: '5', j: 6 }, { i: '6', j: 6 }, { i: '7', j: 6 }, { i: '8', j: 6 }, { i: '9', j: 6 }, { i: '1', j: 7 }, { i: '2', j: 7 }, { i: '3', j: 7 }, { i: '4', j: 7 }, { i: '5', j: 7 }, { i: '6', j: 7 }, { i: '7', j: 7 }, { i: '8', j: 7 }, { i: '9', j: 7 } ], css_id: 'tinytable_css_vmc7hlucjaqrabp4u8m3',}, 
+          { positions: [ { i: '0', j: 3 }, { i: '0', j: 4 }, { i: '0', j: 5 }, { i: '0', j: 6 }, { i: '0', j: 7 } ], css_id: 'tinytable_css_kw9y8p2uvhcit8zl3c71',}, 
+          { positions: [ { i: '10', j: 1 }, { i: '10', j: 2 } ], css_id: 'tinytable_css_yc92go0tvnt8erj36hag',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 } ], css_id: 'tinytable_css_2824250jmi4lmyyy4x9l',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 } ], css_id: 'tinytable_css_6l4om9pqrknzxyj0weai',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_2mmvfjhmlvs5tzih5tld.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_4pfddcowzxhj6e3k7tv2.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
@@ -483,15 +483,15 @@ Table&nbsp;1: Reconciliation of sales by group and sub-groups: Total (State)
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
     <style>
     /* tinytable css entries after */
-    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_h0dd36848fl9mhmzfthv, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_h0dd36848fl9mhmzfthv {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
-    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_yo2zgu1769gfolxrmg16, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_yo2zgu1769gfolxrmg16 { text-align: right }
-    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_9a940mlw45kxf4opftct, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_9a940mlw45kxf4opftct {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
-    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_cd05ddqhvigt0sxxbgeb, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_cd05ddqhvigt0sxxbgeb {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_teb6q2owgmnp66ym4v4r, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_teb6q2owgmnp66ym4v4r { text-align: left }
-    #tinytable_2mmvfjhmlvs5tzih5tld td.tinytable_css_i7w6bxt87nqql3803bep, #tinytable_2mmvfjhmlvs5tzih5tld th.tinytable_css_i7w6bxt87nqql3803bep {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_4pfddcowzxhj6e3k7tv2 td.tinytable_css_ul5fv0h4w4w8x80zv2en, #tinytable_4pfddcowzxhj6e3k7tv2 th.tinytable_css_ul5fv0h4w4w8x80zv2en {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_4pfddcowzxhj6e3k7tv2 td.tinytable_css_vmc7hlucjaqrabp4u8m3, #tinytable_4pfddcowzxhj6e3k7tv2 th.tinytable_css_vmc7hlucjaqrabp4u8m3 { text-align: right }
+    #tinytable_4pfddcowzxhj6e3k7tv2 td.tinytable_css_kw9y8p2uvhcit8zl3c71, #tinytable_4pfddcowzxhj6e3k7tv2 th.tinytable_css_kw9y8p2uvhcit8zl3c71 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_4pfddcowzxhj6e3k7tv2 td.tinytable_css_yc92go0tvnt8erj36hag, #tinytable_4pfddcowzxhj6e3k7tv2 th.tinytable_css_yc92go0tvnt8erj36hag {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_4pfddcowzxhj6e3k7tv2 td.tinytable_css_2824250jmi4lmyyy4x9l, #tinytable_4pfddcowzxhj6e3k7tv2 th.tinytable_css_2824250jmi4lmyyy4x9l { text-align: left }
+    #tinytable_4pfddcowzxhj6e3k7tv2 td.tinytable_css_6l4om9pqrknzxyj0weai, #tinytable_4pfddcowzxhj6e3k7tv2 th.tinytable_css_6l4om9pqrknzxyj0weai {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
     <div class="container">
-      <table class="tinytable" id="tinytable_2mmvfjhmlvs5tzih5tld" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="tinytable" id="tinytable_4pfddcowzxhj6e3k7tv2" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
         
         <thead>
               <tr>
@@ -625,23 +625,23 @@ Table&nbsp;2: Non-missing values by state and year and industry level
 
     <script>
       // Create table-specific functions using external factory
-      const tableFns_uun4024cjwhe5g9dm1pb = TinyTable.createTableFunctions("tinytable_uun4024cjwhe5g9dm1pb");
+      const tableFns_h9jnadehh02vvvqq8ihw = TinyTable.createTableFunctions("tinytable_h9jnadehh02vvvqq8ihw");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '18', j: 3 }, { i: '18', j: 4 }, { i: '18', j: 5 }, { i: '18', j: 6 }, { i: '18', j: 7 } ], css_id: 'tinytable_css_wlh214f4ivbcxcsuw0ed',}, 
-          { positions: [ { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '10', j: 3 }, { i: '11', j: 3 }, { i: '12', j: 3 }, { i: '13', j: 3 }, { i: '14', j: 3 }, { i: '15', j: 3 }, { i: '16', j: 3 }, { i: '17', j: 3 }, { i: '1', j: 4 }, { i: '2', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 }, { i: '9', j: 4 }, { i: '10', j: 4 }, { i: '11', j: 4 }, { i: '12', j: 4 }, { i: '13', j: 4 }, { i: '14', j: 4 }, { i: '15', j: 4 }, { i: '16', j: 4 }, { i: '17', j: 4 }, { i: '1', j: 5 }, { i: '2', j: 5 }, { i: '3', j: 5 }, { i: '4', j: 5 }, { i: '5', j: 5 }, { i: '6', j: 5 }, { i: '7', j: 5 }, { i: '8', j: 5 }, { i: '9', j: 5 }, { i: '10', j: 5 }, { i: '11', j: 5 }, { i: '12', j: 5 }, { i: '13', j: 5 }, { i: '14', j: 5 }, { i: '15', j: 5 }, { i: '16', j: 5 }, { i: '17', j: 5 }, { i: '1', j: 6 }, { i: '2', j: 6 }, { i: '3', j: 6 }, { i: '4', j: 6 }, { i: '5', j: 6 }, { i: '6', j: 6 }, { i: '7', j: 6 }, { i: '8', j: 6 }, { i: '9', j: 6 }, { i: '10', j: 6 }, { i: '11', j: 6 }, { i: '12', j: 6 }, { i: '13', j: 6 }, { i: '14', j: 6 }, { i: '15', j: 6 }, { i: '16', j: 6 }, { i: '17', j: 6 }, { i: '1', j: 7 }, { i: '2', j: 7 }, { i: '3', j: 7 }, { i: '4', j: 7 }, { i: '5', j: 7 }, { i: '6', j: 7 }, { i: '7', j: 7 }, { i: '8', j: 7 }, { i: '9', j: 7 }, { i: '10', j: 7 }, { i: '11', j: 7 }, { i: '12', j: 7 }, { i: '13', j: 7 }, { i: '14', j: 7 }, { i: '15', j: 7 }, { i: '16', j: 7 }, { i: '17', j: 7 } ], css_id: 'tinytable_css_j3azgkl6vnziue6d2ej7',}, 
-          { positions: [ { i: '0', j: 3 }, { i: '0', j: 4 }, { i: '0', j: 5 }, { i: '0', j: 6 }, { i: '0', j: 7 } ], css_id: 'tinytable_css_kk3jjgnz9c51o70lsial',}, 
-          { positions: [ { i: '18', j: 1 }, { i: '18', j: 2 } ], css_id: 'tinytable_css_19a4bmlpe7k71hrmbw73',}, 
-          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '10', j: 1 }, { i: '11', j: 1 }, { i: '12', j: 1 }, { i: '13', j: 1 }, { i: '14', j: 1 }, { i: '15', j: 1 }, { i: '16', j: 1 }, { i: '17', j: 1 }, { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 }, { i: '10', j: 2 }, { i: '11', j: 2 }, { i: '12', j: 2 }, { i: '13', j: 2 }, { i: '14', j: 2 }, { i: '15', j: 2 }, { i: '16', j: 2 }, { i: '17', j: 2 } ], css_id: 'tinytable_css_uzukmjbj6552ktfibwj0',}, 
-          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 } ], css_id: 'tinytable_css_f25wn5w2ethck9q85w4v',}, 
+          { positions: [ { i: '18', j: 3 }, { i: '18', j: 4 }, { i: '18', j: 5 }, { i: '18', j: 6 }, { i: '18', j: 7 } ], css_id: 'tinytable_css_psagjw8im8m7pcng911h',}, 
+          { positions: [ { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '10', j: 3 }, { i: '11', j: 3 }, { i: '12', j: 3 }, { i: '13', j: 3 }, { i: '14', j: 3 }, { i: '15', j: 3 }, { i: '16', j: 3 }, { i: '17', j: 3 }, { i: '1', j: 4 }, { i: '2', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 }, { i: '9', j: 4 }, { i: '10', j: 4 }, { i: '11', j: 4 }, { i: '12', j: 4 }, { i: '13', j: 4 }, { i: '14', j: 4 }, { i: '15', j: 4 }, { i: '16', j: 4 }, { i: '17', j: 4 }, { i: '1', j: 5 }, { i: '2', j: 5 }, { i: '3', j: 5 }, { i: '4', j: 5 }, { i: '5', j: 5 }, { i: '6', j: 5 }, { i: '7', j: 5 }, { i: '8', j: 5 }, { i: '9', j: 5 }, { i: '10', j: 5 }, { i: '11', j: 5 }, { i: '12', j: 5 }, { i: '13', j: 5 }, { i: '14', j: 5 }, { i: '15', j: 5 }, { i: '16', j: 5 }, { i: '17', j: 5 }, { i: '1', j: 6 }, { i: '2', j: 6 }, { i: '3', j: 6 }, { i: '4', j: 6 }, { i: '5', j: 6 }, { i: '6', j: 6 }, { i: '7', j: 6 }, { i: '8', j: 6 }, { i: '9', j: 6 }, { i: '10', j: 6 }, { i: '11', j: 6 }, { i: '12', j: 6 }, { i: '13', j: 6 }, { i: '14', j: 6 }, { i: '15', j: 6 }, { i: '16', j: 6 }, { i: '17', j: 6 }, { i: '1', j: 7 }, { i: '2', j: 7 }, { i: '3', j: 7 }, { i: '4', j: 7 }, { i: '5', j: 7 }, { i: '6', j: 7 }, { i: '7', j: 7 }, { i: '8', j: 7 }, { i: '9', j: 7 }, { i: '10', j: 7 }, { i: '11', j: 7 }, { i: '12', j: 7 }, { i: '13', j: 7 }, { i: '14', j: 7 }, { i: '15', j: 7 }, { i: '16', j: 7 }, { i: '17', j: 7 } ], css_id: 'tinytable_css_iqoiz164t58jueubrwpf',}, 
+          { positions: [ { i: '0', j: 3 }, { i: '0', j: 4 }, { i: '0', j: 5 }, { i: '0', j: 6 }, { i: '0', j: 7 } ], css_id: 'tinytable_css_v3l98t02quac5njvdoxn',}, 
+          { positions: [ { i: '18', j: 1 }, { i: '18', j: 2 } ], css_id: 'tinytable_css_xczylvf05w5bng9a2kll',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '10', j: 1 }, { i: '11', j: 1 }, { i: '12', j: 1 }, { i: '13', j: 1 }, { i: '14', j: 1 }, { i: '15', j: 1 }, { i: '16', j: 1 }, { i: '17', j: 1 }, { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 }, { i: '10', j: 2 }, { i: '11', j: 2 }, { i: '12', j: 2 }, { i: '13', j: 2 }, { i: '14', j: 2 }, { i: '15', j: 2 }, { i: '16', j: 2 }, { i: '17', j: 2 } ], css_id: 'tinytable_css_3rkf445u3g0nntjrdplr',}, 
+          { positions: [ { i: '0', j: 1 }, { i: '0', j: 2 } ], css_id: 'tinytable_css_fp1yma15ubve5qlyhyab',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_uun4024cjwhe5g9dm1pb.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_h9jnadehh02vvvqq8ihw.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
@@ -650,15 +650,15 @@ Table&nbsp;2: Non-missing values by state and year and industry level
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
     <style>
     /* tinytable css entries after */
-    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_wlh214f4ivbcxcsuw0ed, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_wlh214f4ivbcxcsuw0ed {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
-    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_j3azgkl6vnziue6d2ej7, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_j3azgkl6vnziue6d2ej7 { text-align: right }
-    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_kk3jjgnz9c51o70lsial, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_kk3jjgnz9c51o70lsial {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
-    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_19a4bmlpe7k71hrmbw73, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_19a4bmlpe7k71hrmbw73 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_uzukmjbj6552ktfibwj0, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_uzukmjbj6552ktfibwj0 { text-align: left }
-    #tinytable_uun4024cjwhe5g9dm1pb td.tinytable_css_f25wn5w2ethck9q85w4v, #tinytable_uun4024cjwhe5g9dm1pb th.tinytable_css_f25wn5w2ethck9q85w4v {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_h9jnadehh02vvvqq8ihw td.tinytable_css_psagjw8im8m7pcng911h, #tinytable_h9jnadehh02vvvqq8ihw th.tinytable_css_psagjw8im8m7pcng911h {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_h9jnadehh02vvvqq8ihw td.tinytable_css_iqoiz164t58jueubrwpf, #tinytable_h9jnadehh02vvvqq8ihw th.tinytable_css_iqoiz164t58jueubrwpf { text-align: right }
+    #tinytable_h9jnadehh02vvvqq8ihw td.tinytable_css_v3l98t02quac5njvdoxn, #tinytable_h9jnadehh02vvvqq8ihw th.tinytable_css_v3l98t02quac5njvdoxn {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: right }
+    #tinytable_h9jnadehh02vvvqq8ihw td.tinytable_css_xczylvf05w5bng9a2kll, #tinytable_h9jnadehh02vvvqq8ihw th.tinytable_css_xczylvf05w5bng9a2kll {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_h9jnadehh02vvvqq8ihw td.tinytable_css_3rkf445u3g0nntjrdplr, #tinytable_h9jnadehh02vvvqq8ihw th.tinytable_css_3rkf445u3g0nntjrdplr { text-align: left }
+    #tinytable_h9jnadehh02vvvqq8ihw td.tinytable_css_fp1yma15ubve5qlyhyab, #tinytable_h9jnadehh02vvvqq8ihw th.tinytable_css_fp1yma15ubve5qlyhyab {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
     <div class="container">
-      <table class="tinytable" id="tinytable_uun4024cjwhe5g9dm1pb" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="tinytable" id="tinytable_h9jnadehh02vvvqq8ihw" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
         
         <thead>
               <tr>
@@ -905,7 +905,7 @@ Table&nbsp;2: Non-missing values by state and year and industry level
 <div id="fig-all-ind" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-all-ind-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="retail-sales_files/figure-html/fig-all-ind-1.png" class="img-fluid figure-img" width="672">
+<img src="retail-sales_files/figure-html/fig-all-ind-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;1: Retail sales by industry using <code>facet_wrap()</code>
@@ -925,7 +925,7 @@ Figure&nbsp;1: Retail sales by industry using <code>facet_wrap()</code>
 <div id="fig-all-ind2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-all-ind2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="retail-sales_files/figure-html/fig-all-ind2-1.png" class="img-fluid figure-img" width="672">
+<img src="retail-sales_files/figure-html/fig-all-ind2-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;2: Retail sales by industry
@@ -965,7 +965,7 @@ Figure&nbsp;2: Retail sales by industry
 <div id="fig-season" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-season-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="retail-sales_files/figure-html/fig-season-1.png" class="img-fluid figure-img" width="576">
+<img src="retail-sales_files/figure-html/fig-season-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-season-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;3: Seasonality
@@ -1036,7 +1036,7 @@ Tip&nbsp;2: Alternative engines
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>retail_sales_db</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A query:  ?? x 6
-# Database: DuckDB 1.4.4 [igow@Darwin 25.4.0:R 4.5.2/:memory:]
+# Database: DuckDB 1.5.1 [root@Darwin 25.4.0:R 4.5.3/:memory:]
    industry                     state date       sales ind_level parent_industry
    &lt;chr&gt;                        &lt;chr&gt; &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;          
  1 Cafes, restaurants and cate… Aust… 1982-04-01   4.4         2 Cafes, restaur…
@@ -1094,7 +1094,7 @@ Tip&nbsp;2: Alternative engines
 <div id="fig-all-ind-ytd" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-all-ind-ytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="retail-sales_files/figure-html/fig-all-ind-ytd-1.png" class="img-fluid figure-img" width="576">
+<img src="retail-sales_files/figure-html/fig-all-ind-ytd-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-ytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;4: Year-to-date sales for cafes
@@ -1160,7 +1160,7 @@ Figure&nbsp;4: Year-to-date sales for cafes
 <div id="fig-all-ind-fytd" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-all-ind-fytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="retail-sales_files/figure-html/fig-all-ind-fytd-1.png" class="img-fluid figure-img" width="576">
+<img src="retail-sales_files/figure-html/fig-all-ind-fytd-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-fytd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;5: Fiscal year-to-date sales for cafes
@@ -1214,7 +1214,7 @@ Figure&nbsp;5: Fiscal year-to-date sales for cafes
 <div id="fig-all-ind-ma" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-all-ind-ma-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="retail-sales_files/figure-html/fig-all-ind-ma-1.png" class="img-fluid figure-img" width="576">
+<img src="retail-sales_files/figure-html/fig-all-ind-ma-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-all-ind-ma-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;6: Retail sales by industry with moving average
@@ -1278,7 +1278,7 @@ Figure&nbsp;6: Retail sales by industry with moving average
 <div id="fig-vic-wa-liq" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-vic-wa-liq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="retail-sales_files/figure-html/fig-vic-wa-liq-1.png" class="img-fluid figure-img" width="672">
+<img src="retail-sales_files/figure-html/fig-vic-wa-liq-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vic-wa-liq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;7: Liquor retailing sales (normalised by 2018 average monthly sales)
@@ -1337,11 +1337,22 @@ Caution
 <span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">label =</span> <span class="fu">str_trim</span>(label)) <span class="sc">|&gt;</span></span>
 <span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(industry, state, date, value) <span class="sc">|&gt;</span></span>
 <span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">sales =</span> value) <span class="sc">|&gt;</span></span>
-<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date, industry, state)</span>
-<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>abs_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date, industry, state)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding URLs for tables corresponding to ABS catalogue 8501.0</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Attempting to download files from catalogue 8501.0, Retail Trade, Australia</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Extracting data from downloaded spreadsheets</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Tidying data from imported ABS spreadsheets</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>abs_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 96,957 × 4
+<pre><code># A tibble: 98,091 × 4
    industry                                      state          date       sales
    &lt;chr&gt;                                         &lt;chr&gt;          &lt;date&gt;     &lt;dbl&gt;
  1 Cafes, restaurants and catering services      Australian Ca… 1982-04-01   4.4
@@ -1354,44 +1365,44 @@ Caution
  8 Cafes, restaurants and catering services      Victoria       1982-04-01  36.4
  9 Cafes, restaurants and catering services      Western Austr… 1982-04-01   8  
 10 Cafes, restaurants and takeaway food services Australian Ca… 1982-04-01   7.6
-# ℹ 96,947 more rows</code></pre>
+# ℹ 98,081 more rows</code></pre>
 </div>
 </div>
 <p>One thing that can be observed in the output above is that there is no indication of which industries are groups and which are subgroups. Also there is no indication of how the subgroups map to groups. To handle this, I created the following data frame to map <code>industry</code> to <code>ind_level</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>retail_industries <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>industry, <span class="sc">~</span>ind_level,</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Supermarket and grocery stores"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Liquor retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other specialised food retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Food retailing"</span>, <span class="dv">1</span>,</span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Furniture, floor coverings, houseware and textile goods retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Electrical and electronic goods retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Hardware, building and garden supplies retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Household goods retailing"</span>, <span class="dv">1</span>,</span>
-<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Clothing retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Footwear and other personal accessory retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Clothing, footwear and personal accessory retailing"</span>, <span class="dv">1</span>,</span>
-<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Department stores"</span>, <span class="dv">1</span>,</span>
-<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Newspaper and book retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other recreational goods retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Pharmaceutical, cosmetic and toiletry goods retailing"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other retailing n.e.c."</span>, <span class="dv">2</span>,</span>
-<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other retailing"</span>, <span class="dv">1</span>,</span>
-<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Cafes, restaurants and catering services"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Takeaway food services"</span>, <span class="dv">2</span>,</span>
-<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Cafes, restaurants and takeaway food services"</span>, <span class="dv">1</span>,</span>
-<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Total (Industry)"</span>, <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
-<span id="cb45-24"><a href="#cb45-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parent_industry =</span> <span class="fu">if_else</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>, industry, <span class="cn">NA</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(parent_industry, <span class="at">.direction =</span> <span class="st">"up"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb45-26"><a href="#cb45-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parent_industry =</span> <span class="fu">if_else</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Total (Industry)"</span>, </span>
-<span id="cb45-27"><a href="#cb45-27" aria-hidden="true" tabindex="-1"></a>                                   parent_industry)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>retail_industries <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>industry, <span class="sc">~</span>ind_level,</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Supermarket and grocery stores"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Liquor retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other specialised food retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Food retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Furniture, floor coverings, houseware and textile goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Electrical and electronic goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Hardware, building and garden supplies retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Household goods retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Clothing retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Footwear and other personal accessory retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Clothing, footwear and personal accessory retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Department stores"</span>, <span class="dv">1</span>,</span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Newspaper and book retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other recreational goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Pharmaceutical, cosmetic and toiletry goods retailing"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other retailing n.e.c."</span>, <span class="dv">2</span>,</span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other retailing"</span>, <span class="dv">1</span>,</span>
+<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Cafes, restaurants and catering services"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-21"><a href="#cb50-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Takeaway food services"</span>, <span class="dv">2</span>,</span>
+<span id="cb50-22"><a href="#cb50-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Cafes, restaurants and takeaway food services"</span>, <span class="dv">1</span>,</span>
+<span id="cb50-23"><a href="#cb50-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Total (Industry)"</span>, <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb50-24"><a href="#cb50-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parent_industry =</span> <span class="fu">if_else</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>, industry, <span class="cn">NA</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb50-25"><a href="#cb50-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(parent_industry, <span class="at">.direction =</span> <span class="st">"up"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb50-26"><a href="#cb50-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parent_industry =</span> <span class="fu">if_else</span>(ind_level <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Total (Industry)"</span>, </span>
+<span id="cb50-27"><a href="#cb50-27" aria-hidden="true" tabindex="-1"></a>                                   parent_industry)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="ot">&lt;-</span></span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  abs_data <span class="sc">|&gt;</span></span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(retail_industries, <span class="fu">join_by</span>(industry)) <span class="sc">|&gt;</span></span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"data/retail_sales.csv"</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>retail_sales <span class="ot">&lt;-</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  abs_data <span class="sc">|&gt;</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(retail_industries, <span class="fu">join_by</span>(industry)) <span class="sc">|&gt;</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"data/retail_sales.csv"</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="exercises-7" class="level4" data-number="2.3.5.1">
 <h4 data-number="2.3.5.1" class="anchored" data-anchor-id="exercises-7"><span class="header-section-number">2.3.5.1</span> Exercises</h4>

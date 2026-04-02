@@ -10,7 +10,7 @@
 <meta name="dcterms.date" content="2026-03-15">
 <meta name="keywords" content="Python, Polars, Accounting research">
 
-<title>Ball and Brown (1968): A reading guide and replication – notes</title>
+<title>Ball and Brown (1968): Replication using Python Polars – notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -217,14 +217,14 @@ window.Quarto = {
   </ul></li>
   </ul></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="bb68.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="bb68.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Ball and Brown (1968): A reading guide and replication</h1>
+<h1 class="title">Ball and Brown (1968): Replication using Python Polars</h1>
   <div class="quarto-categories">
     <div class="quarto-category">Accounting research</div>
     <div class="quarto-category">Replication</div>
@@ -285,11 +285,11 @@ Tip
 <div class="callout-body-container callout-body">
 <p>The Python code in this note uses <code>requests</code>, <code>polars</code>, <code>era-py</code>, <code>db2pq</code>, and <code>plotnine</code>.</p>
 <p>If you are using <code>pip</code>, you can install the required packages with:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install requests polars era-py db2pq plotnine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install requests polars <span class="st">"era-py[polars]"</span> db2pq plotnine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The imports below load the packages used throughout the note. More general setup instructions will be provided in Chapter 1 of the book. Quarto templates for the exercises below will be made available on GitHub.</p>
 </div>
 </div>
-<div id="51030c81" class="cell" data-execution_count="1">
+<div id="e933e7ec" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> zipfile</span>
@@ -328,9 +328,9 @@ Note
 <ol type="1">
 <li><p>What is the research question of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span>? Do you find the paper to be persuasive?</p></li>
 <li><p>What do you notice about the references in <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968, pp. 177–178</a>)</span>?</p></li>
-<li><p>Given that “the most fundamental result” of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> relates to an association or correlation, is it correct to say that the paper provides no evidence on causal linkages? Does this also mean that <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> is a “merely” descriptive paper according to the taxonomy introduced in Chapter 4 of the book? How might the results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> be represented in a causal diagram assuming that accounting information is meaningful and markets are efficient? Would an alternative causal diagram be assumed by a critic who viewed accounting information as meaningless? </p></li>
+<li><p>Given that “the most fundamental result” of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> relates to an association or correlation, is it correct to say that the paper provides no evidence on causal linkages? Does this also mean that <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> is a “merely” descriptive paper according to the taxonomy introduced in Chapter 4 of the book? How might the results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> be represented in a causal diagram assuming that accounting information is meaningful and markets are efficient? Would an alternative causal diagram be assumed by a critic who viewed accounting information as meaningless?</p></li>
 <li><p>Describe how Figure 1 of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> supports each of principal results identified by <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>.</p></li>
-<li><p>Consider the causal diagrams you created above. Do the results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> provide more support for one causal diagram than the other? </p></li>
+<li><p>Consider the causal diagrams you created above. Do the results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> provide more support for one causal diagram than the other?</p></li>
 <li><p>Compare Figure 1 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span> with Figure 1 of BB68. What is common between the two figures? What is different?</p></li>
 <li><p>What does “less their average” mean in the title of Figure 1 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>? What effect does this have on the plot? (Does it make this plot different from Figure 1 of BB68? Is information lost in the process?)</p></li>
 <li><p><span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019, p. 418</a>)</span> say “in this replication we address two issues with the BB68 significance tests.” Do you understand the points being made here?</p></li>
@@ -375,8 +375,7 @@ Note
 <p>See the <code>db2pq</code> documentation on PyPI for more details on installation and environment-variable setup.</p>
 </div>
 </div>
-<p> </p>
-<div id="eef9c4a4" class="cell" data-execution_count="2">
+<div id="2bd7b4ae" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> ptime():</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    msi <span class="op">=</span> load_parquet(<span class="st">"msi"</span>, <span class="st">"crsp"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    msf <span class="op">=</span> load_parquet(<span class="st">"msf"</span>, <span class="st">"crsp"</span>)</span>
@@ -386,7 +385,7 @@ Note
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    funda <span class="op">=</span> load_parquet(<span class="st">"funda"</span>, <span class="st">"comp"</span>)</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    fundq <span class="op">=</span> load_parquet(<span class="st">"fundq"</span>, <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 5.23 ms</p>
+<p><strong>Wall time:</strong> 5.85 ms</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-note callout-titled" data-text-align="left">
@@ -424,7 +423,7 @@ Note
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        .with_columns(annc_month<span class="op">=</span>pl.col(<span class="st">"rdq"</span>).dt.truncate(<span class="st">"1mo"</span>))</span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div id="annc_events" class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 1.30 ms</p>
+<p><strong>Wall time:</strong> 1.39 ms</p>
 </div>
 </div>
 <p>To compile returns for months <span class="math inline">\(t-11\)</span> through <span class="math inline">\(t+6\)</span> for each earnings announcement date (<span class="math inline">\(t\)</span>) (as <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> and <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span> do), we will need the <code>date</code> values on CRSP associated with each of those months. We will create a table <code>td_link</code> that will provide the link between announcement events in <code>annc_events</code> and dates on CRSP’s monthly stock file (<code>crsp.msf</code>).</p>
@@ -441,9 +440,9 @@ Note
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f47cdf17" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>crsp_dates.limit(<span class="dv">10</span>).collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="5">
+<div id="c57a4788" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>crsp_dates.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -451,7 +450,7 @@ Note
   white-space: pre-wrap;
 }
 </style>
-<small>shape: (10, 3)</small>
+<small>shape: (5, 3)</small>
 <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
@@ -491,31 +490,6 @@ Note
 <td>1926-04-30</td>
 <td>1926-04-01</td>
 </tr>
-<tr class="even">
-<td>6</td>
-<td>1926-05-28</td>
-<td>1926-05-01</td>
-</tr>
-<tr class="odd">
-<td>7</td>
-<td>1926-06-30</td>
-<td>1926-06-01</td>
-</tr>
-<tr class="even">
-<td>8</td>
-<td>1926-07-31</td>
-<td>1926-07-01</td>
-</tr>
-<tr class="odd">
-<td>9</td>
-<td>1926-08-31</td>
-<td>1926-08-01</td>
-</tr>
-<tr class="even">
-<td>10</td>
-<td>1926-09-30</td>
-<td>1926-09-01</td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -547,7 +521,7 @@ Note
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Here are the data for one <code>annc_month</code>:</p>
-<div id="8dd48bee" class="cell" data-execution_count="8">
+<div id="6132f64e" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    td_link</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"annc_month"</span>) <span class="op">==</span> pl.date(<span class="dv">2001</span>, <span class="dv">4</span>, <span class="dv">1</span>))</span>
@@ -653,7 +627,7 @@ Note
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The following code creates <code>events_linked</code>, which links the events (<code>gvkey</code> and <code>rdq</code>) with PERMNOs and return dates.</p>
-<div id="3669578c" class="cell" data-execution_count="10">
+<div id="d67b6a33" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>events_linked <span class="op">=</span> (</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    annc_events</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    .join(td_link, on<span class="op">=</span><span class="st">"annc_month"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
@@ -724,7 +698,7 @@ Note
 <p>That is useful here because we need to locate sections of Ken French’s text file without hard-coding row numbers. Once we find a heading such as <code>"Value Weight"</code> or <code>"Equal Weight"</code>, we can use the associated line numbers to identify where the relevant block of data starts and ends.</p>
 </div>
 </div>
-<div id="8822370d" class="cell" data-execution_count="14">
+<div id="a3767a7c" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zip_url_to_text(url):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    resp <span class="op">=</span> requests.get(url)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    resp.raise_for_status()</span>
@@ -733,18 +707,18 @@ Note
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> zf.read(inner_name).decode(<span class="st">"latin1"</span>)</span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> NumberedLines(raw.splitlines())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="b381fdda" class="cell" data-execution_count="15">
+<div id="19676291" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> (<span class="st">"https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>       <span class="st">"Portfolios_Formed_on_ME_CSV.zip"</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> zip_url_to_text(url)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s look at the first few rows of <code>text</code>.</p>
-<div id="72623130" class="cell" data-execution_count="16">
+<div id="a01d4d8d" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>text[:<span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
 <pre><code>NumberedLines([
-  00: This file was created using the 202601 CRSP database.  It contains
+  00: This file was created using the 202602 CRSP database.  It contains
   01: value- and equal-weighted returns for size portfolios.  Each record contains returns for:
   02: Negative (not used)  30%  40%  30%     5 Quintiles    10 Deciles
   03: The portfolios are constructed at the end of Jun.  The annual returns are from January
@@ -768,36 +742,36 @@ Note
 </div>
 </div>
 <p>The next question would seem to be: Where is the last row of data (<code>vw_end</code>)? Before answering that question, notice that the data rows start with dates in <code>yyyymm</code> form (or in <code>yyyy</code> form for annual data) and header rows seem to start with commas (<code>,</code>), so let’s look at all rows that do <em>not</em> start with any of these forms.</p>
-<div id="d94f4881" class="cell" data-execution_count="18">
+<div id="e9259c66" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>text[vw_start:].filter_out(re.<span class="bu">compile</span>(<span class="vs">r"</span><span class="dv">^</span><span class="kw">(</span><span class="dv">\s</span><span class="op">*</span><span class="dv">\d</span><span class="op">{4,6}</span><span class="cf">|</span><span class="vs">,</span><span class="kw">)</span><span class="vs">"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <pre><code>NumberedLines([
-  1203:   Average Equal Weighted Returns -- Monthly
-  2400:   Value Weight Returns -- Annual from January to December
-  2501:   Equal Weight Returns -- Annual from January to December
-  2602:   Number of Firms in Portfolios
-  3799:   Average Firm Size
-  4996: Copyright 2026 Eugene F. Fama and Kenneth R. French
+  1204:   Average Equal Weighted Returns -- Monthly
+  2402:   Value Weight Returns -- Annual from January to December
+  2503:   Equal Weight Returns -- Annual from January to December
+  2604:   Number of Firms in Portfolios
+  3802:   Average Firm Size
+  5000: Copyright 2026 Eugene F. Fama and Kenneth R. French
 ])</code></pre>
 </div>
 </div>
 <p>Presumably the <code>"Average Value Weight Returns -- Monthly"</code> data end somewhere before the row containing <code>"Average Equal Weighted Returns -- Monthly"</code>, so let’s look at the rows just before that row.</p>
-<div id="a7b47eb7" class="cell" data-execution_count="19">
+<div id="5f8b5940" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>text[<span class="dv">1197</span>:<span class="dv">1203</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="19">
 <pre><code>NumberedLines([
-  1197: 202508,  -99.99,    9.18,    5.21,    1.92,    9.32,    8.61,    5.96,    3.34,    1.83,    8.29,   10.03,    9.04,    8.34,    5.67,    6.18,    3.23,    3.41,    1.52,    1.87
+  1197: 202508,  -99.99,    9.18,    5.21,    1.92,    9.31,    8.61,    5.96,    3.34,    1.83,    8.28,   10.03,    9.04,    8.34,    5.67,    6.18,    3.23,    3.41,    1.52,    1.87
   1198: 202509,  -99.99,    2.19,    0.62,    3.98,    3.42,    0.93,    0.94,    0.19,    4.19,    5.18,    2.23,    0.87,    0.97,    1.28,    0.69,    0.09,    0.25,    1.03,    4.58
   1199: 202510,  -99.99,    1.21,   -0.38,    2.53,    1.05,    1.48,   -0.29,    0.38,    2.61,    1.78,    0.54,    1.38,    1.53,    0.66,   -1.00,   -1.21,    1.21,   -0.64,    3.00
-  1200: 202511,  -99.99,    2.49,    2.65,   -0.01,    2.21,    2.18,    2.31,    1.67,   -0.05,    1.19,    2.92,    2.79,    1.81,    1.68,    2.79,    3.41,    0.79,    1.18,   -0.19
-  1201: 202512,  -99.99,    1.23,   -0.37,    0.01,    0.73,    0.83,   -0.58,    0.76,   -0.06,    0.56,    0.85,    1.78,    0.24,   -0.19,   -0.87,   -0.35,    1.33,   -0.58,    0.00
-  1202: 202601,  -99.99,    4.93,    4.87,    1.03,    4.28,    5.92,    5.07,    3.27,    0.93,    4.32,    4.26,    5.64,    6.10,    4.15,    5.76,    4.14,    2.83,    1.90,    0.82
+  1200: 202511,  -99.99,    2.48,    2.65,   -0.01,    2.21,    2.18,    2.31,    1.67,   -0.05,    1.19,    2.92,    2.79,    1.81,    1.68,    2.79,    3.41,    0.79,    1.18,   -0.19
+  1201: 202512,  -99.99,    1.23,   -0.37,    0.01,    0.73,    0.83,   -0.58,    0.76,   -0.06,    0.55,    0.85,    1.78,    0.24,   -0.19,   -0.87,   -0.35,    1.33,   -0.58,    0.00
+  1202: 202601,  -99.99,    4.93,    4.91,    1.03,    4.28,    5.93,    5.09,    3.29,    0.93,    4.32,    4.26,    5.64,    6.12,    4.15,    5.79,    4.21,    2.83,    1.90,    0.82
 ])</code></pre>
 </div>
 </div>
 <p>From the output above, it seems that the data rows continue right up to the row before the row containing <code>"Average Equal Weighted Returns -- Monthly"</code>. Because of how slicing works in Python, we can set <code>vw_end</code> to the index of that row.</p>
 <p>Having done so, we can check that we have the right rows. The output below confirms that we do (we will want that header row in working with the data).</p>
-<div id="e181a3ff" class="cell" data-execution_count="20">
+<div id="7eec609c" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>vw_end_regex <span class="op">=</span> re.<span class="bu">compile</span>(<span class="vs">r"Equal Weight</span><span class="dv">.</span><span class="op">*</span><span class="vs">Monthly"</span>)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>vw_end <span class="op">=</span> text.<span class="bu">filter</span>(vw_end_regex).index[<span class="dv">0</span>]</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>vw_lines <span class="op">=</span> text[vw_start:vw_end].reset_index()</span>
@@ -810,47 +784,47 @@ Note
   03: 192609,  -99.99,   -1.52,   -0.87,    0.83,   -1.27,   -1.14,    0.08,   -0.12,    0.82,    0.57,   -1.83,   -1.73,   -0.77,   -0.01,    0.15,   -1.93,    0.92,   -0.72,    1.26
   04: 192610,  -99.99,   -3.08,   -3.29,   -2.85,   -2.56,   -4.09,   -2.67,   -3.50,   -2.79,   -4.29,   -2.01,   -3.52,   -4.45,   -3.02,   -2.41,   -3.61,   -3.44,   -3.61,   -2.56
   …
-  1191: 202509,  -99.99,    2.19,    0.62,    3.98,    3.42,    0.93,    0.94,    0.19,    4.19,    5.18,    2.23,    0.87,    0.97,    1.28,    0.69,    0.09,    0.25,    1.03,    4.58
   1192: 202510,  -99.99,    1.21,   -0.38,    2.53,    1.05,    1.48,   -0.29,    0.38,    2.61,    1.78,    0.54,    1.38,    1.53,    0.66,   -1.00,   -1.21,    1.21,   -0.64,    3.00
-  1193: 202511,  -99.99,    2.49,    2.65,   -0.01,    2.21,    2.18,    2.31,    1.67,   -0.05,    1.19,    2.92,    2.79,    1.81,    1.68,    2.79,    3.41,    0.79,    1.18,   -0.19
-  1194: 202512,  -99.99,    1.23,   -0.37,    0.01,    0.73,    0.83,   -0.58,    0.76,   -0.06,    0.56,    0.85,    1.78,    0.24,   -0.19,   -0.87,   -0.35,    1.33,   -0.58,    0.00
-  1195: 202601,  -99.99,    4.93,    4.87,    1.03,    4.28,    5.92,    5.07,    3.27,    0.93,    4.32,    4.26,    5.64,    6.10,    4.15,    5.76,    4.14,    2.83,    1.90,    0.82
+  1193: 202511,  -99.99,    2.48,    2.65,   -0.01,    2.21,    2.18,    2.31,    1.67,   -0.05,    1.19,    2.92,    2.79,    1.81,    1.68,    2.79,    3.41,    0.79,    1.18,   -0.19
+  1194: 202512,  -99.99,    1.23,   -0.37,    0.01,    0.73,    0.83,   -0.58,    0.76,   -0.06,    0.55,    0.85,    1.78,    0.24,   -0.19,   -0.87,   -0.35,    1.33,   -0.58,    0.00
+  1195: 202601,  -99.99,    4.93,    4.91,    1.03,    4.28,    5.93,    5.09,    3.29,    0.93,    4.32,    4.26,    5.64,    6.12,    4.15,    5.79,    4.21,    2.83,    1.90,    0.82
+  1196: 202602,  -99.99,    0.97,    1.71,   -1.06,    0.78,    1.02,    2.24,    2.56,   -1.30,    1.83,    0.04,    1.18,    0.93,    0.10,    3.82,    1.34,    3.17,    3.85,   -1.90
 ])</code></pre>
 </div>
 </div>
 <p>Now we move on to equal-weight returns. Based on what we saw above, we might guess that the header row comes right after the row containing <code>"Average Equal Weighted Returns -- Monthly"</code> (i.e., row number <code>vw_end</code>), but let’s check by looking at the first few rows from that point.</p>
-<div id="a87b3609" class="cell" data-execution_count="21">
+<div id="9b7a4230" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>text[vw_end:(vw_end <span class="op">+</span> <span class="dv">5</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="21">
 <pre><code>NumberedLines([
-  1203:   Average Equal Weighted Returns -- Monthly
-  1204: ,&lt;= 0,Lo 30,Med 40,Hi 30,Lo 20,Qnt 2,Qnt 3,Qnt 4,Hi 20,Lo 10,2-Dec,3-Dec,4-Dec,5-Dec,6-Dec,7-Dec,8-Dec,9-Dec,Hi 10
-  1205: 192607,  -99.99,   -0.53,    1.45,    2.65,   -0.68,    0.33,    1.65,    1.50,    3.27,   -1.69,    0.33,   -0.24,    0.90,    1.45,    1.86,    1.60,    1.40,    3.38,    3.16
-  1206: 192608,  -99.99,    3.79,    3.03,    2.13,    3.74,    3.55,    3.66,    1.59,    2.38,    4.93,    2.55,    3.88,    3.22,    2.67,    4.68,    1.56,    1.61,    0.95,    3.75
-  1207: 192609,  -99.99,   -0.93,   -0.59,    0.20,   -0.43,   -1.39,    0.03,   -0.39,   -0.10,    0.86,   -1.72,   -1.94,   -0.84,    0.12,   -0.05,   -1.58,    0.80,   -0.80,    0.57
+  1204:   Average Equal Weighted Returns -- Monthly
+  1205: ,&lt;= 0,Lo 30,Med 40,Hi 30,Lo 20,Qnt 2,Qnt 3,Qnt 4,Hi 20,Lo 10,2-Dec,3-Dec,4-Dec,5-Dec,6-Dec,7-Dec,8-Dec,9-Dec,Hi 10
+  1206: 192607,  -99.99,   -0.53,    1.45,    2.65,   -0.68,    0.33,    1.65,    1.50,    3.27,   -1.69,    0.33,   -0.24,    0.90,    1.45,    1.86,    1.60,    1.40,    3.38,    3.16
+  1207: 192608,  -99.99,    3.79,    3.03,    2.13,    3.74,    3.55,    3.66,    1.59,    2.38,    4.93,    2.55,    3.88,    3.22,    2.67,    4.68,    1.56,    1.61,    0.95,    3.75
+  1208: 192609,  -99.99,   -0.93,   -0.59,    0.20,   -0.43,   -1.39,    0.03,   -0.39,   -0.10,    0.86,   -1.72,   -1.94,   -0.84,    0.12,   -0.05,   -1.58,    0.80,   -0.80,    0.57
 ])</code></pre>
 </div>
 </div>
 <p>Based on this, we can set <code>ew_start = vw_end + 1</code>. Can we use line 2400 (i.e., the line we saw above as containing <code>"Value Weight Returns -- Annual from January to December"</code> to determine <code>ew_end</code>? From the output below, we see that again the data run up to just before that line.</p>
-<div id="d0a375af" class="cell" data-execution_count="22">
+<div id="1e75dbe4" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>text[<span class="dv">2397</span>:<span class="dv">2401</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
 <pre><code>NumberedLines([
-  2397: 202511,  -99.99,   -2.77,    2.39,    0.87,   -3.59,    1.92,    2.50,    1.97,    0.93,   -5.19,    1.98,    2.20,    1.62,    2.48,    2.53,    3.23,    0.77,    1.34,    0.55
-  2398: 202512,  -99.99,   -3.00,    0.03,    0.55,   -3.75,    1.20,   -0.32,    0.56,    0.14,   -5.35,    1.91,    1.58,    0.78,   -0.19,   -0.48,   -0.23,    1.30,   -0.21,    0.47
-  2399: 202601,  -99.99,    4.64,    4.45,    1.90,    4.52,    5.50,    4.04,    2.83,    1.81,    4.54,    4.45,    5.36,    5.65,    3.46,    4.72,    3.66,    2.06,    1.31,    2.26
-  2400:   Value Weight Returns -- Annual from January to December
+  2397: 202510,  -99.99,    0.68,   -0.73,   -0.17,    0.59,    0.80,   -1.11,   -0.55,   -0.37,    0.78,   -0.07,    1.22,    0.34,   -0.44,   -1.91,   -1.37,    0.21,   -0.88,    0.10
+  2398: 202511,  -99.99,   -2.78,    2.39,    0.87,   -3.60,    1.92,    2.50,    1.97,    0.93,   -5.20,    1.98,    2.20,    1.62,    2.48,    2.53,    3.23,    0.77,    1.34,    0.55
+  2399: 202512,  -99.99,   -3.01,    0.03,    0.55,   -3.76,    1.20,   -0.32,    0.56,    0.14,   -5.37,    1.91,    1.58,    0.78,   -0.19,   -0.48,   -0.23,    1.30,   -0.21,    0.47
+  2400: 202601,  -99.99,    4.62,    4.47,    1.90,    4.50,    5.51,    4.06,    2.85,    1.81,    4.51,    4.45,    5.36,    5.66,    3.46,    4.75,    3.72,    2.06,    1.31,    2.26
 ])</code></pre>
 </div>
 </div>
 <p>So we can use a regular expression to identify the index of that line and set <code>ew_end</code> to that value.</p>
-<div id="8e3807ec" class="cell" data-execution_count="23">
+<div id="93759ce3" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ew_end_regex <span class="op">=</span> re.<span class="bu">compile</span>(<span class="vs">r"</span><span class="dv">^\s</span><span class="op">+</span><span class="vs">Value Weight</span><span class="dv">.</span><span class="op">*</span><span class="vs">Annual"</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>ew_end <span class="op">=</span> text.<span class="bu">filter</span>(ew_end_regex).index[<span class="dv">0</span>]</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>ew_start <span class="op">=</span> vw_end <span class="op">+</span> <span class="dv">1</span></span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>ew_lines <span class="op">=</span> text[ew_start:ew_end].reset_index()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="1e7b2252" class="cell" data-execution_count="24">
+<div id="85be525e" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lines_to_df(lines, header<span class="op">=</span><span class="st">"infer"</span>):</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    block <span class="op">=</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(lines)</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    has_header <span class="op">=</span> header <span class="op">==</span> <span class="st">"infer"</span></span>
@@ -872,7 +846,7 @@ Note
 <span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df_raw.rename({df_raw.columns[<span class="dv">0</span>]: <span class="st">"date"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="e69dec44" class="cell" data-execution_count="25">
+<div id="a1bb1dd6" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> read_data(lines):</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> (</span>
@@ -905,13 +879,13 @@ Note
 <span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="930ee0b8" class="cell" data-execution_count="26">
+<div id="7c0f4526" class="cell" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ew_rets <span class="op">=</span> read_data(ew_lines)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="51406bc3" class="cell" data-execution_count="27">
+<div id="bba17cd2" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>vw_rets <span class="op">=</span> read_data(vw_lines)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="2da0cf24" class="cell" data-execution_count="28">
+<div id="e309480b" class="cell" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>size_rets <span class="op">=</span> (</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    ew_rets</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"month"</span>, <span class="st">"decile"</span>, pl.col(<span class="st">"ret"</span>).alias(<span class="st">"ew_ret"</span>))</span>
@@ -924,8 +898,8 @@ Note
 <span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>    .sort([<span class="st">"month"</span>, <span class="st">"decile"</span>])</span>
 <span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>size_rets.limit(<span class="dv">10</span>).collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="28">
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>size_rets.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -933,7 +907,7 @@ Note
   white-space: pre-wrap;
 }
 </style>
-<small>shape: (10, 4)</small>
+<small>shape: (5, 4)</small>
 <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
@@ -980,43 +954,13 @@ Note
 <td>0.0145</td>
 <td>0.0139</td>
 </tr>
-<tr class="even">
-<td>1926-07-01</td>
-<td>6</td>
-<td>0.0186</td>
-<td>0.0189</td>
-</tr>
-<tr class="odd">
-<td>1926-07-01</td>
-<td>7</td>
-<td>0.016</td>
-<td>0.0159</td>
-</tr>
-<tr class="even">
-<td>1926-07-01</td>
-<td>8</td>
-<td>0.014</td>
-<td>0.0131</td>
-</tr>
-<tr class="odd">
-<td>1926-07-01</td>
-<td>9</td>
-<td>0.0338</td>
-<td>0.0353</td>
-</tr>
-<tr class="even">
-<td>1926-07-01</td>
-<td>10</td>
-<td>0.0316</td>
-<td>0.0367</td>
-</tr>
 </tbody>
 </table>
 </div>
 </div>
 </div>
 <p>The second set of data we need to get from Ken French’s website is data on the cut-offs we will use in assigning firms to decile portfolios in calculating size-adjusted returns:</p>
-<div id="e4fc2960" class="cell" data-execution_count="29">
+<div id="8d003a97" class="cell" data-execution_count="29">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>url_bp <span class="op">=</span> (<span class="st">"https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>          <span class="st">"ME_Breakpoints_CSV.zip"</span>)</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1029,7 +973,7 @@ Note
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>df_raw <span class="op">=</span> lines_to_df(text[<span class="dv">1</span>:me_last], header<span class="op">=</span><span class="va">None</span>)</span>
 <span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>df_raw.columns <span class="op">=</span> [<span class="st">"month"</span>, <span class="st">"n"</span>] <span class="op">+</span> [<span class="st">"p"</span> <span class="op">+</span> <span class="bu">str</span>(i)</span>
 <span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>, <span class="dv">101</span>, <span class="dv">5</span>)]</span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>df_raw</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>df_raw.select(<span class="st">"month"</span>, <span class="st">"n"</span>, <span class="st">"p10"</span>, <span class="st">"p20"</span>, <span class="st">"p30"</span>, <span class="st">"p40"</span>, <span class="st">"p50"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div id="me_breakpoints" class="cell-output cell-output-display" data-execution_count="30">
 <div><style>
 .dataframe > thead > tr,
@@ -1038,50 +982,20 @@ Note
   white-space: pre-wrap;
 }
 </style>
-<small>shape: (1_202, 22)</small>
+<small>shape: (1_203, 7)</small>
 <table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th">month</th>
 <th data-quarto-table-cell-role="th">n</th>
-<th data-quarto-table-cell-role="th">p5</th>
 <th data-quarto-table-cell-role="th">p10</th>
-<th data-quarto-table-cell-role="th">p15</th>
 <th data-quarto-table-cell-role="th">p20</th>
-<th data-quarto-table-cell-role="th">p25</th>
 <th data-quarto-table-cell-role="th">p30</th>
-<th data-quarto-table-cell-role="th">p35</th>
 <th data-quarto-table-cell-role="th">p40</th>
-<th data-quarto-table-cell-role="th">p45</th>
 <th data-quarto-table-cell-role="th">p50</th>
-<th data-quarto-table-cell-role="th">p55</th>
-<th data-quarto-table-cell-role="th">p60</th>
-<th data-quarto-table-cell-role="th">p65</th>
-<th data-quarto-table-cell-role="th">p70</th>
-<th data-quarto-table-cell-role="th">p75</th>
-<th data-quarto-table-cell-role="th">p80</th>
-<th data-quarto-table-cell-role="th">p85</th>
-<th data-quarto-table-cell-role="th">p90</th>
-<th data-quarto-table-cell-role="th">p95</th>
-<th data-quarto-table-cell-role="th">p100</th>
 </tr>
 <tr class="even">
 <td>i64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
-<td>f64</td>
 <td>f64</td>
 <td>f64</td>
 <td>f64</td>
@@ -1094,139 +1008,49 @@ Note
 <tr class="odd">
 <td>192512</td>
 <td>488.0</td>
-<td>1.4</td>
 <td>2.38</td>
-<td>3.37</td>
 <td>4.96</td>
-<td>5.95</td>
 <td>7.4</td>
-<td>8.92</td>
 <td>10.81</td>
-<td>13.01</td>
 <td>15.57</td>
-<td>18.5</td>
-<td>22.88</td>
-<td>29.55</td>
-<td>38.41</td>
-<td>49.93</td>
-<td>65.4</td>
-<td>92.72</td>
-<td>142.48</td>
-<td>238.78</td>
-<td>1319.0</td>
 </tr>
 <tr class="even">
 <td>192601</td>
 <td>492.0</td>
-<td>1.38</td>
 <td>2.54</td>
-<td>3.76</td>
 <td>4.84</td>
-<td>5.94</td>
 <td>7.5</td>
-<td>9.28</td>
 <td>10.94</td>
-<td>12.69</td>
 <td>15.81</td>
-<td>17.75</td>
-<td>23.2</td>
-<td>30.4</td>
-<td>38.99</td>
-<td>50.85</td>
-<td>66.82</td>
-<td>94.7</td>
-<td>139.18</td>
-<td>235.2</td>
-<td>1331.71</td>
 </tr>
 <tr class="odd">
 <td>192602</td>
 <td>500.0</td>
-<td>1.29</td>
 <td>2.34</td>
-<td>3.57</td>
 <td>4.69</td>
-<td>5.61</td>
 <td>7.15</td>
-<td>8.45</td>
 <td>10.41</td>
-<td>12.06</td>
 <td>14.62</td>
-<td>17.03</td>
-<td>21.18</td>
-<td>27.63</td>
-<td>36.55</td>
-<td>46.49</td>
-<td>61.43</td>
-<td>87.51</td>
-<td>138.04</td>
-<td>223.02</td>
-<td>1366.39</td>
 </tr>
 <tr class="even">
 <td>192603</td>
 <td>504.0</td>
-<td>1.13</td>
 <td>2.05</td>
-<td>3.08</td>
 <td>4.15</td>
-<td>5.01</td>
 <td>6.02</td>
-<td>7.39</td>
 <td>9.0</td>
-<td>10.68</td>
 <td>13.2</td>
-<td>15.63</td>
-<td>18.98</td>
-<td>24.8</td>
-<td>31.9</td>
-<td>44.4</td>
-<td>58.24</td>
-<td>80.89</td>
-<td>130.13</td>
-<td>205.2</td>
-<td>1322.46</td>
 </tr>
 <tr class="odd">
 <td>192604</td>
 <td>506.0</td>
-<td>1.31</td>
 <td>2.35</td>
-<td>3.32</td>
 <td>4.37</td>
-<td>5.07</td>
 <td>6.63</td>
-<td>8.07</td>
 <td>9.6</td>
-<td>11.66</td>
 <td>13.62</td>
-<td>15.8</td>
-<td>19.17</td>
-<td>25.6</td>
-<td>33.02</td>
-<td>45.0</td>
-<td>57.73</td>
-<td>83.63</td>
-<td>120.4</td>
-<td>211.2</td>
-<td>1350.21</td>
 </tr>
 <tr class="even">
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
-<td>…</td>
 <td>…</td>
 <td>…</td>
 <td>…</td>
@@ -1236,131 +1060,56 @@ Note
 <td>…</td>
 </tr>
 <tr class="odd">
-<td>202509</td>
-<td>1131.0</td>
-<td>245.38</td>
-<td>406.03</td>
-<td>653.59</td>
-<td>954.94</td>
-<td>1407.17</td>
-<td>1836.43</td>
-<td>2291.79</td>
-<td>3058.44</td>
-<td>3853.52</td>
-<td>4781.54</td>
-<td>5844.59</td>
-<td>7148.37</td>
-<td>9434.14</td>
-<td>11717.88</td>
-<td>16284.24</td>
-<td>23530.16</td>
-<td>35902.98</td>
-<td>58596.82</td>
-<td>110973.6</td>
-<td>1.0846e6</td>
-</tr>
-<tr class="even">
 <td>202510</td>
 <td>1127.0</td>
-<td>235.85</td>
 <td>390.21</td>
-<td>659.92</td>
 <td>920.53</td>
-<td>1328.52</td>
 <td>1762.32</td>
-<td>2271.34</td>
 <td>2946.7</td>
-<td>3736.27</td>
 <td>4634.46</td>
-<td>5746.05</td>
-<td>7179.28</td>
-<td>9234.55</td>
-<td>11467.43</td>
-<td>16108.43</td>
-<td>23364.7</td>
-<td>35131.11</td>
-<td>57787.9</td>
-<td>108087.17</td>
-<td>1.0299e6</td>
-</tr>
-<tr class="odd">
-<td>202511</td>
-<td>1121.0</td>
-<td>255.16</td>
-<td>415.38</td>
-<td>671.22</td>
-<td>979.56</td>
-<td>1341.81</td>
-<td>1862.56</td>
-<td>2354.18</td>
-<td>3051.28</td>
-<td>3937.17</td>
-<td>4843.77</td>
-<td>5942.07</td>
-<td>7303.48</td>
-<td>9522.33</td>
-<td>12158.99</td>
-<td>16516.71</td>
-<td>23235.19</td>
-<td>36455.7</td>
-<td>58519.19</td>
-<td>109021.39</td>
-<td>1.1081e6</td>
 </tr>
 <tr class="even">
-<td>202512</td>
-<td>1116.0</td>
-<td>242.93</td>
-<td>427.18</td>
-<td>649.15</td>
-<td>988.37</td>
-<td>1369.77</td>
-<td>1836.91</td>
-<td>2409.99</td>
-<td>2989.91</td>
-<td>3921.31</td>
-<td>4828.35</td>
-<td>5860.16</td>
-<td>7438.3</td>
-<td>9459.47</td>
-<td>12063.11</td>
-<td>16647.21</td>
-<td>23763.34</td>
-<td>35320.41</td>
-<td>55447.99</td>
-<td>111920.27</td>
-<td>1.0848e6</td>
+<td>202511</td>
+<td>1121.0</td>
+<td>415.38</td>
+<td>979.56</td>
+<td>1862.56</td>
+<td>3051.28</td>
+<td>4843.77</td>
 </tr>
 <tr class="odd">
+<td>202512</td>
+<td>1116.0</td>
+<td>427.18</td>
+<td>988.37</td>
+<td>1836.91</td>
+<td>2989.91</td>
+<td>4828.35</td>
+</tr>
+<tr class="even">
 <td>202601</td>
 <td>1109.0</td>
-<td>262.26</td>
 <td>444.65</td>
-<td>665.47</td>
 <td>1017.53</td>
-<td>1483.11</td>
 <td>1940.52</td>
-<td>2560.02</td>
 <td>3312.32</td>
-<td>4067.16</td>
 <td>4988.12</td>
-<td>6217.31</td>
-<td>7719.4</td>
-<td>9908.99</td>
-<td>12712.14</td>
-<td>16627.47</td>
-<td>24616.45</td>
-<td>36027.62</td>
-<td>57994.45</td>
-<td>121970.58</td>
-<td>1037548.7</td>
+</tr>
+<tr class="odd">
+<td>202602</td>
+<td>1102.0</td>
+<td>428.04</td>
+<td>1016.84</td>
+<td>1897.83</td>
+<td>3337.21</td>
+<td>5097.83</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 </div>
-<div id="c486e2bc" class="cell" data-execution_count="31">
+<div id="da7ab204" class="cell" data-execution_count="31">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>me_breakpoints_raw <span class="op">=</span> (</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    df_raw</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
@@ -1382,7 +1131,7 @@ Note
 <span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Finally, we organize the data to facilitate their use in joining with other data. Specifically, we create variables for the range of values covered by each decile (from <code>me_min</code> to <code>me_max</code>). We specify the minimum value for the first decile as zero and the maximum value for the tenth decile to infinity (<code>inf</code>).</p>
-<div id="912ff0a3" class="cell" data-execution_count="32">
+<div id="a9b04a00" class="cell" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>me_breakpoints <span class="op">=</span> (</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    me_breakpoints_raw</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    .sort([<span class="st">"month"</span>, <span class="st">"decile"</span>])</span>
@@ -1439,7 +1188,7 @@ Note
 </div>
 <div class="callout-body-container callout-body">
 <p>Two bits of syntax in the next chunk are worth flagging.</p>
-<p>First, I use Polars’s column-expression expansion. For example, <code>pl.col("earn", "cfo")</code> creates an expression over both columns, so the later methods are applied to each in turn. This lets me write one pipeline that computes changes, scales them, and renames the results for both earnings and cash flow.</p>
+<p>First, I use the “expression expansion” functionality offered by Polars. For example, <code>pl.col("earn", "cfo")</code> creates an expression over both columns, so the later methods are applied to each in turn. This lets me write one pipeline that computes changes, scales them, and renames the results for both earnings and cash flow.</p>
 <p>Second, I use the <code>era</code> expression namespace provided by the <code>era_pl</code> package in a couple of places. This expression namespace provides helper methods that are useful here. First, <code>.era.div_if_pos("lag_at")</code> divides by lagged assets only when that denominator is positive and avoids cumbersome <code>.when()</code>/<code>.then()</code> logic. Second, <code>.era.ntile(10)</code> assigns observations to deciles. The aim is to keep the code concise while making these common data-cleaning and portfolio-sorting steps explicit. In addition, because these are based on <em>expressions</em>, they can be applied even to <code>LazyFrame</code> objects such as <code>funda</code>.</p>
 </div>
 </div>
@@ -1558,7 +1307,7 @@ Note
 <span id="cb46-30"><a href="#cb46-30" aria-hidden="true" tabindex="-1"></a>        .collect()</span>
 <span id="cb46-31"><a href="#cb46-31" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div id="plot_data" class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Wall time:</strong> 369.58 ms</p>
+<p><strong>Wall time:</strong> 439.14 ms</p>
 </div>
 </div>
 <p>Figure 1 of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> confirms that a picture is worth a thousand words. We produce our analogue of Figure 1 in <a href="#fig-bb-1" class="quarto-xref">Figure&nbsp;1</a>.</p>
@@ -1608,7 +1357,7 @@ Figure&nbsp;1: Replication of Figure 1 of Ball and Brown (1968).
 <ol type="1">
 <li>From the data below, we see that the upper bound for the tenth decile is about US$544 billion. How can we reconcile this with the existence of firms with market capitalizations over US$1 trillion? <em>Bonus</em>: Using data from <code>crsp.msf</code>, identify the firm whose market capitalization was US$544 billion in December 2020? (<em>Hint</em>: For the bonus question, you can add a <code>.filter()</code> to code in the template to obtain the answer. Why do we need to group by <code>permco</code>, not <code>permno</code>, to find the answer?)</li>
 </ol>
-<div id="986639ec" class="cell" data-execution_count="40">
+<div id="ced9689d" class="cell" data-execution_count="40">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    me_breakpoints_raw</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"month"</span>) <span class="op">==</span> pl.date(<span class="dv">2020</span>, <span class="dv">12</span>, <span class="dv">1</span>))</span>

@@ -163,7 +163,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#revising-the-datasheet" id="toc-revising-the-datasheet" class="nav-link" data-scroll-target="#revising-the-datasheet"><span class="header-section-number">3</span> Revising the datasheet</a></li>
   <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">4</span> Conclusion</a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="repro_data.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="repro_data.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -282,7 +282,7 @@ Tip
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">source</span>(<span class="st">"get_bls_data_orig.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-323.801  18.505 343.777 </code></pre>
+329.393  20.949 353.153 </code></pre>
 </div>
 </div>
 <p>So this takes about 6 minutes. This is not a big deal for the researchers, who probably worked on this project for years. But it’s an additional cost for anyone attempting to replicate the analysis in the paper.</p>
@@ -318,7 +318,7 @@ Tip
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">lapply</span>(years, get_qcew_data))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-265.143  21.882 145.036 </code></pre>
+265.361  27.321 157.590 </code></pre>
 </div>
 </div>
 </section>
@@ -362,7 +362,7 @@ Tip
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">lapply</span>(<span class="dv">2001</span><span class="sc">:</span><span class="dv">2019</span>L, get_qcew_data_duckdb))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-130.561  17.008  36.656 </code></pre>
+138.979  21.838  44.143 </code></pre>
 </div>
 </div>
 <section id="creating-a-code-repository-for-the-raw-data" class="level3" data-number="2.4.1">
@@ -393,7 +393,7 @@ Tip
 <span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.064   0.003   0.068 </code></pre>
+  0.061   0.003   0.066 </code></pre>
 </div>
 </div>
 <p>I can take a quick peek at a sample from this data set:</p>
@@ -401,7 +401,7 @@ Tip
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>qcew_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A query:  ?? x 38
-# Database: DuckDB 1.4.4 [igow@Darwin 25.4.0:R 4.5.2/:memory:]
+# Database: DuckDB 1.5.1 [root@Darwin 25.4.0:R 4.5.3/:memory:]
    area_fips own_code industry_code agglvl_code size_code  year qtr  
    &lt;chr&gt;        &lt;dbl&gt;         &lt;int&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;int&gt; &lt;chr&gt;
  1 01000            0            10          50         0  2001 A    
@@ -433,12 +433,12 @@ Tip
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
- 10.485   1.200   1.542 </code></pre>
+ 10.190   0.974   1.376 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>bls_county</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A query:  ?? x 38
-# Database: DuckDB 1.4.4 [igow@Darwin 25.4.0:R 4.5.2/:memory:]
+# Database: DuckDB 1.5.1 [root@Darwin 25.4.0:R 4.5.3/:memory:]
    area_fips own_code industry_code agglvl_code size_code  year qtr  
    &lt;chr&gt;        &lt;dbl&gt;         &lt;int&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;int&gt; &lt;chr&gt;
  1 01001            0            10          70         0  2001 A    
@@ -468,7 +468,7 @@ Tip
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  4.007   0.681   0.735 </code></pre>
+  3.915   0.600   0.721 </code></pre>
 </div>
 </div>
 <div class="cell">
@@ -479,7 +479,7 @@ Tip
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  1.746   0.078   0.245 </code></pre>
+  1.634   0.084   0.223 </code></pre>
 </div>
 </div>
 </section>

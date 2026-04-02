@@ -183,7 +183,7 @@ div.csl-indent {
   <li><a href="#other-ideas" id="toc-other-ideas" class="nav-link" data-scroll-target="#other-ideas"><span class="header-section-number">2.3</span> Other ideas</a></li>
   </ul></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="data_mgt_r.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="data_mgt_r.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -220,6 +220,12 @@ div.csl-indent {
     
   </div>
   
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While many of the ideas I discuss here are general in nature, for concreteness, I focus on the special case of a WRDS user maintaining a local Parquet data library of the kind discussed in <a href="https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq">Appendix E</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> and provide examples using my R package <code>db2pq</code>.</p>
+  </div>
+</div>
 
 <div>
   <div class="keywords">
@@ -231,9 +237,6 @@ div.csl-indent {
 </header>
 
 
-<div class="abstract">
-<p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While many of the ideas I discuss here are general in nature, for concreteness, I focus on the special case of a WRDS user maintaining a local Parquet data library of the kind discussed in <a href="https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq">Appendix E</a> of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> and provide examples using my R package <code>db2pq</code>.</p>
-</div>
 <section id="introduction" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
 <p>My sense is that data management is a challenge for researchers. In an academic context, some fields may receive greater institutional support than others. My experience in business schools was that there was very little support for data curation and management. While data curation is often inextricably linked with data management, in this note I assume that we are working with curated data and just need to “manage” it in some way. A classic example of (mostly) curated data in an academic context is WRDS data, which my R package <code>db2pq</code> provides tools for managing a local library of such data.</p>
@@ -296,10 +299,10 @@ div.csl-indent {
 <pre><code>Updated crsp.dsi is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-03-23 16:56:17 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-04-02 22:39:56 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-03-23 16:56:17 UTC.</code></pre>
+<pre><code>Completed file download at 2026-04-02 22:39:56 UTC.</code></pre>
 </div>
 </div>
 </section>
@@ -314,10 +317,10 @@ div.csl-indent {
 <pre><code>Updated comp.company is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-03-23 16:56:18 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-04-02 22:39:57 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-03-23 16:56:20 UTC.</code></pre>
+<pre><code>Completed file download at 2026-04-02 22:39:58 UTC.</code></pre>
 </div>
 </div>
 <p>For most tables on the WRDS database, it appears that “last updated” metadata is included in table comments. The <code>wrds_update_pq()</code> function will, by default, extract that metadata and embed it as metadata in the Parquet files.</p>
@@ -325,7 +328,7 @@ div.csl-indent {
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "Company (Updated 2026-03-23)"</code></pre>
+<pre><code>[1] "Company (Updated 2026-04-02)"</code></pre>
 </div>
 </div>
 <p>But if I specify <code>archive = TRUE</code>, then <code>pq_last_modified()</code> will instead return a tibble containing information about (possibly several) files matching the specified <code>table_name</code> in the archive.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> Here, we see that I have four previous versions of <code>comp.company</code> in my archive.</p>
@@ -333,7 +336,7 @@ div.csl-indent {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="ot">&lt;-</span> <span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>pq_df[<span class="fu">c</span>(<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 12 × 2
+<pre><code># A tibble: 14 × 2
    file_name                last_mod           
    &lt;chr&gt;                    &lt;dttm&gt;             
  1 company_20260105T070000Z 2026-01-05 07:00:00
@@ -347,7 +350,9 @@ div.csl-indent {
  9 company_20260303T070000Z 2026-03-03 07:00:00
 10 company_20260315T060000Z 2026-03-15 06:00:00
 11 company_20260322T060000Z 2026-03-22 06:00:00
-12 company_20260323T060000Z 2026-03-23 06:00:00</code></pre>
+12 company_20260323T060000Z 2026-03-23 06:00:00
+13 company_20260331T060000Z 2026-03-31 06:00:00
+14 company_20260402T060000Z 2026-04-02 06:00:00</code></pre>
 </div>
 </div>
 <p>I can use the function <code>pq_restore()</code> to make the one from <code>2024-06-14</code> the one that I am using for my data repository.</p>
@@ -361,7 +366,7 @@ div.csl-indent {
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "Company (Updated 2026-03-23)"</code></pre>
+<pre><code>[1] "Company (Updated 2026-04-02)"</code></pre>
 </div>
 </div>
 <p>One thing you will notice is that the format of the “last modified” string has changed from the one above. This could be for one of three reasons:</p>
@@ -376,7 +381,7 @@ div.csl-indent {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>pq_df <span class="ot">&lt;-</span> <span class="fu">pq_last_modified</span>(<span class="at">table_name =</span> <span class="st">"company"</span>, <span class="at">schema =</span> <span class="st">"comp"</span>, <span class="at">archive =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>pq_df[<span class="fu">c</span>(<span class="st">"file_name"</span>, <span class="st">"last_mod"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 12 × 2
+<pre><code># A tibble: 14 × 2
    file_name                last_mod           
    &lt;chr&gt;                    &lt;dttm&gt;             
  1 company_20260105T070000Z 2026-01-05 07:00:00
@@ -390,7 +395,9 @@ div.csl-indent {
  9 company_20260303T070000Z 2026-03-03 07:00:00
 10 company_20260315T060000Z 2026-03-15 06:00:00
 11 company_20260322T060000Z 2026-03-22 06:00:00
-12 company_20260323T060000Z 2026-03-23 06:00:00</code></pre>
+12 company_20260323T060000Z 2026-03-23 06:00:00
+13 company_20260331T060000Z 2026-03-31 06:00:00
+14 company_20260402T060000Z 2026-04-02 06:00:00</code></pre>
 </div>
 </div>
 <p>If we update again with <code>archive = TRUE</code>, we will effectively put the <code>2024-06-14</code> version back in the archive and replace it with the current version on WRDS.</p>
@@ -438,10 +445,10 @@ div.csl-indent {
 <pre><code>Updated ravenpack_common.rpa_entity_mappings is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-03-23 16:56:28 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-04-02 22:40:04 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-03-23 16:56:28 UTC.</code></pre>
+<pre><code>Completed file download at 2026-04-02 22:40:05 UTC.</code></pre>
 </div>
 </div>
 <p>Now we have valid “last modified” data:</p>
@@ -472,7 +479,7 @@ div.csl-indent {
 <section id="timestamps" class="level3" data-number="2.2.4">
 <h3 data-number="2.2.4" class="anchored" data-anchor-id="timestamps"><span class="header-section-number">2.2.4</span> Timestamps</h3>
 <p>Speaking of type inference, one bane of the existence of any data analyst might be timestamps. The usual purpose of timestamps is to identify a moment in time. For example, I want to know the precise time at which an earnings conference call happened, so I can turn to a dataset with intra-day data on quotes and trades to see how the market reacted. If the data on earnings conference calls use UTC and the trade-and-quote data use US Eastern time and I ignore these differences, then I will be looking at times that are off by four or five hours (depending on the time of year).</p>
-<p>To examine this issue, I’m going to revisit the Call Report data I wrote about <a href="../published/curate_call_reports.html">recently</a>. I have these data in my (general-purpose) data repository and I can use the <code>ffiec_scan_pqs</code> from my <code>ffiec.pq</code> package to read the data into R.</p>
+<p>To examine this issue, I’m going to revisit the Call Report data I wrote about <a href="curate_call_reports.html">recently</a>. I have these data in my (general-purpose) data repository and I can use the <code>ffiec_scan_pqs</code> from my <code>ffiec.pq</code> package to read the data into R.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -496,13 +503,13 @@ div.csl-indent {
 <pre><code>Updated bank.wrds_call_rcfa_1 is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-03-23 16:56:33 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-04-02 22:40:10 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Applying tz='UTC' to 1 timestamp column(s): rssdsubmissiondate.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-03-23 16:56:33 UTC.</code></pre>
+<pre><code>Completed file download at 2026-04-02 22:40:10 UTC.</code></pre>
 </div>
 </div>
 <p>To load the data into R, I will use the following <code>load_parquet()</code> helper function.</p>
@@ -535,13 +542,13 @@ div.csl-indent {
 <pre><code>Forcing update based on user request.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-03-23 16:56:34 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-04-02 22:40:11 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Applying tz='America/New_York' to 1 timestamp column(s): rssdsubmissiondate.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-03-23 16:56:34 UTC.</code></pre>
+<pre><code>Completed file download at 2026-04-02 22:40:11 UTC.</code></pre>
 </div>
 </div>
 <p>Now, we see that the data are correct.</p>
@@ -567,10 +574,10 @@ div.csl-indent {
 <pre><code>Updated audit.feed03_audit_fees is available.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-03-23 16:56:35 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-04-02 22:40:12 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-03-23 16:56:35 UTC.</code></pre>
+<pre><code>Completed file download at 2026-04-02 22:40:12 UTC.</code></pre>
 </div>
 </div>
 <p>But here we see that <code>file_accepted</code> is stored as a string (and <code>auditor_fkey</code> is a floating-point value).</p>
@@ -599,13 +606,13 @@ div.csl-indent {
 <pre><code>Forcing update based on user request.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Beginning file download at 2026-03-23 16:56:36 UTC.</code></pre>
+<pre><code>Beginning file download at 2026-04-02 22:40:13 UTC.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Applying tz='America/New_York' to 1 timestamp column(s): file_accepted.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Completed file download at 2026-03-23 16:56:37 UTC.</code></pre>
+<pre><code>Completed file download at 2026-04-02 22:40:14 UTC.</code></pre>
 </div>
 </div>
 <p>Now things look much better.</p>

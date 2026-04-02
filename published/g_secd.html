@@ -206,7 +206,7 @@ window.Quarto = {
   <li><a href="#using-the-wrds-postgresql-server" id="toc-using-the-wrds-postgresql-server" class="nav-link" data-scroll-target="#using-the-wrds-postgresql-server"><span class="header-section-number">3</span> Using the WRDS PostgreSQL server</a></li>
   <li><a href="#using-parquet-data" id="toc-using-parquet-data" class="nav-link" data-scroll-target="#using-parquet-data"><span class="header-section-number">4</span> Using Parquet data</a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="g_secd.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="g_secd.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -351,22 +351,22 @@ Tip
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.014   0.006  37.993 </code></pre>
+  0.012   0.003  46.490 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 115 × 2
    curcdd        n
    &lt;chr&gt;   &lt;int64&gt;
- 1 EUR    48037544
- 2 JPY    31823971
- 3 CNY    25635258
- 4 INR    20653714
- 5 GBP    20619033
- 6 KRW    15641761
- 7 HKD    14697439
- 8 AUD    13800095
- 9 TWD    11646012
-10 THB     8980840
+ 1 EUR    48810183
+ 2 JPY    31984239
+ 3 CNY    26032353
+ 4 INR    20871726
+ 5 GBP    20739375
+ 6 KRW    15782311
+ 7 HKD    14853868
+ 8 AUD    13920026
+ 9 TWD    11738898
+10 THB     9054423
 # ℹ 105 more rows</code></pre>
 </div>
 </div>
@@ -380,8 +380,10 @@ Tip
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"g_secd"</span>, <span class="st">"comp"</span>, archive<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>comp.g_secd already up to date.
-False</code></pre>
+<pre><code>Updated comp.g_secd is available.
+Beginning file download at 2026-04-02 19:42:27 UTC.
+Completed file download at 2026-04-02 20:09:47 UTC.
+'/Users/igow/Dropbox/pq_data/comp/g_secd.parquet'</code></pre>
 </div>
 </div>
 <p>When I did this update earlier today, it took a bit over 45 minutes on my computer. But, as can be seen above, <code>wrds_update_pq()</code> will not fetch new data if the data are up to date.</p>
@@ -401,22 +403,22 @@ False</code></pre>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  1.517   0.123   0.200 </code></pre>
+  1.495   0.127   0.263 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 115 × 2
    curcdd        n
    &lt;chr&gt;     &lt;dbl&gt;
- 1 EUR    48130467
- 2 JPY    31841749
- 3 CNY    25687260
- 4 INR    20676444
- 5 GBP    20636852
- 6 KRW    15657569
- 7 HKD    14717583
- 8 AUD    13812258
- 9 TWD    11656464
-10 THB     8987656
+ 1 EUR    48810183
+ 2 JPY    31984239
+ 3 CNY    26032353
+ 4 INR    20871726
+ 5 GBP    20739375
+ 6 KRW    15782311
+ 7 HKD    14853868
+ 8 AUD    13920026
+ 9 TWD    11738898
+10 THB     9054423
 # ℹ 105 more rows</code></pre>
 </div>
 </div>
@@ -441,7 +443,7 @@ False</code></pre>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"comp"</span> <span class="op">/</span> <span class="st">"g_secd.parquet"</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>file_size(path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>'3.8 GB'</code></pre>
+<pre><code>'3.9 GB'</code></pre>
 </div>
 </div>
 <p>So the 57.71 GB PostgreSQL table is reduced to under 4 GB as a Parquet file.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a> This is much more manageable!</p>
@@ -455,7 +457,7 @@ False</code></pre>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pq_last_modified(<span class="st">"g_secd"</span>, <span class="st">"comp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>'Merged Global Security Daily File (Updated 2026-02-17)'</code></pre>
+<pre><code>'Merged Global Security Daily File (Updated 2026-04-02)'</code></pre>
 </div>
 </div>
 <p>We can run the function with <code>archive=True</code> to see what we have in the archive:</p>
@@ -466,8 +468,10 @@ False</code></pre>
 0  g_secd_20250907T161453Z  ...   local
 1  g_secd_20260120T070000Z  ...   local
 2  g_secd_20260216T070000Z  ...   local
+3  g_secd_20260217T070000Z  ...   local
+4  g_secd_20260322T060000Z  ...   local
 
-[3 rows x 6 columns]</code></pre>
+[5 rows x 6 columns]</code></pre>
 </div>
 </div>
 <p>The one archived file I have has an update string taken from the SAS file existing on the WRDS server when that update occurred.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p>
@@ -481,11 +485,11 @@ Listing&nbsp;1: Output from <code>PROC CONTENTS</code> with <code>comp.g_secd</c
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>The CONTENTS Procedure</span>
 <span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="kw">Data</span> <span class="kw">Set</span> Name        COMP.G_SECD                 Observations          <span class="dv">303896067</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="kw">Data</span> <span class="kw">Set</span> Name        COMP.G_SECD                 Observations          <span class="dv">304999801</span></span>
 <span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>Member Type<span class="kw">          DATA</span>                        Variables             <span class="dv">54</span>       </span>
 <span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>Engine               V9                          Indexes               <span class="dv">5</span>        </span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>Created              <span class="dv">03</span>/<span class="dv">15</span>/<span class="dv">2026</span> <span class="dv">11</span>:<span class="dv">11</span>:<span class="dv">14</span>         Observation <span class="kw">Length</span>    <span class="dv">496</span>      </span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>Last Modified        <span class="dv">03</span>/<span class="dv">15</span>/<span class="dv">2026</span> <span class="dv">11</span>:<span class="dv">19</span>:<span class="dv">42</span>         Deleted Observations  <span class="dv">0</span>        </span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>Created              <span class="dv">04</span>/<span class="dv">02</span>/<span class="dv">2026</span> <span class="dv">11</span>:<span class="dv">05</span>:<span class="dv">16</span>         Observation <span class="kw">Length</span>    <span class="dv">496</span>      </span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>Last Modified        <span class="dv">04</span>/<span class="dv">02</span>/<span class="dv">2026</span> <span class="dv">11</span>:<span class="dv">13</span>:<span class="dv">04</span>         Deleted Observations  <span class="dv">0</span>        </span>
 <span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>Protection                                       Compressed            NO       </span>
 <span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="kw">Data</span> <span class="kw">Set</span> Type                                    Sorted                YES      </span>
 <span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="kw">Label</span>                Merged Global Security                                     </span>
@@ -498,21 +502,21 @@ Listing&nbsp;1: Output from <code>PROC CONTENTS</code> with <code>comp.g_secd</c
 <span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>                   Engine/Host Dependent Information</span>
 <span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a><span class="kw">Data</span> <span class="kw">Set</span> <span class="kw">Page</span> Size          <span class="dv">65536</span>                                      </span>
-<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>Number of<span class="kw"> Data</span> <span class="kw">Set</span> Pages    <span class="dv">2302245</span>                                    </span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>Number of<span class="kw"> Data</span> <span class="kw">Set</span> Pages    <span class="dv">2310606</span>                                    </span>
 <span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>First<span class="kw"> Data</span> <span class="kw">Page</span>             <span class="dv">1</span>                                          </span>
 <span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a><span class="fu">Max</span> Obs per <span class="kw">Page</span>            <span class="dv">132</span>                                        </span>
 <span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>Obs <span class="kw">in</span> First<span class="kw"> Data</span> <span class="kw">Page</span>      <span class="dv">111</span>                                        </span>
 <span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a><span class="kw">Index</span> <span class="kw">File</span> <span class="kw">Page</span> Size        <span class="dv">8192</span>                                       </span>
-<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>Number of <span class="kw">Index</span> <span class="kw">File</span> Pages  <span class="dv">2874850</span>                                    </span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>Number of <span class="kw">Index</span> <span class="kw">File</span> Pages  <span class="dv">2884289</span>                                    </span>
 <span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>Number of<span class="kw"> Data</span> <span class="kw">Set</span> Repairs  <span class="dv">0</span>                                          </span>
 <span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a><span class="kw">Filename</span>                    /wrds/comp/sasdata/d_global/g_secd.sas7bdat</span>
 <span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>Release Created             <span class="dv">9.0401</span>M8                                   </span>
 <span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>Host Created                Linux                                      </span>
-<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>Inode Number                <span class="dv">2465334673</span>                                 </span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>Inode Number                <span class="dv">2465334683</span>                                 </span>
 <span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>Access Permission           rw-r-----                                  </span>
 <span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>Owner Name                  wrdsadmn                                   </span>
 <span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a><span class="kw">File</span> Size                   <span class="dv">141</span>GB                                      </span>
-<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a><span class="kw">File</span> Size (bytes)           <span class="dv">150879993856</span>                               </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a><span class="kw">File</span> Size (bytes)           <span class="dv">151427940352</span>                               </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </figure>
 </div>
@@ -609,11 +613,11 @@ Listing&nbsp;3: Output from <code>PROC CONTENTS</code> with <code>comp.g_secd</c
 <span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>                          <span class="kw">Unique</span></span>
 <span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a>#    <span class="kw">Index</span>                Values    Variables</span>
 <span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-38"><a href="#cb26-38" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span>    ISIN                  <span class="dv">92686</span>                   </span>
-<span id="cb26-39"><a href="#cb26-39" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span>    SEDOL                <span class="dv">122784</span>                   </span>
+<span id="cb26-38"><a href="#cb26-38" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span>    ISIN                  <span class="dv">92981</span>                   </span>
+<span id="cb26-39"><a href="#cb26-39" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span>    SEDOL                <span class="dv">123348</span>                   </span>
 <span id="cb26-40"><a href="#cb26-40" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span>    exchg                   <span class="dv">156</span>                   </span>
 <span id="cb26-41"><a href="#cb26-41" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span>    fic                     <span class="dv">131</span>                   </span>
-<span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span>    gvkey_datadate    <span class="dv">246418271</span>    gvkey datadate </span>
+<span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span>    gvkey_datadate    <span class="dv">247088597</span>    gvkey datadate </span>
 <span id="cb26-43"><a href="#cb26-43" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a>        Sort Information</span>
 <span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a></span>

@@ -144,7 +144,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-    <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="getting_dera_notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></div>
+    <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="getting_dera_notes.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -179,7 +179,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>In a <a href="https://github.com/iangow/notes/blob/main/missing_form_aps.pdf">recent note</a>, I used XBRL data to identify potentially missing Form AP filings. In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data. However, I provided no real information on how to get the XBRL data from SEC EDGAR. This note aims to provide this missing information.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>In a <a href="../missing_form_aps.html">recent note</a>, I used XBRL data to identify potentially missing Form AP filings. In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data. However, I provided no real information on how to get the XBRL data from SEC EDGAR. This note aims to provide this missing information.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 <p>This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/getting_dera_notes.qmd">here</a> and the latest version of this PDF is <a href="https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf">here</a>.</p>
 <p>This note uses the following R packages:<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
 <div class="cell">
@@ -192,7 +192,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="getting-financial-statement-and-notes-files" class="level2" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="getting-financial-statement-and-notes-files"><span class="header-section-number">1</span> Getting <em>Financial Statement and Notes</em> files</h2>
-<p>There are two XBRL bulk data sets made available on SEC EDGAR: the <a href="https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets"><em>Financial Statements</em></a> and <a href="https://www.sec.gov/data-research/financial-statement-notes-data-sets"><em>Financial Statement and Notes</em></a> data sets, with the latter being roughly ten times as large as the former. For the task considered in the <a href="https://github.com/iangow/notes/blob/main/missing_form_aps.pdf">note discussed above</a>, we needed the <em>Financial Statement and Notes</em> data set, so I focus on that data set here.</p>
+<p>There are two XBRL bulk data sets made available on SEC EDGAR: the <a href="https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets"><em>Financial Statements</em></a> and <a href="https://www.sec.gov/data-research/financial-statement-notes-data-sets"><em>Financial Statement and Notes</em></a> data sets, with the latter being roughly ten times as large as the former. For the task considered in the <a href="../missing_form_aps.html">note discussed above</a>, we needed the <em>Financial Statement and Notes</em> data set, so I focus on that data set here.</p>
 <section id="structure-of-processed-data" class="level3" data-number="1.1">
 <h3 data-number="1.1" class="anchored" data-anchor-id="structure-of-processed-data"><span class="header-section-number">1.1</span> Structure of processed data</h3>
 <p>The <em>Financial Statement and Notes</em> data library comprises seven tables:</p>
@@ -418,20 +418,20 @@ character   numeric   POSIXct
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>zip_files <span class="ot">&lt;-</span> <span class="fu">get_zip_files_df</span>()</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>zip_files</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 77 × 2
+<pre><code># A tibble: 78 × 2
    file              last_modified                
    &lt;chr&gt;             &lt;chr&gt;                        
- 1 2026_01_notes.zip Wed, 04 Feb 2026 17:27:33 GMT
- 2 2025_12_notes.zip Wed, 14 Jan 2026 20:59:24 GMT
- 3 2025_11_notes.zip Thu, 15 Jan 2026 14:09:07 GMT
- 4 2025_10_notes.zip Mon, 01 Dec 2025 14:48:45 GMT
- 5 2025_09_notes.zip Tue, 18 Nov 2025 21:32:32 GMT
- 6 2025_08_notes.zip Wed, 03 Sep 2025 16:10:15 GMT
- 7 2025_07_notes.zip Tue, 05 Aug 2025 16:57:51 GMT
- 8 2025_06_notes.zip Thu, 03 Jul 2025 18:46:28 GMT
- 9 2025_05_notes.zip Tue, 03 Jun 2025 11:09:16 GMT
-10 2025_04_notes.zip Wed, 07 May 2025 17:47:37 GMT
-# ℹ 67 more rows</code></pre>
+ 1 2026_02_notes.zip Tue, 03 Mar 2026 16:36:34 GMT
+ 2 2026_01_notes.zip Wed, 04 Feb 2026 17:27:33 GMT
+ 3 2025_12_notes.zip Wed, 14 Jan 2026 20:59:24 GMT
+ 4 2025_11_notes.zip Thu, 15 Jan 2026 14:09:07 GMT
+ 5 2025_10_notes.zip Mon, 01 Dec 2025 14:48:45 GMT
+ 6 2025_09_notes.zip Tue, 18 Nov 2025 21:32:32 GMT
+ 7 2025_08_notes.zip Wed, 03 Sep 2025 16:10:15 GMT
+ 8 2025_07_notes.zip Tue, 05 Aug 2025 16:57:51 GMT
+ 9 2025_06_notes.zip Thu, 03 Jul 2025 18:46:28 GMT
+10 2025_05_notes.zip Tue, 03 Jun 2025 11:09:16 GMT
+# ℹ 68 more rows</code></pre>
 </div>
 </div>
 <p>Next, I can apply the function <code>get_notes_data()</code> to each file in <code>zip_files</code> using <code>map()</code>:</p>
@@ -505,13 +505,13 @@ character   numeric   POSIXct
 <span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.042   0.019   0.035 </code></pre>
+  0.043   0.019   0.032 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 18 × 2
     year      n
    &lt;dbl&gt;  &lt;dbl&gt;
- 1  2026   5428
+ 1  2026  14184
  2  2025  99208
  3  2024 194501
  4  2023 104015
@@ -539,7 +539,7 @@ character   numeric   POSIXct
 <div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
 
 <ol>
-<li id="fn1"><p>Guidance on downloading the Form AP data is provided in <a href="https://github.com/iangow/notes/blob/main/form_ap_names.pdf">an earlier note</a> I wrote.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>Guidance on downloading the Form AP data is provided in <a href="../form_ap_names.html">an earlier note</a> I wrote.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>To install these packages, run <code>install.packages(c(tidyverse, "DBI", "farr", "httr2", "rvest", "arrow")</code> in the console of RStudio.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3"><p>Run <code>source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")</code> to get these data.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn4"><p>Using <code>unz(t, "sub.tsv")</code> allows us to unzip just that one file in a way that does not leave detritus in our file system.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
