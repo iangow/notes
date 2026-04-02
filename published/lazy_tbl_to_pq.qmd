@@ -32,7 +32,7 @@ keywords:
 ---
 
 ::: {.abstract}
-In this short note, I show how my `db2pq` package can be used to turn "lazy data frames" produced by `dbplyr` into Parquet files on disk without needing to load the data into RAM and with minimal RAM requirements.
+In this short note, I show how my `db2pq` package can be used to turn "lazy data frames" produced by `dbplyr` into Parquet files on disk without needing to load the data into RAM all at once.
 :::
 
 :::{.callout-tip text-align="left"}
@@ -152,12 +152,7 @@ crsp_daily <-
     factors_ff3_daily |> select(date, risk_free),
     join_by(date),
   ) |>
-  mutate(
-    ret_excess = ret - risk_free,
-    # Note that excess returns are *not* bound below by -1 ...
-    # ... but I follow Tidy Finance here.
-    ret_excess = pmax(ret_excess, -1, na.rm = TRUE)
-  ) |>
+  mutate(ret_excess = ret - risk_free) |>
   select(permno, date, ret, ret_excess) |>
   lazy_tbl_to_pq(out_file = "crsp_daily.parquet") |>
   system_time()
