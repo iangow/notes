@@ -64,10 +64,13 @@ import pandas as pd
 
 ```{python}
 #| include: false
-#| eval: false
-%%time
-msf_v2 = pd.read_parquet("/Users/igow/Dropbox/pq_data/crsp/msf_v2.parquet")
-msf_v2.to_csv("msf_v2.csv", index=False, header=True)
+from pathlib import Path
+
+csv_file = Path("msf_v2.csv")
+parquet_file = Path("msf_v2.parquet")
+
+if not csv_file.exists():
+    pd.read_parquet(parquet_file).to_csv(csv_file, index=False, header=True)
 ```
 
 Unlike systems such as Stata or SAS, there is no "pandas data file" format as such.
