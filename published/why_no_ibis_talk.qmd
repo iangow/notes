@@ -1,23 +1,32 @@
 ---
 title: "Why aren't more data people talking about ibis?"
-author: 
+author:
   - name: Ian D. Gow
     orcid: 0000-0002-6243-8409
     email: iandgow@gmail.com
 date: 2025-12-04
 date-format: "D MMMM YYYY"
+categories: [Python, Ibis, DuckDB, SQL]
+keywords:
+  - Python
+  - Ibis
+  - DuckDB
+  - SQL
+number-sections: true
 format:
   html:
     colorlinks: true
-  pdf: 
+    number-sections: true
+  typst:
+    number-sections: true
     colorlinks: true
-    geometry:
-      - left=2.5cm
-      - right=2.5cm
+    linkcolor: "#0000FF"
+    margin:
+      x: 2.5cm
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
-bibliography: papers.bib
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    monofont: Menlo
 execute:
   cache: true
   freeze: auto
@@ -40,7 +49,7 @@ I wrote a little bit about that [here](https://iangow.github.io/sql_book/#sql-an
 
 But if you're working in data analyst or scientist today, you're likely more familiar with dataframe APIs like Pandas, Polars, or PySpark.
 Dataframe libraries have become the standard in data science and analytics.
-In fact, more data professionals today know how to use a dataframe library like Pandas than SQL. 
+In fact, more data professionals today know how to use a dataframe library like Pandas than SQL.
 Currently, Pandas is the most widely adopted, but recently Polars has become so good it can't be ignored.
 
 Like many people, I find dataframe libraries easier and more intuitive to work with than traditional SQL.
@@ -60,7 +69,7 @@ This is largely because most dataframe libraries are columnar in design, whereas
 What if we could combine the elegance of dataframe syntax with the efficiency of database engines? That would allow us to write powerful queries in a syntax that's accessible to both SQL pros and their colleagues who may not be familiar with SQL, while still leveraging the power of a backend database engine to perform query optimizations.
 
 If only there were a project that brought together the best of both worlds.
-Well, there is---and it's called Ibis. 
+Well, there is---and it's called Ibis.
 It's like a match made in heaven!
 
 ## What is Ibis?
@@ -80,14 +89,14 @@ Because he learned from the mistakes of Pandas which he outlined in his [10 Thin
 ## Business reasons to use Ibis
 
 You may be asking, "Why should my business switch to Ibis?"
-Beyond being a cool piece of technology, there are solid business reasons to adopt Ibis in your company. 
+Beyond being a cool piece of technology, there are solid business reasons to adopt Ibis in your company.
 Here are two good reasons.
 
  1. **It acts as an insurance policy** - If your core vendor changes their policy or switches to a different database, you won't need to rewrite your code.
  Just update the backend, and your existing code will continue to run smoothly.
- This can save you tens–or even hundreds–of developer hours.
- 
- 2. **It prevents vendor lock-in** - At some point, you'll probably want to move your data out of a vendor system and use it elsewhere—like in a browser for visualization or in a dashboard.
+ This can save you tens--or even hundreds--of developer hours.
+
+ 2. **It prevents vendor lock-in** - At some point, you'll probably want to move your data out of a vendor system and use it elsewhere---like in a browser for visualization or in a dashboard.
  With Ibis, you don't need to write custom code for each database.
  The same Ibis code works whether you're using Microsoft SQL Server, MySQL, or another system.
  Once again, this saves your company time and money.
@@ -118,7 +127,7 @@ pip install 'ibis-framework[duckdb]'
 We'll use a dataset from a clothing store, which you can [download here](https://raw.githubusercontent.com/jorammutenge/learn-rust/main/sample_sales.csv).
 The dataset contains clothing sales data over two years.
 It has 8 columns and 1,000 rows.
-If you download it, you'll notice that it's a CSV file 
+If you download it, you'll notice that it's a CSV file
 I like this dataset because it's rich enough to help us explore the capabilities of Ibis.
 
 ::: {.callout-note}
@@ -139,8 +148,8 @@ raw_url = (
 t = con.read_csv(
     raw_url,
     table_name="sales_orders",
-    header=False,      # do not treat the first row as header
-    skip=1,            # SKIP the first row entirely
+    header=False,
+    skip=1,
     names=["account_num", "account_name", "sku", "category", "quantity",
            "unit_price", "ext_price", "date"])
 ```
@@ -160,7 +169,6 @@ t
 ::: {.callout-note}
 We can check that the data are in `sales_table`, but below I will just use `t` to access the data.
 :::
-
 
 ```{python}
 con.table('sales_orders')
@@ -221,7 +229,6 @@ What if we wanted to know what the top-selling SKUs are by quantity and revenue 
  )
 ```
 
-
 Just for fun, let's perform multiple aggregates in a single query.
 We'll calculate the total, average, and median sales value for each day of the week, then sort the results by average sales.
 
@@ -240,7 +247,7 @@ This query includes creating a new column called day based on the date column.
 
 ## Filtering and creating columns
 
-We want to know which year had the highest revenue and what was the dollar value of that revenue. 
+We want to know which year had the highest revenue and what was the dollar value of that revenue.
 Here's the query to do just that.
 
 ```{python}
@@ -252,7 +259,7 @@ Here's the query to do just that.
  )
 ```
 
-Suppose we want to identify the hours of the day with the least store traffic so we can reduce the number of employees during those times. 
+Suppose we want to identify the hours of the day with the least store traffic so we can reduce the number of employees during those times.
 After all, we don't want them standing around with nothing to do!
 To achieve this, we'll select the top three hours of the day with the lowest sales.
 
@@ -308,15 +315,14 @@ import altair as alt
 bar_chart = (alt
  .Chart(t.group_by('sku').agg(total_quantity=_.quantity.sum()))
  .mark_bar(color='#556B2F')
- .encode(x=alt.X('sku', axis=alt.Axis(labelAngle=0, labelFontSize=14), 
+ .encode(x=alt.X('sku', axis=alt.Axis(labelAngle=0, labelFontSize=14),
                  title=None,
-                 sort=alt.EncodingSortField(field='total_quantity', 
+                 sort=alt.EncodingSortField(field='total_quantity',
                                             order='descending')),
          y=alt.Y('total_quantity', axis=alt.Axis(labelFontSize=14), title=None),
          tooltip=['sku','total_quantity'])
- .properties(width=1000, height=500, 
+ .properties(width=1000, height=500,
              title={'text':'Total quantity by product SKU', 'fontSize': 20})
-#  .configure_view(fill='#FFE4B5')
  .configure(background='#FFE4B5')
  .interactive()
  )
@@ -335,13 +341,13 @@ Let's create a pivot table that shows the total quantity for each month in 2014.
  .filter(t.date.year() == 2014)
  .mutate(month=t.date.strftime('%b-%Y'))
  .select('quantity','month')
- .pivot_wider(names_from='month', values_from='quantity', 
+ .pivot_wider(names_from='month', values_from='quantity',
               names_sort=True, values_agg='sum')
 )
 ```
 
 There's an issue with the result of the query above.
-It's not with the values themselves, but with how the columns are arranged. 
+It's not with the values themselves, but with how the columns are arranged.
 The months aren't in the correct calendar order.
 Let's fix that!
 
@@ -363,6 +369,7 @@ I believe that the original code would not be robust to including data from diff
 ```
 
 ### Customer segmentation
+
 We want to offer a discount to our loyal customers, which we define as any customer who has purchased clothing from every product category available in our store.
 
 First, let's take a look at all the product categories we have in stock.
@@ -384,7 +391,7 @@ Since we know there are three product categories in stock, we can easily write a
 )
 ```
 
-In most cases, we won't know in advance how many product categories are available. 
+In most cases, we won't know in advance how many product categories are available.
 That means the previous query wouldn't be suitable.
 Here's the revised version of the query for situations where the number of product categories is unknown.
 
@@ -448,13 +455,13 @@ Here's the content of the CSV file saved to disk.
 
 ```{python}
 #| echo: false
-# if CSV, load it
 t = ibis.read_csv("top_5_customers.csv", all_varchar=True)
 
 ibis.options.repr.interactive.show_types = False
 
 t.head(10)
 ```
+
 ## Conclusion
 
 We've only scratched the surface of what Ibis can do.

@@ -3,22 +3,32 @@ title: "Missing Form APs?"
 author: Ian D. Gow
 date: 2024-12-01
 date-format: "D MMMM YYYY"
+categories: [Research methods, PCAOB, XBRL, SEC]
+keywords:
+  - PCAOB
+  - Form AP
+  - XBRL
+  - SEC
+  - Research methods
+number-sections: true
 format:
   html:
     colorlinks: true
-  pdf: 
-    include-in-header:
-      text: |
-        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
+    csl: jfe.csl
+    fig-format: png
+  typst:
     colorlinks: true
-    geometry:
-      - left=2cm
-      - right=2cm
+    linkcolor: "#0000FF"
+    fig-format: pdf
+    margin:
+      x: 2cm
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    monofont: Menlo
 bibliography: papers.bib
-csl: jfe.csl
+execute:
+  freeze: auto
 ---
 
 In May of 2024, I [posted on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-form-ap-data-activity-7196971381010432001-Isyc) a brief note about working with data from Form APs filed with the PCAOB.
@@ -30,11 +40,11 @@ There are two data sets: the [*Financial Statements*](https://www.sec.gov/data-r
 For the task we consider here, we need to use the *Financial Statement and Notes* data set.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")` to get these data.]
 
 In essence, I compare the auditors listed in firms' 10-K filings with data on Form APs, with a focus on my success rate in matching the two.
-In @tbl-top-non-matches, we can see that the auditor with the greatest number of non-matches is B F Borgers CPA PC, an auditor featured in a tongue-in-cheek *Financial Times* [article by George Steer](https://www.ft.com/content/2556fab5-d168-4d68-aedb-9be4b5ab739d) that showed that the auditor Ben Borgers had used 14 different names---including the name "Ben F orgers"---on Form AP filings.^[The analysis of the Form AP data in the FT article had been conducted by independent researcher [Stephen Walker](https://www.stephenwalker.me) and I showed how to reproduce Stephen's analysis in [an earlier note](https://github.com/iangow/notes/blob/main/form_ap_names.pdf).]
+In @tbl-top-non-matches, we can see that the auditor with the greatest number of non-matches is B F Borgers CPA PC, an auditor featured in a tongue-in-cheek *Financial Times* [article by George Steer](https://www.ft.com/content/2556fab5-d168-4d68-aedb-9be4b5ab739d) that showed that the auditor Ben Borgers had used 14 different names---including the name "Ben F orgers"---on Form AP filings.^[The analysis of the Form AP data in the FT article had been conducted by independent researcher [Stephen Walker](https://www.stephenwalker.me) and I showed how to reproduce Stephen's analysis in [an earlier note](../form_ap_names.html).]
 While more research would be needed to investigate the reasons for "missing" data, having Borgers emerge as the "winner" yet again suggests that missing Form AP filings might be another red flag worth pursuing.
 
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/missing_form_aps.qmd) and the latest version of this PDF is [here](https://github.com/iangow/notes/blob/main/missing_form_aps.pdf).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/published/missing_form_aps.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/published/missing_form_aps.pdf).
 
 ```{r}
 #| message: false
@@ -50,16 +60,17 @@ library(dbplyr)
 #| include: false
 db <- dbConnect(duckdb::duckdb())
 
-load_parquet <- function (conn, table, schema = "", 
-                          data_dir = Sys.getenv("DATA_DIR")) 
+load_parquet <- function (conn, table, schema = "",
+                          data_dir = Sys.getenv("DATA_DIR"))
 {
     file_path <- file.path(data_dir, schema, paste0(table, ".parquet"))
-    df_sql <- paste0("SELECT * FROM read_parquet('", file_path, 
+    df_sql <- paste0("SELECT * FROM read_parquet('", file_path,
         "', union_by_name=true)")
     dplyr::tbl(conn, dplyr::sql(df_sql))
 }
 
-sub <- load_parquet(db, "sub_*", "dera_notes")
+sub <- load_parquet(db, "sub_*", "dera_notes") |>
+  select(adsh, cik, form)
 txt <- load_parquet(db, "txt_*", "dera_notes")
 form_aps <- load_parquet(db, "form_aps", "pcaob")
 ```
@@ -93,7 +104,7 @@ While there might be a perfectly innocent explanation, it might be worth digging
 #| echo: false
 #| label: tbl-tags
 #| tbl-cap: Tags beginning with `Auditor` on `txt`
-txt |> 
+txt |>
   filter(str_detect(tag, "^Auditor")) |>
   count(tag, sort = TRUE) |>
   collect() |>
@@ -111,7 +122,7 @@ missing <-
   txt |>
   filter(tag %in% c("AuditorName", "AuditorFirmId")) |>
   select(adsh, tag, ddate, value) |>
-  pivot_wider(names_from = "tag", 
+  pivot_wider(names_from = "tag",
               values_from = "value") |>
   mutate(has_name = !is.na(AuditorName),
         has_id = !is.na(AuditorFirmId)) |>
@@ -140,9 +151,9 @@ missing |>
 #| tbl-cap: Sample of auditor names with missing IDs
 #| cache: true
 #| dependson: missing
-missing |> 
-  filter(has_name, !has_id) |> 
-  count(AuditorName, sort = TRUE) |> 
+missing |>
+  filter(has_name, !has_id) |>
+  count(AuditorName, sort = TRUE) |>
   filter(n > 2) |>
   tt() |>
   style_tt(align = "lr") |>
@@ -159,14 +170,14 @@ auditor_id_tags_raw <-
   select(adsh, ddate, tag, value) |>
   pivot_wider(names_from = "tag", values_from = "value") |>
   rename(firm_id = AuditorFirmId) |>
-  mutate(firm_id = as.integer(firm_id)) 
+  mutate(firm_id = as.integer(firm_id))
 
 auditor_id_dates <-
   txt |>
   filter(tag == "DocumentPeriodEndDate", is.na(coreg)) |>
   select(adsh, ddate, tag, value) |>
   pivot_wider(names_from = "tag", values_from = "value") |>
-  mutate(DocumentPeriodEndDate = as.Date(DocumentPeriodEndDate), 
+  mutate(DocumentPeriodEndDate = as.Date(DocumentPeriodEndDate),
          month = floor_date(DocumentPeriodEndDate, "month"))
 
 auditor_id_tags <-
@@ -180,9 +191,9 @@ auditor_id_tags <-
 #| echo: false
 #| label: tbl-forms
 #| tbl-cap: Forms with information on `AuditorFirmId`
-auditor_id_tags |> 
-  inner_join(sub, by = join_by(adsh)) |> 
-  count(form) |> 
+auditor_id_tags |>
+  inner_join(sub, by = join_by(adsh)) |>
+  count(form) |>
   arrange(desc(n)) |>
   collect() |>
   tt() |>
@@ -202,7 +213,6 @@ auditor_ids <-
   compute()
 ```
 
-
 ```{r}
 #| include: false
 auditor_ids_form_aps <-
@@ -217,10 +227,11 @@ auditor_ids_form_aps <-
 #| include: false
 auditor_names <-
   form_aps |>
+  select(firm_id, firm_name, audit_report_date) |>
   group_by(firm_id) |>
-  window_order(audit_report_date) |>
-  summarize(firm_name = last(firm_name)) |>
-  arrange() |>
+  window_order(desc(audit_report_date)) |>
+  mutate(firm_name = first(firm_name)) |>
+  distinct(firm_id, firm_name) |>
   compute()
 ```
 
@@ -235,7 +246,6 @@ match_data <-
   mutate(matched = !is.na(firm_id_aps)) |>
   compute()
 ```
-
 
 ```{r}
 #| label: tbl-top-non-matches
@@ -253,7 +263,7 @@ match_data |>
   style_tt(align = "rlrrd") |>
   format_tt(escape = TRUE) |>
   format_tt(j = c(3, 4), digits = 0, num_mark_big = ",") |>
-  format_tt(j = 5,  num_fmt = "decimal", digits = 2, num_zero = TRUE) 
+  format_tt(j = 5,  num_fmt = "decimal", digits = 2, num_zero = TRUE)
 ```
 
 ```{r}
