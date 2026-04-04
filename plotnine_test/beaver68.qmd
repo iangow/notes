@@ -1,0 +1,711 @@
+---
+title: "Solutions for 'Beaver (1968)'"
+author: Ian D. Gow
+date: 2026-04-02
+date-format: "D MMMM YYYY"
+
+bibliography: book.bib
+engine: jupyter
+jupyter: plotnine-test
+
+format:
+  typst:
+    bibliographystyle: harvard-cite-them-right
+    papersize: a4
+    margin:
+      left: 2.5cm
+      right: 2.5cm
+---
+
+## Market reactions to earnings announcements
+
+### Discussion questions
+
+1. How do the research questions of @Beaver:1968vf and @Ball:1968ub differ?
+If there is overlap, do you think that one paper provides superior evidence to the other?
+Or are they just different?
+
+@Ball:1968ub is primarily concerned with whether accounting numbers are meaningful.
+@Beaver:1968vf focuses on whether they appear to be "useful", as evidenced by market reactions to earnings announcements.
+The research question of @Ball:1968ub is best answered by long windows and that paper uses monthly data.
+@Beaver:1968vf focuses on a narrower window and uses weekly data, though arguably daily data would be even better (as we see below).
+I see these two papers as addressing different---but related---research questions, so they are arguably "just different".
+
+2. What differences are there in the data (e.g., sample period) used in @Beaver:1968vf from the data used in @Ball:1968ub?
+Why do these differences exist?
+
+| Feature         | @Beaver:1968vf | @Ball:1968ub |
+|-----------------|---------------:|-------------:|
+| Data frequency  | Weekly         | Monthly      |
+| Sample period   | 1961--1965     | 1946--1966   |
+| Number of firms | 143            | 261          |
+| Number of announcements | 506    | 2340 |
+
+: Differences between @Beaver:1968vf and @Ball:1968ub {#tbl-diffs}
+
+The difference in data frequency is related to differences in the research questions of the two papers.
+Having data of at least weekly frequency was likely essential to implement @Beaver:1968vf.
+I figure that the sample period of @Beaver:1968vf was in turn a function of data availability at that frequency.
+(Note that @Beaver:1968vf was actually produced about a year after @Ball:1968ub, so it's not clear whether weekly data were available at the time of @Ball:1968ub, but in any case such data are not necessary for the research design of the earlier paper.)
+The other differences derive from these two differences and other sample selection criteria, which we discuss below.
+
+3. Do the reasons given by @Beaver:1968vf for his sample selection criteria seem reasonable? 
+Do you think these were made prior to looking at results? (Why or why not?)
+Does it matter at what stage in the research process these decisions were made?
+
+These seem reasonable to me.
+Beaver was likely look for a set of firms where his results would be more likely to hold and where confounding explanations would be fewer.
+Today it would be easy to run regressions and then change samples if there were no "results", but Beaver likely was much more constrained because the cost of running analyses was so much higher. 
+
+4. Which do you think is the better variable---price or volume---for addressing the research questions of @Beaver:1968vf?
+Do you think it is helpful to have both variables?
+
+It is not clear that one is better than the other.
+If there is complete agreement about the value implications of earnings after announcement, then we would expect price revisions, but not necessarily trading volume.
+So there are reasons to consider the magnitude of price changes.
+Alternatively, earnings might increase disagreement among traders, leading to trading volume even absent effects on the market's expectation of earnings.
+Using both variables (and each works) covers more bases.
+
+5. @Beaver:1968vf compares event-week volume and volatility with their average equivalents in non-event periods.
+@Ball:2008un "quantify the relative importance of earnings announcements in providing new information to the share market" and argue that earnings announcements provide relatively little of this information.
+If volume is a measure of information content, what does Figure 1 of @Beaver:1968vf imply regarding the proportion of information conveyed during earnings announcement weeks?
+Can this be reconciled with reported results in @Beaver:1968vf and the arguments in @Ball:2008un?
+
+Focusing on Figure 1, we see that the volume is $1.5 \times$ its usual level in the earnings announcement week.
+If we take volume as a measure of information flow, we would calculate the proportion of information using the proportion of value, which would be
+$$ \frac{1.5 \times 1}{1.5 \times 1 + 1 \times 51} = 2.9\% $$
+of the year's trading volume.
+This is lower than the 5%--9% reported in @Ball:2008un for all earnings announcements, but higher than the 1%--2% for quarterly announcements.
+Recall that there were no quarterly announcements in the the sample period of @Beaver:1968vf.
+
+6. @Beaver:1968vf discusses the statistical significance of his results on p. 77 (residual volume analysis) and pp. 81--82 (return residual analysis).
+Why do think @Beaver:1968vf uses the approaches discussed there?
+How might you evaluate statistical significance more formally if you were writing the paper today?
+
+@Beaver:1968vf uses approaches that are intuitive and straightforward, as there would not have been ready-made statistical routines at that time.
+Researchers in years after @Beaver:1968vf might have regressed outcome measures on an indicator for an earnings announcement week.
+More recently, researchers might actually use computing power to look at something more like what @Beaver:1968vf used (for example using randomization inference), as such approaches are more robust and require fewer assumptions for validity than the t-statistics reported in regression output from statistical packages.
+
+7. The primary analyses in @Beaver:1968vf are provided in plots.
+While the cost of producing plots has surely plummeted since 1968, we generally do not see primary analyses presented as plots today.
+Why do you think this is the case?
+
+I think one reason is that many researchers use packages such as SAS where the apparent cost of producing plots is material.^[While SAS may have excellent plotting functions, the fact that most SAS users in accounting produce plots in Excel suggests that something is getting lost in implementing this.]
+Another more cynical reason is that plots serve to elucidate and many researchers want to obfuscate, especially if their "results" are driven by outliers in a way that would be obvious in a scatter plot.
+
+```{python}
+#| echo: false
+import polars as pl
+from plotnine import ggplot, element_text
+from era_pl import load_parquet
+```
+
+```{python}
+#| echo: false
+fundq = load_parquet("fundq", "comp")
+ccmxpf_lnkhist = load_parquet("ccmxpf_lnkhist", "crsp")
+dsi = load_parquet("dsi", "crsp")
+dsf = load_parquet("dsf", "crsp")
+stocknames = load_parquet("stocknames", "crsp")
+```
+
+```{python}
+#| echo: false
+first_date = pl.date(2010, 1, 1)
+last_date = pl.date(2019, 12, 31)
+
+earn_annc_dates = (
+    fundq
+    .filter(
+        pl.col("indfmt") == "INDL",
+        pl.col("datafmt") == "STD",
+        pl.col("consol") == "C",
+        pl.col("popsrc") == "D",
+        pl.col("rdq").is_not_null(),
+        pl.col("fqtr") == 4,
+    )
+    .select("gvkey", "datadate", "rdq")
+    .filter(pl.col("datadate").is_between(first_date, last_date))
+)
+```
+
+```{python}
+#| echo: false
+
+```
+
+```{python}
+#| echo: false
+ccm_link = (
+    ccmxpf_lnkhist
+    .filter(
+        pl.col("linktype").is_in(["LC", "LU", "LS"]),
+        pl.col("linkprim").is_in(["C", "P"])
+    )
+    .rename({"lpermno": "permno"})
+    .with_columns(
+        linkenddt=pl.col("linkenddt")
+                  .fill_null(pl.col("linkenddt").max()),
+    )
+)
+```
+
+```{python}
+#| echo: false
+trading_dates = (
+    dsi
+    .select("date")
+    .sort("date")
+    .with_row_index("td", offset=1)
+    .with_columns(td=pl.col("td").cast(pl.Int32))
+)
+
+min_date = (
+    trading_dates
+    .select("date")
+    .collect()
+    .min()
+    .item()
+)
+
+max_date =  (
+    trading_dates
+    .select("date")
+    .collect()
+    .max()
+    .item()
+)
+
+annc_dates = (
+    pl.DataFrame(
+        {
+            "annc_date": pl.date_range(
+                min_date,
+                max_date,
+                interval="1d",
+                eager=True,
+            )
+        }
+    )
+    .lazy()
+    .join(trading_dates, 
+          left_on="annc_date", 
+          right_on="date",
+          how="left")
+    .sort("annc_date")
+    .with_columns(
+        td=pl.col("td").backward_fill()
+    )
+    .with_columns(td=pl.col("td").cast(pl.Int32))
+)
+
+days_before = 20
+days_after = 20
+```
+
+```{python}
+#| echo: false
+mkt_rets = (
+    dsf 
+    .join(dsi, on="date", how="inner")
+    .with_columns(
+        ret_mkt=pl.col("ret") - pl.col("vwretd"),
+    )
+    .with_columns(
+        pl.col("ret", "ret_mkt", "vol").cast(pl.Float64)
+    )
+    .select("permno", "date", "ret", "ret_mkt", "vol")
+)
+```
+
+```{python}
+#| echo: false
+# NOTE: I have reordered the code from the book and  put all
+# the "single event" code together here. This code is not necessary 
+# to answer the questions.
+single_event = (
+    earn_annc_dates
+    .filter(pl.col("gvkey") == "064515",
+            pl.col("rdq") == pl.date(2018, 3, 4))
+)
+
+single_event_link = (
+    single_event 
+    .join(ccm_link, 
+          on="gvkey", how="inner")
+    .filter(pl.col("rdq").is_between(pl.col("linkdt"), 
+                                     pl.col("linkenddt")))
+    .select("gvkey", "datadate", "permno"))
+
+single_event_window = (
+    single_event
+    .join(annc_dates, left_on="rdq", right_on="annc_date", how="left")
+    .rename({"td": "event_td"})
+    .with_columns(
+        start_td=pl.col("event_td") - days_before,
+        end_td=pl.col("event_td") + days_after,
+    )
+    .join(
+        trading_dates
+        .select(pl.all().name.prefix("start_")),
+        on="start_td",
+        how="inner",
+    )
+    .join(
+        trading_dates
+        .select(pl.all().name.prefix("end_")),
+        on="end_td",
+        how="inner",
+    )
+    .drop("start_td", "end_td")
+)
+
+single_event_window_permno = (
+    single_event_window
+    .join(single_event_link, 
+          on=["gvkey", "datadate"], how="inner")
+)
+
+single_event_crsp = (
+    single_event_window_permno
+    .join(mkt_rets, 
+          on="permno", how="inner")
+    .filter(pl.col("date").is_between(pl.col("start_date"), 
+                                      pl.col("end_date")))
+    .select("gvkey", "datadate", "event_td", 
+            "date", "ret", "ret_mkt", "vol")
+)
+
+single_event_tds = (
+    single_event_crsp
+    .join(trading_dates, on="date", how="inner")
+    .with_columns(relative_td=pl.col("td") - pl.col("event_td"))
+    .select("relative_td", "vol")
+    .collect()
+) 
+```
+
+```{python}
+#| echo: false
+nyse = (
+    stocknames 
+    .filter(pl.col("exchcd") == 1)
+    .select("permno", "namedt", "nameenddt")
+)
+
+earn_annc_links = (
+    earn_annc_dates 
+    .join(ccm_link, on="gvkey", how="inner")
+    .filter(pl.col("rdq").is_between(pl.col("linkdt"), 
+                                     pl.col("linkenddt")))
+    .join(nyse, on="permno", how="inner")
+    .filter(pl.col("rdq").is_between(pl.col("namedt"), 
+                                     pl.col("nameenddt")))
+    .select("gvkey", "datadate", "rdq", "permno")
+)
+
+earn_annc_windows = (
+    earn_annc_dates
+    .join(annc_dates, 
+          left_on="rdq", 
+          right_on="annc_date", how="left")
+    .rename({"td": "event_td"})
+    .with_columns(
+        start_td=pl.col("event_td") - days_before,
+        end_td=pl.col("event_td") + days_after,
+    )
+    .join(
+        trading_dates
+        .select(pl.all().name.prefix("start_")),
+        on="start_td",
+        how="inner",
+    )
+    .join(
+        trading_dates
+        .select(pl.all().name.prefix("end_")),
+        on="end_td",
+        how="inner",
+    )
+    .drop("start_td", "end_td")
+)
+
+earn_annc_window_permnos = (
+    earn_annc_windows
+    .join(earn_annc_links, 
+          on=["gvkey", "datadate", "rdq"], how="inner")
+)
+
+earn_annc_crsp = (
+    mkt_rets 
+    .join(earn_annc_window_permnos,
+          on="permno", how="inner")
+    .filter(pl.col("date").is_between(pl.col("start_date"), 
+                                      pl.col("end_date")))
+    .select("gvkey", "datadate", "rdq", "event_td", 
+            "date", "ret", "ret_mkt", "vol")
+)
+
+earn_annc_rets = (
+    earn_annc_crsp
+    .join(trading_dates, on="date", how="inner")
+    .with_columns(relative_td=pl.col("td") - pl.col("event_td"))
+)
+
+earn_annc_vols = (
+    earn_annc_rets
+    .with_columns(
+        avg_vol=pl.col("vol").mean()
+        .over("gvkey", "datadate"),
+    )
+    .with_columns(
+        rel_vol=pl.col("vol") / pl.col("avg_vol"),
+        year=pl.col("datadate").dt.year(),
+    )
+)
+
+earn_annc_summ = (
+    earn_annc_vols 
+    .group_by("relative_td", "year")
+    .agg(
+        pl.len().alias("obs"),
+        pl.col("ret", "ret_mkt", "rel_vol")
+            .mean().name.prefix("mean_"),
+        pl.col("ret_mkt", "rel_vol")
+            .std(ddof=1).name.prefix("sd_"),
+        pl.col("ret_mkt", "rel_vol")
+            .abs().mean().name.prefix("mad_"),
+    )
+)
+```
+
+```{python}
+#| cache: false
+#| label: fig-sd-rets
+#| echo: true
+#| fig-height: 3
+#| fig-cap: "Residual return volatility around earnings announcements"
+#| fig-alt: "Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volality in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout."
+(
+    earn_annc_summ
+    .filter((pl.col("year") > 2010) & (pl.col("year") < 2019))
+    .with_columns(
+        pl.col("year").cast(pl.Int64).cast(pl.String),
+        (pl.col("year") == 2015).alias("is_2015"),
+    )
+    .collect()
+    >>
+    ggplot()
+    .aes(
+        x="relative_td",
+        y="sd_ret_mkt",
+        group="year",
+        colour="year",
+        linetype="is_2015",
+    )
+    .geom_line()
+)
+```
+
+```{python}
+#| cache: false
+#| label: fig-rel-vols
+#| fig-height: 3
+#| echo: true
+#| fig-cap: "Relative trading volume around earnings announcements"
+#| fig-alt: "Plot of trading volume in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in trading volume in days 0 and 1 relative to earnings announcements. Lines are essentially indistinguishable from each other."
+(
+    earn_annc_summ
+    .filter((pl.col("year") > 2010) & (pl.col("year") < 2019))
+    .with_columns(pl.col("year").cast(pl.Int64).cast(pl.String))
+    .collect()
+    >>
+    ggplot()
+    .aes(
+        x="relative_td",
+        y="mean_rel_vol",
+        group="year",
+        color="year",
+    )
+    .geom_line()
+)
+```
+
+## Discussion questions
+
+1. After reading @Bamber:2000wv, do the reasons given by @Beaver:1968vf for his sample selection criteria still seem reasonable? 
+Why or why not?
+
+I think one has to be careful not to reason from the lack of "results" shown by @Bamber:2000wv to conclude that sample selection criteria in @Beaver:1968vf are flawed.
+So long as the sample criteria were not imposed after seeing initial results with a view to getting "results", then we should not evaluate sample selection criteria *because* they delivered results that would not be there with a different sample.
+What we can (and should) do is limit the generalizations we make from the study.
+
+At times, it can make sense to choose a sample drawn from a sub-population, even if that means that the results of the study would be less generalizable to a wider population.
+For example, we might conduct an initial (randomized controlled) trial of a Covid-19 vaccine focused on older people, because that is where we expect to see the most benefit (and where it is more important to get a vaccine approved).
+Showing that vaccine is not effective with young people does not undermine the initial study, but does demonstrate that the findings of the initial study do not generalize to young people.
+Of course, we may have exercised caution in generalizing the initial study in this way in any case.
+
+In the earlier stages, we might seek to test a theory in the places where we expect the strongest results.
+In @Beaver:1968vf, we would expect stronger results when there is less information about the firm being revealed through sources other than earnings announcements (hence the fewer-than-20-news-items criterion) and when earnings announcements occur during periods where less market-wide news is being revealed (e.g., other firms announcing earnings around the same time, which may account for the non-31 December year-end criterion).
+
+@Bamber:2000wv do not quibble with the sample selection criteria of @Beaver:1968vf so much as with how subsequent researchers "generalized" the findings of @Beaver:1968vf.
+
+2. @Bamber:2000wv do a replication and an extension of @Beaver:1968vf.
+Why was it important to include the replication?
+What alternative approaches to extension could @Bamber:2000wv have considered? 
+Does it make sense to limit extensions to the sample period, available data, and methods of @Beaver:1968vf?
+What do you think of the claim that "the first research bricks [i.e., @Beaver:1968vf] affect the whole wall [of accounting research]"?
+
+It was important to include the replication simply because it is important to establish that the code and data procedures used by @Bamber:2000wv produce results similar to those in @Beaver:1968vf when applied to the same sample (hence *approximately* the same data).
+If they did not, then finding that they did not on the sample @Bamber:2000wv preferred would not be particularly interesting.
+In principle, @Bamber:2000wv might have omitted the replication, but most reviewers would have asked for it to make sure that nothing was wrong with the code and procedures of @Bamber:2000wv.
+
+There is a sense in which it makes sense to "limit extensions to the sample period, available data, and methods of @Beaver:1968vf" and that is with regard to the concern of @Bamber:2000wv that subsequent researchers generalized the results of @Beaver:1968vf in a way that they would not have had they understood the issues raised in the re-evaluation of @Beaver:1968vf presented in @Bamber:2000wv.
+This concern may be (1) because subsequent researchers believe something that is not true or (2) because it illustrates that accounting researchers have a bad habit of generalizing results.
+
+These two concerns are conceptually distinct.
+The first concern can be allayed by showing that what researchers believed based on @Beaver:1968vf is---despite the limitations of @Beaver:1968vf---true.
+In this respect, our replication analysis suggest that markets do in fact react to earnings announcements in the way suggested by @Beaver:1968vf.
+
+The second concern is more difficult to address with such evidence.
+However, I am not persuaded that @Beaver:1968vf was a "research brick" in "the whole wall" of accounting research in quite the way supposed by @Bamber:2000wv.
+While subsequent research did not directly revisit the question of @Beaver:1968vf, I do not believe that later research relied on @Beaver:1968vf in any simplistic fashion.
+For example, if the findings of @Beaver:1968vf were false for a broader sample of firms, then (for example) @Patell:1984aa likely would have uncovered this in their more precise study of market reactions to earnings announcements.
+
+3. What's the basic conclusion from Figures [-@fig-sd-rets] and [-@fig-rel-vols] in terms of whether "earnings announcements convey new information to the market"?
+Do the results support the conclusions made by subsequent researchers based on @Beaver:1968vf?
+Or do the concerns of @Bamber:2000wv remain applicable?
+
+The basic conclusion is arguably that the results of @Beaver:1968vf *do* generalize to latter periods and broader samples.
+In this regard, the "generalization" made by subsequent researchers based on @Beaver:1968vf arguably did not steer them in the wrong direction.
+This does not entirely negate the concerns of @Bamber:2000wv, which are that researchers tend to generalize even when they should not do so.
+
+4. In our replication analysis above, we made a number of measurement and design choices that differed from those made by @Beaver:1968vf.
+What are those differences?
+Do you expect these to materially affect the tenor of the results?
+Do the choices we made seem appropriate if we were writing a research paper?
+
+We used daily data, more recent years, more precise measures of earnings announcement dates, and did not impose requirements in terms of fiscal year-ends or the like.
+Based on @Bamber:2000wv, we might guess that these *could* affect the tenor of the results, but it seems that *in fact* they do not.
+
+5. Figures [-@fig-sd-rets] and [-@fig-rel-vols] use *daily* data [@Beaver:1968vf used weekly data].
+Apart from more **statistical power**, do the daily plots provide novel insights in this case?
+
+We can see that the reaction is very much focused in the day of and the day after the earnings announcement, something that could not be deduced from @Beaver:1968vf due to the weekly data available then.
+We also see a high degree of consistency in the empirical results over years.
+Additionally, while we don't test for it formally, there seems to be evidence of elevated volatility in returns for some days after the earnings announcement.
+
+6. What does the variable `mad_ret_mkt` on the data frame `earn_annc_summ` represent?
+Do results look different if this variable is used?
+Does this address the first concern about research design that @Bamber:2000wv raise?
+If not, can you suggest (and apply) an alternative measure?
+
+The variable `mad_ret_mkt` is the **mean absolute deviation** ("MAD") of market-adjusted returns.
+This measure is less sensitive to outliers than the standard deviation is.
+The impact of outliers is the first concern raised by @Bamber:2000wv.
+
+7. In Figures [-@fig-sd-rets] and [-@fig-rel-vols], two filters have been applied: `year > 2010` and `year < 2019`.
+Does it make sense to remove one or the other of these filters?
+What do you observe if you remove one or both of these?
+Can you explain these observations?
+
+If we remove `year > 2010`, we do not see much difference [@fig-beaver68-w2010]
+
+```{python}
+#| label: fig-beaver68-w2010
+#| fig-cap: Replication plot with 2010
+(
+    earn_annc_summ
+    .filter(pl.col("year").is_between(2010, 2019, closed="left"))
+    .collect()
+    >>
+    ggplot()
+    .aes(x = "relative_td", y = "sd_ret_mkt",
+         group = "year", colour = "factor(year)")
+    .geom_line()
+)
+```
+
+But removing `year < 2019` does have more of an impact, as can be seen in @fig-beaver68-w2019.
+
+```{python}
+#| label: fig-beaver68-w2019
+#| fig-cap: Replication plot with 2010 and 2019
+(
+    earn_annc_summ
+    .filter(pl.col("year").is_between(2010, 2019, closed="both"))
+    .collect()
+    >>
+    ggplot()
+    .aes(x = "relative_td", y = "sd_ret_mkt",
+         group = "year", colour = "factor(year)")
+    .geom_line()
+)
+```
+
+Even using a measure more robust to outliers (`mad_ret_mkt`) does not appreciably reduce the apparent anomaly, as can be seen in @fig-mad-ret-mkt.
+
+```{python}
+#| label: fig-mad-ret-mkt
+#| fig-cap: Replication plot using `mad_ret_mkt`
+(
+    earn_annc_summ
+    .filter((pl.col("year") > 2010) & (pl.col("year") < 2019))
+    .with_columns(pl.col("year").cast(pl.Int64).cast(pl.String))
+    .collect()
+    >>
+    ggplot()
+    .aes(x = "relative_td", y = "mad_ret_mkt",
+         group = "year", colour = "factor(year)")
+    .geom_line()
+)
+```
+
+Something seems to be going on in 2019 (note these would often be announcements early in 2020).
+However, it is important not to infer that the market is going up or down based on the plots above.
+
+One concern might be that 2019 has fewer observations, perhaps because of data restrictions we have imposed.
+This is easily checked, as we do in @fig-firms-by-year, where we see that the number of firms (`obs`) is pretty consistent across the years around the date of the earnings announcements.
+
+```{python}
+#| label: fig-firms-by-year
+#| fig-cap: Number of observations by `relative_td` and `year`
+(
+    earn_annc_summ
+    .filter(pl.col("year") >= 2016)
+    .with_columns(pl.col("year").cast(pl.Int64).cast(pl.String))
+    .collect()
+    >>
+    ggplot()
+    .aes(x="relative_td", y="obs", fill="year")
+    .geom_col()
+    .facet_grid("year ~ .")
+)
+```
+
+We have `mean_ret` (raw returns) and `mean_ret_mkt` (market-adjusted returns) on `earn_annc_summ` and can calculate a measure of market returns by "reversing" the calculation we used above (`ret_mkt = ret - vwretd`).^[Note that this is the average of `vwretd` across firms on the `relative_td` trading dates for each firm, so will not correspond to `vwretd` on any particular date.]
+Using `.unpivot()` and plotnine's `facet_grid()`, we plot these variables in a single set of plots in @fig-exam.
+
+```{python}
+#| label: fig-exam
+#| fig-cap: Decomposition of market-adjusted returns by year
+(
+    earn_annc_summ
+    .filter(pl.col("year") >= 2016)
+    .select("year", "relative_td", "mean_ret", "mean_ret_mkt")
+    .with_columns(
+        (pl.col("mean_ret") - pl.col("mean_ret_mkt")).alias("vwretd"),
+        pl.col("year").cast(pl.Int64).cast(pl.String),
+    )
+    .unpivot(
+        on=["mean_ret", "mean_ret_mkt", "vwretd"],
+        index=["year", "relative_td"],
+        variable_name="measure",
+        value_name="value",
+    )
+    .collect()
+    >>
+    ggplot()
+    .aes(x="relative_td", y="value", color="year")
+    .geom_line()
+    .facet_grid("year ~ measure")
+)
+```
+
+From @fig-exam, we can see that 2019 is somewhat odd and involves mean returns that are not what we would expect in general.
+Further research would be needed to understand what is going on here, but for present purposes, we could probably justify excluding data from 2019.
+
+That said, I explore a few ideas here.
+One idea is that fiscal 2019 was particularly affected by Covid-19, as it seems many firms would have been announcing earnings early in 2020.
+@fig-rdq shows that many 2019 earnings announcements would have been in early 2020.
+It might make sense to dig into the precise timing.
+
+```{python}
+#| label: fig-rdq
+#| fig-cap: Distribution of announcement dates by year of `datadate`
+(
+    earn_annc_rets
+    .with_columns(year=pl.col("datadate").dt.year())
+    .filter(pl.col("year") >= 2016)
+    .with_columns(
+        year_end=pl.date(pl.col("year"), 12, 31),
+    )
+    .with_columns(
+        rdq_adj=pl.when(pl.col("year") != 2019)
+        .then(pl.date(2019, 12, 31) + (pl.col("rdq") - pl.col("year_end")))
+        .otherwise(pl.col("rdq"))
+    )
+    .select("year", "rdq_adj")
+    .collect()
+    >>
+    ggplot()
+    .aes(x="rdq_adj")
+    .geom_histogram(bins=200)
+    .facet_grid("year ~ .")
+)
+```
+
+@fig-vwretd shows that the market-wide effects of Covid-19 do appear to coincide with the strange patterns observed.
+Of course, one caveat is that we're using market-adjusted returns, so market-wide affects do not obviously account for what we see in @fig-exam.
+
+```{python}
+#| label: fig-vwretd
+#| fig-cap: Cumulative market returns (value-weighted)
+(
+    dsi
+    .filter(pl.col("date") >= pl.date(2019, 1, 1))
+    .sort("date")
+    .with_columns(
+        pl.col("vwretd").cast(pl.Float64),
+        pl.col("vwretd").log1p().cum_sum().exp().alias("cumret"),
+    )
+    .select("date", "cumret")
+    .collect()
+    >>
+    ggplot()
+    .aes(x="date", y="cumret")
+    .geom_line()
+)
+```
+
+Perhaps it's not the mean of market returns, but their variance that is causing strange results.
+@fig-ret-vol provides two measures of return volatility.
+While there is a spike in mean absolute deviation (`mad_ret`) around that time, there is less evidence of that period being anything special in terms of `sd_ret`.
+
+```{python}
+#| label: fig-ret-vol
+#| fig-cap: Market volatility since 1 January 2019
+(
+    dsf
+    .join(dsi, on="date", how="inner")
+    .with_columns(
+        (pl.col("ret") - pl.col("vwretd"))
+        .cast(pl.Float64).alias("ab_ret"),
+    )
+    .group_by("date")
+    .agg(
+        pl.col("ab_ret").std(ddof=1).alias("sd_ret"),
+        pl.col("ab_ret").abs().mean().alias("mad_ret"),
+    )
+    .filter(pl.col("date") >= pl.date(2019, 1, 1))
+    .unpivot(
+        on=["sd_ret", "mad_ret"],
+        index=["date"],
+        variable_name="measure",
+        value_name="value",
+    )
+    .collect()
+    >>
+    ggplot()
+    .aes(x="date", y="value")
+    .geom_line()
+    .facet_grid(". ~ measure")
+    .scale_x_date(date_breaks="9 months", date_labels="%Y-%m")
+    .add_theme(axis_text_x=element_text(angle=90, ha="right"))
+)
+```
+
+I would conclude that it's not entirely clear why 2019 looks so different from the other years in @fig-beaver68-w2019 and @fig-mad-ret-mkt.
+While "something to do with Covid-19" seems plausible, it's not much of an explanation.
+The point of these analyses was to demonstrate how easy it can be to address questions empirically using plots.
+My experience is that many researchers are inclined to idle speculation even when data are on hand to address their questions.
+Often a plot will be worth a hundred regressions, which is problematic if researchers lack the skills or inclination to generate plots.
