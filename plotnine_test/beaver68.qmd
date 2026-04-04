@@ -1,7 +1,7 @@
 ---
-title: "Solutions for 'Beaver (1968)'"
+title: "Making `plotnine` more 'Pythonic'"
 author: Ian D. Gow
-date: 2026-04-02
+date: 2026-04-04
 date-format: "D MMMM YYYY"
 
 bibliography: book.bib
@@ -16,6 +16,22 @@ format:
       left: 2.5cm
       right: 2.5cm
 ---
+
+## Background on plotting in Python
+
+The oldest and still most foundational plotting library in Python is `matplotlib`, which emerged in the early 2000s with an explicit goal of giving Python something like the plotting capabilities of MATLAB.
+It remains the base layer for a great deal of Python plotting, partly because it is flexible and widely supported, and partly because many other libraries either wrap it or borrow its conceptual structure.
+That flexibility comes with costs: `matplotlib` can feel fairly low-level, and users often need to think carefully about figure objects, axes, styling, and annotation details.
+
+`seaborn` was developed later as a higher-level interface oriented toward statistical graphics.
+It aims to make common plots easier to produce and prettier by default, especially when working with data frames and grouped data.
+In practice, `seaborn` sits comfortably on top of `matplotlib`: it simplifies many standard workflows without replacing the underlying plotting engine.
+
+`plotnine` occupies a somewhat different niche.
+It brings the grammar-of-graphics approach associated with Wilkinson and popularized for many researchers by `ggplot2` in R into Python.
+Rather than building figures by directly manipulating axes, one specifies mappings from variables to aesthetics and then adds geometric layers, scales, facets, and themes.
+For users coming from R, this can make plotting in Python feel much more natural, and for teaching purposes it often helps separate the structure of a graphic from the mechanics of drawing it.
+That is one reason it is a useful choice for the examples below.
 
 ## Market reactions to earnings announcements
 
@@ -94,288 +110,13 @@ I think one reason is that many researchers use packages such as SAS where the a
 Another more cynical reason is that plots serve to elucidate and many researchers want to obfuscate, especially if their "results" are driven by outliers in a way that would be obvious in a scatter plot.
 
 ```{python}
-#| echo: false
 import polars as pl
 from plotnine import ggplot, element_text
-from era_pl import load_parquet
 ```
 
 ```{python}
-#| echo: false
-fundq = load_parquet("fundq", "comp")
-ccmxpf_lnkhist = load_parquet("ccmxpf_lnkhist", "crsp")
-dsi = load_parquet("dsi", "crsp")
-dsf = load_parquet("dsf", "crsp")
-stocknames = load_parquet("stocknames", "crsp")
-```
-
-```{python}
-#| echo: false
-first_date = pl.date(2010, 1, 1)
-last_date = pl.date(2019, 12, 31)
-
-earn_annc_dates = (
-    fundq
-    .filter(
-        pl.col("indfmt") == "INDL",
-        pl.col("datafmt") == "STD",
-        pl.col("consol") == "C",
-        pl.col("popsrc") == "D",
-        pl.col("rdq").is_not_null(),
-        pl.col("fqtr") == 4,
-    )
-    .select("gvkey", "datadate", "rdq")
-    .filter(pl.col("datadate").is_between(first_date, last_date))
-)
-```
-
-```{python}
-#| echo: false
-
-```
-
-```{python}
-#| echo: false
-ccm_link = (
-    ccmxpf_lnkhist
-    .filter(
-        pl.col("linktype").is_in(["LC", "LU", "LS"]),
-        pl.col("linkprim").is_in(["C", "P"])
-    )
-    .rename({"lpermno": "permno"})
-    .with_columns(
-        linkenddt=pl.col("linkenddt")
-                  .fill_null(pl.col("linkenddt").max()),
-    )
-)
-```
-
-```{python}
-#| echo: false
-trading_dates = (
-    dsi
-    .select("date")
-    .sort("date")
-    .with_row_index("td", offset=1)
-    .with_columns(td=pl.col("td").cast(pl.Int32))
-)
-
-min_date = (
-    trading_dates
-    .select("date")
-    .collect()
-    .min()
-    .item()
-)
-
-max_date =  (
-    trading_dates
-    .select("date")
-    .collect()
-    .max()
-    .item()
-)
-
-annc_dates = (
-    pl.DataFrame(
-        {
-            "annc_date": pl.date_range(
-                min_date,
-                max_date,
-                interval="1d",
-                eager=True,
-            )
-        }
-    )
-    .lazy()
-    .join(trading_dates, 
-          left_on="annc_date", 
-          right_on="date",
-          how="left")
-    .sort("annc_date")
-    .with_columns(
-        td=pl.col("td").backward_fill()
-    )
-    .with_columns(td=pl.col("td").cast(pl.Int32))
-)
-
-days_before = 20
-days_after = 20
-```
-
-```{python}
-#| echo: false
-mkt_rets = (
-    dsf 
-    .join(dsi, on="date", how="inner")
-    .with_columns(
-        ret_mkt=pl.col("ret") - pl.col("vwretd"),
-    )
-    .with_columns(
-        pl.col("ret", "ret_mkt", "vol").cast(pl.Float64)
-    )
-    .select("permno", "date", "ret", "ret_mkt", "vol")
-)
-```
-
-```{python}
-#| echo: false
-# NOTE: I have reordered the code from the book and  put all
-# the "single event" code together here. This code is not necessary 
-# to answer the questions.
-single_event = (
-    earn_annc_dates
-    .filter(pl.col("gvkey") == "064515",
-            pl.col("rdq") == pl.date(2018, 3, 4))
-)
-
-single_event_link = (
-    single_event 
-    .join(ccm_link, 
-          on="gvkey", how="inner")
-    .filter(pl.col("rdq").is_between(pl.col("linkdt"), 
-                                     pl.col("linkenddt")))
-    .select("gvkey", "datadate", "permno"))
-
-single_event_window = (
-    single_event
-    .join(annc_dates, left_on="rdq", right_on="annc_date", how="left")
-    .rename({"td": "event_td"})
-    .with_columns(
-        start_td=pl.col("event_td") - days_before,
-        end_td=pl.col("event_td") + days_after,
-    )
-    .join(
-        trading_dates
-        .select(pl.all().name.prefix("start_")),
-        on="start_td",
-        how="inner",
-    )
-    .join(
-        trading_dates
-        .select(pl.all().name.prefix("end_")),
-        on="end_td",
-        how="inner",
-    )
-    .drop("start_td", "end_td")
-)
-
-single_event_window_permno = (
-    single_event_window
-    .join(single_event_link, 
-          on=["gvkey", "datadate"], how="inner")
-)
-
-single_event_crsp = (
-    single_event_window_permno
-    .join(mkt_rets, 
-          on="permno", how="inner")
-    .filter(pl.col("date").is_between(pl.col("start_date"), 
-                                      pl.col("end_date")))
-    .select("gvkey", "datadate", "event_td", 
-            "date", "ret", "ret_mkt", "vol")
-)
-
-single_event_tds = (
-    single_event_crsp
-    .join(trading_dates, on="date", how="inner")
-    .with_columns(relative_td=pl.col("td") - pl.col("event_td"))
-    .select("relative_td", "vol")
-    .collect()
-) 
-```
-
-```{python}
-#| echo: false
-nyse = (
-    stocknames 
-    .filter(pl.col("exchcd") == 1)
-    .select("permno", "namedt", "nameenddt")
-)
-
-earn_annc_links = (
-    earn_annc_dates 
-    .join(ccm_link, on="gvkey", how="inner")
-    .filter(pl.col("rdq").is_between(pl.col("linkdt"), 
-                                     pl.col("linkenddt")))
-    .join(nyse, on="permno", how="inner")
-    .filter(pl.col("rdq").is_between(pl.col("namedt"), 
-                                     pl.col("nameenddt")))
-    .select("gvkey", "datadate", "rdq", "permno")
-)
-
-earn_annc_windows = (
-    earn_annc_dates
-    .join(annc_dates, 
-          left_on="rdq", 
-          right_on="annc_date", how="left")
-    .rename({"td": "event_td"})
-    .with_columns(
-        start_td=pl.col("event_td") - days_before,
-        end_td=pl.col("event_td") + days_after,
-    )
-    .join(
-        trading_dates
-        .select(pl.all().name.prefix("start_")),
-        on="start_td",
-        how="inner",
-    )
-    .join(
-        trading_dates
-        .select(pl.all().name.prefix("end_")),
-        on="end_td",
-        how="inner",
-    )
-    .drop("start_td", "end_td")
-)
-
-earn_annc_window_permnos = (
-    earn_annc_windows
-    .join(earn_annc_links, 
-          on=["gvkey", "datadate", "rdq"], how="inner")
-)
-
-earn_annc_crsp = (
-    mkt_rets 
-    .join(earn_annc_window_permnos,
-          on="permno", how="inner")
-    .filter(pl.col("date").is_between(pl.col("start_date"), 
-                                      pl.col("end_date")))
-    .select("gvkey", "datadate", "rdq", "event_td", 
-            "date", "ret", "ret_mkt", "vol")
-)
-
-earn_annc_rets = (
-    earn_annc_crsp
-    .join(trading_dates, on="date", how="inner")
-    .with_columns(relative_td=pl.col("td") - pl.col("event_td"))
-)
-
-earn_annc_vols = (
-    earn_annc_rets
-    .with_columns(
-        avg_vol=pl.col("vol").mean()
-        .over("gvkey", "datadate"),
-    )
-    .with_columns(
-        rel_vol=pl.col("vol") / pl.col("avg_vol"),
-        year=pl.col("datadate").dt.year(),
-    )
-)
-
-earn_annc_summ = (
-    earn_annc_vols 
-    .group_by("relative_td", "year")
-    .agg(
-        pl.len().alias("obs"),
-        pl.col("ret", "ret_mkt", "rel_vol")
-            .mean().name.prefix("mean_"),
-        pl.col("ret_mkt", "rel_vol")
-            .std(ddof=1).name.prefix("sd_"),
-        pl.col("ret_mkt", "rel_vol")
-            .abs().mean().name.prefix("mad_"),
-    )
-)
+# Regenerate with `./.venv/bin/python make_earn_annc_summ.py`.
+earn_annc_summ = pl.scan_parquet("earn_annc_summ.parquet")
 ```
 
 ```{python}
@@ -618,6 +359,152 @@ That said, I explore a few ideas here.
 One idea is that fiscal 2019 was particularly affected by Covid-19, as it seems many firms would have been announcing earnings early in 2020.
 @fig-rdq shows that many 2019 earnings announcements would have been in early 2020.
 It might make sense to dig into the precise timing.
+The figures below revert to WRDS-backed data because they require variables not included in `earn_annc_summ.parquet`.
+
+```{python}
+from era_pl import load_parquet
+
+first_date = pl.date(2010, 1, 1)
+last_date = pl.date(2019, 12, 31)
+days_before = 20
+days_after = 20
+
+fundq = load_parquet("fundq", "comp")
+ccmxpf_lnkhist = load_parquet("ccmxpf_lnkhist", "crsp")
+dsi = load_parquet("dsi", "crsp")
+dsf = load_parquet("dsf", "crsp")
+stocknames = load_parquet("stocknames", "crsp")
+
+earn_annc_dates = (
+    fundq
+    .filter(
+        pl.col("indfmt") == "INDL",
+        pl.col("datafmt") == "STD",
+        pl.col("consol") == "C",
+        pl.col("popsrc") == "D",
+        pl.col("rdq").is_not_null(),
+        pl.col("fqtr") == 4,
+    )
+    .select("gvkey", "datadate", "rdq")
+    .filter(pl.col("datadate").is_between(first_date, last_date))
+)
+
+ccm_link = (
+    ccmxpf_lnkhist
+    .filter(
+        pl.col("linktype").is_in(["LC", "LU", "LS"]),
+        pl.col("linkprim").is_in(["C", "P"]),
+    )
+    .rename({"lpermno": "permno"})
+    .with_columns(
+        linkenddt=pl.col("linkenddt").fill_null(pl.col("linkenddt").max()),
+    )
+)
+
+trading_dates = (
+    dsi
+    .select("date")
+    .sort("date")
+    .with_row_index("td", offset=1)
+    .with_columns(td=pl.col("td").cast(pl.Int32))
+)
+
+min_date = (
+    trading_dates
+    .select("date")
+    .collect()
+    .min()
+    .item()
+)
+
+max_date = (
+    trading_dates
+    .select("date")
+    .collect()
+    .max()
+    .item()
+)
+
+annc_dates = (
+    pl.DataFrame(
+        {
+            "annc_date": pl.date_range(
+                min_date,
+                max_date,
+                interval="1d",
+                eager=True,
+            )
+        }
+    )
+    .lazy()
+    .join(trading_dates, left_on="annc_date", right_on="date", how="left")
+    .sort("annc_date")
+    .with_columns(td=pl.col("td").backward_fill())
+    .with_columns(td=pl.col("td").cast(pl.Int32))
+)
+
+mkt_rets = (
+    dsf
+    .join(dsi, on="date", how="inner")
+    .with_columns(ret_mkt=pl.col("ret") - pl.col("vwretd"))
+    .with_columns(pl.col("ret", "ret_mkt", "vol").cast(pl.Float64))
+    .select("permno", "date", "ret", "ret_mkt", "vol")
+)
+
+nyse = (
+    stocknames
+    .filter(pl.col("exchcd") == 1)
+    .select("permno", "namedt", "nameenddt")
+)
+
+earn_annc_links = (
+    earn_annc_dates
+    .join(ccm_link, on="gvkey", how="inner")
+    .filter(pl.col("rdq").is_between(pl.col("linkdt"), pl.col("linkenddt")))
+    .join(nyse, on="permno", how="inner")
+    .filter(pl.col("rdq").is_between(pl.col("namedt"), pl.col("nameenddt")))
+    .select("gvkey", "datadate", "rdq", "permno")
+)
+
+earn_annc_windows = (
+    earn_annc_dates
+    .join(annc_dates, left_on="rdq", right_on="annc_date", how="left")
+    .rename({"td": "event_td"})
+    .with_columns(
+        start_td=pl.col("event_td") - days_before,
+        end_td=pl.col("event_td") + days_after,
+    )
+    .join(
+        trading_dates.select(pl.all().name.prefix("start_")),
+        on="start_td",
+        how="inner",
+    )
+    .join(
+        trading_dates.select(pl.all().name.prefix("end_")),
+        on="end_td",
+        how="inner",
+    )
+    .drop("start_td", "end_td")
+)
+
+earn_annc_window_permnos = (
+    earn_annc_windows
+    .join(earn_annc_links, on=["gvkey", "datadate", "rdq"], how="inner")
+)
+
+earn_annc_crsp = (
+    mkt_rets
+    .join(earn_annc_window_permnos, on="permno", how="inner")
+    .filter(pl.col("date").is_between(pl.col("start_date"), pl.col("end_date")))
+    .select("gvkey", "datadate", "rdq", "event_td", "date", "ret", "ret_mkt", "vol")
+)
+
+earn_annc_rets = (
+    earn_annc_crsp
+    .join(trading_dates, on="date", how="inner")
+    .with_columns(relative_td=pl.col("td") - pl.col("event_td"))
+)
+```
 
 ```{python}
 #| label: fig-rdq
