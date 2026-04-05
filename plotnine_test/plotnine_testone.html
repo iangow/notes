@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-04-04">
+
+<title>Making plotnine more ‘Pythonic’ – notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#background-on-plotting-in-python" id="toc-background-on-plotting-in-python" class="nav-link active" data-scroll-target="#background-on-plotting-in-python">Background on plotting in Python</a></li>
+  <li><a href="#but-plotnine-isnt-pythonic." id="toc-but-plotnine-isnt-pythonic." class="nav-link" data-scroll-target="#but-plotnine-isnt-pythonic.">“But <code>plotnine</code> isn’t Pythonic.”</a>
+  <ul class="collapse">
+  <li><a href="#matplotlib-defines-pythonic" id="toc-matplotlib-defines-pythonic" class="nav-link" data-scroll-target="#matplotlib-defines-pythonic"><code>matplotlib</code> defines Pythonic</a></li>
+  <li><a href="#plotnine-overrides-the-operator" id="toc-plotnine-overrides-the-operator" class="nav-link" data-scroll-target="#plotnine-overrides-the-operator"><code>plotnine</code> overrides the <code>+</code> operator!</a></li>
+  <li><a href="#plotnine-is-un-pythonic-because-its-different" id="toc-plotnine-is-un-pythonic-because-its-different" class="nav-link" data-scroll-target="#plotnine-is-un-pythonic-because-its-different"><code>plotnine</code> is un-Pythonic because it’s different</a></li>
+  <li><a href="#plotnine-ports-a-library-from-r" id="toc-plotnine-ports-a-library-from-r" class="nav-link" data-scroll-target="#plotnine-ports-a-library-from-r"><code>plotnine</code> ports a library from R</a></li>
+  <li><a href="#using-from-plotnine-import-is-un-pythonic" id="toc-using-from-plotnine-import-is-un-pythonic" class="nav-link" data-scroll-target="#using-from-plotnine-import-is-un-pythonic">Using <code>from plotnine import *</code> is un-Pythonic</a></li>
+  </ul></li>
+  <li><a href="#implementing-plotnine-using-methods" id="toc-implementing-plotnine-using-methods" class="nav-link" data-scroll-target="#implementing-plotnine-using-methods">Implementing <code>plotnine</code> using methods</a></li>
+  <li><a href="#a-quick-test-drive" id="toc-a-quick-test-drive" class="nav-link" data-scroll-target="#a-quick-test-drive">A quick test drive</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="plotnine_testone.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Making <code>plotnine</code> more ‘Pythonic’</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">4 April 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>The note addresses the claim that the <code>plotnine</code> plotting library for Python is “not Pythonic”. Here I propose a minor tweak to <code>plotnine</code> that provides a more method-oriented interface, while preserving the core grammar-of-graphics approach.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="background-on-plotting-in-python" class="level2">
+<h2 class="anchored" data-anchor-id="background-on-plotting-in-python">Background on plotting in Python</h2>
+<p>The oldest and still most foundational plotting library in Python is <code>matplotlib</code>, which emerged in the early 2000s with an explicit goal of giving Python something like the plotting capabilities of MATLAB. Not only is it widely used directly, it also provides the base layer for other leading Python plotting packages. It is flexible and widely supported, but its flexibility comes with costs: <code>matplotlib</code> can feel fairly low-level, and users often need to think carefully about lots of details include figure objects, axes, styling, and annotation details.</p>
+<p>Seaborn is newer and was developed later as a higher-level interface oriented toward statistical graphics. It aims to make common plots easier to produce and better looking by default, especially when working with data frames. In practice, Seaborn sits comfortably on top of <code>matplotlib</code>: it simplifies many standard workflows without replacing the underlying plotting engine.</p>
+<p>It seems <code>plotnine</code> occupies a bit of a niche in the Python data science ecosystem. It brings to Python the grammar-of-graphics approach of <span class="citation" data-cites="wilkinson2005grammar">Wilkinson (<a href="#ref-wilkinson2005grammar" role="doc-biblioref">2005</a>)</span> that was popularized by R’s <code>ggplot2</code> in R. Rather than building figures by directly manipulating axes, one specifies mappings from variables to aesthetics and then adds geometric layers, scales, facets, and themes. Because of <code>plotnine</code>, users of <code>ggplot2</code> can quickly feel at home in Python, and for pedagogical purposes it helps to separate the structure of a graphic from the mechanics of drawing it.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+</section>
+<section id="but-plotnine-isnt-pythonic." class="level2">
+<h2 class="anchored" data-anchor-id="but-plotnine-isnt-pythonic.">“But <code>plotnine</code> isn’t Pythonic.”</h2>
+<p>An apparent critique of <code>plotnine</code> is that it is “not Pythonic” in some way. Because it seems difficult to find a clear statement of this criticism, so I need to speculate a bit about what is meant by “Pythonic” in this context. The following are some ideas:</p>
+<section id="matplotlib-defines-pythonic" class="level3">
+<h3 class="anchored" data-anchor-id="matplotlib-defines-pythonic"><code>matplotlib</code> defines Pythonic</h3>
+<p>One view might be that <code>matplotlib</code>, as the established standard, defines “Pythonic” when it comes to plotting. But I think this argument (if made) would fail in multiple ways.</p>
+<p>When people say something is Pythonic, they typically mean a few things. <a href="https://peps.python.org/pep-0020/#the-zen-of-python">The Zen of Python</a> advocates for clear, readable, and explicit code. In this regard, <code>matplotlib</code> often falls short.</p>
+<p>Apart from having two commonly used APIs (one very un-Pythonic), <code>matplotlib</code> often seems difficult to understand and verbose compared to code you might use with <code>ggplot2</code>, the popular R plotting package. For example, my experience is that some plots from the <a href="`https://jakevdp.github.io/PythonDataScienceHandbook/">Python Data Science Handbook</a> have been “broken” by API changes since publication of the second edition in 2023.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> But even with the eager assistance of Codex, I wasn’t able to get some of these to look as they did in the book. From this experience, I learnt that the documentation for <code>matplotlib</code> is incredibly extensive and detailed, but is poring through documentation Pythonic? I think not.</p>
+<p>Seaborn is intended to provide a higher-level interface to <code>matplotlib</code>, but my sense is that one often needs to interact with <code>matplotlib</code> in practice even when using Seaborn. I’m still working my way up the learning curve with Seaborn, so I am not in a position to make any kind case that it is or is not “Pythonic”. So I will assume that it is and evaluate some other potential claims against <code>plotnite</code>.</p>
+</section>
+<section id="plotnine-overrides-the-operator" class="level3">
+<h3 class="anchored" data-anchor-id="plotnine-overrides-the-operator"><code>plotnine</code> overrides the <code>+</code> operator!</h3>
+<p>The <code>plotnine</code> website includes a <a href="https://plotnine.org/guide/operators.html#is-overloading-operators-pythonic">section</a> devoted to the question: “Is overloading operators ‘Pythonic’?” There it is suggested that “sometimes people ask whether overloading the <code>+</code> and <code>&gt;&gt;</code> operators is ‘Pythonic’”.</p>
+<p>I think the idea that overriding <code>+</code> and <code>&gt;&gt;</code> is not Pythonic is pretty silly. Many examples of “overriding” (I think a better word would be <em>implementing</em>) <code>+</code> exist. Think lists or strings. Also, that’s the whole idea of having methods like <code>.__add__()</code> (for <code>+</code>) and <code>.__rrshift__()</code> (used by <code>plotnine</code> for <code>&gt;&gt;</code>) in the first place. This seems <em>very</em> Pythonic!</p>
+</section>
+<section id="plotnine-is-un-pythonic-because-its-different" class="level3">
+<h3 class="anchored" data-anchor-id="plotnine-is-un-pythonic-because-its-different"><code>plotnine</code> is un-Pythonic because it’s different</h3>
+<p>I think the reality is that different packages in Python will do things in different ways for good reasons and one way is not necessarily more Pythonic than another.</p>
+<p>The move in pandas 3 to a “copy-on-write” model might be viewed as un-Pythonic, given that NumPy slices are typically views on the underlying array. But that argument relies on treating consistency with existing libraries as the definition of Pythonic.</p>
+<p>In practice, what makes sense for arrays does not necessarily make sense for data frames. Copy-on-write trades some performance characteristics for clearer and safer semantics, which may be more appropriate for tabular data.</p>
+<p>Similarly, Polars largely dispenses with the pandas-style index. One could argue that this is un-Pythonic because pandas treats the index as central to its data model and pandas is the most “Python” data frame library around. But that again reduces “Pythonic” to “consistent with the most popular existing package [pandas].”</p>
+<p>In practice, Polars adopts a different model of tabular data—one that prioritizes explicit columns and query-style transformations over index-based alignment. That choice may be better suited to its goals, particularly around performance and composability. This doesn’t seem language-specific.</p>
+</section>
+<section id="plotnine-ports-a-library-from-r" class="level3">
+<h3 class="anchored" data-anchor-id="plotnine-ports-a-library-from-r"><code>plotnine</code> ports a library from R</h3>
+<p>I don’t think that this, in itself, is any kind of argument at all. Where did <code>matplotlib</code> come from, if not MATLAB? Some of the implementation of <code>matplotlib</code> was heavily influenced by Java.</p>
+<p>Coming from R cannot, by itself, be evidence that something is un-Pythonic. Where did that <code>DataFrame</code> idea, which put pandas at the centre of the Python data science ecosystem, come from again?</p>
+</section>
+<section id="using-from-plotnine-import-is-un-pythonic" class="level3">
+<h3 class="anchored" data-anchor-id="using-from-plotnine-import-is-un-pythonic">Using <code>from plotnine import *</code> is un-Pythonic</h3>
+<p>Here is where I think there is more of a case. In R, one thinks little of saying <code>library(ggplot2)</code>, which would translate as <code>from ggplot2 import *</code>. I suspect that the decision was made to implement <code>plotnine</code> using a functional approach was driven by the idea of making a transition from R’s <code>ggplot2</code> to Python’s <code>plotnine</code> as straightforward as possible. For a user of <code>ggplot2</code>, one can pretty much just copy-paste R code into Python and it magically works.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>An unfortunate downside of this is that <code>plotnine</code> can feel like a definite interloper. Perhaps the <a href="https://en.wikipedia.org/wiki/Plan_9_from_Outer_Space">“Plan 9 from Outer Space”</a> allusion in the package’s name is a nod to this.</p>
+<p>However, I think that one needs to understand that there’s nothing particularly “R” about <code>ggplot2</code>. One only has to consider the plotting functions in “base” R or the various packages that were popular at the time when <code>ggplot2</code> first arrived to see this. I think that <code>ggplot2</code> is perceived as “Plan 9 from R” in part because it is so dominant in the R ecosystem. But it’s not because it’s whatever-the-R-equivalent-of-Pythonic-is, or because corporate IT departments pushed it down the throats of users (Windows/Office-style) but because it scratched an itch and people liked it.</p>
+<p>The reality is that <code>ggplot2</code> is based on <span class="citation" data-cites="wilkinson2005grammar">Wilkinson (<a href="#ref-wilkinson2005grammar" role="doc-biblioref">2005</a>)</span>, a language-agnostic, conceptual framework for building statistical graphics.</p>
+<p>All that said, when using <code>plotnine</code>, one either uses <code>from plotnine import *</code> or carefully imports each function one uses in a particular file, and there can be many. Using the latter approach does not feel particularly ergonomic. And using the former approach feels a bit like showing up to my (Korean) mother-in-law’s house and insisting on wearing my shoes inside.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> One could argue that little harm would occur from doing so, but it feels just plain rude and not respecting local customs.</p>
+<p>But if you use <code>plotnine</code>, you can’t help but feel that it’s <em>almost</em> Pythonic. Those functions almost feel like methods on some kind of object. How could I test this idea?</p>
+</section>
+</section>
+<section id="implementing-plotnine-using-methods" class="level2">
+<h2 class="anchored" data-anchor-id="implementing-plotnine-using-methods">Implementing <code>plotnine</code> using methods</h2>
+<p>One approach to seeing just how easy it would be to implement <code>plotnine</code> functions as methods is, as one does nowadays, to ask Codex (or equivalent).</p>
+<p>I gave Codex the following prompt:</p>
+<blockquote class="blockquote">
+<p>OK. So the standard way to use this package is pretty much <code>from plotnine import *</code>. Would it be possible to make a version of this package that was more method-oriented. Basically <code>from plotnine import ggplot</code> and then <code>ggplot(aes(...)).geom_line()</code> and so on?</p>
+</blockquote>
+<p>Codex suggested it was very feasible. So I forked the <code>plotnine</code> package and had it get to work.</p>
+<p>In a few minutes, Codex came back with an implementation that comprised:</p>
+<ul>
+<li>two lines of additional code in <code>plotnine.py</code>.</li>
+<li>an additional module <code>_fluent.py</code> consisting of 72 lines of code</li>
+<li>about 50 lines of code added to <code>test_ggplot_internals.py</code>.</li>
+</ul>
+<p>One of the tweaks it made to my request was the implementation of an <code>.aes()</code> method. Another was a choice to leave some things as they are (e.g., <code>element_text()</code> is still a function that would need to be imported). Finally, to avoid clashes between methods and attributes, Codex gave me things like <code>.add_theme()</code> instead of <code>.theme()</code>.</p>
+<p>These changes can be found on the <a href="https://github.com/iangow/plotnine/tree/codex-fluent-api"><code>codex-fluent-api</code> branch</a> on my GitHub fork. Below I take this version for a spin by putting <code>"plotnine @ git+https://github.com/iangow/plotnine.git@codex-fluent-api"</code> in my <code>pyproject.toml</code>. Because (it seems) <code>plotnine</code> is pure Python, it’s pretty easy to install.</p>
+<p>The code to create this note, including the data, can be found <a href="https://github.com/iangow/notes/tree/main/plotnine_test">here</a>.</p>
+</section>
+<section id="a-quick-test-drive" class="level2">
+<h2 class="anchored" data-anchor-id="a-quick-test-drive">A quick test drive</h2>
+<p>I have a <a href="beaver68.html">“solutions manual”</a> for one chapter of the Python Polars version of <a href="https://iangow.github.io/far_book/beaver68.html"><em>Empirical Research in Accounting: Tools and Methods</em></a>. Because this solutions manual chapter has a bunch of plots (originally created using <code>ggplot2</code>) and I was looking at it recently, it seemed to provide a good case study for the alternative version of <code>plotnine</code>.</p>
+<p>I will use <code>polars</code>, but you can see that here I just need <code>from plotnine import ggplot</code> (very Pythonic, no?).</p>
+<div id="26a83675" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="f51a6f80" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>earn_annc_summ <span class="op">=</span> pl.scan_parquet(<span class="st">"earn_annc_summ.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The plots below are just what I had to hand. Note that most of the plots just differ in terms of the data fed into them. Here is where <code>&gt;&gt;</code> is nice. I don’t need to create <code>plot_data</code> data frames, I just figure out the data I want for each case in terms of a method chain (or “pipeline”) and feed it to <code>plotnine</code>. Note that <code>plotnine</code> has no trouble accepting Polars <code>DataFrame</code> objects (despite what Codex and Claude Code sometimes think).</p>
+<p>I believe I could also import <code>aes()</code> and use the function form (and I think perhaps I would need to in some cases), but here I just go with the <code>.aes()</code> flow and everything works.</p>
+<p>Most of the plots just use <code>.geom_line()</code>. But in <a href="#fig-firms-by-year" class="quarto-xref">Figure&nbsp;6</a>, you can see that it works for <code>.geom_col()</code> and <code>.facet_grid()</code>.</p>
+<p>My original note had other variations, but these required more extensive data, so I omitted them here. Perhaps a natural next step would be to try some more examples from the [extensive] <a href="https://plotnine.org/gallery/"><code>plotnine</code> gallery</a>.</p>
+<div id="cell-fig-sd-rets" class="cell" data-cache="false" data-fig-height="3" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((pl.col(<span class="st">"year"</span>) <span class="op">&gt;</span> <span class="dv">2010</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"year"</span>) <span class="op">&lt;</span> <span class="dv">2019</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        (pl.col(<span class="st">"year"</span>) <span class="op">==</span> <span class="dv">2015</span>).alias(<span class="st">"is_2015"</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    ggplot()</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    .aes(</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        x<span class="op">=</span><span class="st">"relative_td"</span>,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        y<span class="op">=</span><span class="st">"sd_ret_mkt"</span>,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        group<span class="op">=</span><span class="st">"year"</span>,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        colour<span class="op">=</span><span class="st">"year"</span>,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        linetype<span class="op">=</span><span class="st">"is_2015"</span>,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div id="fig-sd-rets" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volality in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sd-rets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="plotnine_testone_files/figure-html/fig-sd-rets-output-1.png" alt="Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volality in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout." width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sd-rets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Residual return volatility around earnings announcements
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-rel-vols" class="cell" data-cache="false" data-fig-height="3" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((pl.col(<span class="st">"year"</span>) <span class="op">&gt;</span> <span class="dv">2010</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"year"</span>) <span class="op">&lt;</span> <span class="dv">2019</span>))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    ggplot()</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    .aes(</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        x<span class="op">=</span><span class="st">"relative_td"</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        y<span class="op">=</span><span class="st">"mean_rel_vol"</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        group<span class="op">=</span><span class="st">"year"</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"year"</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div id="fig-rel-vols" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot of trading volume in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in trading volume in days 0 and 1 relative to earnings announcements. Lines are essentially indistinguishable from each other.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rel-vols-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="plotnine_testone_files/figure-html/fig-rel-vols-output-1.png" alt="Plot of trading volume in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in trading volume in days 0 and 1 relative to earnings announcements. Lines are essentially indistinguishable from each other." width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rel-vols-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Relative trading volume around earnings announcements
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-beaver68-w2010" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"year"</span>).is_between(<span class="dv">2010</span>, <span class="dv">2019</span>, closed<span class="op">=</span><span class="st">"left"</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    ggplot()</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    .aes(x <span class="op">=</span> <span class="st">"relative_td"</span>, y <span class="op">=</span> <span class="st">"sd_ret_mkt"</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>         group <span class="op">=</span> <span class="st">"year"</span>, colour <span class="op">=</span> <span class="st">"factor(year)"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<div id="fig-beaver68-w2010" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-beaver68-w2010-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="plotnine_testone_files/figure-html/fig-beaver68-w2010-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-beaver68-w2010-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Replication plot with 2010
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-beaver68-w2019" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"year"</span>).is_between(<span class="dv">2010</span>, <span class="dv">2019</span>, closed<span class="op">=</span><span class="st">"both"</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    ggplot()</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    .aes(x <span class="op">=</span> <span class="st">"relative_td"</span>, y <span class="op">=</span> <span class="st">"sd_ret_mkt"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>         group <span class="op">=</span> <span class="st">"year"</span>, colour <span class="op">=</span> <span class="st">"factor(year)"</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<div id="fig-beaver68-w2019" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-beaver68-w2019-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="plotnine_testone_files/figure-html/fig-beaver68-w2019-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-beaver68-w2019-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Replication plot with 2010 and 2019
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-mad-ret-mkt" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((pl.col(<span class="st">"year"</span>) <span class="op">&gt;</span> <span class="dv">2010</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"year"</span>) <span class="op">&lt;</span> <span class="dv">2019</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    ggplot()</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    .aes(x <span class="op">=</span> <span class="st">"relative_td"</span>, y <span class="op">=</span> <span class="st">"mad_ret_mkt"</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>         group <span class="op">=</span> <span class="st">"year"</span>, colour <span class="op">=</span> <span class="st">"factor(year)"</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div id="fig-mad-ret-mkt" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mad-ret-mkt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="plotnine_testone_files/figure-html/fig-mad-ret-mkt-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mad-ret-mkt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Replication plot using <code>mad_ret_mkt</code>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-firms-by-year" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"year"</span>) <span class="op">&gt;=</span> <span class="dv">2016</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    ggplot()</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    .aes(x<span class="op">=</span><span class="st">"relative_td"</span>, y<span class="op">=</span><span class="st">"obs"</span>, fill<span class="op">=</span><span class="st">"year"</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    .geom_col()</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    .facet_grid(<span class="st">"year ~ ."</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<div id="fig-firms-by-year" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-firms-by-year-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="plotnine_testone_files/figure-html/fig-firms-by-year-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-firms-by-year-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Number of observations by <code>relative_td</code> and <code>year</code>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-exam" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"year"</span>) <span class="op">&gt;=</span> <span class="dv">2016</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"year"</span>, <span class="st">"relative_td"</span>, <span class="st">"mean_ret"</span>, <span class="st">"mean_ret_mkt"</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        (pl.col(<span class="st">"mean_ret"</span>) <span class="op">-</span> pl.col(<span class="st">"mean_ret_mkt"</span>)).alias(<span class="st">"vwretd"</span>),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String),</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    .unpivot(</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span>[<span class="st">"mean_ret"</span>, <span class="st">"mean_ret_mkt"</span>, <span class="st">"vwretd"</span>],</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        index<span class="op">=</span>[<span class="st">"year"</span>, <span class="st">"relative_td"</span>],</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        variable_name<span class="op">=</span><span class="st">"measure"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        value_name<span class="op">=</span><span class="st">"value"</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    ggplot()</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    .aes(x<span class="op">=</span><span class="st">"relative_td"</span>, y<span class="op">=</span><span class="st">"value"</span>, color<span class="op">=</span><span class="st">"year"</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    .facet_grid(<span class="st">"year ~ measure"</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<div id="fig-exam" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-exam-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="plotnine_testone_files/figure-html/fig-exam-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-exam-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Decomposition of market-adjusted returns by year
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-wilkinson2005grammar" class="csl-entry" role="listitem">
+Wilkinson, Leland. 2005. <em>The Grammar of Graphics</em>. 2nd ed. Springer.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>I have also appreciated its willingness to work with Polars data frames.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>An excellent book, by the way.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>There are some tweaks that need to be made, but nothing that any LLM can’t handle easily.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Frank Costanza has similar issues in the <a href="https://en.wikipedia.org/wiki/The_Understudy_(Seinfeld)"><em>The Understudy</em></a>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
