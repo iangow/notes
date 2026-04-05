@@ -4,7 +4,8 @@ author: Ian D. Gow
 date: 2026-04-04
 date-format: "D MMMM YYYY"
 abstract: |
-  The note addresses the claim that `plotnine` is "not Pythonic" by proposing a minor tweak to that library that provides a method-oriented interface, while preserving the core grammar-of-graphics approach.
+  The note addresses the claim that the `plotnine` plotting library for Python is "not Pythonic".
+  Here I propose a minor tweak to `plotnine` that provides a more method-oriented interface, while preserving the core grammar-of-graphics approach.
 
 bibliography: book.bib
 engine: jupyter
@@ -12,8 +13,10 @@ jupyter: plotnine-test
 
 format:
   html:
-    toc: true
+    colorlinks: true
   typst:
+    colorlinks: true
+    linkcolor: "#0000FF"
     bibliographystyle: harvard-cite-them-right
     papersize: a4
     margin:
@@ -24,23 +27,22 @@ format:
 ## Background on plotting in Python
 
 The oldest and still most foundational plotting library in Python is `matplotlib`, which emerged in the early 2000s with an explicit goal of giving Python something like the plotting capabilities of MATLAB.
-It remains the base layer for a great deal of Python plotting, partly because it is flexible and widely supported, and partly because many other libraries either wrap it or borrow its conceptual structure.
-That flexibility comes with costs: `matplotlib` can feel fairly low-level, and users often need to think carefully about figure objects, axes, styling, and annotation details.
+Not only is it widely used directly, it also provides the base layer for other leading Python plotting packages.
+It is flexible and widely supported, but its flexibility comes with costs: `matplotlib` can feel fairly low-level, and users often need to think carefully about lots of details include figure objects, axes, styling, and annotation details.
 
-`seaborn` was developed later as a higher-level interface oriented toward statistical graphics.
-It aims to make common plots easier to produce and prettier by default, especially when working with data frames and grouped data.
-In practice, `seaborn` sits comfortably on top of `matplotlib`: it simplifies many standard workflows without replacing the underlying plotting engine.
+Seaborn is newer and was developed later as a higher-level interface oriented toward statistical graphics.
+It aims to make common plots easier to produce and better looking by default, especially when working with data frames.
+In practice, Seaborn sits comfortably on top of `matplotlib`: it simplifies many standard workflows without replacing the underlying plotting engine.
 
-`plotnine` occupies a somewhat different niche.
-It brings the grammar-of-graphics approach associated with Wilkinson and popularized for many researchers by `ggplot2` in R into Python.
+It seems `plotnine` occupies a bit of a niche in the Python data science ecosystem.
+It brings to Python the grammar-of-graphics approach of @wilkinson2005grammar  that was popularized by R's `ggplot2` in R.
 Rather than building figures by directly manipulating axes, one specifies mappings from variables to aesthetics and then adds geometric layers, scales, facets, and themes.
-For users coming from R, this can make plotting in Python feel much more natural, and for teaching purposes it often helps separate the structure of a graphic from the mechanics of drawing it.
-That is one reason it is a useful choice for the examples below.
+Because of `plotnine`, users of `ggplot2` can quickly feel at home in Python, and for pedagogical purposes it helps to separate the structure of a graphic from the mechanics of drawing it.^[I have also appreciated its willingness to work with Polars data frames.]
 
 ## "But `plotnine` isn't Pythonic."
 
 An apparent critique of `plotnine` is that it is "not Pythonic" in some way.
-Because it seems difficult to find a clear statement of this criticism, one needs to speculate a bit about what is meant by "Pythonic" in this context.
+Because it seems difficult to find a clear statement of this criticism, so I need to speculate a bit about what is meant by "Pythonic" in this context.
 The following are some ideas:
 
 ###  `matplotlib` defines Pythonic
@@ -54,12 +56,12 @@ In this regard, `matplotlib` often falls short.
 
 Apart from having two commonly used APIs (one very un-Pythonic),  `matplotlib` often seems difficult to understand and verbose compared to code you might use with `ggplot2`, the popular R plotting package.
 For example, my experience is that some plots from the [Python Data Science Handbook](`https://jakevdp.github.io/PythonDataScienceHandbook/) have been "broken" by API changes since publication of the second edition in 2023.^[An excellent book, by the way.]
-But even with the eager assistance of Codex, I wasn't able to get them to look as they did in the book.
-The documentation for `matplotlib` is incredibly extensive and detailed, but is poring through documentation Pythonic?
+But even with the eager assistance of Codex, I wasn't able to get some of these to look as they did in the book.
+From this experience, I learnt that the documentation for `matplotlib` is incredibly extensive and detailed, but is poring through documentation Pythonic?
 I think not.
 
 Seaborn is intended to provide a higher-level interface to `matplotlib`, but my sense is that one often needs to interact with `matplotlib` in practice even when using Seaborn.
-I'm still working my way up the learning curve with Seaborn, so I a not in a position to make a case that it isn't "Pythonic".
+I'm still working my way up the learning curve with Seaborn, so I am not in a position to make any kind case that it is or is not "Pythonic".
 So I will assume that it is and evaluate some other potential claims against `plotnite`.
 
 ### `plotnine` overrides the `+` operator!
@@ -145,7 +147,9 @@ In a few minutes, Codex came back with an implementation that comprised:
  - an additional module `_fluent.py` consisting of 72 lines of code
  - about 50 lines of code added to `test_ggplot_internals.py`.
 
- The tweaks it made to my request was the implementation of an `.aes()` method and a choice to leave some things as they are (e.g., `element_text()` is still a function that would need to be imported).
+One of the tweaks it made to my request was the implementation of an `.aes()` method.
+Another was a choice to leave some things as they are (e.g., `element_text()` is still a function that would need to be imported).
+Finally, to avoid clashes between methods and attributes, Codex gave me things like `.add_theme()` instead of `.theme()`.
 
 These changes can be found on the [`codex-fluent-api` branch](https://github.com/iangow/plotnine/tree/codex-fluent-api) on my GitHub fork.
 Below I take this version for a spin by putting `"plotnine @ git+https://github.com/iangow/plotnine.git@codex-fluent-api"` in my `pyproject.toml`.
@@ -155,7 +159,7 @@ The code to create this note, including the data, can be found [here](https://gi
 
 ## A quick test drive
 
-I have a "solutions manual" for one chapter of the Python Polars version of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/beaver68.html).
+I have a ["solutions manual"](beaver68.pdf) for one chapter of the Python Polars version of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/beaver68.html).
 Because this solutions manual chapter has a bunch of plots (originally created using `ggplot2`) and I was looking at it recently, it seemed to provide a good case study for the alternative version of `plotnine`.
 
 I will use `polars`, but you can see that here I just need `from plotnine import ggplot` (very Pythonic, no?).
@@ -166,7 +170,6 @@ from plotnine import ggplot
 ```
 
 ```{python}
-# Regenerate with `./.venv/bin/python make_earn_annc_summ.py`.
 earn_annc_summ = pl.scan_parquet("earn_annc_summ.parquet")
 ```
 
