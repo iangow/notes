@@ -287,11 +287,11 @@ div.csl-indent {
 <h2 class="anchored" data-anchor-id="a-quick-test-drive">A quick test drive</h2>
 <p>I have a <a href="beaver68.html">“solutions manual”</a> for one chapter of the Python Polars version of <a href="https://iangow.github.io/far_book/beaver68.html"><em>Empirical Research in Accounting: Tools and Methods</em></a>. Because this solutions manual chapter has a bunch of plots (originally created using <code>ggplot2</code>), it seems to provide a good case study for the alternative version of <code>plotnine</code>.</p>
 <p>I will use <code>polars</code>, but you can see that here I just need <code>from plotnine import ggplot</code> (very Pythonic, no?).</p>
-<div id="0d2e913f" class="cell" data-execution_count="1">
+<div id="db95acd7" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="33cd80b2" class="cell" data-execution_count="2">
+<div id="0bdde97f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>earn_annc_summ <span class="op">=</span> pl.scan_parquet(<span class="st">"earn_annc_summ.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The plots below are just what I had to hand. Note that most of the plots just differ in terms of the data fed into them. Here is where <code>&gt;&gt;</code> is nice. I don’t need to create <code>plot_data</code> data frames; in each case, I just figure out the method chain (or “pipeline”) that produces the data I need and feed that into <code>plotnine</code> using <code>&gt;&gt;</code>. Note that <code>plotnine</code> has no trouble accepting Polars <code>DataFrame</code> objects (despite what Codex and Claude Code sometimes think).</p>
@@ -301,7 +301,7 @@ div.csl-indent {
 <div id="cell-fig-sd-rets" class="cell" data-cache="false" data-fig-height="3" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((pl.col(<span class="st">"year"</span>) <span class="op">&gt;</span> <span class="dv">2010</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"year"</span>) <span class="op">&lt;</span> <span class="dv">2019</span>))</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"year"</span>).is_between(<span class="dv">2010</span>, <span class="dv">2019</span>, closed<span class="op">=</span><span class="st">"none"</span>))</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String),</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        (pl.col(<span class="st">"year"</span>) <span class="op">==</span> <span class="dv">2015</span>).alias(<span class="st">"is_2015"</span>),</span>
@@ -334,7 +334,7 @@ Figure&nbsp;1: Residual return volatility around earnings announcements
 <div id="cell-fig-rel-vols" class="cell" data-cache="false" data-fig-height="3" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((pl.col(<span class="st">"year"</span>) <span class="op">&gt;</span> <span class="dv">2010</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"year"</span>) <span class="op">&lt;</span> <span class="dv">2019</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"year"</span>).is_between(<span class="dv">2010</span>, <span class="dv">2019</span>, closed<span class="op">=</span><span class="st">"none"</span>))</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String))</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
@@ -411,7 +411,7 @@ Figure&nbsp;4: Replication plot with 2010 and 2019
 <div id="cell-fig-mad-ret-mkt" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>((pl.col(<span class="st">"year"</span>) <span class="op">&gt;</span> <span class="dv">2010</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"year"</span>) <span class="op">&lt;</span> <span class="dv">2019</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"year"</span>).is_between(<span class="dv">2010</span>, <span class="dv">2019</span>, closed<span class="op">=</span><span class="st">"none"</span>))</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"year"</span>).cast(pl.Int64).cast(pl.String))</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span></span>
