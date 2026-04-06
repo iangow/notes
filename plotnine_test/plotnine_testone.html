@@ -9,7 +9,7 @@
 <meta name="author" content="Ian D. Gow">
 <meta name="dcterms.date" content="2026-04-04">
 
-<title>Making plotnine more ‘Pythonic’</title>
+<title>Making plotnine more ‘Pythonic’ – notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -82,26 +82,106 @@ div.csl-indent {
 }</style>
 
 
-<script src="plotnine_testone_files/libs/clipboard/clipboard.min.js"></script>
-<script src="plotnine_testone_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="plotnine_testone_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="plotnine_testone_files/libs/quarto-html/popper.min.js"></script>
-<script src="plotnine_testone_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="plotnine_testone_files/libs/quarto-html/anchor.min.js"></script>
-<link href="plotnine_testone_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="plotnine_testone_files/libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="plotnine_testone_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="plotnine_testone_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="plotnine_testone_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
 
 
 </head>
 
-<body class="quarto-light">
+<body class="nav-fixed quarto-light">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="plotnine_testone.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></div>
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#background-on-plotting-in-python" id="toc-background-on-plotting-in-python" class="nav-link active" data-scroll-target="#background-on-plotting-in-python">Background on plotting in Python</a></li>
+  <li><a href="#but-plotnine-isnt-pythonic." id="toc-but-plotnine-isnt-pythonic." class="nav-link" data-scroll-target="#but-plotnine-isnt-pythonic.">“But <code>plotnine</code> isn’t Pythonic.”</a>
+  <ul class="collapse">
+  <li><a href="#matplotlib-defines-pythonic" id="toc-matplotlib-defines-pythonic" class="nav-link" data-scroll-target="#matplotlib-defines-pythonic"><code>matplotlib</code> defines Pythonic</a></li>
+  <li><a href="#plotnine-overloads-the-operator" id="toc-plotnine-overloads-the-operator" class="nav-link" data-scroll-target="#plotnine-overloads-the-operator"><code>plotnine</code> overloads the <code>+</code> operator!</a></li>
+  <li><a href="#plotnine-is-un-pythonic-because-its-different" id="toc-plotnine-is-un-pythonic-because-its-different" class="nav-link" data-scroll-target="#plotnine-is-un-pythonic-because-its-different"><code>plotnine</code> is un-Pythonic because it’s different</a></li>
+  <li><a href="#plotnine-ports-a-library-from-r" id="toc-plotnine-ports-a-library-from-r" class="nav-link" data-scroll-target="#plotnine-ports-a-library-from-r"><code>plotnine</code> ports a library from R</a></li>
+  <li><a href="#using-from-plotnine-import-is-un-pythonic" id="toc-using-from-plotnine-import-is-un-pythonic" class="nav-link" data-scroll-target="#using-from-plotnine-import-is-un-pythonic">Using <code>from plotnine import *</code> is un-Pythonic</a></li>
+  </ul></li>
+  <li><a href="#implementing-plotnine-using-methods" id="toc-implementing-plotnine-using-methods" class="nav-link" data-scroll-target="#implementing-plotnine-using-methods">Implementing <code>plotnine</code> using methods</a></li>
+  <li><a href="#a-quick-test-drive" id="toc-a-quick-test-drive" class="nav-link" data-scroll-target="#a-quick-test-drive">A quick test drive</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="plotnine_testone.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
+    </div>
+<!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -157,8 +237,8 @@ div.csl-indent {
 <p>Apart from having two commonly used APIs (one very un-Pythonic), <code>matplotlib</code> often seems difficult to understand and verbose compared to code you might use with <code>ggplot2</code>, the popular R plotting package. For example, my experience is that some plots from the <a href="https://jakevdp.github.io/PythonDataScienceHandbook/">Python Data Science Handbook</a> have been “broken” by API changes since publication of the second edition in 2023.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> But even with the eager assistance of Codex, I wasn’t able to get some of these to look as they did in the book. From this experience, I learnt that the documentation for <code>matplotlib</code> is incredibly extensive and detailed, but wading through detailed documentation doesn’t see very Pythonic. I think not.</p>
 <p>Seaborn is intended to provide a higher-level interface to <code>matplotlib</code>, but my sense is that one often needs to interact with <code>matplotlib</code> in practice even when using Seaborn. I’m still working my way up the learning curve with Seaborn, so I am not in a position to make any kind of case that it is or is not “Pythonic”.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> So I will assume that it is and evaluate some other potential claims against <code>plotnine</code>.</p>
 </section>
-<section id="plotnine-overrides-the-operator" class="level3">
-<h3 class="anchored" data-anchor-id="plotnine-overrides-the-operator"><code>plotnine</code> overrides the <code>+</code> operator!</h3>
+<section id="plotnine-overloads-the-operator" class="level3">
+<h3 class="anchored" data-anchor-id="plotnine-overloads-the-operator"><code>plotnine</code> overloads the <code>+</code> operator!</h3>
 <p>The <code>plotnine</code> website includes a <a href="https://plotnine.org/guide/operators.html#is-overloading-operators-pythonic">section</a> devoted to the question: “Is overloading operators ‘Pythonic’?” There it is suggested that “sometimes people ask whether overloading the <code>+</code> and <code>&gt;&gt;</code> operators is ‘Pythonic’”.</p>
 <p>I think the idea that overloading <code>+</code> and <code>&gt;&gt;</code> is not Pythonic is pretty silly. Many examples of “overloading” (I think a better word would be <em>implementing</em>) <code>+</code> exist. Think of lists, strings, and numeric types. Also, that’s the whole idea of having methods like <code>.__add__()</code> (for <code>+</code>) and <code>.__rrshift__()</code> (used by <code>plotnine</code> for <code>&gt;&gt;</code>) in the first place. This seems <em>very</em> Pythonic!</p>
 </section>
@@ -207,11 +287,11 @@ div.csl-indent {
 <h2 class="anchored" data-anchor-id="a-quick-test-drive">A quick test drive</h2>
 <p>I have a <a href="beaver68.html">“solutions manual”</a> for one chapter of the Python Polars version of <a href="https://iangow.github.io/far_book/beaver68.html"><em>Empirical Research in Accounting: Tools and Methods</em></a>. Because this solutions manual chapter has a bunch of plots (originally created using <code>ggplot2</code>), it seems to provide a good case study for the alternative version of <code>plotnine</code>.</p>
 <p>I will use <code>polars</code>, but you can see that here I just need <code>from plotnine import ggplot</code> (very Pythonic, no?).</p>
-<div id="216f8f34" class="cell" data-execution_count="1">
+<div id="0d2e913f" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0dff5c53" class="cell" data-execution_count="2">
+<div id="33cd80b2" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>earn_annc_summ <span class="op">=</span> pl.scan_parquet(<span class="st">"earn_annc_summ.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The plots below are just what I had to hand. Note that most of the plots just differ in terms of the data fed into them. Here is where <code>&gt;&gt;</code> is nice. I don’t need to create <code>plot_data</code> data frames; in each case, I just figure out the method chain (or “pipeline”) that produces the data I need and feed that into <code>plotnine</code> using <code>&gt;&gt;</code>. Note that <code>plotnine</code> has no trouble accepting Polars <code>DataFrame</code> objects (despite what Codex and Claude Code sometimes think).</p>
@@ -414,6 +494,8 @@ Figure&nbsp;7: Decomposition of market-adjusted returns by year
 </div>
 </div>
 
+
+
 </section>
 
 
@@ -430,8 +512,7 @@ Wilkinson, Leland. 2005. <em>The Grammar of Graphics</em>. 2nd ed. Springer.
 <li id="fn4"><p>There are some tweaks that need to be made, but nothing that any LLM can’t handle easily.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn5"><p>Frank Costanza has similar issues in the <a href="https://en.wikipedia.org/wiki/The_Understudy_(Seinfeld)"><em>The Understudy</em></a>.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
-</section></div></main>
-<!-- /main column -->
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
