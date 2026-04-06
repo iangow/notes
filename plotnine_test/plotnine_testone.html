@@ -9,7 +9,7 @@
 <meta name="author" content="Ian D. Gow">
 <meta name="dcterms.date" content="2026-04-04">
 
-<title>Making plotnine more ‘Pythonic’ – notes</title>
+<title>Making plotnine more ‘Pythonic’</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -82,106 +82,26 @@ div.csl-indent {
 }</style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
-<script id="quarto-search-options" type="application/json">{
-  "location": "navbar",
-  "copy-button": false,
-  "collapse-after": 3,
-  "panel-placement": "end",
-  "type": "overlay",
-  "limit": 50,
-  "keyboard-shortcut": [
-    "f",
-    "/",
-    "s"
-  ],
-  "show-item-context": false,
-  "language": {
-    "search-no-results-text": "No results",
-    "search-matching-documents-text": "matching documents",
-    "search-copy-link-title": "Copy link to search",
-    "search-hide-matches-text": "Hide additional matches",
-    "search-more-match-text": "more match in this document",
-    "search-more-matches-text": "more matches in this document",
-    "search-clear-button-title": "Clear",
-    "search-text-placeholder": "",
-    "search-detached-cancel-button-title": "Cancel",
-    "search-submit-button-title": "Submit",
-    "search-label": "Search"
-  }
-}</script>
+<script src="plotnine_testone_files/libs/clipboard/clipboard.min.js"></script>
+<script src="plotnine_testone_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="plotnine_testone_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="plotnine_testone_files/libs/quarto-html/popper.min.js"></script>
+<script src="plotnine_testone_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="plotnine_testone_files/libs/quarto-html/anchor.min.js"></script>
+<link href="plotnine_testone_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="plotnine_testone_files/libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="plotnine_testone_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="plotnine_testone_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="plotnine_testone_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
 
-<body class="nav-fixed quarto-light">
+<body class="quarto-light">
 
-<div id="quarto-search-results"></div>
-  <header id="quarto-header" class="headroom fixed-top">
-    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
-      <div class="navbar-container container-fluid">
-      <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="../index.html">
-    <span class="navbar-title">notes</span>
-    </a>
-  </div>
-            <div id="quarto-search" class="" title="Search"></div>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
-  <span class="navbar-toggler-icon"></span>
-</button>
-          <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="navbar-nav navbar-nav-scroll ms-auto">
-  <li class="nav-item">
-    <a class="nav-link" href="../index.html"> 
-<span class="menu-text">Home</span></a>
-  </li>  
-</ul>
-          </div> <!-- /navcollapse -->
-            <div class="quarto-navbar-tools">
-</div>
-      </div> <!-- /container-fluid -->
-    </nav>
-</header>
-<!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
-<!-- sidebar -->
-<!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#background-on-plotting-in-python" id="toc-background-on-plotting-in-python" class="nav-link active" data-scroll-target="#background-on-plotting-in-python">Background on plotting in Python</a></li>
-  <li><a href="#but-plotnine-isnt-pythonic." id="toc-but-plotnine-isnt-pythonic." class="nav-link" data-scroll-target="#but-plotnine-isnt-pythonic.">“But <code>plotnine</code> isn’t Pythonic.”</a>
-  <ul class="collapse">
-  <li><a href="#matplotlib-defines-pythonic" id="toc-matplotlib-defines-pythonic" class="nav-link" data-scroll-target="#matplotlib-defines-pythonic"><code>matplotlib</code> defines Pythonic</a></li>
-  <li><a href="#plotnine-overrides-the-operator" id="toc-plotnine-overrides-the-operator" class="nav-link" data-scroll-target="#plotnine-overrides-the-operator"><code>plotnine</code> overrides the <code>+</code> operator!</a></li>
-  <li><a href="#plotnine-is-un-pythonic-because-its-different" id="toc-plotnine-is-un-pythonic-because-its-different" class="nav-link" data-scroll-target="#plotnine-is-un-pythonic-because-its-different"><code>plotnine</code> is un-Pythonic because it’s different</a></li>
-  <li><a href="#plotnine-ports-a-library-from-r" id="toc-plotnine-ports-a-library-from-r" class="nav-link" data-scroll-target="#plotnine-ports-a-library-from-r"><code>plotnine</code> ports a library from R</a></li>
-  <li><a href="#using-from-plotnine-import-is-un-pythonic" id="toc-using-from-plotnine-import-is-un-pythonic" class="nav-link" data-scroll-target="#using-from-plotnine-import-is-un-pythonic">Using <code>from plotnine import *</code> is un-Pythonic</a></li>
-  </ul></li>
-  <li><a href="#implementing-plotnine-using-methods" id="toc-implementing-plotnine-using-methods" class="nav-link" data-scroll-target="#implementing-plotnine-using-methods">Implementing <code>plotnine</code> using methods</a></li>
-  <li><a href="#a-quick-test-drive" id="toc-a-quick-test-drive" class="nav-link" data-scroll-target="#a-quick-test-drive">A quick test drive</a></li>
-  </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="plotnine_testone.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
-    </div>
-<!-- main -->
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="plotnine_testone.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -223,24 +143,24 @@ div.csl-indent {
 
 <section id="background-on-plotting-in-python" class="level2">
 <h2 class="anchored" data-anchor-id="background-on-plotting-in-python">Background on plotting in Python</h2>
-<p>The oldest and still most foundational plotting library in Python is <code>matplotlib</code>, which emerged in the early 2000s with an explicit goal of giving Python something like the plotting capabilities of MATLAB. Not only is it widely used directly, it also provides the base layer for other leading Python plotting packages. It is flexible and widely supported, but its flexibility comes with costs: <code>matplotlib</code> can feel fairly low-level, and users often need to think carefully about lots of details include figure objects, axes, styling, and annotation details.</p>
+<p>The oldest and still most foundational plotting library in Python is <code>matplotlib</code>, which emerged in the early 2000s with an explicit goal of giving Python something like the plotting capabilities of MATLAB. Not only is it widely used directly, it also provides the base layer for other leading Python plotting packages. It is flexible and widely supported, but its flexibility comes with costs: <code>matplotlib</code> can feel fairly low-level, and users often need to think carefully about lots of details about things like figure objects, axes, styling, and annotation details.</p>
 <p>Seaborn is newer and was developed later as a higher-level interface oriented toward statistical graphics. It aims to make common plots easier to produce and better looking by default, especially when working with data frames. In practice, Seaborn sits comfortably on top of <code>matplotlib</code>: it simplifies many standard workflows without replacing the underlying plotting engine.</p>
-<p>It seems <code>plotnine</code> occupies a bit of a niche in the Python data science ecosystem. It brings to Python the grammar-of-graphics approach of <span class="citation" data-cites="wilkinson2005grammar">Wilkinson (<a href="#ref-wilkinson2005grammar" role="doc-biblioref">2005</a>)</span> that was popularized by R’s <code>ggplot2</code> in R. Rather than building figures by directly manipulating axes, one specifies mappings from variables to aesthetics and then adds geometric layers, scales, facets, and themes. Because of <code>plotnine</code>, users of <code>ggplot2</code> can quickly feel at home in Python, and for pedagogical purposes it helps to separate the structure of a graphic from the mechanics of drawing it.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>It seems <code>plotnine</code> occupies a bit of a niche in the Python data science ecosystem. It brings to Python the grammar-of-graphics approach of <span class="citation" data-cites="wilkinson2005grammar">Wilkinson (<a href="#ref-wilkinson2005grammar" role="doc-biblioref">2005</a>)</span> that was popularized by R’s <code>ggplot2</code>. Rather than building figures by directly manipulating axes, one specifies mappings from variables to aesthetics and then adds geometric layers, scales, facets, and themes. Because of <code>plotnine</code>, users of <code>ggplot2</code> can quickly feel at home in Python, and for pedagogical purposes it helps to separate the structure of a graphic from the mechanics of drawing it.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 </section>
 <section id="but-plotnine-isnt-pythonic." class="level2">
 <h2 class="anchored" data-anchor-id="but-plotnine-isnt-pythonic.">“But <code>plotnine</code> isn’t Pythonic.”</h2>
-<p>An apparent critique of <code>plotnine</code> is that it is “not Pythonic” in some way. Because it seems difficult to find a clear statement of this criticism, so I need to speculate a bit about what is meant by “Pythonic” in this context. The following are some ideas:</p>
+<p>An apparent critique of <code>plotnine</code> is that it is “not Pythonic” in some way. Because it seems difficult to find a clear statement of this criticism, I need to speculate a bit about what is meant by “Pythonic” in this context. The following are some ideas:</p>
 <section id="matplotlib-defines-pythonic" class="level3">
 <h3 class="anchored" data-anchor-id="matplotlib-defines-pythonic"><code>matplotlib</code> defines Pythonic</h3>
 <p>One view might be that <code>matplotlib</code>, as the established standard, defines “Pythonic” when it comes to plotting. But I think this argument (if made) would fail in multiple ways.</p>
 <p>When people say something is Pythonic, they typically mean a few things. <a href="https://peps.python.org/pep-0020/#the-zen-of-python">The Zen of Python</a> advocates for clear, readable, and explicit code. In this regard, <code>matplotlib</code> often falls short.</p>
-<p>Apart from having two commonly used APIs (one very un-Pythonic), <code>matplotlib</code> often seems difficult to understand and verbose compared to code you might use with <code>ggplot2</code>, the popular R plotting package. For example, my experience is that some plots from the <a href="`https://jakevdp.github.io/PythonDataScienceHandbook/">Python Data Science Handbook</a> have been “broken” by API changes since publication of the second edition in 2023.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> But even with the eager assistance of Codex, I wasn’t able to get some of these to look as they did in the book. From this experience, I learnt that the documentation for <code>matplotlib</code> is incredibly extensive and detailed, but is poring through documentation Pythonic? I think not.</p>
-<p>Seaborn is intended to provide a higher-level interface to <code>matplotlib</code>, but my sense is that one often needs to interact with <code>matplotlib</code> in practice even when using Seaborn. I’m still working my way up the learning curve with Seaborn, so I am not in a position to make any kind case that it is or is not “Pythonic”. So I will assume that it is and evaluate some other potential claims against <code>plotnite</code>.</p>
+<p>Apart from having two commonly used APIs (one very un-Pythonic), <code>matplotlib</code> often seems difficult to understand and verbose compared to code you might use with <code>ggplot2</code>, the popular R plotting package. For example, my experience is that some plots from the <a href="https://jakevdp.github.io/PythonDataScienceHandbook/">Python Data Science Handbook</a> have been “broken” by API changes since publication of the second edition in 2023.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> But even with the eager assistance of Codex, I wasn’t able to get some of these to look as they did in the book. From this experience, I learnt that the documentation for <code>matplotlib</code> is incredibly extensive and detailed, but wading through detailed documentation doesn’t see very Pythonic. I think not.</p>
+<p>Seaborn is intended to provide a higher-level interface to <code>matplotlib</code>, but my sense is that one often needs to interact with <code>matplotlib</code> in practice even when using Seaborn. I’m still working my way up the learning curve with Seaborn, so I am not in a position to make any kind of case that it is or is not “Pythonic”.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> So I will assume that it is and evaluate some other potential claims against <code>plotnine</code>.</p>
 </section>
 <section id="plotnine-overrides-the-operator" class="level3">
 <h3 class="anchored" data-anchor-id="plotnine-overrides-the-operator"><code>plotnine</code> overrides the <code>+</code> operator!</h3>
 <p>The <code>plotnine</code> website includes a <a href="https://plotnine.org/guide/operators.html#is-overloading-operators-pythonic">section</a> devoted to the question: “Is overloading operators ‘Pythonic’?” There it is suggested that “sometimes people ask whether overloading the <code>+</code> and <code>&gt;&gt;</code> operators is ‘Pythonic’”.</p>
-<p>I think the idea that overriding <code>+</code> and <code>&gt;&gt;</code> is not Pythonic is pretty silly. Many examples of “overriding” (I think a better word would be <em>implementing</em>) <code>+</code> exist. Think lists or strings. Also, that’s the whole idea of having methods like <code>.__add__()</code> (for <code>+</code>) and <code>.__rrshift__()</code> (used by <code>plotnine</code> for <code>&gt;&gt;</code>) in the first place. This seems <em>very</em> Pythonic!</p>
+<p>I think the idea that overloading <code>+</code> and <code>&gt;&gt;</code> is not Pythonic is pretty silly. Many examples of “overloading” (I think a better word would be <em>implementing</em>) <code>+</code> exist. Think of lists, strings, and numeric types. Also, that’s the whole idea of having methods like <code>.__add__()</code> (for <code>+</code>) and <code>.__rrshift__()</code> (used by <code>plotnine</code> for <code>&gt;&gt;</code>) in the first place. This seems <em>very</em> Pythonic!</p>
 </section>
 <section id="plotnine-is-un-pythonic-because-its-different" class="level3">
 <h3 class="anchored" data-anchor-id="plotnine-is-un-pythonic-because-its-different"><code>plotnine</code> is un-Pythonic because it’s different</h3>
@@ -257,23 +177,23 @@ div.csl-indent {
 </section>
 <section id="using-from-plotnine-import-is-un-pythonic" class="level3">
 <h3 class="anchored" data-anchor-id="using-from-plotnine-import-is-un-pythonic">Using <code>from plotnine import *</code> is un-Pythonic</h3>
-<p>Here is where I think there is more of a case. In R, one thinks little of saying <code>library(ggplot2)</code>, which would translate as <code>from ggplot2 import *</code>. I suspect that the decision was made to implement <code>plotnine</code> using a functional approach was driven by the idea of making a transition from R’s <code>ggplot2</code> to Python’s <code>plotnine</code> as straightforward as possible. For a user of <code>ggplot2</code>, one can pretty much just copy-paste R code into Python and it magically works.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>Here is where I think there is more of a case. In R, one thinks little of saying <code>library(ggplot2)</code>, which would translate as <code>from ggplot2 import *</code>. I suspect that the decision to implement <code>plotnine</code> using a functional approach was guided by the idea of making a transition from R’s <code>ggplot2</code> to Python’s <code>plotnine</code> as straightforward as possible. For a user of <code>ggplot2</code>, one can pretty much just copy-paste R code into Python and it magically works.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
 <p>An unfortunate downside of this is that <code>plotnine</code> can feel like a definite interloper. Perhaps the <a href="https://en.wikipedia.org/wiki/Plan_9_from_Outer_Space">“Plan 9 from Outer Space”</a> allusion in the package’s name is a nod to this.</p>
-<p>However, I think that one needs to understand that there’s nothing particularly “R” about <code>ggplot2</code>. One only has to consider the plotting functions in “base” R or the various packages that were popular at the time when <code>ggplot2</code> first arrived to see this. I think that <code>ggplot2</code> is perceived as “Plan 9 from R” in part because it is so dominant in the R ecosystem. But it’s not because it’s whatever-the-R-equivalent-of-Pythonic-is, or because corporate IT departments pushed it down the throats of users (Windows/Office-style) but because it scratched an itch and people liked it.</p>
+<p>However, I think that one needs to understand that there’s nothing particularly “R” about <code>ggplot2</code>. One only has to consider the plotting functions in “base” R or the various packages that were popular at the time when <code>ggplot2</code> first arrived to see this. I think that <code>ggplot2</code> is perceived as “Plan 9 from R” in part because it is so dominant in the R ecosystem. But it’s not because it’s whatever-the-R-equivalent-of-Pythonic-is, or because corporate IT departments pushed it down the throats of users (Windows/Office-style), but because it scratched an itch and people liked it.</p>
 <p>The reality is that <code>ggplot2</code> is based on <span class="citation" data-cites="wilkinson2005grammar">Wilkinson (<a href="#ref-wilkinson2005grammar" role="doc-biblioref">2005</a>)</span>, a language-agnostic, conceptual framework for building statistical graphics.</p>
-<p>All that said, when using <code>plotnine</code>, one either uses <code>from plotnine import *</code> or carefully imports each function one uses in a particular file, and there can be many. Using the latter approach does not feel particularly ergonomic. And using the former approach feels a bit like showing up to my (Korean) mother-in-law’s house and insisting on wearing my shoes inside.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> One could argue that little harm would occur from doing so, but it feels just plain rude and not respecting local customs.</p>
+<p>All that said, when using <code>plotnine</code>, one either uses <code>from plotnine import *</code> or carefully imports each function one uses in a particular file, and there can be many. Using the latter approach does not feel particularly ergonomic. And using the former approach feels a bit like showing up to my (Korean) mother-in-law’s house and insisting on wearing my shoes inside.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> One could argue that little harm would occur from doing so, but it feels just plain rude and not respecting local customs.</p>
 <p>But if you use <code>plotnine</code>, you can’t help but feel that it’s <em>almost</em> Pythonic. Those functions almost feel like methods on some kind of object. How could I test this idea?</p>
 </section>
 </section>
 <section id="implementing-plotnine-using-methods" class="level2">
 <h2 class="anchored" data-anchor-id="implementing-plotnine-using-methods">Implementing <code>plotnine</code> using methods</h2>
-<p>One approach to seeing just how easy it would be to implement <code>plotnine</code> functions as methods is, as one does nowadays, to ask Codex (or equivalent).</p>
+<p>One approach to seeing just how easy it would be to implement <code>plotnine</code> functions as methods is—as one does nowadays—to ask Codex (or equivalent) to do so.</p>
 <p>I gave Codex the following prompt:</p>
 <blockquote class="blockquote">
 <p>OK. So the standard way to use this package is pretty much <code>from plotnine import *</code>. Would it be possible to make a version of this package that was more method-oriented. Basically <code>from plotnine import ggplot</code> and then <code>ggplot(aes(...)).geom_line()</code> and so on?</p>
 </blockquote>
 <p>Codex suggested it was very feasible. So I forked the <code>plotnine</code> package and had it get to work.</p>
-<p>In a few minutes, Codex came back with an implementation that comprised:</p>
+<p>In a few minutes, Codex came back with an implementation that comprises:</p>
 <ul>
 <li>two lines of additional code in <code>plotnine.py</code>.</li>
 <li>an additional module <code>_fluent.py</code> consisting of 72 lines of code</li>
@@ -285,19 +205,19 @@ div.csl-indent {
 </section>
 <section id="a-quick-test-drive" class="level2">
 <h2 class="anchored" data-anchor-id="a-quick-test-drive">A quick test drive</h2>
-<p>I have a <a href="beaver68.html">“solutions manual”</a> for one chapter of the Python Polars version of <a href="https://iangow.github.io/far_book/beaver68.html"><em>Empirical Research in Accounting: Tools and Methods</em></a>. Because this solutions manual chapter has a bunch of plots (originally created using <code>ggplot2</code>) and I was looking at it recently, it seemed to provide a good case study for the alternative version of <code>plotnine</code>.</p>
+<p>I have a <a href="beaver68.html">“solutions manual”</a> for one chapter of the Python Polars version of <a href="https://iangow.github.io/far_book/beaver68.html"><em>Empirical Research in Accounting: Tools and Methods</em></a>. Because this solutions manual chapter has a bunch of plots (originally created using <code>ggplot2</code>), it seems to provide a good case study for the alternative version of <code>plotnine</code>.</p>
 <p>I will use <code>polars</code>, but you can see that here I just need <code>from plotnine import ggplot</code> (very Pythonic, no?).</p>
-<div id="26a83675" class="cell" data-execution_count="1">
+<div id="216f8f34" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f51a6f80" class="cell" data-execution_count="2">
+<div id="0dff5c53" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>earn_annc_summ <span class="op">=</span> pl.scan_parquet(<span class="st">"earn_annc_summ.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>The plots below are just what I had to hand. Note that most of the plots just differ in terms of the data fed into them. Here is where <code>&gt;&gt;</code> is nice. I don’t need to create <code>plot_data</code> data frames, I just figure out the data I want for each case in terms of a method chain (or “pipeline”) and feed it to <code>plotnine</code>. Note that <code>plotnine</code> has no trouble accepting Polars <code>DataFrame</code> objects (despite what Codex and Claude Code sometimes think).</p>
+<p>The plots below are just what I had to hand. Note that most of the plots just differ in terms of the data fed into them. Here is where <code>&gt;&gt;</code> is nice. I don’t need to create <code>plot_data</code> data frames; in each case, I just figure out the method chain (or “pipeline”) that produces the data I need and feed that into <code>plotnine</code> using <code>&gt;&gt;</code>. Note that <code>plotnine</code> has no trouble accepting Polars <code>DataFrame</code> objects (despite what Codex and Claude Code sometimes think).</p>
 <p>I believe I could also import <code>aes()</code> and use the function form (and I think perhaps I would need to in some cases), but here I just go with the <code>.aes()</code> flow and everything works.</p>
 <p>Most of the plots just use <code>.geom_line()</code>. But in <a href="#fig-firms-by-year" class="quarto-xref">Figure&nbsp;6</a>, you can see that it works for <code>.geom_col()</code> and <code>.facet_grid()</code>.</p>
-<p>My original note had other variations, but these required more extensive data, so I omitted them here. Perhaps a natural next step would be to try some more examples from the [extensive] <a href="https://plotnine.org/gallery/"><code>plotnine</code> gallery</a>.</p>
+<p>My original note had other variations, but these required more extensive data, so I omitted them here. Perhaps a natural next step would be to try some more examples from the (extensive!) <a href="https://plotnine.org/gallery/"><code>plotnine</code> gallery</a>.</p>
 <div id="cell-fig-sd-rets" class="cell" data-cache="false" data-fig-height="3" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    earn_annc_summ</span>
@@ -319,10 +239,10 @@ div.csl-indent {
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="3">
-<div id="fig-sd-rets" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volality in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout.">
+<div id="fig-sd-rets" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volatility in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-sd-rets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="plotnine_testone_files/figure-html/fig-sd-rets-output-1.png" alt="Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volality in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout." width="672" height="480" class="figure-img">
+<img src="plotnine_testone_files/figure-html/fig-sd-rets-output-1.png" alt="Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volatility in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout." width="672" height="480" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sd-rets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;1: Residual return volatility around earnings announcements
@@ -494,8 +414,6 @@ Figure&nbsp;7: Decomposition of market-adjusted returns by year
 </div>
 </div>
 
-
-
 </section>
 
 
@@ -508,10 +426,12 @@ Wilkinson, Leland. 2005. <em>The Grammar of Graphics</em>. 2nd ed. Springer.
 <ol>
 <li id="fn1"><p>I have also appreciated its willingness to work with Polars data frames.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>An excellent book, by the way.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>There are some tweaks that need to be made, but nothing that any LLM can’t handle easily.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4"><p>Frank Costanza has similar issues in the <a href="https://en.wikipedia.org/wiki/The_Understudy_(Seinfeld)"><em>The Understudy</em></a>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Though my preliminary assessment is that using the Seaborn objects interface can yield nice code, though nothing any more Pythonic than what a methods-oriented <code>plotnine</code> interface gives.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>There are some tweaks that need to be made, but nothing that any LLM can’t handle easily.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Frank Costanza has similar issues in the <a href="https://en.wikipedia.org/wiki/The_Understudy_(Seinfeld)"><em>The Understudy</em></a>.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
-</section></div></main> <!-- /main -->
+</section></div></main>
+<!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
