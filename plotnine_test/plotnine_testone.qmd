@@ -196,7 +196,7 @@ Perhaps a natural next step would be to try some more examples from the (extensi
 #| fig-alt: "Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volatility in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout."
 (
     earn_annc_summ
-    .filter((pl.col("year") > 2010) & (pl.col("year") < 2019))
+    .filter(pl.col("year").is_between(2010, 2019, closed="none"))
     .with_columns(
         pl.col("year").cast(pl.Int64).cast(pl.String),
         (pl.col("year") == 2015).alias("is_2015"),
@@ -224,7 +224,7 @@ Perhaps a natural next step would be to try some more examples from the (extensi
 #| fig-alt: "Plot of trading volume in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in trading volume in days 0 and 1 relative to earnings announcements. Lines are essentially indistinguishable from each other."
 (
     earn_annc_summ
-    .filter((pl.col("year") > 2010) & (pl.col("year") < 2019))
+    .filter(pl.col("year").is_between(2010, 2019, closed="none"))
     .with_columns(pl.col("year").cast(pl.Int64).cast(pl.String))
     .collect()
     >>
@@ -274,7 +274,7 @@ Perhaps a natural next step would be to try some more examples from the (extensi
 #| fig-cap: Replication plot using `mad_ret_mkt`
 (
     earn_annc_summ
-    .filter((pl.col("year") > 2010) & (pl.col("year") < 2019))
+    .filter(pl.col("year").is_between(2010, 2019, closed="none"))
     .with_columns(pl.col("year").cast(pl.Int64).cast(pl.String))
     .collect()
     >>
