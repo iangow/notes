@@ -28,21 +28,21 @@ format:
 
 The oldest and still most foundational plotting library in Python is `matplotlib`, which emerged in the early 2000s with an explicit goal of giving Python something like the plotting capabilities of MATLAB.
 Not only is it widely used directly, it also provides the base layer for other leading Python plotting packages.
-It is flexible and widely supported, but its flexibility comes with costs: `matplotlib` can feel fairly low-level, and users often need to think carefully about lots of details include figure objects, axes, styling, and annotation details.
+It is flexible and widely supported, but its flexibility comes with costs: `matplotlib` can feel fairly low-level, and users often need to think carefully about lots of details about things like figure objects, axes, styling, and annotation details.
 
 Seaborn is newer and was developed later as a higher-level interface oriented toward statistical graphics.
 It aims to make common plots easier to produce and better looking by default, especially when working with data frames.
 In practice, Seaborn sits comfortably on top of `matplotlib`: it simplifies many standard workflows without replacing the underlying plotting engine.
 
 It seems `plotnine` occupies a bit of a niche in the Python data science ecosystem.
-It brings to Python the grammar-of-graphics approach of @wilkinson2005grammar  that was popularized by R's `ggplot2` in R.
+It brings to Python the grammar-of-graphics approach of @wilkinson2005grammar  that was popularized by R's `ggplot2`.
 Rather than building figures by directly manipulating axes, one specifies mappings from variables to aesthetics and then adds geometric layers, scales, facets, and themes.
 Because of `plotnine`, users of `ggplot2` can quickly feel at home in Python, and for pedagogical purposes it helps to separate the structure of a graphic from the mechanics of drawing it.^[I have also appreciated its willingness to work with Polars data frames.]
 
 ## "But `plotnine` isn't Pythonic."
 
 An apparent critique of `plotnine` is that it is "not Pythonic" in some way.
-Because it seems difficult to find a clear statement of this criticism, so I need to speculate a bit about what is meant by "Pythonic" in this context.
+Because it seems difficult to find a clear statement of this criticism, I need to speculate a bit about what is meant by "Pythonic" in this context.
 The following are some ideas:
 
 ###  `matplotlib` defines Pythonic
@@ -54,24 +54,24 @@ When people say something is Pythonic, they typically mean a few things.
 [The Zen of Python](https://peps.python.org/pep-0020/#the-zen-of-python) advocates for clear, readable, and explicit code.
 In this regard, `matplotlib` often falls short.
 
-Apart from having two commonly used APIs (one very un-Pythonic),  `matplotlib` often seems difficult to understand and verbose compared to code you might use with `ggplot2`, the popular R plotting package.
-For example, my experience is that some plots from the [Python Data Science Handbook](`https://jakevdp.github.io/PythonDataScienceHandbook/) have been "broken" by API changes since publication of the second edition in 2023.^[An excellent book, by the way.]
+Apart from having two commonly used APIs (one very un-Pythonic), `matplotlib` often seems difficult to understand and verbose compared to code you might use with `ggplot2`, the popular R plotting package.
+For example, my experience is that some plots from the [Python Data Science Handbook](https://jakevdp.github.io/PythonDataScienceHandbook/) have been "broken" by API changes since publication of the second edition in 2023.^[An excellent book, by the way.]
 But even with the eager assistance of Codex, I wasn't able to get some of these to look as they did in the book.
-From this experience, I learnt that the documentation for `matplotlib` is incredibly extensive and detailed, but is poring through documentation Pythonic?
+From this experience, I learnt that the documentation for `matplotlib` is incredibly extensive and detailed, but wading through detailed documentation doesn't see very Pythonic.
 I think not.
 
 Seaborn is intended to provide a higher-level interface to `matplotlib`, but my sense is that one often needs to interact with `matplotlib` in practice even when using Seaborn.
-I'm still working my way up the learning curve with Seaborn, so I am not in a position to make any kind case that it is or is not "Pythonic".
-So I will assume that it is and evaluate some other potential claims against `plotnite`.
+I'm still working my way up the learning curve with Seaborn, so I am not in a position to make any kind of case that it is or is not "Pythonic".^[Though my preliminary assessment is that using the Seaborn objects interface can yield nice code, though nothing any more Pythonic than what a methods-oriented `plotnine` interface gives.]
+So I will assume that it is and evaluate some other potential claims against `plotnine`.
 
 ### `plotnine` overrides the `+` operator!
 
 The `plotnine` website includes a [section](https://plotnine.org/guide/operators.html#is-overloading-operators-pythonic) devoted to the question: "Is overloading operators 'Pythonic'?"
 There it is suggested that "sometimes people ask whether overloading the `+` and `>>` operators is 'Pythonic'".
 
-I think the idea that overriding `+` and `>>` is not Pythonic is pretty silly.
-Many examples of "overriding" (I think a better word would be *implementing*) `+` exist.
-Think lists or strings.
+I think the idea that overloading `+` and `>>` is not Pythonic is pretty silly.
+Many examples of "overloading" (I think a better word would be *implementing*) `+` exist.
+Think of lists, strings, and numeric types.
 Also, that's the whole idea of having methods like `.__add__()` (for `+`) and `.__rrshift__()` (used by `plotnine` for `>>`) in the first place.
 This seems *very* Pythonic!
 
@@ -106,7 +106,7 @@ Where did that `DataFrame` idea, which put pandas at the centre of the Python da
 
 Here is where I think there is more of a case.
 In R, one thinks little of saying `library(ggplot2)`, which would translate as `from ggplot2 import *`.
-I suspect that the decision was made to implement `plotnine` using a functional approach was driven by the idea of making a transition from R's `ggplot2` to Python's `plotnine` as straightforward as possible.
+I suspect that the decision to implement `plotnine` using a functional approach was guided by the idea of making a transition from R's `ggplot2` to Python's `plotnine` as straightforward as possible.
 For a user of `ggplot2`, one can pretty much just copy-paste R code into Python and it magically works.^[There are some tweaks that need to be made, but nothing that any LLM can't handle easily.]
 
 An unfortunate downside of this is that `plotnine` can feel like a definite interloper.
@@ -115,12 +115,12 @@ Perhaps the ["Plan 9 from Outer Space"](https://en.wikipedia.org/wiki/Plan_9_fro
 However, I think that one needs to understand that there's nothing particularly "R" about `ggplot2`.
 One only has to consider the plotting functions in "base" R or the various packages that were popular at the time when `ggplot2` first arrived to see this.
 I think that `ggplot2` is perceived as "Plan 9 from R" in part because it is so dominant in the R ecosystem.
-But it's not because it's whatever-the-R-equivalent-of-Pythonic-is, or because corporate IT departments pushed it down the throats of users (Windows/Office-style) but because it scratched an itch and people liked it.
+But it's not because it's whatever-the-R-equivalent-of-Pythonic-is, or because corporate IT departments pushed it down the throats of users (Windows/Office-style), but because it scratched an itch and people liked it.
 
 The reality is that `ggplot2` is based on @wilkinson2005grammar, a language-agnostic, conceptual framework for building statistical graphics.
 
 All that said, when using `plotnine`, one either uses `from plotnine import *` or carefully imports each function one uses in a particular file, and there can be many.
-Using the latter approach does not feel particularly ergonomic. 
+Using the latter approach does not feel particularly ergonomic.
 And using the former approach feels a bit like showing up to my (Korean) mother-in-law's house and insisting on wearing my shoes inside.^[Frank Costanza has similar issues in the [*The Understudy*](https://en.wikipedia.org/wiki/The_Understudy_(Seinfeld)).]
 One could argue that little harm would occur from doing so, but it feels just plain rude and not respecting local customs.
 
@@ -130,7 +130,7 @@ How could I test this idea?
 
 ## Implementing `plotnine` using methods
 
-One approach to seeing just how easy it would be to implement `plotnine` functions as methods is, as one does nowadays, to ask Codex (or equivalent).
+One approach to seeing just how easy it would be to implement `plotnine` functions as methods is---as one does nowadays---to ask Codex (or equivalent) to do so.
 
 I gave Codex the following prompt:
 
@@ -141,11 +141,11 @@ I gave Codex the following prompt:
 Codex suggested it was very feasible.
 So I forked the `plotnine` package and had it get to work.
 
-In a few minutes, Codex came back with an implementation that comprised:
+In a few minutes, Codex came back with an implementation that comprises:
 
- - two lines of additional code in `plotnine.py`.
- - an additional module `_fluent.py` consisting of 72 lines of code
- - about 50 lines of code added to `test_ggplot_internals.py`.
+- two lines of additional code in `plotnine.py`.
+- an additional module `_fluent.py` consisting of 72 lines of code
+- about 50 lines of code added to `test_ggplot_internals.py`.
 
 One of the tweaks it made to my request was the implementation of an `.aes()` method.
 Another was a choice to leave some things as they are (e.g., `element_text()` is still a function that would need to be imported).
@@ -160,7 +160,7 @@ The code to create this note, including the data, can be found [here](https://gi
 ## A quick test drive
 
 I have a ["solutions manual"](beaver68.html) for one chapter of the Python Polars version of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/beaver68.html).
-Because this solutions manual chapter has a bunch of plots (originally created using `ggplot2`) and I was looking at it recently, it seemed to provide a good case study for the alternative version of `plotnine`.
+Because this solutions manual chapter has a bunch of plots (originally created using `ggplot2`), it seems to provide a good case study for the alternative version of `plotnine`.
 
 I will use `polars`, but you can see that here I just need `from plotnine import ggplot` (very Pythonic, no?).
 
@@ -176,7 +176,7 @@ earn_annc_summ = pl.scan_parquet("earn_annc_summ.parquet")
 The plots below are just what I had to hand.
 Note that most of the plots just differ in terms of the data fed into them.
 Here is where `>>` is nice.
-I don't need to create `plot_data` data frames, I just figure out the data I want for each case in terms of a method chain (or "pipeline") and feed it to `plotnine`.
+I don't need to create `plot_data` data frames; in each case, I just figure out the method chain (or "pipeline") that produces the data I need and feed that into `plotnine` using `>>`.
 Note that `plotnine` has no trouble accepting Polars `DataFrame` objects (despite what Codex and Claude Code sometimes think).
 
 I believe I could also import `aes()` and use the function form (and I think perhaps I would need to in some cases), but here I just go with the `.aes()` flow and everything works.
@@ -185,7 +185,7 @@ Most of the plots just use `.geom_line()`.
 But in @fig-firms-by-year, you can see that it works for `.geom_col()` and `.facet_grid()`.
 
 My original note had other variations, but these required more extensive data, so I omitted them here.
-Perhaps a natural next step would be to try some more examples from the [extensive] [`plotnine` gallery](https://plotnine.org/gallery/).
+Perhaps a natural next step would be to try some more examples from the (extensive!) [`plotnine` gallery](https://plotnine.org/gallery/).
     
 ```{python}
 #| cache: false
@@ -193,7 +193,7 @@ Perhaps a natural next step would be to try some more examples from the [extensi
 #| echo: true
 #| fig-height: 3
 #| fig-cap: "Residual return volatility around earnings announcements"
-#| fig-alt: "Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volality in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout."
+#| fig-alt: "Plot of residual return volatility in days around earnings announcements. Each year from 2011 to 2018 is represented by a different line. Plot shows clear spike in return volatility in days 0 and 1 relative to earnings announcements. Lines are indistinguishable from each other with the exception of 2015, which has high volatility throughout."
 (
     earn_annc_summ
     .filter((pl.col("year") > 2010) & (pl.col("year") < 2019))
