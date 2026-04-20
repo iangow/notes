@@ -28,13 +28,13 @@ execute:
   freeze: auto
 ---
 
-In a [recent note](../missing_form_aps.html), I used XBRL data to identify potentially missing Form AP filings.
+In a [recent note](missing_form_aps.html), I used XBRL data to identify potentially missing Form AP filings.
 In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data.
 However, I provided no real information on how to get the XBRL data from SEC EDGAR.
 This note aims to provide this missing information.^[Guidance on downloading the Form AP data is provided in [an earlier note](../form_ap_names.html) I wrote.]
 
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/getting_dera_notes.qmd) and the latest version of this PDF is [here](https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf).
+The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/published/getting_dera_notes.qmd).
 
 This note uses the following R packages:^[To install these packages, run `install.packages(c(tidyverse, "DBI", "farr", "httr2", "rvest", "arrow")` in the console of RStudio.]
 
@@ -57,7 +57,7 @@ library(tinytable)
 ## Getting *Financial Statement and Notes* files
 
 There are two XBRL bulk data sets made available on SEC EDGAR: the [*Financial Statements*](https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets) and [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets) data sets, with the latter being roughly ten times as large as the former.
-For the task considered in the [note discussed above](../missing_form_aps.html), we needed the *Financial Statement and Notes* data set, so I focus on that data set here.
+For the task considered in the [note discussed above](missing_form_aps.html), we needed the *Financial Statement and Notes* data set, so I focus on that data set here.
 
 ### Structure of processed data
 
@@ -73,7 +73,7 @@ the SEC's [standard taxonomies file](https://www.sec.gov/info/edgar/edgartaxonom
  - `pre` contains one row for each line of the financial statements tagged by the filer.
  - `cal` contains one row for each calculation relationship ("arc"). Note that XBRL allows a parent
 element to have more than one distinct set of arcs for a given parent element, thus the rationale for distinct
-fields for the group and the arc.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/get_dera_notes.R")` to get these data.]
+fields for the group and the arc.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/published/get_dera_notes.R")` to get these data.]
 
 ### Structure of unprocessed data
 
