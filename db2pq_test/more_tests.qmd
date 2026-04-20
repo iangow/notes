@@ -1,0 +1,225 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{python}
+import ibis
+from ibis import _
+```
+
+
+```{python}
+duck = ibis.duckdb.connect()
+```
+
+```{python}
+%%time
+min_obs = 1000
+
+crsp_daily = duck.read_parquet(
+    "crsp_daily.parquet", 
+    table_name="crsp_daily")
+    
+factors_ff3_daily = duck.read_parquet(
+    "factors_ff3_daily.parquet",
+    table_name="factors_ff3_daily",
+)
+
+daily = (
+    crsp_daily
+    .select("permno", "date", "ret_excess")
+    .join(
+        factors_ff3_daily.select(
+            "date",
+            mkt_excess=(
+                _["mktrf"].cast("float64") - _["rf"].cast("float64")
+            ),
+        ),
+        "date",
+    )
+    .mutate(month=_.date.truncate("M"))
+)
+
+w_beta = ibis.trailing_range_window(
+    ibis.interval(months=59),
+    group_by=_.permno,
+    order_by=_.month,
+)
+
+w_month = ibis.window(
+    group_by=[_.permno, _.month]
+)
+
+betas_duckdb = (
+    daily
+    .mutate(
+        beta=(
+            _.mkt_excess.cov(_.ret_excess, how="sample").over(w_beta)
+            / _.mkt_excess.var(how="sample").over(w_beta)
+        ),
+        mean_ret=_.ret_excess.mean().over(w_beta),
+        mean_mkt=_.mkt_excess.mean().over(w_beta),
+        n=_.permno.count().over(w_beta),
+        first_month_date=_.date.min().over(w_month),
+    )
+    .filter(_.date == _.first_month_date, _.n >= min_obs)
+    .select(
+        "permno",
+        "month",
+        "beta",
+        "n",
+        alpha=_.mean_ret - _.beta * _.mean_mkt,
+    )
+    .rename(date="month")
+    .order_by("permno", "date")
+)
+```
+
+And here are the resulting betas:
+
+```{python}
+betas_duckdb.compile()
+```
+
+```{python}
+%%time
+min_obs = 1000
+
+crsp_daily = duck.read_parquet(
+    "crsp_daily.parquet", 
+    table_name="crsp_daily")
+    
+factors_ff3_daily = duck.read_parquet(
+    "factors_ff3_daily.parquet",
+    table_name="factors_ff3_daily",
+)
+
+daily = (
+    crsp_daily
+    .select("permno", "date", "ret_excess")
+    .join(
+        factors_ff3_daily.select(
+            "date",
+            mkt_excess=(
+                _["mktrf"].cast("float64") - _["rf"].cast("float64")
+            ),
+        ),
+        "date",
+    )
+    .mutate(month=_.date.truncate("M"))
+)
+
+w_beta = ibis.trailing_range_window(
+    ibis.interval(months=59),
+    group_by=_.permno,
+    order_by=_.month,
+)
+
+w_month = ibis.window(
+    group_by=[_.permno, _.month]
+)
+
+betas_duckdb = (
+    daily
+    .mutate(
+        beta=(
+            _.mkt_excess.cov(_.ret_excess, how="sample").over(w_beta)
+            / _.mkt_excess.var(how="sample").over(w_beta)
+        ),
+        mean_ret=_.ret_excess.mean().over(w_beta),
+        mean_mkt=_.mkt_excess.mean().over(w_beta),
+        n=_.permno.count().over(w_beta),
+        first_month_date=_.date.min().over(w_month),
+    )
+    .filter(_.date == _.first_month_date, _.n >= min_obs)
+    .select(
+        "permno",
+        "month",
+        "beta",
+        "n",
+        alpha=_.mean_ret - _.beta * _.mean_mkt,
+    )
+    .rename(date="month")
+    .order_by("permno", "date")
+)
+```
+
+And here are the resulting betas:
+
+```{python}
+betas_duckdb.compile()
+```
+
+```{python}
+%%time
+import polars as pl
+
+con = ibis.polars.connect()
+
+crsp_daily = con.read_parquet(
+    "crsp_daily.parquet", 
+    table_name="crsp_daily")
+    
+factors_ff3_daily = con.read_parquet(
+    "factors_ff3_daily.parquet",
+    table_name="factors_ff3_daily",
+)
+```
+
+
+```{python}
+daily = (
+    crsp_daily
+    .select("permno", "date", "ret_excess")
+    .join(
+        factors_ff3_daily.select(
+            "date",
+            mkt_excess=(
+                _["mktrf"].cast("float64") - _["rf"].cast("float64")
+            ),
+        ),
+        "date",
+    )
+    .mutate(month=_.date.truncate("M"))
+)
+
+w_beta = ibis.trailing_range_window(
+    ibis.interval(months=59),
+    group_by=_.permno,
+    order_by=_.month,
+)
+
+w_month = ibis.window(
+    group_by=[_.permno, _.month]
+)
+
+betas_duckdb = (
+    daily
+    .mutate(
+        beta=(
+            _.mkt_excess.cov(_.ret_excess, how="sample").over(w_beta)
+            / _.mkt_excess.var(how="sample").over(w_beta)
+        ),
+        mean_ret=_.ret_excess.mean().over(w_beta),
+        mean_mkt=_.mkt_excess.mean().over(w_beta),
+        n=_.permno.count().over(w_beta),
+        first_month_date=_.date.min().over(w_month),
+    )
+    .filter(_.date == _.first_month_date, _.n >= min_obs)
+    .select(
+        "permno",
+        "month",
+        "beta",
+        "n",
+        alpha=_.mean_ret - _.beta * _.mean_mkt,
+    )
+    .rename(date="month")
+    .order_by("permno", "date")
+)
+```
+
+```{python}
+#| eval: false
+betas_duckdb.compile()
+```
