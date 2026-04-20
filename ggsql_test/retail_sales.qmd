@@ -1,0 +1,88 @@
+---
+title: "The Retail Sales Data Set"
+date: 2026-04-20
+people:
+  - Ian D. Gow
+description: >
+  Introducing ggsql, a grammar of graphics for SQL that lets you describe
+  visualizations directly inside SQL queries.
+topics:
+  - Visualization
+software:
+  - ggsql
+languages:
+  - SQL
+---
+
+The code to create this note can be found [here](https://github.com/iangow/notes/tree/main/ggsql_test).
+
+```{ggsql}
+SELECT sales_month, sales
+FROM 'retail_sales.parquet'
+WHERE kind_of_business = 'Retail and food services sales, total'
+ORDER BY 1 
+VISUALIZE sales_month AS x, sales AS y
+DRAW line
+```
+
+```{ggsql}
+SELECT date_part('year',sales_month) as sales_year, 
+  kind_of_business, sum(sales) as sales
+FROM 'retail_sales.parquet'
+WHERE kind_of_business IN 
+          ('Book stores',
+           'Sporting goods stores',
+           'Hobby, toy, and game stores')
+GROUP BY 1,2
+ORDER BY 1
+VISUALIZE sales_year AS x, sales AS y, kind_of_business AS color
+DRAW line
+```
+
+```{ggsql}
+SELECT sales_month, kind_of_business, sales
+FROM 'retail_sales.parquet'
+WHERE kind_of_business IN ('Men''s clothing stores','Women''s clothing stores')
+ORDER BY 1, 2
+VISUALIZE sales_month AS x, sales AS y, kind_of_business AS color
+DRAW line
+```
+
+```{ggsql}
+SELECT date_part('year',sales_month) as sales_year,
+  kind_of_business, sum(sales) as sales
+FROM 'retail_sales.parquet'
+WHERE kind_of_business IN 
+        ('Men''s clothing stores',
+        'Women''s clothing stores')
+GROUP BY 1, 2
+ORDER BY 1, 2
+VISUALIZE sales_year AS x, sales AS y, kind_of_business AS color
+DRAW line
+```
+
+```{ggsql}
+CREATE OR REPLACE TABLE wide_data AS
+WITH long_data AS (
+    SELECT date_part('year',sales_month) as sales_year,
+        CASE WHEN (kind_of_business = 'Women''s clothing stores')
+            THEN 'womens'
+            ELSE 'mens'
+        END AS kind_of_business,
+        sum(sales) as sales
+    FROM 'retail_sales.parquet'
+    WHERE kind_of_business IN
+            ('Men''s clothing stores',
+            'Women''s clothing stores')
+    GROUP BY 1, 2)
+PIVOT long_data ON kind_of_business USING sum(sales)
+```
+
+```{ggsql}
+SELECT sales_year, womens - mens AS womens_minus_mens
+FROM wide_data
+WHERE sales_year <= 2019
+ORDER BY 1
+VISUALIZE sales_year AS x, womens_minus_mens AS y
+DRAW line
+```
