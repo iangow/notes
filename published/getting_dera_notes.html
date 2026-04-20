@@ -180,7 +180,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>In a <a href="../missing_form_aps.html">recent note</a>, I used XBRL data to identify potentially missing Form AP filings. In writing that note, I used two data sources: SEC EDGAR for the XBRL data and the PCAOB website for the Form AP data. However, I provided no real information on how to get the XBRL data from SEC EDGAR. This note aims to provide this missing information.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
-<p>This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/getting_dera_notes.qmd">here</a> and the latest version of this PDF is <a href="https://github.com/iangow/notes/blob/main/getting_dera_notes.pdf">here</a>.</p>
+<p>This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/published/getting_dera_notes.qmd">here</a>.</p>
 <p>This note uses the following R packages:<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -209,10 +209,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="structure-of-unprocessed-data" class="level3" data-number="1.2">
 <h3 data-number="1.2" class="anchored" data-anchor-id="structure-of-unprocessed-data"><span class="header-section-number">1.2</span> Structure of unprocessed data</h3>
 <p>If you visit the <a href="https://www.sec.gov/data-research/financial-statement-notes-data-sets"><em>Financial Statement and Notes</em></a> site, you will see something like the table partially seen in <a href="#fig-dera-notes" class="quarto-xref">Figure&nbsp;1</a>. This table provides links to many ZIP files. The last year or so of data are found in monthly data files and earlier periods are found in quarterly data files. Each data file is found using a link provided in the table.</p>
-<div id="fig-dera-notes" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div id="fig-dera-notes" class="quarto-float quarto-figure quarto-figure-center anchored" style="max-width: 560px; width: 100%; height: auto;">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dera-notes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="images/dera_notes.png" style="height:50.0%" class="figure-img">
+<img src="images/dera_notes.png" class="img-fluid figure-img" style="max-width: 560px; width: 100%; height: auto;">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dera-notes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;1: Financial Statement and Notes website
@@ -220,10 +220,10 @@ Figure&nbsp;1: Financial Statement and Notes website
 </figure>
 </div>
 <p>I start with the <code>2024_10</code> file, the <a href="https://www.sec.gov/files/dera/data/financial-statement-notes-data-sets/2024_10_notes.zip">link to which</a> points to a file named <code>2024_10_notes.zip</code>. We can download that file and extract its contents, which are depicted in <a href="#fig-example" class="quarto-xref">Figure&nbsp;2</a>. It seems that each of the data tables discussed above is found in an eponymous <code>.tsv</code> file.</p>
-<div id="fig-example" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div id="fig-example" class="quarto-float quarto-figure quarto-figure-center anchored" style="max-width: 480px; width: 100%; height: auto;">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="images/2024_10_notes.png" style="height:40.0%" class="figure-img">
+<img src="images/2024_10_notes.png" class="img-fluid figure-img" style="max-width: 480px; width: 100%; height: auto;">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;2: Contents of <code>2024_10_notes.zip</code>
@@ -418,27 +418,27 @@ character   numeric   POSIXct
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>zip_files <span class="ot">&lt;-</span> <span class="fu">get_zip_files_df</span>()</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>zip_files</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 78 × 2
+<pre><code># A tibble: 77 × 2
    file              last_modified                
    &lt;chr&gt;             &lt;chr&gt;                        
- 1 2026_02_notes.zip Tue, 03 Mar 2026 16:36:34 GMT
- 2 2026_01_notes.zip Wed, 04 Feb 2026 17:27:33 GMT
- 3 2025_12_notes.zip Wed, 14 Jan 2026 20:59:24 GMT
- 4 2025_11_notes.zip Thu, 15 Jan 2026 14:09:07 GMT
- 5 2025_10_notes.zip Mon, 01 Dec 2025 14:48:45 GMT
- 6 2025_09_notes.zip Tue, 18 Nov 2025 21:32:32 GMT
- 7 2025_08_notes.zip Wed, 03 Sep 2025 16:10:15 GMT
- 8 2025_07_notes.zip Tue, 05 Aug 2025 16:57:51 GMT
- 9 2025_06_notes.zip Thu, 03 Jul 2025 18:46:28 GMT
-10 2025_05_notes.zip Tue, 03 Jun 2025 11:09:16 GMT
-# ℹ 68 more rows</code></pre>
+ 1 2026_03_notes.zip Tue, 07 Apr 2026 11:50:37 GMT
+ 2 2026_02_notes.zip Tue, 03 Mar 2026 16:36:34 GMT
+ 3 2026_01_notes.zip Wed, 04 Feb 2026 17:27:33 GMT
+ 4 2025_12_notes.zip Wed, 14 Jan 2026 20:59:24 GMT
+ 5 2025_11_notes.zip Thu, 15 Jan 2026 14:09:07 GMT
+ 6 2025_10_notes.zip Mon, 01 Dec 2025 14:48:45 GMT
+ 7 2025_09_notes.zip Tue, 18 Nov 2025 21:32:32 GMT
+ 8 2025_08_notes.zip Wed, 03 Sep 2025 16:10:15 GMT
+ 9 2025_07_notes.zip Tue, 05 Aug 2025 16:57:51 GMT
+10 2025_06_notes.zip Thu, 03 Jul 2025 18:46:28 GMT
+# ℹ 67 more rows</code></pre>
 </div>
 </div>
 <p>Next, I can apply the function <code>get_notes_data()</code> to each file in <code>zip_files</code> using <code>map()</code>:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(zip_files<span class="sc">$</span>file, get_notes_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Doing this takes me a bit under 38 minutes.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> The resulting files take up about 39 GB of space, likely representing about 10 times that in terms of raw data due to compression.</p>
+<p>Doing this takes me a bit under 38 minutes.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> The resulting files take up about 41 GB of space, likely representing about 10 times that in terms of raw data due to compression.</p>
 </section>
 <section id="doing-incremental-updates" class="level3" data-number="1.3">
 <h3 data-number="1.3" class="anchored" data-anchor-id="doing-incremental-updates"><span class="header-section-number">1.3</span> Doing incremental updates</h3>
@@ -505,14 +505,14 @@ character   numeric   POSIXct
 <span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.043   0.019   0.032 </code></pre>
+  0.049   0.025   0.043 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 18 × 2
     year      n
    &lt;dbl&gt;  &lt;dbl&gt;
- 1  2026  14184
- 2  2025  99208
+ 1  2026  23863
+ 2  2025 123137
  3  2024 194501
  4  2023 104015
  5  2022  97814
