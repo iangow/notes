@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Working with DERA Notes data using Polars – notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Working with DERA Notes data using Polars</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The source code for this note can be found <a href="https://github.com/iangow/notes/blob/main/published/dera-polars.qmd">here</a>. The package <code>era_pl</code> is installed using <code>pip install 'era-py[polars]'</code>.</p>
+<div id="1d8f93da" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era_pl <span class="im">import</span> load_parquet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>There are three Parquet files that I use here:</p>
+<ul>
+<li><a href="https://www.dropbox.com/scl/fi/qnwav4kdjugwpw6svuogk/sub_notes_2024q1.parquet?rlkey=oaerjel2y3juoducsh0pyerkb&amp;dl=0"><code>sub_notes_2024q1</code></a></li>
+<li><a href="https://www.dropbox.com/scl/fi/nruobijayw1tf1zjp5jbe/num_notes_2024_01.parquet?rlkey=6z5tz8ww7j52bjljxf6y4m4j6&amp;dl=0"><code>num_notes_2024q1</code></a></li>
+<li><a href="https://www.dropbox.com/scl/fi/i0vejw0ykdzdae0rfwp1w/dim_notes_2024q1.parquet?rlkey=2h4lqawuzo8i0wyqsssh253nm&amp;dl=0"><code>dim_notes_2024q1</code></a></li>
+</ul>
+<div id="101e4dbf" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>submissions <span class="op">=</span> load_parquet(<span class="st">'sub_notes_2024q1'</span>, <span class="st">'dera_notes'</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>numericFacts <span class="op">=</span> load_parquet(<span class="st">'num_notes_2024q1'</span>, <span class="st">'dera_notes'</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>dimensions <span class="op">=</span> load_parquet(<span class="st">'dim_notes_2024q1'</span>, <span class="st">'dera_notes'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The commands above are equivalent to the following if you put the data files in your working directory:</p>
+<div id="5e8e3f46" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>submissions <span class="op">=</span> pl.scan_parquet(<span class="st">'sub_notes_2024q1.parquet'</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>numericFacts <span class="op">=</span> pl.scan_parquet(<span class="st">'num_notes_2024q1.parquet'</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>dimensions <span class="op">=</span> pl.scan_parquet(<span class="st">'dim_notes_2024q1.parquet'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I use the former form because I have organized my Parquet data repository along the lines outlined <a href="https://iangow.github.io/era_pl_book/parquet-wrds.html">here</a> or <a href="https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq">here</a>.</p>
+<div id="f6aa92e2" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>submissions.head().collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 40)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">adsh</th>
+<th data-quarto-table-cell-role="th">cik</th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">sic</th>
+<th data-quarto-table-cell-role="th">countryba</th>
+<th data-quarto-table-cell-role="th">stprba</th>
+<th data-quarto-table-cell-role="th">cityba</th>
+<th data-quarto-table-cell-role="th">zipba</th>
+<th data-quarto-table-cell-role="th">bas1</th>
+<th data-quarto-table-cell-role="th">bas2</th>
+<th data-quarto-table-cell-role="th">baph</th>
+<th data-quarto-table-cell-role="th">countryma</th>
+<th data-quarto-table-cell-role="th">stprma</th>
+<th data-quarto-table-cell-role="th">cityma</th>
+<th data-quarto-table-cell-role="th">zipma</th>
+<th data-quarto-table-cell-role="th">mas1</th>
+<th data-quarto-table-cell-role="th">mas2</th>
+<th data-quarto-table-cell-role="th">countryinc</th>
+<th data-quarto-table-cell-role="th">stprinc</th>
+<th data-quarto-table-cell-role="th">ein</th>
+<th data-quarto-table-cell-role="th">former</th>
+<th data-quarto-table-cell-role="th">changed</th>
+<th data-quarto-table-cell-role="th">afs</th>
+<th data-quarto-table-cell-role="th">wksi</th>
+<th data-quarto-table-cell-role="th">fye</th>
+<th data-quarto-table-cell-role="th">form</th>
+<th data-quarto-table-cell-role="th">period</th>
+<th data-quarto-table-cell-role="th">fy</th>
+<th data-quarto-table-cell-role="th">fp</th>
+<th data-quarto-table-cell-role="th">filed</th>
+<th data-quarto-table-cell-role="th">accepted</th>
+<th data-quarto-table-cell-role="th">prevrpt</th>
+<th data-quarto-table-cell-role="th">detail</th>
+<th data-quarto-table-cell-role="th">instance</th>
+<th data-quarto-table-cell-role="th">nciks</th>
+<th data-quarto-table-cell-role="th">aciks</th>
+<th data-quarto-table-cell-role="th">pubfloatusd</th>
+<th data-quarto-table-cell-role="th">floatdate</th>
+<th data-quarto-table-cell-role="th">floataxis</th>
+<th data-quarto-table-cell-role="th">floatmems</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>f64</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>date</td>
+<td>str</td>
+<td>f64</td>
+<td>str</td>
+<td>str</td>
+<td>date</td>
+<td>f64</td>
+<td>str</td>
+<td>date</td>
+<td>datetime[μs]</td>
+<td>f64</td>
+<td>f64</td>
+<td>str</td>
+<td>f64</td>
+<td>str</td>
+<td>f64</td>
+<td>date</td>
+<td>str</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"0000002178-24-000004"</td>
+<td>2178.0</td>
+<td>"ADAMS RESOURCES &amp; ENERGY, INC."</td>
+<td>"5172"</td>
+<td>"US"</td>
+<td>"TX"</td>
+<td>"HOUSTON"</td>
+<td>"77027"</td>
+<td>"17 S. BRIAR HOLLOW LN."</td>
+<td>null</td>
+<td>"713-881-3600"</td>
+<td>"US"</td>
+<td>"TX"</td>
+<td>"HOUSTON"</td>
+<td>"77001"</td>
+<td>"P O BOX 844"</td>
+<td>null</td>
+<td>"US"</td>
+<td>"DE"</td>
+<td>"741753147"</td>
+<td>"ADAMS RESOURCES &amp; ENERGY INC"</td>
+<td>1992-07-03</td>
+<td>"2-ACC"</td>
+<td>0.0</td>
+<td>"1231"</td>
+<td>"8-K"</td>
+<td>2024-02-29</td>
+<td>null</td>
+<td>null</td>
+<td>2024-02-21</td>
+<td>2024-02-21 16:13:00</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>"ae-20240221_htm.xml"</td>
+<td>1.0</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+</tr>
+<tr class="even">
+<td>"0000002178-24-000033"</td>
+<td>2178.0</td>
+<td>"ADAMS RESOURCES &amp; ENERGY, INC."</td>
+<td>"5172"</td>
+<td>"US"</td>
+<td>"TX"</td>
+<td>"HOUSTON"</td>
+<td>"77027"</td>
+<td>"17 S. BRIAR HOLLOW LN."</td>
+<td>null</td>
+<td>"713-881-3600"</td>
+<td>"US"</td>
+<td>"TX"</td>
+<td>"HOUSTON"</td>
+<td>"77001"</td>
+<td>"P O BOX 844"</td>
+<td>null</td>
+<td>"US"</td>
+<td>"DE"</td>
+<td>"741753147"</td>
+<td>"ADAMS RESOURCES &amp; ENERGY INC"</td>
+<td>1992-07-03</td>
+<td>"2-ACC"</td>
+<td>0.0</td>
+<td>"1231"</td>
+<td>"8-K"</td>
+<td>2024-02-29</td>
+<td>null</td>
+<td>null</td>
+<td>2024-03-13</td>
+<td>2024-03-13 16:08:00</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>"ae-20240313_htm.xml"</td>
+<td>1.0</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+</tr>
+<tr class="odd">
+<td>"0000002178-24-000035"</td>
+<td>2178.0</td>
+<td>"ADAMS RESOURCES &amp; ENERGY, INC."</td>
+<td>"5172"</td>
+<td>"US"</td>
+<td>"TX"</td>
+<td>"HOUSTON"</td>
+<td>"77027"</td>
+<td>"17 S. BRIAR HOLLOW LN."</td>
+<td>null</td>
+<td>"713-881-3600"</td>
+<td>"US"</td>
+<td>"TX"</td>
+<td>"HOUSTON"</td>
+<td>"77001"</td>
+<td>"P O BOX 844"</td>
+<td>null</td>
+<td>"US"</td>
+<td>"DE"</td>
+<td>"741753147"</td>
+<td>"ADAMS RESOURCES &amp; ENERGY INC"</td>
+<td>1992-07-03</td>
+<td>"2-ACC"</td>
+<td>0.0</td>
+<td>"1231"</td>
+<td>"10-K"</td>
+<td>2023-12-31</td>
+<td>2023.0</td>
+<td>"FY"</td>
+<td>2024-03-13</td>
+<td>2024-03-13 16:13:00</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>"ae-20231231_htm.xml"</td>
+<td>1.0</td>
+<td>null</td>
+<td>8.7396622e7</td>
+<td>2023-06-30</td>
+<td>null</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td>"0000002488-24-000009"</td>
+<td>2488.0</td>
+<td>"ADVANCED MICRO DEVICES INC"</td>
+<td>"3674"</td>
+<td>"US"</td>
+<td>"CA"</td>
+<td>"SANTA CLARA"</td>
+<td>"95054"</td>
+<td>"2485 AUGUSTINE DRIVE"</td>
+<td>null</td>
+<td>"(408) 749-4000"</td>
+<td>"US"</td>
+<td>"CA"</td>
+<td>"SANTA CLARA"</td>
+<td>"95054"</td>
+<td>"2485 AUGUSTINE DRIVE"</td>
+<td>null</td>
+<td>"US"</td>
+<td>"DE"</td>
+<td>"941692300"</td>
+<td>null</td>
+<td>null</td>
+<td>"1-LAF"</td>
+<td>0.0</td>
+<td>"1231"</td>
+<td>"8-K"</td>
+<td>2024-01-31</td>
+<td>null</td>
+<td>null</td>
+<td>2024-01-30</td>
+<td>2024-01-30 16:16:00</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>"amd-20240130_htm.xml"</td>
+<td>1.0</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+<td>null</td>
+</tr>
+<tr class="odd">
+<td>"0000002488-24-000012"</td>
+<td>2488.0</td>
+<td>"ADVANCED MICRO DEVICES INC"</td>
+<td>"3674"</td>
+<td>"US"</td>
+<td>"CA"</td>
+<td>"SANTA CLARA"</td>
+<td>"95054"</td>
+<td>"2485 AUGUSTINE DRIVE"</td>
+<td>null</td>
+<td>"(408) 749-4000"</td>
+<td>"US"</td>
+<td>"CA"</td>
+<td>"SANTA CLARA"</td>
+<td>"95054"</td>
+<td>"2485 AUGUSTINE DRIVE"</td>
+<td>null</td>
+<td>"US"</td>
+<td>"DE"</td>
+<td>"941692300"</td>
+<td>null</td>
+<td>null</td>
+<td>"1-LAF"</td>
+<td>1.0</td>
+<td>"1231"</td>
+<td>"10-K"</td>
+<td>2023-12-31</td>
+<td>2023.0</td>
+<td>"FY"</td>
+<td>2024-01-31</td>
+<td>2024-01-31 17:17:00</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>"amd-20231230_htm.xml"</td>
+<td>1.0</td>
+<td>null</td>
+<td>1.8290e11</td>
+<td>2023-06-30</td>
+<td>null</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="eb449c8b" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>numericFacts.head().collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 16)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">adsh</th>
+<th data-quarto-table-cell-role="th">tag</th>
+<th data-quarto-table-cell-role="th">version</th>
+<th data-quarto-table-cell-role="th">ddate</th>
+<th data-quarto-table-cell-role="th">qtrs</th>
+<th data-quarto-table-cell-role="th">uom</th>
+<th data-quarto-table-cell-role="th">dimh</th>
+<th data-quarto-table-cell-role="th">iprx</th>
+<th data-quarto-table-cell-role="th">value</th>
+<th data-quarto-table-cell-role="th">footnote</th>
+<th data-quarto-table-cell-role="th">footlen</th>
+<th data-quarto-table-cell-role="th">dimn</th>
+<th data-quarto-table-cell-role="th">coreg</th>
+<th data-quarto-table-cell-role="th">durp</th>
+<th data-quarto-table-cell-role="th">datp</th>
+<th data-quarto-table-cell-role="th">dcml</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>str</td>
+<td>str</td>
+<td>date</td>
+<td>f64</td>
+<td>str</td>
+<td>str</td>
+<td>f64</td>
+<td>f64</td>
+<td>str</td>
+<td>f64</td>
+<td>f64</td>
+<td>str</td>
+<td>f64</td>
+<td>f64</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"0000002178-24-000035"</td>
+<td>"AccountsPayableCurrent"</td>
+<td>"us-gaap/2023"</td>
+<td>2022-12-31</td>
+<td>0.0</td>
+<td>"USD"</td>
+<td>"0x925220d2d88cfa5035259ecd112c…</td>
+<td>0.0</td>
+<td>31000.0</td>
+<td>null</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>null</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>-3.0</td>
+</tr>
+<tr class="even">
+<td>"0000002178-24-000035"</td>
+<td>"AccountsPayableCurrent"</td>
+<td>"us-gaap/2023"</td>
+<td>2022-12-31</td>
+<td>0.0</td>
+<td>"USD"</td>
+<td>"0xd6dca3c8e07701ae26dfb331d267…</td>
+<td>0.0</td>
+<td>2.04391e8</td>
+<td>null</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>null</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>-3.0</td>
+</tr>
+<tr class="odd">
+<td>"0000002178-24-000035"</td>
+<td>"AccountsPayableCurrent"</td>
+<td>"us-gaap/2023"</td>
+<td>2023-12-31</td>
+<td>0.0</td>
+<td>"USD"</td>
+<td>"0x925220d2d88cfa5035259ecd112c…</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>null</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>null</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>-3.0</td>
+</tr>
+<tr class="even">
+<td>"0000002178-24-000035"</td>
+<td>"AccountsPayableCurrent"</td>
+<td>"us-gaap/2023"</td>
+<td>2023-12-31</td>
+<td>0.0</td>
+<td>"USD"</td>
+<td>"0xd6dca3c8e07701ae26dfb331d267…</td>
+<td>0.0</td>
+<td>1.83102e8</td>
+<td>null</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>null</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>-3.0</td>
+</tr>
+<tr class="odd">
+<td>"0000002178-24-000035"</td>
+<td>"AccountsReceivableNetCurrent"</td>
+<td>"us-gaap/2023"</td>
+<td>2022-12-31</td>
+<td>0.0</td>
+<td>"USD"</td>
+<td>"0x00000000"</td>
+<td>0.0</td>
+<td>1.89039e8</td>
+<td>null</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>null</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>-3.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="86590c2f" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dimensions.head().collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 3)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">dimhash</th>
+<th data-quarto-table-cell-role="th">segments</th>
+<th data-quarto-table-cell-role="th">segt</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>str</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"0x00000000"</td>
+<td>null</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>"0x00001edc0fd7f190315b2b6d0747…</td>
+<td>"CreditLossStatus=FinancialAsse…</td>
+<td>0.0</td>
+</tr>
+<tr class="odd">
+<td>"0x000030e9e609596370c1d54e9ef8…</td>
+<td>"BusinessAcquisition=Independen…</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>"0x00004cbb662171926d8eebc72345…</td>
+<td>"ComponentsOfEquity=NonControll…</td>
+<td>0.0</td>
+</tr>
+<tr class="odd">
+<td>"0x0000679b8aea8dfb2fb05700c919…</td>
+<td>"CounterpartyName=GIPR;Mortgage…</td>
+<td>0.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="b6eaf25e" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>mergedDF <span class="op">=</span> (</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    submissions</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    .join(numericFacts, on<span class="op">=</span><span class="st">'adsh'</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    .join(dimensions, left_on<span class="op">=</span><span class="st">'dimh'</span>, right_on<span class="op">=</span><span class="st">'dimhash'</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"name"</span>) <span class="op">==</span> <span class="st">'DELTA AIR LINES, INC.'</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"tag"</span>) <span class="op">==</span> <span class="st">'RevenueFromContractWithCustomerExcludingAssessedTax'</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"ddate"</span>) <span class="op">==</span> pl.date(<span class="dv">2023</span>, <span class="dv">12</span>, <span class="dv">31</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"qtrs"</span>) <span class="op">==</span> <span class="dv">4</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"iprx"</span>) <span class="op">==</span> <span class="dv">0</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">'name'</span>, <span class="st">'dimn'</span>, <span class="st">'segments'</span>, <span class="st">'uom'</span>, <span class="st">'value'</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">'dimn'</span>, <span class="st">'segments'</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 471 ms, sys: 224 ms, total: 695 ms
+Wall time: 109 ms</code></pre>
+</div>
+</div>
+<div id="f0d9850d" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>mergedDF.style</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div id="euhfgcvkbf" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>
+#euhfgcvkbf table {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+#euhfgcvkbf thead, tbody, tfoot, tr, td, th { border-style: none; }
+ tr { background-color: transparent; }
+#euhfgcvkbf p { margin: 0; padding: 0; }
+ #euhfgcvkbf .gt_table { display: table; border-collapse: collapse; line-height: normal; margin-left: auto; margin-right: auto; color: #333333; font-size: 16px; font-weight: normal; font-style: normal; background-color: #FFFFFF; width: auto; border-top-style: solid; border-top-width: 2px; border-top-color: #A8A8A8; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #A8A8A8; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; }
+ #euhfgcvkbf .gt_caption { padding-top: 4px; padding-bottom: 4px; }
+ #euhfgcvkbf .gt_title { color: #333333; font-size: 125%; font-weight: initial; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; border-bottom-color: #FFFFFF; border-bottom-width: 0; }
+ #euhfgcvkbf .gt_subtitle { color: #333333; font-size: 85%; font-weight: initial; padding-top: 3px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-top-color: #FFFFFF; border-top-width: 0; }
+ #euhfgcvkbf .gt_heading { background-color: #FFFFFF; text-align: center; border-bottom-color: #FFFFFF; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #euhfgcvkbf .gt_bottom_border { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #euhfgcvkbf .gt_col_headings { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #euhfgcvkbf .gt_col_heading { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; overflow-x: hidden; }
+ #euhfgcvkbf .gt_column_spanner_outer { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; padding-top: 0; padding-bottom: 0; padding-left: 4px; padding-right: 4px; }
+ #euhfgcvkbf .gt_column_spanner_outer:first-child { padding-left: 0; }
+ #euhfgcvkbf .gt_column_spanner_outer:last-child { padding-right: 0; }
+ #euhfgcvkbf .gt_column_spanner { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; overflow-x: hidden; display: inline-block; width: 100%; }
+ #euhfgcvkbf .gt_spanner_row { border-bottom-style: hidden; }
+ #euhfgcvkbf .gt_group_heading { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; text-align: left; }
+ #euhfgcvkbf .gt_empty_group_heading { padding: 0.5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: middle; }
+ #euhfgcvkbf .gt_from_md> :first-child { margin-top: 0; }
+ #euhfgcvkbf .gt_from_md> :last-child { margin-bottom: 0; }
+ #euhfgcvkbf .gt_row { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; margin: 10px; border-top-style: solid; border-top-width: 1px; border-top-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; overflow-x: hidden; }
+ #euhfgcvkbf .gt_stub { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; }
+ #euhfgcvkbf .gt_stub_row_group { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; vertical-align: top; }
+ #euhfgcvkbf .gt_row_group_first td { border-top-width: 2px; }
+ #euhfgcvkbf .gt_row_group_first th { border-top-width: 2px; }
+ #euhfgcvkbf .gt_striped { color: #333333; background-color: #F4F4F4; }
+ #euhfgcvkbf .gt_table_body { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #euhfgcvkbf .gt_grand_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #euhfgcvkbf .gt_first_grand_summary_row_bottom { border-top-style: double; border-top-width: 6px; border-top-color: #D3D3D3; }
+ #euhfgcvkbf .gt_last_grand_summary_row_top { border-bottom-style: double; border-bottom-width: 6px; border-bottom-color: #D3D3D3; }
+ #euhfgcvkbf .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #euhfgcvkbf .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #euhfgcvkbf .gt_left { text-align: left; }
+ #euhfgcvkbf .gt_center { text-align: center; }
+ #euhfgcvkbf .gt_right { text-align: right; font-variant-numeric: tabular-nums; }
+ #euhfgcvkbf .gt_font_normal { font-weight: normal; }
+ #euhfgcvkbf .gt_font_bold { font-weight: bold; }
+ #euhfgcvkbf .gt_font_italic { font-style: italic; }
+ #euhfgcvkbf .gt_super { font-size: 65%; }
+ #euhfgcvkbf .gt_footnote_marks { font-size: 75%; vertical-align: 0.4em; position: initial; }
+ #euhfgcvkbf .gt_asterisk { font-size: 100%; vertical-align: 0; }
+ 
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="name" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">name</th>
+<th id="dimn" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">dimn</th>
+<th id="segments" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">segments</th>
+<th id="uom" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">uom</th>
+<th id="value" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">value</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">0.0</td>
+<td class="gt_row gt_left">None</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">58048000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">AirlineDestinations=AtlanticDestination;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">10458000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">AirlineDestinations=DomesticDestination;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">40845000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">AirlineDestinations=LatinAmericaDestination;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">4292000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">AirlineDestinations=PacificDestination;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">2453000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ConsolidationItems=IntersegmentElimination;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">-4193000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=CargoAndFreight;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">723000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=Passenger;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">48909000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=PassengerAirTraffic;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">43596000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=PassengerLoyaltyTravelAwards;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">3462000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=PassengerTravelRelatedServices;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">1851000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=ProductAndServiceOther;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">8416000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=ProductAndServiceOtherAncillaryBusinesses;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">840000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=ProductAndServiceOtherLoyaltyProgram;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">3093000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=ProductAndServiceOtherMiscellaneous;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">1104000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">1.0</td>
+<td class="gt_row gt_left">ProductOrService=ProductAndServiceOtherRefinery;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">3379000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">AirlineDestinations=AtlanticDestination;ProductOrService=Passenger;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">9057000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">AirlineDestinations=DomesticDestination;ProductOrService=Passenger;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">33968000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">AirlineDestinations=LatinAmericaDestination;ProductOrService=Passenger;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">3798000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">AirlineDestinations=PacificDestination;ProductOrService=Passenger;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">2086000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">BusinessSegments=Airline;ConsolidationItems=OperatingSegments;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">54669000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">BusinessSegments=Refinery;ConsolidationItems=OperatingSegments;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">7572000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">ConsolidationItems=IntersegmentElimination;ProductOrService=ExchangedProducts;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">-2354000000.0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">ConsolidationItems=IntersegmentElimination;ProductOrService=SalesOfRefinedProductsToThirdParties;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">-304000000.0</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left">DELTA AIR LINES, INC.</td>
+<td class="gt_row gt_right">2.0</td>
+<td class="gt_row gt_left">ConsolidationItems=IntersegmentElimination;ProductOrService=SalesToAirlineSegment;</td>
+<td class="gt_row gt_left">USD</td>
+<td class="gt_row gt_right">-1535000000.0</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+</div>
+</div>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
