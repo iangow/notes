@@ -11,6 +11,7 @@ software:
   - ggsql
 languages:
   - SQL
+engine: ggsql
 ---
 
 The code to create this note can be found [here](https://github.com/iangow/notes/tree/main/ggsql_test).
@@ -48,6 +49,8 @@ DRAW line
 ```
 
 ```{ggsql}
+#| label: fig-m-w-yearly
+#| fig-cap: Yearly women's and men's clothing store sales
 SELECT date_part('year',sales_month) as sales_year,
   kind_of_business, sum(sales) as sales
 FROM 'retail_sales.parquet'
@@ -78,10 +81,23 @@ PIVOT long_data ON kind_of_business USING sum(sales)
 ```
 
 ```{ggsql}
+#| label: fig-m-w-diff
+#| fig-cap: Difference between women's to men's annual retail clothing sales
 SELECT sales_year, womens - mens AS womens_minus_mens
 FROM wide_data
 WHERE sales_year <= 2019
 ORDER BY 1
 VISUALIZE sales_year AS x, womens_minus_mens AS y
+DRAW line
+```
+
+```{ggsql}
+#| label: fig-m-w-ratio
+#| fig-cap: Ratio of women's to men's annual retail clothing sales
+SELECT sales_year, womens / mens AS womens_times_of_mens
+FROM wide_data
+WHERE sales_year <= 2019
+ORDER BY 1
+VISUALIZE sales_year AS x, womens_times_of_mens AS y
 DRAW line
 ```
