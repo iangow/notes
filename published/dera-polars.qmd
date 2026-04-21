@@ -1,0 +1,72 @@
+---
+title: "Working with DERA Notes data using Polars"
+format:
+  html:
+    colorlinks: true
+    fig-format: png
+engine: jupyter
+jupyter: notes
+---
+The source code for this note can be found [here](https://github.com/iangow/notes/blob/main/published/dera-polars.qmd).
+The package `era_pl` is installed using `pip install 'era-py[polars]'`.
+
+```{python}
+import polars as pl
+from era_pl import load_parquet
+```
+
+There are three Parquet files that I use here:
+
+ - [`sub_notes_2024q1`](https://www.dropbox.com/scl/fi/qnwav4kdjugwpw6svuogk/sub_notes_2024q1.parquet?rlkey=oaerjel2y3juoducsh0pyerkb&dl=0)
+ - [`num_notes_2024q1`](https://www.dropbox.com/scl/fi/nruobijayw1tf1zjp5jbe/num_notes_2024_01.parquet?rlkey=6z5tz8ww7j52bjljxf6y4m4j6&dl=0)
+ - [`dim_notes_2024q1`](https://www.dropbox.com/scl/fi/i0vejw0ykdzdae0rfwp1w/dim_notes_2024q1.parquet?rlkey=2h4lqawuzo8i0wyqsssh253nm&dl=0)
+
+```{python}
+submissions = load_parquet('sub_notes_2024q1', 'dera_notes')
+numericFacts = load_parquet('num_notes_2024q1', 'dera_notes')
+dimensions = load_parquet('dim_notes_2024q1', 'dera_notes')
+```
+
+The commands above are equivalent to the following if you put the data files in your working directory:
+
+```{python}
+#| eval: false
+submissions = pl.scan_parquet('sub_notes_2024q1.parquet')
+numericFacts = pl.scan_parquet('num_notes_2024q1.parquet')
+dimensions = pl.scan_parquet('dim_notes_2024q1.parquet')
+```
+
+I use the former form because I have organized my Parquet data repository along the lines outlined [here](https://iangow.github.io/era_pl_book/parquet-wrds.html) or [here](https://iangow.github.io/far_book/parquet-wrds.html#sec-make-pq).
+
+```{python}
+submissions.head().collect()
+```
+
+```{python}
+numericFacts.head().collect()
+```
+
+```{python}
+dimensions.head().collect()
+```
+
+```{python}
+%%time
+mergedDF = (
+    submissions
+    .join(numericFacts, on='adsh')
+    .join(dimensions, left_on='dimh', right_on='dimhash')
+    .filter(pl.col("name") == 'DELTA AIR LINES, INC.',
+            pl.col("tag") == 'RevenueFromContractWithCustomerExcludingAssessedTax',
+            pl.col("ddate") == pl.date(2023, 12, 31),
+            pl.col("qtrs") == 4,
+            pl.col("iprx") == 0)
+    .select('name', 'dimn', 'segments', 'uom', 'value')
+    .sort('dimn', 'segments')
+    .collect()
+)
+```
+
+```{python}
+mergedDF.style
+```
