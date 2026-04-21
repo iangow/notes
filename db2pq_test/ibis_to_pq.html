@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-03-23">
+<meta name="keywords" content="Python, Polars, Arrow, db2pq, WRDS">
+
+<title>Converting lazy data frames into Parquet files (Python version) – notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+<script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@*/dist/embed-amd.js" crossorigin="anonymous"></script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#motivating-example" id="toc-motivating-example" class="nav-link active" data-scroll-target="#motivating-example"><span class="header-section-number">1</span> Motivating example</a>
+  <ul class="collapse">
+  <li><a href="#using-the-data" id="toc-using-the-data" class="nav-link" data-scroll-target="#using-the-data"><span class="header-section-number">1.1</span> Using the data</a></li>
+  <li><a href="#the-same-analysis-with-ibis-and-duckdb" id="toc-the-same-analysis-with-ibis-and-duckdb" class="nav-link" data-scroll-target="#the-same-analysis-with-ibis-and-duckdb"><span class="header-section-number">1.2</span> The same analysis with Ibis and DuckDB</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="ibis_to_pq.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Converting lazy data frames into Parquet files (Python version)</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Python</div>
+    <div class="quarto-category">Parquet</div>
+    <div class="quarto-category">db2pq</div>
+    <div class="quarto-category">WRDS</div>
+    <div class="quarto-category">Tidy Finance</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">23 March 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>In a note I published yesterday (<a href="../published/lazy_tbl_to_pq.html"><em>Converting lazy data frames into Parquet files</em></a>), I showed how my <code>db2pq</code> R package can be used to turn “lazy data frames” produced by the R package <code>dbplyr</code> into Parquet files on disk without needing to load the data into memory. Today, I wondered if I could do the same with my <code>db2pq</code> <em>Python</em> package. In this note, I turn “lazy data frames” produced by Ibis into Parquet files on disk.</p>
+  </div>
+</div>
+
+<div>
+  <div class="keywords">
+    <div class="block-title">Keywords</div>
+    <p>Python, Polars, Arrow, db2pq, WRDS</p>
+  </div>
+</div>
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The source for this note is available in <a href="https://github.com/iangow/notes/tree/main/db2pq_test">a folder on GitHub</a> that contains two files:</p>
+<ul>
+<li><a href="https://raw.githubusercontent.com/iangow/notes/main/db2pq_test/ibis_to_pq.qmd"><code>ibis_to_pq.qmd</code></a></li>
+<li><a href="https://raw.githubusercontent.com/iangow/notes/main/db2pq_test/pyproject.toml"><code>pyproject.toml</code></a></li>
+</ul>
+<p>To run this note locally with <code>uv</code>, put the two files above in a directory on your computer, I will refer to this directory as the <strong>project directory</strong> in this now.</p>
+<p>For the convenience of <em>Tidy Finance</em> readers, I follow the approach laid out <a href="https://www.tidy-finance.org/python/setting-up-your-environment.html">here</a> closely. The <em>Tidy Finance</em> instructions start with installation of “<code>uv</code>, a modern Python package and project manager.” You should install <code>uv</code> using the instructions provided by <em>Tidy Finance</em>; these are taken from the <a href="https://docs.astral.sh/uv/getting-started/installation/">homepage for <code>uv</code></a>.</p>
+<p>From the project directory, run the following command:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Next, you should follow the instructions provided by <em>Tidy Finance</em> for setting things up to connect to WRDS:</p>
+<blockquote class="blockquote">
+<p>Create a <code>.env</code> file in your project directory. For the purpose of this book, we create and save the following variables (where user and password are our private login credentials):</p>
+<pre><code>WRDS_USER=user
+WRDS_PASSWORD=password</code></pre>
+</blockquote>
+<p>Once you have done the above, you should be able to run the code in this note. For example, you could <code>uv run jupyter lab</code> and copy-paste the commands show here (in order). Alternatively, if you are comfortable with Quarto, you could open <code>ibis_to_pq.qmd</code> and treat it like a notebook.</p>
+</div>
+</div>
+<section id="motivating-example" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Motivating example</h1>
+<p>According to <a href="https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html#daily-crsp-data">Tidy Finance with Python</a>:</p>
+<blockquote class="blockquote">
+<p>The daily CRSP data file is substantially larger than monthly data and can exceed 20 GB. This has two important implications: you cannot hold all the daily return data in your memory (hence it is not possible to save the entire dataset to your local folder), and in our experience, the download usually crashes (or never stops) because it is too much data for the WRDS cloud to prepare and send to your R session.</p>
+<p>There is a solution to this challenge. As with many big data problems, you can split up the big task into several smaller tasks that are easier to handle. That is, instead of downloading data about all stocks at once, download the data in small batches of stocks consecutively.</p>
+</blockquote>
+<p>Below I show how one can simplify the code dramatically (no batches!) and download the data faster (for me, it takes <em>less than a minute</em>) and with no significant burden on either the CPU or RAM.</p>
+<p>An issue with translating the <code>lazy_tbl_to_pq()</code> function from the R version of my <code>db2pq</code> package is that there is no equivalent of <code>dbplyr</code> for Python. While Python Polars has its <code>LazyFrame</code>, the Tidy Finance task involves extracting data from a PostgreSQL database and Polars has no way of creating lazy data frames from database connections. The closest analogue is surely Ibis. So I added a function <code>ibis_to_pq()</code> to my Python package <code>db2pq</code> and in this note I take it for a spin.</p>
+<p>I start by creating a connection to the WRDS PostgreSQL database. Here I follow the <a href="https://www.tidy-finance.org/python/wrds-crsp-and-compustat.html#accessing-wrds"><em>Tidy Finance</em> approach</a> closely. But so long as <code>wrds</code> is a <code>psycopg</code>-backed SQLAlchemy engine for the WRDS PostgreSQL database, you should be able to use whatever approach you are used to.</p>
+<div id="1c05876e" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sqlalchemy <span class="im">import</span> create_engine</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dotenv <span class="im">import</span> load_dotenv</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>load_dotenv()</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>connection_string <span class="op">=</span> (</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"postgresql+psycopg://"</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"</span><span class="sc">{</span>os<span class="sc">.</span>getenv(<span class="st">'WRDS_USER'</span>)<span class="sc">}</span><span class="ss">:</span><span class="sc">{</span>os<span class="sc">.</span>getenv(<span class="st">'WRDS_PASSWORD'</span>)<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"@wrds-pgdata.wharton.upenn.edu:9737/wrds"</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>wrds <span class="op">=</span> create_engine(connection_string, pool_pre_ping<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Having established <code>wrds</code>, I load in the packages I will be using.</p>
+<div id="285e6a03" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> ibis</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> ibis <span class="im">import</span> _</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> ibis_to_pq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Then I turn <code>wrds</code> into an Ibis instance with WRDS PostgreSQL as its <strong>backend</strong>. You can learn more about Ibis <a href="https://ibis-project.org">here</a>.</p>
+<div id="e4483101" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> ibis.postgres.from_connection(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    wrds.<span class="ex">connect</span>().connection.driver_connection</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I then set up Ibis <strong>lazy tables</strong> for the three tables I will use here.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<div id="de3297f3" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dsf <span class="op">=</span> db.table(<span class="st">"dsf_v2"</span>, database<span class="op">=</span><span class="st">"crsp"</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>stksecurityinfohist <span class="op">=</span> db.table(<span class="st">"stksecurityinfohist"</span>, database<span class="op">=</span><span class="st">"crsp"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>factors_daily <span class="op">=</span> db.table(<span class="st">"factors_daily"</span>, database<span class="op">=</span><span class="st">"ff"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Ibis offers an “interactive” option that makes it easier to work with lazy tables.</p>
+<div id="68beae45" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ibis.options.interactive <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Let’s look at <code>ff3</code>:</p>
+<div id="f3c1ce9a" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>factors_daily</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃<span style="font-weight: bold"> date       </span>┃<span style="font-weight: bold"> mktrf         </span>┃<span style="font-weight: bold"> smb           </span>┃<span style="font-weight: bold"> hml           </span>┃<span style="font-weight: bold"> rf            </span>┃<span style="font-weight: bold"> umd           </span>┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">date</span>       │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(8, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(8, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(8, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(7, 5)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(8, 6)</span> │
+├────────────┼───────────────┼───────────────┼───────────────┼───────────────┼───────────────┤
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-01</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000900</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.002500</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.002700</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-02</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.004500</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.003300</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.000600</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-06</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.001700</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.003000</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.003900</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-07</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000900</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.005800</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000200</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-08</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.002200</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.003800</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.001900</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-09</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.007100</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.004300</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.005700</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-10</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.006100</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.005300</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.001000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-12</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000400</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.000300</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.006400</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-13</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.004800</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.002800</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.002000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #800080; text-decoration-color: #800080">1926-07-14</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000400</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000700</span> │     <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.004300</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.00010</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │
+│ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>          │             <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │             <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │             <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │             <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │             <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │
+└────────────┴───────────────┴───────────────┴───────────────┴───────────────┴───────────────┘
+</pre>
+</div>
+</div>
+<p>And then <code>dsf</code>:</p>
+<div id="46247a3b" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dsf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃<span style="font-weight: bold"> permno </span>┃<span style="font-weight: bold"> hdrcusip  </span>┃<span style="font-weight: bold"> permco </span>┃<span style="font-weight: bold"> siccd </span>┃<span style="font-weight: bold"> nasdissuno </span>┃<span style="font-weight: bold"> yyyymmdd </span>┃<span style="font-weight: bold"> sharetype </span>┃<span style="font-weight: bold"> securitytype </span>┃<span style="font-weight: bold"> securitysubtype </span>┃<span style="font-weight: bold"> usincflg  </span>┃<span style="font-weight: bold"> issuertype </span>┃<span style="font-weight: bold"> primaryexch </span>┃<span style="font-weight: bold"> conditionaltype </span>┃<span style="font-weight: bold"> tradingstatusflg </span>┃<span style="font-weight: bold"> dlycaldt   </span>┃<span style="font-weight: bold"> dlydelflg </span>┃<span style="font-weight: bold"> dlyprc         </span>┃<span style="font-weight: bold"> dlyprcflg </span>┃<span style="font-weight: bold"> dlycap         </span>┃<span style="font-weight: bold"> dlycapflg </span>┃<span style="font-weight: bold"> dlyprevprc     </span>┃<span style="font-weight: bold"> dlyprevprcflg </span>┃<span style="font-weight: bold"> dlyprevdt  </span>┃<span style="font-weight: bold"> dlyprevcap     </span>┃<span style="font-weight: bold"> dlyprevcapflg </span>┃<span style="font-weight: bold"> dlyret         </span>┃<span style="font-weight: bold"> dlyretx        </span>┃<span style="font-weight: bold"> dlyreti        </span>┃<span style="font-weight: bold"> dlyretmissflg </span>┃<span style="font-weight: bold"> dlyretdurflg </span>┃<span style="font-weight: bold"> dlyorddivamt   </span>┃<span style="font-weight: bold"> dlynonorddivamt </span>┃<span style="font-weight: bold"> dlyfacprc      </span>┃<span style="font-weight: bold"> dlydistretflg </span>┃<span style="font-weight: bold"> dlyvol         </span>┃<span style="font-weight: bold"> dlyclose       </span>┃<span style="font-weight: bold"> dlylow         </span>┃<span style="font-weight: bold"> dlyhigh        </span>┃<span style="font-weight: bold"> dlybid         </span>┃<span style="font-weight: bold"> dlyask         </span>┃<span style="font-weight: bold"> dlyopen        </span>┃<span style="font-weight: bold"> dlynumtrd </span>┃<span style="font-weight: bold"> dlymmcnt </span>┃<span style="font-weight: bold"> dlyprcvol      </span>┃<span style="font-weight: bold"> dlycumfacpr     </span>┃<span style="font-weight: bold"> dlycumfacshr    </span>┃<span style="font-weight: bold"> cusip     </span>┃<span style="font-weight: bold"> ticker    </span>┃<span style="font-weight: bold"> exchangetier </span>┃<span style="font-weight: bold"> shrout </span>┃
+┡━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span>  │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(8)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span>  │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span>      │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span>    │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(3)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(4)</span>    │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(3)</span>       │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(1)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(4)</span>  │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(1)</span>   │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(3)</span>       │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(1)</span>        │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">date</span>       │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(1)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(2)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 2)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(2)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(2)</span>     │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">date</span>       │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 2)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(2)</span>     │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(10, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(10, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(10, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(2)</span>     │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(2)</span>    │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span>  │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(10, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(2)</span>     │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(14, 0)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(13, 6)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span>     │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int16</span>    │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(14, 1)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(17, 12)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">decimal(17, 12)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(8)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(5)</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">string(3)</span>    │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span>  │
+├────────┼───────────┼────────┼───────┼────────────┼──────────┼───────────┼──────────────┼─────────────────┼───────────┼────────────┼─────────────┼─────────────────┼──────────────────┼────────────┼───────────┼────────────────┼───────────┼────────────────┼───────────┼────────────────┼───────────────┼────────────┼────────────────┼───────────────┼────────────────┼────────────────┼────────────────┼───────────────┼──────────────┼────────────────┼─────────────────┼────────────────┼───────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼───────────┼──────────┼────────────────┼─────────────────┼─────────────────┼───────────┼───────────┼──────────────┼────────┤
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860107</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-07</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.562500</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9430.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │ <span style="color: #008000; text-decoration-color: #008000">NS           </span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span>       │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │ <span style="color: #008000; text-decoration-color: #008000">MP           </span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │ <span style="color: #008000; text-decoration-color: #008000">NS           </span> │ <span style="color: #008000; text-decoration-color: #008000">MR          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │           <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.375000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.750000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9</span> │         <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2562.5</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860108</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-08</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.500000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9200.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.562500</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-07</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9430.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.024390</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.024390</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D1          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │          <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">12800</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.375000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.625000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">32000.0</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860109</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-09</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.500000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9200.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.500000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-08</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9200.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D1          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │           <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1400</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.375000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.625000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9</span> │         <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3500.0</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860110</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-10</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.500000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9200.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.500000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-09</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9200.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D1          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │           <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">8500</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.375000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.625000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">21250.0</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860113</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-13</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.625000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9660.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.500000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-10</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9200.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.050000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.050000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D3          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │           <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5450</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.500000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.750000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">14306.3</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860114</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-14</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.750000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10120.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.625000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-13</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9660.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.047619</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.047619</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D1          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │           <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2075</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.625000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.875000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10</span> │         <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5706.3</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860115</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-15</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.875000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10580.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.750000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-14</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10120.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.045455</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.045455</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D1          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │          <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">22490</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.750000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.000000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">64658.8</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860116</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-16</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">11040.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.875000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-15</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10580.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.043478</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.043478</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D1          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │          <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10900</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.875000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.125000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">32700.0</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860117</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-17</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">11040.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-16</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">11040.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D1          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │           <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">8470</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.875000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.125000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">25410.0</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">7952</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3990</span> │      <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10396</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19860120</span> │ <span style="color: #008000; text-decoration-color: #008000">NS       </span> │ <span style="color: #008000; text-decoration-color: #008000">EQTY        </span> │ <span style="color: #008000; text-decoration-color: #008000">COM            </span> │ <span style="color: #008000; text-decoration-color: #008000">Y        </span> │ <span style="color: #008000; text-decoration-color: #008000">ACOR      </span> │ <span style="color: #008000; text-decoration-color: #008000">Q          </span> │ <span style="color: #008000; text-decoration-color: #008000">RW             </span> │ <span style="color: #008000; text-decoration-color: #008000">A               </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-20</span> │ <span style="color: #008000; text-decoration-color: #008000">N        </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">11040.00</span> │ <span style="color: #008000; text-decoration-color: #008000">BP       </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">BA           </span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-17</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">11040.00</span> │ <span style="color: #008000; text-decoration-color: #008000">PB           </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NA           </span> │ <span style="color: #008000; text-decoration-color: #008000">D3          </span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │        <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000</span> │ <span style="color: #008000; text-decoration-color: #008000">NO           </span> │           <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2.875000</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3.125000</span> │           <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">NULL</span> │       <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10</span> │         <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3000.0</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1.000000000000</span> │ <span style="color: #008000; text-decoration-color: #008000">68391610 </span> │ <span style="color: #008000; text-decoration-color: #008000">OMFGA    </span> │ <span style="color: #008000; text-decoration-color: #008000">SC1         </span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3680</span> │
+│      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │     <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │        <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>            │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>               │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>          │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>           │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>               │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>                │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>          │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>             │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>          │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>             │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>             │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>            │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │               <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>             │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │         <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │        <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │              <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │               <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │               <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>         │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>            │      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │
+└────────┴───────────┴────────┴───────┴────────────┴──────────┴───────────┴──────────────┴─────────────────┴───────────┴────────────┴─────────────┴─────────────────┴──────────────────┴────────────┴───────────┴────────────────┴───────────┴────────────────┴───────────┴────────────────┴───────────────┴────────────┴────────────────┴───────────────┴────────────────┴────────────────┴────────────────┴───────────────┴──────────────┴────────────────┴─────────────────┴────────────────┴───────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴───────────┴──────────┴────────────────┴─────────────────┴─────────────────┴───────────┴───────────┴──────────────┴────────┘
+</pre>
+</div>
+</div>
+<div id="cfea77be" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"1960-01-01"</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="op">=</span> <span class="st">"2024-12-31"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>For clarity, in translating the original <em>Tidy Finance</em> query, I break out the <code>security</code> sub-query from the main query.</p>
+<div id="415310d2" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>security <span class="op">=</span> (</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    stksecurityinfohist</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        _.sharetype <span class="op">==</span> <span class="st">"NS"</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        _.securitytype <span class="op">==</span> <span class="st">"EQTY"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        _.securitysubtype <span class="op">==</span> <span class="st">"COM"</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        _.usincflg <span class="op">==</span> <span class="st">"Y"</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        _.issuertype.isin([<span class="st">"ACOR"</span>, <span class="st">"CORP"</span>]),</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        _.primaryexch.isin([<span class="st">"N"</span>, <span class="st">"A"</span>, <span class="st">"Q"</span>]),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        _.conditionaltype.isin([<span class="st">"RW"</span>, <span class="st">"NW"</span>]),</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        _.tradingstatusflg <span class="op">==</span> <span class="st">"A"</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    ).select(</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"permno"</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">"secinfostartdt"</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">"secinfoenddt"</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>I next construct the main <code>crsp_daily</code> query.</p>
+<div id="b417f92c" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> (</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    dsf</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.dlycaldt.between(start_date, end_date))</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    .inner_join(security,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                dsf.permno <span class="op">==</span> security.permno)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.dlycaldt.between(_.secinfostartdt, _.secinfoenddt))</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    .select(</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        permno<span class="op">=</span>_.permno,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        date<span class="op">=</span>_.dlycaldt,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        ret<span class="op">=</span>_.dlyret,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    .drop_null([<span class="st">"permno"</span>, <span class="st">"date"</span>, <span class="st">"ret"</span>])</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    .left_join(</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>        factors_daily</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        .select(<span class="st">"date"</span>, <span class="st">"rf"</span>)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        .rename(risk_free<span class="op">=</span><span class="st">"rf"</span>),</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        _.date <span class="op">==</span> factors_daily.date,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    .mutate(</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        ret_excess<span class="op">=</span>ibis.greatest(_.ret <span class="op">-</span> _.risk_free, <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    .select(</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"permno"</span>, <span class="st">"date"</span>, </span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        ret<span class="op">=</span>_.ret.cast(<span class="st">"float64"</span>),</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>        ret_excess<span class="op">=</span>_.ret_excess.cast(<span class="st">"float64"</span>),</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Let’s take a peek at <code>crsp_daily</code>, which is still a lazy table:</p>
+<div id="cb21db16" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>crsp_daily</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃<span style="font-weight: bold"> permno </span>┃<span style="font-weight: bold"> date       </span>┃<span style="font-weight: bold"> ret       </span>┃<span style="font-weight: bold"> ret_excess </span>┃
+┡━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">int32</span>  │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">date</span>       │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">float64</span>   │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">float64</span>    │
+├────────┼────────────┼───────────┼────────────┤
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-08</span> │ <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.024390</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.024690</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-09</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.000300</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-10</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.000300</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-13</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.050000</span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.049700</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-14</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.047619</span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.047319</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-15</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.045455</span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.045155</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-16</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.043478</span> │   <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.043178</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-17</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.000300</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-20</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.000300</span> │
+│  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">10000</span> │ <span style="color: #800080; text-decoration-color: #800080">1986-01-21</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.000000</span> │  <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">-0.000300</span> │
+│      <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │ <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span>          │         <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │          <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">…</span> │
+└────────┴────────────┴───────────┴────────────┘
+</pre>
+</div>
+</div>
+<p>The next step is to create a Parquet file from <code>crsp_daily</code> using <code>ibis_to_pq()</code>.</p>
+<div id="648759c4" class="cell" data-cache="true" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>ibis_to_pq(crsp_daily, <span class="st">"crsp_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 2min 33s, sys: 12.7 s, total: 2min 46s
+Wall time: 4min 28s</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>'crsp_daily.parquet'</code></pre>
+</div>
+</div>
+<p>For some reason, <code>ibis_to_pq()</code> does not perform quite as well as its sibling <code>lazy_tbl_to_pq()</code> in the R version of <code>db2pq</code>.</p>
+<div id="8d4cfac5" class="cell" data-cache="true" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ibis_to_pq(factors_daily, <span class="st">"factors_ff3_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 350 ms, sys: 25.3 ms, total: 376 ms
+Wall time: 860 ms</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>'factors_ff3_daily.parquet'</code></pre>
+</div>
+</div>
+<section id="using-the-data" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="using-the-data"><span class="header-section-number">1.1</span> Using the data</h2>
+<p>I figured that it would be a little dull to do no more than simply create the Parquet files. But looking through <em>Tidy Finance with Python</em>, the only use of <code>crsp_daily</code> seemed to be in the section <a href="https://www.tidy-finance.org/r/beta-estimation.html#estimating-beta-using-daily-returns"><em>Estimating Beta Using Daily Returns</em></a>.</p>
+<p>There <em>Tidy Finance</em> say:</p>
+<blockquote class="blockquote">
+<p>We then create a connection to the daily CRSP data, but we don’t load the whole table into our memory. We only extract all distinct <code>permno</code> because we loop the beta estimation over batches of stocks with size 500. To estimate the CAPM over a consistent lookback window while accommodating different return frequencies, we adjust the minimum required number of observations accordingly. Specifically, we require at least 1,000 daily returns over a five‑year period for a valid estimation. This threshold is consistent with the monthly requirement of 48 observations out of 60 months, given that there are roughly 252 trading days in a year.</p>
+</blockquote>
+<p>The <em>Tidy Finance</em> code uses pandas, but I will use Python Polars, which does much better with larger data sets. I start by creating <code>LazyFrame</code> instances of the two tables that are used in calculating betas.</p>
+<div id="966db6ac" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> pl.scan_parquet(<span class="st">"crsp_daily.parquet"</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily <span class="op">=</span> pl.scan_parquet(<span class="st">"factors_ff3_daily.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next step is to implement the approach described above. Python Polars can handle the details of creating the windows and so on, but we don’t really want to have to hand over all the data to Statsmodels to do the regressions.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> But if you’re reading <em>Tidy Finance with Python</em>, it seems reasonable to assume that you know how to calculate a univariate regression coefficient, so let’s just use Polars expressions and do it by hand.</p>
+<p>Unfortunately, it turns out that we will be calculating about 2.5 million betas over windows of up to about 1,250 days each and that will be a lot of data even for Polars!<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>So I ended up using batches of 500, just as <em>Tidy Finance</em> do. The trick is to keep using rolling windows, but to define them over <strong>month labels</strong> rather than over raw daily dates. Each daily observation is assigned to its month, and the rolling window then spans the current month and the prior 59 months. This gives a 60-month lookback while still ensuring that a stock-month appears in the output only if the stock actually traded in that month.</p>
+<p><em>Tidy Finance</em> do not provide any indication of how long their code takes to run, but let’s see how long this takes to run:</p>
+<div id="c6cd9de9" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>min_obs <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>batch_size <span class="op">=</span> <span class="dv">500</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_betas_batch(permno_batch: pl.DataFrame) <span class="op">-&gt;</span> pl.LazyFrame:</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    daily <span class="op">=</span> (</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>        crsp_daily</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>        .join(permno_batch.lazy(), on<span class="op">=</span><span class="st">"permno"</span>, how<span class="op">=</span><span class="st">"semi"</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>        .select(<span class="st">"permno"</span>, <span class="st">"date"</span>, <span class="st">"ret_excess"</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>        .join(</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>            factors_ff3_daily.select(</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>                <span class="st">"date"</span>,</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>                pl.col(<span class="st">"mktrf"</span>).cast(pl.Float64),</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>                pl.col(<span class="st">"rf"</span>).cast(pl.Float64),</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>            on<span class="op">=</span><span class="st">"date"</span>,</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>            how<span class="op">=</span><span class="st">"inner"</span>,</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>        .select(</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>            <span class="st">"permno"</span>,</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>,</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>            <span class="st">"ret_excess"</span>,</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>            mkt_excess<span class="op">=</span>pl.col(<span class="st">"mktrf"</span>) <span class="op">-</span> pl.col(<span class="st">"rf"</span>),</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>        .with_columns(month<span class="op">=</span>pl.col(<span class="st">"date"</span>).dt.truncate(<span class="st">"1mo"</span>))</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>    firm_months <span class="op">=</span> (</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>        daily</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>        .select(<span class="st">"permno"</span>, <span class="st">"month"</span>)</span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>        .unique()</span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>        daily</span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>        .sort(<span class="st">"permno"</span>, <span class="st">"month"</span>, <span class="st">"date"</span>)</span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>        .group_by_dynamic(</span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>            <span class="st">"month"</span>,</span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a>            every<span class="op">=</span><span class="st">"1mo"</span>,</span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a>            period<span class="op">=</span><span class="st">"60mo"</span>,</span>
+<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a>            offset<span class="op">=</span><span class="st">"-59mo"</span>,</span>
+<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a>            group_by<span class="op">=</span><span class="st">"permno"</span>,</span>
+<span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a>            closed<span class="op">=</span><span class="st">"left"</span>,</span>
+<span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="st">"right"</span>,</span>
+<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a>        .agg(</span>
+<span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a>            beta<span class="op">=</span>pl.cov(<span class="st">"mkt_excess"</span>, <span class="st">"ret_excess"</span>) <span class="op">/</span> pl.col(<span class="st">"mkt_excess"</span>).var(),</span>
+<span id="cb21-48"><a href="#cb21-48" aria-hidden="true" tabindex="-1"></a>            mean_ret<span class="op">=</span>pl.col(<span class="st">"ret_excess"</span>).mean(),</span>
+<span id="cb21-49"><a href="#cb21-49" aria-hidden="true" tabindex="-1"></a>            mean_mkt<span class="op">=</span>pl.col(<span class="st">"mkt_excess"</span>).mean(),</span>
+<span id="cb21-50"><a href="#cb21-50" aria-hidden="true" tabindex="-1"></a>            n<span class="op">=</span>pl.<span class="bu">len</span>(),</span>
+<span id="cb21-51"><a href="#cb21-51" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb21-52"><a href="#cb21-52" aria-hidden="true" tabindex="-1"></a>        .with_columns(month<span class="op">=</span>pl.col(<span class="st">"month"</span>).dt.offset_by(<span class="st">"-1mo"</span>))</span>
+<span id="cb21-53"><a href="#cb21-53" aria-hidden="true" tabindex="-1"></a>        .join(firm_months, on<span class="op">=</span>[<span class="st">"permno"</span>, <span class="st">"month"</span>], how<span class="op">=</span><span class="st">"semi"</span>)</span>
+<span id="cb21-54"><a href="#cb21-54" aria-hidden="true" tabindex="-1"></a>        .<span class="bu">filter</span>(</span>
+<span id="cb21-55"><a href="#cb21-55" aria-hidden="true" tabindex="-1"></a>            pl.col(<span class="st">"n"</span>) <span class="op">&gt;=</span> min_obs,</span>
+<span id="cb21-56"><a href="#cb21-56" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb21-57"><a href="#cb21-57" aria-hidden="true" tabindex="-1"></a>        .with_columns(</span>
+<span id="cb21-58"><a href="#cb21-58" aria-hidden="true" tabindex="-1"></a>            date<span class="op">=</span>pl.col(<span class="st">"month"</span>),</span>
+<span id="cb21-59"><a href="#cb21-59" aria-hidden="true" tabindex="-1"></a>            alpha<span class="op">=</span>pl.col(<span class="st">"mean_ret"</span>) <span class="op">-</span> pl.col(<span class="st">"beta"</span>) <span class="op">*</span> pl.col(<span class="st">"mean_mkt"</span>)</span>
+<span id="cb21-60"><a href="#cb21-60" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb21-61"><a href="#cb21-61" aria-hidden="true" tabindex="-1"></a>        .select(<span class="st">"permno"</span>, <span class="st">"date"</span>, <span class="st">"beta"</span>, <span class="st">"n"</span>, <span class="st">"alpha"</span>)</span>
+<span id="cb21-62"><a href="#cb21-62" aria-hidden="true" tabindex="-1"></a>        .sort(<span class="st">"permno"</span>, <span class="st">"date"</span>)</span>
+<span id="cb21-63"><a href="#cb21-63" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb21-64"><a href="#cb21-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-65"><a href="#cb21-65" aria-hidden="true" tabindex="-1"></a>permnos <span class="op">=</span> (</span>
+<span id="cb21-66"><a href="#cb21-66" aria-hidden="true" tabindex="-1"></a>    crsp_daily</span>
+<span id="cb21-67"><a href="#cb21-67" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"permno"</span>)</span>
+<span id="cb21-68"><a href="#cb21-68" aria-hidden="true" tabindex="-1"></a>    .unique()</span>
+<span id="cb21-69"><a href="#cb21-69" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb21-70"><a href="#cb21-70" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-71"><a href="#cb21-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-72"><a href="#cb21-72" aria-hidden="true" tabindex="-1"></a>betas <span class="op">=</span> pl.concat(</span>
+<span id="cb21-73"><a href="#cb21-73" aria-hidden="true" tabindex="-1"></a>    (</span>
+<span id="cb21-74"><a href="#cb21-74" aria-hidden="true" tabindex="-1"></a>        get_betas_batch(permnos.<span class="bu">slice</span>(i, batch_size)).collect()</span>
+<span id="cb21-75"><a href="#cb21-75" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, permnos.height, batch_size)</span>
+<span id="cb21-76"><a href="#cb21-76" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb21-77"><a href="#cb21-77" aria-hidden="true" tabindex="-1"></a>    rechunk<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb21-78"><a href="#cb21-78" aria-hidden="true" tabindex="-1"></a>).sort(<span class="st">"permno"</span>, <span class="st">"date"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 33.6 s, sys: 19.1 s, total: 52.7 s
+Wall time: 22 s</code></pre>
+</div>
+</div>
+<p>So about 15-20 seconds for the whole lot.</p>
+<p>And let’s take a peek at the data:</p>
+<div id="c5cb076d" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>betas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (2_354_575, 5)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">permno</th>
+<th data-quarto-table-cell-role="th">date</th>
+<th data-quarto-table-cell-role="th">beta</th>
+<th data-quarto-table-cell-role="th">n</th>
+<th data-quarto-table-cell-role="th">alpha</th>
+</tr>
+<tr class="even">
+<td>i32</td>
+<td>date</td>
+<td>f64</td>
+<td>u32</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>10001</td>
+<td>1989-12-01</td>
+<td>0.091415</td>
+<td>1005</td>
+<td>0.001083</td>
+</tr>
+<tr class="even">
+<td>10001</td>
+<td>1990-01-01</td>
+<td>0.09536</td>
+<td>1027</td>
+<td>0.001044</td>
+</tr>
+<tr class="odd">
+<td>10001</td>
+<td>1990-02-01</td>
+<td>0.098356</td>
+<td>1046</td>
+<td>0.001014</td>
+</tr>
+<tr class="even">
+<td>10001</td>
+<td>1990-03-01</td>
+<td>0.09657</td>
+<td>1068</td>
+<td>0.001004</td>
+</tr>
+<tr class="odd">
+<td>10001</td>
+<td>1990-04-01</td>
+<td>0.094286</td>
+<td>1088</td>
+<td>0.000986</td>
+</tr>
+<tr class="even">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2024-08-01</td>
+<td>1.592899</td>
+<td>1258</td>
+<td>0.002095</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2024-09-01</td>
+<td>1.595383</td>
+<td>1258</td>
+<td>0.002201</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2024-10-01</td>
+<td>1.605146</td>
+<td>1258</td>
+<td>0.001993</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2024-11-01</td>
+<td>1.62253</td>
+<td>1258</td>
+<td>0.002191</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2024-12-01</td>
+<td>1.631224</td>
+<td>1258</td>
+<td>0.00221</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="the-same-analysis-with-ibis-and-duckdb" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="the-same-analysis-with-ibis-and-duckdb"><span class="header-section-number">1.2</span> The same analysis with Ibis and DuckDB</h2>
+<p>An obvious alternative is to let DuckDB do the rolling-window work directly. Ibis makes this straightforward: we can connect to its default DuckDB backend, query the Parquet files in place, and then get the result as Polars table.</p>
+<p>Here I use the same idea as above. I label each daily row with its month, define rolling windows over those month labels, and then keep only the first daily row for each <code>permno</code>/month. The window spans the current month and the prior 59 months, which seems closest to the pandas implementation.</p>
+<div id="f60be1fd" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>duck <span class="op">=</span> ibis.duckdb.<span class="ex">connect</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="1b028619" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>min_obs <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>crsp_daily <span class="op">=</span> duck.read_parquet(</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"crsp_daily.parquet"</span>, </span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    table_name<span class="op">=</span><span class="st">"crsp_daily"</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>factors_ff3_daily <span class="op">=</span> duck.read_parquet(</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"factors_ff3_daily.parquet"</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    table_name<span class="op">=</span><span class="st">"factors_ff3_daily"</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>daily <span class="op">=</span> (</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    crsp_daily</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"permno"</span>, <span class="st">"date"</span>, <span class="st">"ret_excess"</span>)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    .join(</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>        factors_ff3_daily.select(</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>,</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>            mkt_excess<span class="op">=</span>(</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>                _[<span class="st">"mktrf"</span>].cast(<span class="st">"float64"</span>) <span class="op">-</span> _[<span class="st">"rf"</span>].cast(<span class="st">"float64"</span>)</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"date"</span>,</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>    .mutate(month<span class="op">=</span>_.date.truncate(<span class="st">"M"</span>))</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>w_beta <span class="op">=</span> ibis.trailing_range_window(</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>    ibis.interval(months<span class="op">=</span><span class="dv">59</span>),</span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>    group_by<span class="op">=</span>_.permno,</span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>    order_by<span class="op">=</span>_.month,</span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a>w_month <span class="op">=</span> ibis.window(</span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a>    group_by<span class="op">=</span>[_.permno, _.month]</span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a>betas_duckdb <span class="op">=</span> (</span>
+<span id="cb25-39"><a href="#cb25-39" aria-hidden="true" tabindex="-1"></a>    daily</span>
+<span id="cb25-40"><a href="#cb25-40" aria-hidden="true" tabindex="-1"></a>    .mutate(</span>
+<span id="cb25-41"><a href="#cb25-41" aria-hidden="true" tabindex="-1"></a>        beta<span class="op">=</span>(</span>
+<span id="cb25-42"><a href="#cb25-42" aria-hidden="true" tabindex="-1"></a>            _.mkt_excess.cov(_.ret_excess, how<span class="op">=</span><span class="st">"sample"</span>).over(w_beta)</span>
+<span id="cb25-43"><a href="#cb25-43" aria-hidden="true" tabindex="-1"></a>            <span class="op">/</span> _.mkt_excess.var(how<span class="op">=</span><span class="st">"sample"</span>).over(w_beta)</span>
+<span id="cb25-44"><a href="#cb25-44" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb25-45"><a href="#cb25-45" aria-hidden="true" tabindex="-1"></a>        mean_ret<span class="op">=</span>_.ret_excess.mean().over(w_beta),</span>
+<span id="cb25-46"><a href="#cb25-46" aria-hidden="true" tabindex="-1"></a>        mean_mkt<span class="op">=</span>_.mkt_excess.mean().over(w_beta),</span>
+<span id="cb25-47"><a href="#cb25-47" aria-hidden="true" tabindex="-1"></a>        n<span class="op">=</span>_.permno.count().over(w_beta),</span>
+<span id="cb25-48"><a href="#cb25-48" aria-hidden="true" tabindex="-1"></a>        first_month_date<span class="op">=</span>_.date.<span class="bu">min</span>().over(w_month),</span>
+<span id="cb25-49"><a href="#cb25-49" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb25-50"><a href="#cb25-50" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(_.date <span class="op">==</span> _.first_month_date, _.n <span class="op">&gt;=</span> min_obs)</span>
+<span id="cb25-51"><a href="#cb25-51" aria-hidden="true" tabindex="-1"></a>    .select(</span>
+<span id="cb25-52"><a href="#cb25-52" aria-hidden="true" tabindex="-1"></a>        <span class="st">"permno"</span>,</span>
+<span id="cb25-53"><a href="#cb25-53" aria-hidden="true" tabindex="-1"></a>        <span class="st">"month"</span>,</span>
+<span id="cb25-54"><a href="#cb25-54" aria-hidden="true" tabindex="-1"></a>        <span class="st">"beta"</span>,</span>
+<span id="cb25-55"><a href="#cb25-55" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n"</span>,</span>
+<span id="cb25-56"><a href="#cb25-56" aria-hidden="true" tabindex="-1"></a>        alpha<span class="op">=</span>_.mean_ret <span class="op">-</span> _.beta <span class="op">*</span> _.mean_mkt,</span>
+<span id="cb25-57"><a href="#cb25-57" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb25-58"><a href="#cb25-58" aria-hidden="true" tabindex="-1"></a>    .rename(date<span class="op">=</span><span class="st">"month"</span>)</span>
+<span id="cb25-59"><a href="#cb25-59" aria-hidden="true" tabindex="-1"></a>    .order_by(<span class="st">"permno"</span>, <span class="st">"date"</span>)</span>
+<span id="cb25-60"><a href="#cb25-60" aria-hidden="true" tabindex="-1"></a>    .to_polars()</span>
+<span id="cb25-61"><a href="#cb25-61" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"428c8e29c0a84b27b307c7afa6d83f6a","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 2min 37s, sys: 6.27 s, total: 2min 43s
+Wall time: 15 s</code></pre>
+</div>
+</div>
+<p>And here are the resulting betas:</p>
+<div id="90209f5d" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>betas_duckdb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="19">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (2_354_575, 5)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">permno</th>
+<th data-quarto-table-cell-role="th">date</th>
+<th data-quarto-table-cell-role="th">beta</th>
+<th data-quarto-table-cell-role="th">n</th>
+<th data-quarto-table-cell-role="th">alpha</th>
+</tr>
+<tr class="even">
+<td>i32</td>
+<td>date</td>
+<td>f64</td>
+<td>i64</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>10001</td>
+<td>1989-12-01</td>
+<td>0.091415</td>
+<td>1005</td>
+<td>0.001083</td>
+</tr>
+<tr class="even">
+<td>10001</td>
+<td>1990-01-01</td>
+<td>0.09536</td>
+<td>1027</td>
+<td>0.001044</td>
+</tr>
+<tr class="odd">
+<td>10001</td>
+<td>1990-02-01</td>
+<td>0.098356</td>
+<td>1046</td>
+<td>0.001014</td>
+</tr>
+<tr class="even">
+<td>10001</td>
+<td>1990-03-01</td>
+<td>0.09657</td>
+<td>1068</td>
+<td>0.001004</td>
+</tr>
+<tr class="odd">
+<td>10001</td>
+<td>1990-04-01</td>
+<td>0.094286</td>
+<td>1088</td>
+<td>0.000986</td>
+</tr>
+<tr class="even">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2024-08-01</td>
+<td>1.592899</td>
+<td>1258</td>
+<td>0.002095</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2024-09-01</td>
+<td>1.595383</td>
+<td>1258</td>
+<td>0.002201</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2024-10-01</td>
+<td>1.605146</td>
+<td>1258</td>
+<td>0.001993</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2024-11-01</td>
+<td>1.62253</td>
+<td>1258</td>
+<td>0.002191</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2024-12-01</td>
+<td>1.631224</td>
+<td>1258</td>
+<td>0.00221</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>The R version of the note did not use <code>ff.factors_daily</code> from WRDS, but I do so here because I don’t have the same <code>copy_inline()</code> functionality I had when using R in yesterday’s note.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>The original pandas code uses <code>smf.ols()</code> from Statsmodels.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>There will be a lot of overlap in these windows and I had thought that Polars would just take the data and just process the windows at the start of each month as it passed through for each <code>permno</code>, but it seems it literally stacks copies of data for each window and I quickly ran out of RAM when I tried this.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script type="application/vnd.jupyter.widget-state+json">
+{"state":{"428c8e29c0a84b27b307c7afa6d83f6a":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"","description":"","description_allow_html":false,"layout":"IPY_MODEL_674afaf81563492fb3a42dc5604b09a6","max":100,"min":0,"orientation":"horizontal","style":"IPY_MODEL_6203d3e2c6d54589b4b76d67d50b6a8a","tabbable":null,"tooltip":null,"value":100}},"6203d3e2c6d54589b4b76d67d50b6a8a":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":"black","description_width":""}},"674afaf81563492fb3a42dc5604b09a6":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":"auto"}}},"version_major":2,"version_minor":0}
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
