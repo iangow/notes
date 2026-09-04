@@ -36,7 +36,7 @@ This note aims to provide this missing information.^[Guidance on downloading the
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/published/getting_dera_notes.qmd).
 
-This note uses the following R packages:^[To install these packages, run `install.packages(c(tidyverse, "DBI", "farr", "httr2", "rvest", "arrow")` in the console of RStudio.]
+This note uses the following R packages:^[To install these packages, run `install.packages(c(tidyverse, "DBI", "farr", "httr2", "rvest", "arrow")` in the console of RStudio. For current DERA downloading code, install the `dera.pq` package using `pak::pak("iangow/dera_pq")`.]
 
 ```{r}
 #| message: false
@@ -72,7 +72,7 @@ The standard tags are derived from taxonomies in the SEC's [standard taxonomies 
  - `pre` contains one row for each line of the financial statements tagged by the filer.
  - `cal` contains one row for each calculation relationship ("arc"). Note that XBRL allows a parent
 element to have more than one distinct set of arcs for a given parent element, thus the rationale for distinct
-fields for the group and the arc.^[Run `source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/published/get_dera_notes.R")` to get these data.]
+fields for the group and the arc.^[The current code I use to download and update these data is in the [`dera.pq`](https://github.com/iangow/dera_pq) package. Run `dera.pq::update_dera_notes()` to get these data.]
 
 ### Structure of unprocessed data
 
@@ -237,26 +237,27 @@ dbExecute(db, str_c("COPY sub_notes TO '", pq_file, "'"))
 dbDisconnect(db)
 ```
 I then do similar work for the remaining tables (`dim`, `num`, `txt`, `ren`, `pre`, and `cal`).
-I then put all of this inside a function `get_notes_data(file)` that downloads a `.zip` file and creates parquet files for each table.
-I can load this function by running the following code:
-
-```{r}
-source(str_c("https://raw.githubusercontent.com/iangow/",
-             "notes/refs/heads/main/published/get_dera_functions.R"))
-```
-
-This code also loads the function `get_zip_files_df()` that can be used to get the list of `.zip` files shown on SEC website.
-
-```{r}
-zip_files <- get_zip_files_df()
-zip_files
-```
-
-Next, I can apply the function `get_notes_data()` to each file in `zip_files` using `map()`:
+The code I now use for this is packaged in [`dera.pq`](https://github.com/iangow/dera_pq).
+The package provides functions to list available SEC files, download and parse each archive, write the component tables as Parquet files, and store source metadata in the Parquet files.
 
 ```{r}
 #| eval: false
-map(zip_files$file, get_notes_data)
+pak::pak("iangow/dera_pq")
+library(dera.pq)
+```
+
+The function `available_dera_notes()` can be used to get the list of `.zip` files shown on the SEC website.
+
+```{r}
+zip_files <- dera.pq::available_dera_notes(user_agent = getOption("HTTPUserAgent"))
+zip_files
+```
+
+The high-level update function downloads only missing or changed source files and writes the Parquet files under `$DATA_DIR/dera_notes`.
+
+```{r}
+#| eval: false
+dera.pq::update_dera_notes()
 ```
 
 ```{r}
@@ -280,7 +281,7 @@ While 38 minutes is a reasonable amount of time to download hundreds of gigabyte
 The astute reader will note that the `last_modified` field of `zip_files` contains information on the date on which the applicable file was modified.
 It seems we could use this information to limit ourselves to files that have been added or modified since we last updated the data.
 
-In the past I have use three different approaches to this kind of problem:
+In the past I have used three different approaches to this kind of problem:
 
  1. Storing `last_modified` data in the metadata of parquet files containing the data.
  2. Modifying the file properties of the data file to match the `last_modified` data.
@@ -291,56 +292,9 @@ I use this first approach in `wrds_update_pq()` in two Python packages, [`wrds2p
 The second approach also collocates the information with the file, but is perhaps a little less robust.
 I use this approach in `wrds_update_csv()` in [`wrds2pg`](https://pypi.org/project/wrds2pg/) because the output files are CSV files where there is no place to store metadata.
 
-Here I will use the third approach just because it is simpler.
-However it is a little less robust.
-For example, if the download process is interrupted or the data files are moved around, the value of a directory-level file with `last_modified` might be limited.
-
-I start by loading a file called `last_modified.parquet` in the parquet data directory if one exists.
-The first time you run the code, there will be no such file and I create an empty data frame `last_modified` in that case.
-
-```{r}
-pq_dir <- file.path(Sys.getenv("DATA_DIR"), "dera_notes")
-pq_path <- file.path(pq_dir, "last_modified.parquet")
-
-if (file.exists(pq_path)) {
-  last_modified <- arrow::read_parquet(pq_path)
-} else {
-  last_modified <- tibble(file = NA, last_modified = NA)
-}
-```
-
-I then compare `zip_files` with `last_modified` to identify files on SEC EDGAR with a different modification date from that recorded in `last_modified`.
-These are the files that we will want to download and we store the list of such files in the data frame `to_update`.
-
-```{r}
-to_update <-
-  zip_files |>
-  left_join(last_modified,
-            by = "file",
-            suffix = c("_new", "_old")) |>
-  filter(is.na(last_modified_old) |
-           last_modified_new != last_modified_old)
-```
-
-Now I can apply `get_notes_data()` to the files in `to_update`.
-
-```{r}
-#| output: false
-map(to_update$file, get_notes_data)
-```
-
-Having updated the files, we now save the data in `zip_files` as the new copy of `last_updated`.
-This new `last_updated.parquet` will be used the next time we update the data.
-
-```{r}
-save_parquet <- function(df, name) {
-  file_path <- file.path(pq_dir, paste0(name, ".parquet"))
-  arrow::write_parquet(df, sink = file_path)
-}
-
-zip_files |>
-  save_parquet(name = "last_modified")
-```
+The `dera.pq` package uses the first approach.
+For each SEC source archive, it writes the raw `Last-Modified` header and a normalized `last_modified_utc` value into the schema metadata of each output Parquet file.
+On later runs, `update_dera_notes()` compares the current SEC metadata with the metadata embedded in the local Parquet files and skips source files that are already current.
 
 According to the SEC EDGAR website, "effective March 2024, monthly data sets will be consolidated into quarterly files after a year, so that only a year of monthly files will be available at a time."
 This will mean that monthly files will become obsolete after about a year and presumably need to be deleted to avoid duplicating data in quarterly files.

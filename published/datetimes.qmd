@@ -26,16 +26,16 @@ execute:
 
 ::: {.abstract}
 The purpose of this note is address the topic of temporal data (dates and times) in more detail than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of *R for Data Science* [@Wickham:2023aa] and to provide a hands-on application of working with them.
-The application I work with is based on the SEC submissions data I discussed in [another recent note](https://raw.githubusercontent.com/iangow/notes/main/published/sec_submissions.pdf).
+The application I work with is based on the SEC submissions data I discussed in [another recent note](sec_submissions.html).
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 :::
 
 As discussed in a [recent post on LinkedIn](https://www.linken.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@gow2024empirical] is to provide a pathway to mastery of the contents of @Wickham:2023aa.^[@gow2024empirical was published in print form by CRC Press in December 2024 and remains free online.]
 That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times.
-[One recent note](https://raw.githubusercontent.com/iangow/notes/main/published/sec_submissions.pdf) covered hierarchical data and a forthcoming note will address spreadsheets.
+[One recent note](sec_submissions.html) covered hierarchical data and a forthcoming note will address spreadsheets.
 
 The purpose of this note is address the gap regarding dates and times in more detail---including a hands-on application---than found in the ["Dates and Times" chapter](https://r4ds.hadley.nz/datetimes) of @Wickham:2023aa.
-The application I work with is based on the SEC submissions data I discussed in [another recent note](https://raw.githubusercontent.com/iangow/notes/main/published/sec_submissions.pdf).
+The application I work with is based on the SEC submissions data I discussed in [another recent note](sec_submissions.html).
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
@@ -200,7 +200,7 @@ sample |> mutate(hour = hour(a_datetime)) |> collect()
 
 ## Working with SEC filings data
 
-We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](https://raw.githubusercontent.com/iangow/notes/main/published/sec_submissions.pdf). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). 
+We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](sec_submissions.html). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). 
 If you have set up a parquet data repository with this data in the `submissions` schema, then use `filings <- load_parquet(db, table = "filings", schema = "submissions")` instead.]
 
 ```{r}
@@ -417,7 +417,7 @@ filings |>
 ```
 
 To merge `sample_calls` with `filings`, we need a mapping from tickers to CIKs.
-We can get the `tickers` file from Dropbox using the code below.^[See [the note](https://raw.githubusercontent.com/iangow/notes/main/published/sec_submissions.pdf) discussed earlier for details on how this file was created from data on SEC EDGAR.]
+We can get the `tickers` file from Dropbox using the code below.^[See [the note](sec_submissions.html) discussed earlier for details on how this file was created from data on SEC EDGAR.]
 
 ```{r}
 url <- str_c("https://www.dropbox.com/scl/fi/04jv6e1gwx0ngbwgqde5a/", 
