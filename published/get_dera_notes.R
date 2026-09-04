@@ -185,6 +185,31 @@ get_data <- function(file) {
 # Apply function to get data ----
 map(to_update$file, get_data)
 
+# Archive parquet files whose source zip is no longer on SEC ----
+available_periods <-
+  last_modified_scraped |>
+  mutate(period = str_replace(file, "^(.*)_notes.*$", "\\1")) |>
+  pull(period)
+
+pq_dir <- file.path(Sys.getenv("DATA_DIR"), "dera_notes")
+
+orphaned_pq <-
+  list.files(pq_dir, pattern = "^[a-z]+_notes_.*\\.parquet$") |>
+  tibble(file = _) |>
+  mutate(period = str_replace(file, "^[a-z]+_notes_(.+)\\.parquet$", "\\1")) |>
+  filter(!period %in% available_periods)
+
+if (nrow(orphaned_pq) > 0) {
+  archive_dir <- file.path(pq_dir, "archive")
+  if (!dir.exists(archive_dir)) dir.create(archive_dir)
+  message("Archiving ", nrow(orphaned_pq),
+          " parquet files whose source is no longer on SEC")
+  file.rename(
+    file.path(pq_dir, orphaned_pq$file),
+    file.path(archive_dir, orphaned_pq$file)
+  )
+}
+
 save_parquet <- function(df, name, schema = "",
                          path = Sys.getenv("DATA_DIR")) {
   file_path <- file.path(path, schema, str_c(name, ".parquet"))
