@@ -393,99 +393,71 @@ character   numeric   POSIXct
 </div>
 <p>Finally I create a DuckDB instance and copy the data frame <code>sub</code> to DuckDB, giving it the name <code>sub_notes</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>sub <span class="sc">|&gt;</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"sub_notes"</span>, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+ℹ /Users/igow/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+ℹ Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+ℹ See ?duckdb_storage for details and alternatives.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sub <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"sub_notes"</span>, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Finally, I create a parquet file by exporting the data from the DuckDB table I just created. I then disconnect from the database, as I no longer need it.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>period <span class="ot">&lt;-</span> <span class="fu">str_replace</span>(<span class="fu">basename</span>(t), <span class="st">"^(.*)_notes.*$"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>)</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>pq_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>), <span class="st">"dera_notes"</span>)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>pq_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(pq_dir, <span class="fu">str_c</span>(<span class="st">"sub_notes_"</span>, period, <span class="st">".parquet"</span>))</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="fu">str_c</span>(<span class="st">"COPY sub_notes TO '"</span>, pq_file, <span class="st">"'"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>period <span class="ot">&lt;-</span> <span class="fu">str_replace</span>(<span class="fu">basename</span>(t), <span class="st">"^(.*)_notes.*$"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>pq_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>), <span class="st">"dera_notes"</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>pq_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(pq_dir, <span class="fu">str_c</span>(<span class="st">"sub_notes_"</span>, period, <span class="st">".parquet"</span>))</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(db, <span class="fu">str_c</span>(<span class="st">"COPY sub_notes TO '"</span>, pq_file, <span class="st">"'"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 7117</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(db)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(db)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>I then do similar work for the remaining tables (<code>dim</code>, <code>num</code>, <code>txt</code>, <code>ren</code>, <code>pre</code>, and <code>cal</code>). I then put all of this inside a function <code>get_notes_data(file)</code> that downloads a <code>.zip</code> file and creates parquet files for each table. I can load this function by running the following code:</p>
+<p>I then do similar work for the remaining tables (<code>dim</code>, <code>num</code>, <code>txt</code>, <code>ren</code>, <code>pre</code>, and <code>cal</code>). The code I now use for this is packaged in <a href="https://github.com/iangow/dera_pq"><code>dera.pq</code></a>. The package provides functions to list available SEC files, download and parse each archive, write the component tables as Parquet files, and store source metadata in the Parquet files.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">str_c</span>(<span class="st">"https://raw.githubusercontent.com/iangow/"</span>,</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>             <span class="st">"notes/refs/heads/main/published/get_dera_functions.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">"iangow/dera_pq"</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dera.pq)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>This code also loads the function <code>get_zip_files_df()</code> that can be used to get the list of <code>.zip</code> files shown on SEC website.</p>
+<p>The function <code>available_dera_notes()</code> can be used to get the list of <code>.zip</code> files shown on the SEC website.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>zip_files <span class="ot">&lt;-</span> <span class="fu">get_zip_files_df</span>()</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>zip_files</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>zip_files <span class="ot">&lt;-</span> dera.pq<span class="sc">::</span><span class="fu">available_dera_notes</span>(<span class="at">user_agent =</span> <span class="fu">getOption</span>(<span class="st">"HTTPUserAgent"</span>))</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>zip_files</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 77 × 2
-   file              last_modified                
-   &lt;chr&gt;             &lt;chr&gt;                        
- 1 2026_03_notes.zip Tue, 07 Apr 2026 11:50:37 GMT
- 2 2026_02_notes.zip Tue, 03 Mar 2026 16:36:34 GMT
- 3 2026_01_notes.zip Wed, 04 Feb 2026 17:27:33 GMT
- 4 2025_12_notes.zip Wed, 14 Jan 2026 20:59:24 GMT
- 5 2025_11_notes.zip Thu, 15 Jan 2026 14:09:07 GMT
- 6 2025_10_notes.zip Mon, 01 Dec 2025 14:48:45 GMT
- 7 2025_09_notes.zip Tue, 18 Nov 2025 21:32:32 GMT
- 8 2025_08_notes.zip Wed, 03 Sep 2025 16:10:15 GMT
- 9 2025_07_notes.zip Tue, 05 Aug 2025 16:57:51 GMT
-10 2025_06_notes.zip Thu, 03 Jul 2025 18:46:28 GMT
-# ℹ 67 more rows</code></pre>
+<pre><code># A tibble: 79 × 3
+   file               last_modified                 last_modified_utc   
+   &lt;chr&gt;              &lt;chr&gt;                         &lt;chr&gt;               
+ 1 2009q1_notes.zip   Tue, 22 Dec 2020 22:19:37 GMT 2020-12-22T22:19:37Z
+ 2 2009q2_notes.zip   Tue, 22 Dec 2020 22:19:36 GMT 2020-12-22T22:19:36Z
+ 3 2009q3_notes.zip   Tue, 22 Dec 2020 22:19:34 GMT 2020-12-22T22:19:34Z
+ 4 2009q4_notes.zip   Tue, 22 Dec 2020 22:19:13 GMT 2020-12-22T22:19:13Z
+ 5 2010q1_notes_1.zip Wed, 25 Sep 2024 11:44:37 GMT 2024-09-25T11:44:37Z
+ 6 2010q2_notes_0.zip Wed, 25 Sep 2024 11:47:31 GMT 2024-09-25T11:47:31Z
+ 7 2010q3_notes_0.zip Wed, 25 Sep 2024 11:48:58 GMT 2024-09-25T11:48:58Z
+ 8 2010q4_notes.zip   Wed, 25 Sep 2024 23:03:20 GMT 2024-09-25T23:03:20Z
+ 9 2011q1_notes.zip   Wed, 25 Sep 2024 23:05:54 GMT 2024-09-25T23:05:54Z
+10 2011q2_notes.zip   Wed, 25 Sep 2024 23:08:32 GMT 2024-09-25T23:08:32Z
+# ℹ 69 more rows</code></pre>
 </div>
 </div>
-<p>Next, I can apply the function <code>get_notes_data()</code> to each file in <code>zip_files</code> using <code>map()</code>:</p>
+<p>The high-level update function downloads only missing or changed source files and writes the Parquet files under <code>$DATA_DIR/dera_notes</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(zip_files<span class="sc">$</span>file, get_notes_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>dera.pq<span class="sc">::</span><span class="fu">update_dera_notes</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Doing this takes me a bit under 38 minutes.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> The resulting files take up about 41 GB of space, likely representing about 10 times that in terms of raw data due to compression.</p>
+<p>Doing this takes me a bit under 38 minutes.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> The resulting files take up about 37 GB of space, likely representing about 10 times that in terms of raw data due to compression.</p>
 </section>
 <section id="doing-incremental-updates" class="level3" data-number="1.3">
 <h3 data-number="1.3" class="anchored" data-anchor-id="doing-incremental-updates"><span class="header-section-number">1.3</span> Doing incremental updates</h3>
 <p>While 38 minutes is a reasonable amount of time to download hundreds of gigabytes of data, it is not something that we would want to repeat on a regular basis. The astute reader will note that the <code>last_modified</code> field of <code>zip_files</code> contains information on the date on which the applicable file was modified. It seems we could use this information to limit ourselves to files that have been added or modified since we last updated the data.</p>
-<p>In the past I have use three different approaches to this kind of problem:</p>
+<p>In the past I have used three different approaches to this kind of problem:</p>
 <ol type="1">
 <li>Storing <code>last_modified</code> data in the metadata of parquet files containing the data.</li>
 <li>Modifying the file properties of the data file to match the <code>last_modified</code> data.</li>
 <li>Saving a table containing <code>last_modified</code> data that can be compared with the current data to identify files that need to be downloaded.</li>
 </ol>
 <p>Of these three approaches, the first is probably the most robust because the <code>last_modified</code> information is part of the parquet file itself. I use this first approach in <code>wrds_update_pq()</code> in two Python packages, <a href="https://pypi.org/project/wrds2pg/"><code>wrds2pg</code></a> and <a href="https://pypi.org/project/db2pq/"><code>db2pq</code></a>. The second approach also collocates the information with the file, but is perhaps a little less robust. I use this approach in <code>wrds_update_csv()</code> in <a href="https://pypi.org/project/wrds2pg/"><code>wrds2pg</code></a> because the output files are CSV files where there is no place to store metadata.</p>
-<p>Here I will use the third approach just because it is simpler. However it is a little less robust. For example, if the download process is interrupted or the data files are moved around, the value of a directory-level file with <code>last_modified</code> might be limited.</p>
-<p>I start by loading a file called <code>last_modified.parquet</code> in the parquet data directory if one exists. The first time you run the code, there will be no such file and I create an empty data frame <code>last_modified</code> in that case.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>pq_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>), <span class="st">"dera_notes"</span>)</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>pq_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(pq_dir, <span class="st">"last_modified.parquet"</span>)</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(pq_path)) {</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  last_modified <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">read_parquet</span>(pq_path)</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  last_modified <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">file =</span> <span class="cn">NA</span>, <span class="at">last_modified =</span> <span class="cn">NA</span>)</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>I then compare <code>zip_files</code> with <code>last_modified</code> to identify files on SEC EDGAR with a different modification date from that recorded in <code>last_modified</code>. These are the files that we will want to download and we store the list of such files in the data frame <code>to_update</code>.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>to_update <span class="ot">&lt;-</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  zip_files <span class="sc">|&gt;</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(last_modified,</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="st">"file"</span>,</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">suffix =</span> <span class="fu">c</span>(<span class="st">"_new"</span>, <span class="st">"_old"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(last_modified_old) <span class="sc">|</span></span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>           last_modified_new <span class="sc">!=</span> last_modified_old)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Now I can apply <code>get_notes_data()</code> to the files in <code>to_update</code>.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(to_update<span class="sc">$</span>file, get_notes_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Having updated the files, we now save the data in <code>zip_files</code> as the new copy of <code>last_updated</code>. This new <code>last_updated.parquet</code> will be used the next time we update the data.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>save_parquet <span class="ot">&lt;-</span> <span class="cf">function</span>(df, name) {</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  file_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(pq_dir, <span class="fu">paste0</span>(name, <span class="st">".parquet"</span>))</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  arrow<span class="sc">::</span><span class="fu">write_parquet</span>(df, <span class="at">sink =</span> file_path)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>zip_files <span class="sc">|&gt;</span></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_parquet</span>(<span class="at">name =</span> <span class="st">"last_modified"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<p>The <code>dera.pq</code> package uses the first approach. For each SEC source archive, it writes the raw <code>Last-Modified</code> header and a normalized <code>last_modified_utc</code> value into the schema metadata of each output Parquet file. On later runs, <code>update_dera_notes()</code> compares the current SEC metadata with the metadata embedded in the local Parquet files and skips source files that are already current.</p>
 <p>According to the SEC EDGAR website, “effective March 2024, monthly data sets will be consolidated into quarterly files after a year, so that only a year of monthly files will be available at a time.” This will mean that monthly files will become obsolete after about a year and presumably need to be deleted to avoid duplicating data in quarterly files. A subsequent update to this note will discuss how we can identify and delete obsolete files.</p>
 </section>
 </section>
@@ -493,27 +465,33 @@ character   numeric   POSIXct
 <h2 data-number="2" class="anchored" data-anchor-id="using-financial-statement-and-notes-data"><span class="header-section-number">2</span> Using <em>Financial Statement and Notes</em> data</h2>
 <p>Now that we have downloaded the data, we can access it quite easily using DuckDB and the <code>load_parquet()</code> function from the <code>farr</code> library.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> Note that while the tables are split across several files, these are easily combined using wildcards in DuckDB. For example, <code>sub_notes_*</code> can be used to refer to all files that make up the submission data (<code>sub</code> table). As can be seen, working with parquet files using DuckDB is generally very fast.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+ℹ /Users/igow/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+ℹ Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+ℹ See ?duckdb_storage for details and alternatives.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sub <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"sub_notes_*"</span>, <span class="at">schema =</span> <span class="st">"dera_notes"</span>)</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>sub <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"sub_notes_*"</span>, <span class="at">schema =</span> <span class="st">"dera_notes"</span>)</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>sub <span class="sc">|&gt;</span></span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(filed)) <span class="sc">|&gt;</span></span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(year) <span class="sc">|&gt;</span> </span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(year)) <span class="sc">|&gt;</span></span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>sub <span class="sc">|&gt;</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(filed)) <span class="sc">|&gt;</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(year) <span class="sc">|&gt;</span> </span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(year)) <span class="sc">|&gt;</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.046   0.025   0.042 </code></pre>
+  0.042   0.023   0.036 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 18 × 2
     year      n
    &lt;dbl&gt;  &lt;dbl&gt;
- 1  2026  23863
- 2  2025 123137
- 3  2024 194501
+ 1  2026  60197
+ 2  2025  99209
+ 3  2024 106739
  4  2023 104015
  5  2022  97814
  6  2021  82740
@@ -521,7 +499,7 @@ character   numeric   POSIXct
  8  2019  35040
  9  2018  26396
 10  2017  26557
-11  2016  34431
+11  2016  27677
 12  2015  29906
 13  2014  31219
 14  2013  31798
@@ -540,8 +518,8 @@ character   numeric   POSIXct
 
 <ol>
 <li id="fn1"><p>Guidance on downloading the Form AP data is provided in <a href="../form_ap_names.html">an earlier note</a> I wrote.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>To install these packages, run <code>install.packages(c(tidyverse, "DBI", "farr", "httr2", "rvest", "arrow")</code> in the console of RStudio.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>Run <code>source("https://raw.githubusercontent.com/iangow/notes/refs/heads/main/published/get_dera_notes.R")</code> to get these data.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>To install these packages, run <code>install.packages(c(tidyverse, "DBI", "farr", "httr2", "rvest", "arrow")</code> in the console of RStudio. For current DERA downloading code, install the <code>dera.pq</code> package using <code>pak::pak("iangow/dera_pq")</code>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>The current code I use to download and update these data is in the <a href="https://github.com/iangow/dera_pq"><code>dera.pq</code></a> package. Run <code>dera.pq::update_dera_notes()</code> to get these data.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn4"><p>Using <code>unz(t, "sub.tsv")</code> allows us to unzip just that one file in a way that does not leave detritus in our file system.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn5"><p>I use <code>first_class()</code> to get just the first class for each column as one column has two classes associated with it. You can see this by running <code>unlist(map, sub, class))</code> and comparing the output with that from the code I use below.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn6"><p>This function only handles a subset of the types that might be identified by <code>read_tsv()</code>, but it suffices for current purposes.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
@@ -623,7 +601,7 @@ character   numeric   POSIXct
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
+        var filterRegex = new RegExp("https:\/\/iangow\.github\.io\/notes\/");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
