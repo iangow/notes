@@ -13,7 +13,7 @@ format:
       - right=2.5cm
     papersize: a4
     filters:
-      - abstract.lua
+      - ../abstract.lua
     include-in-header: preamble.tex
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
@@ -51,7 +51,7 @@ At the end of this note I show how Parquet files can be used to store the conten
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "jsonlite", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and rendered with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
-The source code for this note is available [on GitHub](https://raw.githubusercontent.com/iangow/notes/main/sec_submissions.qmd).
+The source code for this note is available [on GitHub](https://raw.githubusercontent.com/iangow/notes/main/published/sec_submissions.qmd).
 
 ```{r}
 #| include: false
@@ -654,7 +654,7 @@ process_companies <- function(ciks, dest_table = "companies",
     company_data |>
     select(-any_of(c("tickers", "exchanges", 
                      "addresses", "ownerOrg"))) |>
-    mutate(across(any_of(c("country", "stateOrCountry", "countryCode")), 
+    mutate(across(any_of(c("country", "stateOrCountry", "countryCode", "lei")), 
                   as.character))
   
   addresses <-
@@ -675,6 +675,14 @@ process_companies <- function(ciks, dest_table = "companies",
 
   if (write_to_db) {
     db <- dbConnect(duckdb::duckdb(), dbdir = dbdir, read_only = FALSE)
+    if (dest_table %in% dbListTables(db)) {
+      col_info <- dbGetQuery(db, str_c("DESCRIBE ", dest_table))
+      if ("lei" %in% col_info$column_name &&
+          col_info$column_type[col_info$column_name == "lei"] != "VARCHAR") {
+        dbExecute(db, str_c("ALTER TABLE ", dest_table,
+                            " ALTER lei TYPE VARCHAR"))
+      }
+    }
     dbWriteTable(db, dest_table, companies, append = TRUE)
     dbWriteTable(db, "addresses", addresses, append = TRUE)
     dbWriteTable(db, "tickers", tickers, append = TRUE)
@@ -815,6 +823,7 @@ We use `append = TRUE` to indicate that the data are to be added to whatever dat
 The code then returns to the beginning of the loop, where `get_ciks()` will examine the newly updated contents of `companies` so that only unprocessed CIKs are returned.
 
 ```{r}
+#| eval: false
 while (length(ciks <- get_ciks(dest_table = "companies", 
                                            n_ciks = 100)) > 0) {
   process_companies(ciks, dest_table = "companies")
@@ -827,6 +836,7 @@ The while-loop for `filings` is similar.
 The `cik_to_filings()` function takes the place of `get_company_data()` and there is no need to split the data into separate tables.
 
 ```{r}
+#| eval: false
 while (length(ciks <- get_ciks(dest_table = "filings")) > 0) {
   process_filings(ciks, "filings")
 }
@@ -887,6 +897,7 @@ db_to_parquet <- function(db, table, data_path) {
 With `db_to_parquet()` in hand, it is easy to connect to the database and export the four tables.
 
 ```{r}
+#| eval: false
 db <- dbConnect(duckdb::duckdb(), dbdir = db_path, read_only = TRUE)
 
 db_to_parquet(db, table = "companies", data_path = pq_path)
@@ -912,4 +923,3 @@ dbDisconnect(db)
 ```
 
 ## References {-}
-
