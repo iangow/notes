@@ -1,46 +1,249 @@
 ---
-title: "Operating leverage"
-id: sec-bb68
-engine: jupyter
-jupyter: notes
-author: 
-  - name: Ian D. Gow
-    orcid: 0000-0002-6243-8409
-    email: iandgow@gmail.com
-date: 2025-12-22
+title: "Operating leverage and economies of scale"
+id: sec-op-lev
+author: Ian D. Gow
+date: 2026-05-14
+date-format: "D MMMM YYYY"
 number-sections: true
+categories: ["Accounting", "Economics"]
 format:
   html:
-    default
-  pdf: 
-    include-in-header:
-      text: |
-        \usepackage[group-digits = integer, group-separator={,}, group-minimum-digits = 4]{siunitx}
-        \deffootnote{1.6em}{1.6em}{\thefootnotemark.\enskip}
-        \addtokomafont{disposition}{\rmfamily}
-        \newcommand{\indexc}[1]{\index{#1@\texttt{#1}}}
     colorlinks: true
-    geometry:
-      - left=2cm
-      - right=2cm
+  typst:
+    colorlinks: true
+    linkcolor: "#0000FF"
+    fig-format: pdf
+    margin:
+      x: 2.5cm
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
-bibliography: papers.bib
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    monofont: Menlo
+execute:
+  freeze: auto
 ---
 
-My younger daughter is back from her first semester of college and one item on her vacation reading list is [*Expectations Investing*](https://www.expectationsinvesting.com) by Michael J. Mauboussin and Alfred Rappaport.
-According to the website for the book, "Mauboussin and Rappaport apply an 'expectations infrastructure' framework to trace the process of value creation from the basic economic forces that shape a company's performance—sales, costs, and investments—to the resulting impact on value drivers."
+```{r}
+#| message: false
+library(tidyverse)
+library(scales)
+```
 
-I'm completely onboard with the value of the expectations infrastructure, not only for investing, but also for managing a business.
-In the late 1990s, I worked at Stern Stewart, then a world-leading firm in the business of applying ideas from corporate finance to performance measurement, decision-making, and executive compensation.
-I started in the Sydney office shortly after it opened in May 1997 then transferred to the New York office in early 1999.
-Much of what Stern Stewart did centred on EVA (economic value-added), a registered trademark for what is also known as economic profit or residual income.
+# Outline
 
-One use for the expectations infrastructure at Stern Stewart was in setting performance targets for executive compensation.
-Glossing over many details, we would extract the expected levels of EVA from the stock price and set EVA performance targets based on these.
-At times, this approach could be challenging.
-For example, I spent a couple of months from August 2000 working on an "EVA recalibration" for ADC Telecommunications, then a manufacturer of telecommunications network equipment based in Eden Prairie, Minnesota.
+1. Start with a simple Melbourne cafe.
+   The cafe has rent, staff, and machines in place for the day.
+   Once those commitments are made, the main variable cost is the cost of making each additional coffee.
+2. Define the cost categories.
+   Fixed costs do not change with the number of coffees sold over the relevant range.
+   Variable costs do change with the number of coffees sold.
+3. Explain operating leverage.
+   If fixed costs are large relative to variable costs, a change in sales can produce a larger percentage change in profit.
+4. Explain economies of scale.
+   Economies of scale mean that the average cost of production falls as the scale of production increases.
+   They are not the same thing as operating leverage.
+5. Explain capacity utilization.
+   A cafe can have strong operating leverage when it is below capacity.
+   Once capacity binds, more demand does not automatically translate into more sales unless the cafe adds capacity.
+6. Use a small numerical example and two simple figures to keep the distinction clear.
 
-Apart from the accents and the cold (October felt like winter in New York), my recollection of the details is a bit hazy.
-But the idea of an EVA recalibration is that ADCT must have adopted EVA some years prior with EVA targets set for some years into the future, but as time passed, it would necessary 
+# A cafe with fixed daily commitments
+
+Suppose a Melbourne cafe is set up for the day with baristas, rent, and coffee machines already committed.
+These costs are fixed for the day in the sense that they do not change merely because the cafe sells 400, 700, or 960 coffees.
+The cafe may have to make different choices next week or next month, but for today's decision those costs are already in place.
+
+For a simple example, use the following assumptions:
+
+```{r}
+cafe_inputs <-
+  tibble(
+    item = c("Price per coffee",
+             "Variable cost per coffee",
+             "Daily fixed cost",
+             "Daily capacity"),
+    value = c(5, 1.30, 1060, 960),
+    unit = c("A$ per cup", "A$ per cup", "A$ per day", "cups per day")
+  )
+
+cafe_inputs
+```
+
+These numbers are based on a small spreadsheet example: price is A$5 per coffee, variable cost is A$1.30 per coffee, daily fixed cost is A$1,060, and daily capacity is 960 cups.
+The variable cost includes coffee, milk, and a small amount for electricity and other costs that move with volume.
+The fixed cost includes wages, rent, and depreciation for the day.
+
+The contribution margin is therefore A$3.70 per coffee:
+
+```{r}
+price <- 5
+variable_cost <- 1.30
+fixed_cost <- 1060
+capacity <- 960
+contribution_margin <- price - variable_cost
+contribution_margin
+```
+
+Each additional coffee sold, while the cafe has spare capacity, adds A$3.70 to profit.
+This is why fixed costs create operating leverage.
+The fixed costs have already been incurred, so extra sales mostly flow through to profit after covering variable costs.
+
+# Fixed and variable costs
+
+The distinction between fixed and variable costs always depends on the decision horizon and the relevant range.
+Daily rent is fixed for the day.
+Staff rostered for an eight-hour shift may also be fixed for the day.
+Milk and coffee beans are variable because using more of them is tied closely to making more coffees.
+
+This does not mean rent and labour are fixed forever.
+Over a longer period, the owner can sign a different lease, change opening hours, hire more staff, or buy another machine.
+The same cost can therefore be fixed for one decision and variable for another.
+
+# Operating leverage
+
+Operating leverage describes how sensitive profit is to changes in sales.
+It is high when a business has large fixed costs and a high contribution margin.
+
+In the cafe example, compare three possible levels of demand:
+
+```{r}
+cafe_scenarios <-
+  tibble(
+    demand = c(400, 700, 1000),
+    probability = c(0.5, 0.3, 0.2)
+  ) |>
+  mutate(
+    cups_sold = pmin(demand, capacity),
+    revenue = price * cups_sold,
+    variable_costs = variable_cost * cups_sold,
+    contribution = revenue - variable_costs,
+    fixed_costs = fixed_cost,
+    profit = contribution - fixed_costs,
+    capacity_utilization = cups_sold / capacity
+  )
+
+cafe_scenarios
+```
+
+At 400 coffees, the cafe earns a profit of A$420.
+At 700 coffees, profit rises to A$1,530.
+At 960 coffees, profit rises to A$2,492.
+The third demand case is 1,000 coffees, but the cafe can only sell 960 without adding capacity.
+
+The key point is that profit rises faster than revenue while the cafe has spare capacity.
+Going from 400 to 700 cups increases revenue by 75 percent, from A$2,000 to A$3,500.
+Profit rises by 264 percent, from A$420 to A$1,530.
+That is operating leverage.
+
+# Economies of scale
+
+Economies of scale are different.
+A business has economies of scale when average cost falls as the scale of production rises.
+This can happen for many reasons: larger equipment, purchasing power, specialization, better scheduling, or spreading fixed setup costs over more units.
+
+The cafe example does show falling average cost over the day as more coffees are sold:
+
+```{r}
+scale_table <-
+  tibble(cups_sold = seq(100, capacity, by = 100)) |>
+  bind_rows(tibble(cups_sold = capacity)) |>
+  distinct() |>
+  mutate(
+    total_cost = fixed_cost + variable_cost * cups_sold,
+    average_cost = total_cost / cups_sold,
+    profit = price * cups_sold - total_cost
+  )
+
+scale_table
+```
+
+But that pattern is mostly the arithmetic of spreading the same daily fixed cost over more cups.
+It does not necessarily mean the cafe has a lower-cost technology at larger scale.
+If the cafe wants to sell beyond 960 cups, it may need more workers, another machine, more space, or longer opening hours.
+At that point the cost structure changes.
+
+So a cafe can have operating leverage without much in the way of true economies of scale.
+Selling more coffees during the same day uses the existing setup more intensively.
+That is higher utilization of existing capacity.
+It is not the same as becoming a fundamentally lower-cost producer at larger scale.
+
+# Capacity utilization
+
+Capacity utilization is the share of available capacity that is actually used.
+In this example, selling 400 cups uses 42 percent of the cafe's 960-cup daily capacity.
+Selling 700 cups uses 73 percent.
+Selling 960 cups uses 100 percent.
+
+Below capacity, extra demand increases sales and profit.
+At capacity, extra demand does not increase sales unless the cafe changes something.
+That change might be adding staff, buying another machine, extending hours, or opening another location.
+Those decisions can create a new cost structure, but they are not automatic.
+
+This is why capacity utilization is useful when discussing operating leverage.
+Operating leverage is strongest when a business has unused capacity and high contribution margins.
+Once capacity binds, the simple operating-leverage story stops.
+
+# Figures
+
+@fig-profit shows the basic operating leverage picture.
+Revenue and variable costs rise with sales.
+Fixed costs are flat.
+Profit rises steeply after the cafe passes break-even, but only until capacity is reached.
+
+```{r}
+#| label: fig-profit
+#| fig-cap: "Daily cafe economics below and at capacity"
+#| fig-alt: "A line chart showing revenue, total cost, and profit for a cafe as cups sold increase to capacity."
+#| echo: true
+plot_data <-
+  tibble(cups_sold = seq(0, capacity, by = 20)) |>
+  mutate(
+    revenue = price * cups_sold,
+    total_cost = fixed_cost + variable_cost * cups_sold,
+    profit = revenue - total_cost
+  ) |>
+  pivot_longer(c(revenue, total_cost, profit),
+               names_to = "series",
+               values_to = "amount")
+
+plot_data |>
+  ggplot(aes(x = cups_sold, y = amount, colour = series)) +
+  geom_hline(yintercept = 0, linewidth = 0.3, colour = "grey60") +
+  geom_line(linewidth = 0.8) +
+  scale_colour_brewer(palette = "Dark2", name = NULL) +
+  scale_y_continuous(labels = label_dollar(prefix = "A$")) +
+  labs(x = "Cups sold per day", y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+@fig-average-cost shows the falling average cost pattern from using the same daily setup more intensively.
+This is useful, but it should not be overinterpreted.
+It is a within-capacity average cost curve, not proof that a larger cafe has better scale economics.
+
+```{r}
+#| label: fig-average-cost
+#| fig-cap: "Average cost falls as fixed daily costs are spread over more cups"
+#| fig-alt: "A line chart showing average cost per cup falling as cups sold increase."
+#| echo: true
+scale_table |>
+  ggplot(aes(x = cups_sold, y = average_cost)) +
+  geom_line(linewidth = 0.8, colour = "#1B9E77") +
+  geom_point(size = 1.8, colour = "#1B9E77") +
+  scale_y_continuous(labels = label_dollar(prefix = "A$")) +
+  labs(x = "Cups sold per day", y = "Average cost per cup") +
+  theme_minimal()
+```
+
+# Summary
+
+Fixed costs are costs that do not vary with output over the relevant range.
+Variable costs move with output.
+Operating leverage arises when fixed costs are large enough that extra sales have a large effect on profit.
+Economies of scale arise when a larger scale of production lowers average cost.
+Capacity utilization measures how much of the existing setup is being used.
+
+The Melbourne cafe has operating leverage because rent, rostered labour, and equipment costs are fixed for the day.
+It does not necessarily have economies of scale.
+Higher sales may simply mean that the cafe is using the same staff, space, and machines more fully.
+To show economies of scale, we would need evidence that a larger cafe, or a larger chain of cafes, can make each coffee at lower cost in a more durable way.
