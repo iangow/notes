@@ -268,7 +268,7 @@ div.csl-indent {
 <p>But even <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> draws the line at data collection.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> Figure 1-1 of <span class="citation" data-cites="Wickham:2023aa">Wickham et al. (<a href="#ref-Wickham:2023aa" role="doc-biblioref">2023</a>)</span> suggests that the “whole game” of data science kicks off with <em>Import</em>.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> But where do these imported data come from? Who collected them? Often data analysts are blessed with ready-to-import data sources. But sometimes the only way to get data is to <em>Collect</em> them ourselves.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
 <p>At first impression, it might seem that data collection is too dull a topic for data scientists to think much about and there is not much for writers of educational materials (e.g., textbooks) to say on the topic. But <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> seems to suggest otherwise. While its title is “Data organization in spreadsheets”, <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> could equally well be entitled “Data collection (with spreadsheets)” (and I have used the latter as the title for this note). <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> is a concise, well-written paper that provides a number of best practices for data collection and I highly recommend it.</p>
 <p>However, when I first saw <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span> <a href="https://kbroman.org/dataorg/">online</a> in 2016, I had a number of thoughts. I dutifully filed these as (somewhat obnoxious) issues on Karl Broman’s GitHub repository, but had no real expectation that Karl would address these.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> Instead I figured that I would write a short follow-up paper digging more deeply into issues that interested me. This document is that follow-up paper … a mere nine years later! In this note, I provide a different perspective on data collection—albeit one that I hope is complementary to that in <span class="citation" data-cites="Broman:2018aa">Broman and Woo (<a href="#ref-Broman:2018aa" role="doc-biblioref">2018</a>)</span>—with a detailed extended case study to illustrate the ideas I discuss.</p>
-<p>This note also completes the three-part series of notes written to address gaps in the coverage of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> <span class="citation" data-cites="Gow_2024">(<a href="#ref-Gow_2024" role="doc-biblioref">Gow and Ding, 2024</a>)</span> relative to <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> Previous notes covered <a href="../sec_submissions.html">hierarchical data</a> and <a href="../unpublished/datetimes.html">dates and times</a> and this note covers spreadsheets. As discussed in a <a href="https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ">post on LinkedIn</a>, one goal of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> (co-authored with <a href="https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding">Tony Ding</a>) is to provide a pathway to mastery of the contents of <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a>.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
+<p>This note also completes the three-part series of notes written to address gaps in the coverage of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> <span class="citation" data-cites="Gow_2024">(<a href="#ref-Gow_2024" role="doc-biblioref">Gow and Ding, 2024</a>)</span> relative to <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> Previous notes covered <a href="sec_submissions.html">hierarchical data</a> and <a href="datetimes.html">dates and times</a> and this note covers spreadsheets. As discussed in a <a href="https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ">post on LinkedIn</a>, one goal of <a href="https://iangow.github.io/far_book/"><em>Empirical Research in Accounting: Tools and Methods</em></a> (co-authored with <a href="https://fbe.unimelb.edu.au/our-people/staff/accounting/tongqing-ding">Tony Ding</a>) is to provide a pathway to mastery of the contents of <a href="https://r4ds.hadley.nz"><em>R for Data Science</em></a>.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
 <p>The application I study here uses spreadsheets as part of a process of linking data on IPOs in the United States with auditor IDs, as found in Form AP data.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> I also provide brief sketches of the use of spreadsheets in data collection drawing on research projects I have participated in.</p>
 <p>In writing this note, I use the packages listed below.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> This note was written using <a href="https://quarto.org">Quarto</a> and compiled with <a href="https://posit.co/products/open-source/rstudio/">RStudio</a>, an integrated development environment (IDE) for working with R. The source code for this note is available <a href="https://raw.githubusercontent.com/iangow/notes/main/spreadsheets.qmd">here</a> and the latest version of this PDF is <a href="https://raw.githubusercontent.com/iangow/notes/main/spreadsheets.pdf">here</a>.</p>
 <div class="cell">
@@ -456,29 +456,36 @@ Table&nbsp;2: Excel-exported CSV data
 <p>I will use DuckDB to work with data in this example, so I create a connection to an in-memory database here.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>db <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(duckdb<span class="sc">::</span><span class="fu">duckdb</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+ℹ /Users/igow/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+ℹ Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+ℹ See ?duckdb_storage for details and alternatives.</code></pre>
+</div>
 </div>
 <section id="ipo-data" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="ipo-data"><span class="header-section-number">3.1</span> IPO data</h2>
 <p>Nasdaq provides information about IPOs on its website. I have organized these data in two parquet files: <code>ipos.parquet</code> and <code>ipo_experts.parquet</code>. A copy of the <code>ipos.parquet</code> file can be found at <a href="https://go.unimelb.edu.au/2rq8" class="uri">https://go.unimelb.edu.au/2rq8</a> and a copy of the <code>ipos_experts.parquet</code> file can be found at <a href="https://go.unimelb.edu.au/hrq8" class="uri">https://go.unimelb.edu.au/hrq8</a>. If you want to follow along with the code below, you could download these data files into the <code>nasdaq</code> schema of a data repository organized along the lines of that I discuss in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502"><em>Empirical Research in Accounting: Tools and Methods</em></a> and then load them into a DuckDB database using code like this:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ipo_experts <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipo_experts"</span>, <span class="st">"nasdaq"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>ipos <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipos"</span>, <span class="st">"nasdaq"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ipo_experts <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipo_experts"</span>, <span class="st">"nasdaq"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ipos <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipos"</span>, <span class="st">"nasdaq"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Alternatively, you could put these two files in, say <code>~/ipo_auditors</code>, and then load them as follows:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ipo_experts <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipo_experts"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ipos <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipos"</span>, <span class="st">"nasdaq"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ipo_experts <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipo_experts"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>ipos <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"ipos"</span>, <span class="st">"nasdaq"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>For example, details about the IPO of Galmed Pharmaceuticals Ltd.&nbsp;(GLMD) on 13 March 2014 can be found at <a href="https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581" class="uri">https://www.nasdaq.com/market-activity/ipos/overview?dealId=926632-74581</a> and these data are also found in the <code>ipo.parquet</code> file. There are 4,409 rows in <code>ipos.parquet</code> and each row represents an IPO identified by the primary key column <code>dealID</code>.</p>
 <p>The Nasdaq page also includes information about the “experts” associated with each IPO and this information is contained in <code>ipo_experts.parquet</code>. I collect some statistics on these deals in <code>expert_counts</code> and show the results in <a href="#tbl-expert-stats" class="quarto-xref">Table&nbsp;3</a>. As can be seen from the <code>n_deals</code> column, every IPO has an auditor, a company counsel, and a transfer agent, with some deals having more than one of these. It can be inferred from <a href="#tbl-expert-stats" class="quarto-xref">Table&nbsp;3</a> that the typical IPO has multiple underwriters.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>expert_counts <span class="ot">&lt;-</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  ipo_experts <span class="sc">|&gt;</span> </span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(role) <span class="sc">|&gt;</span> </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">n_deals =</span> <span class="fu">n_distinct</span>(dealID), </span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_rows =</span> <span class="fu">n</span>(),</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(n_deals))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>expert_counts <span class="ot">&lt;-</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  ipo_experts <span class="sc">|&gt;</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(role) <span class="sc">|&gt;</span> </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">n_deals =</span> <span class="fu">n_distinct</span>(dealID), </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_rows =</span> <span class="fu">n</span>(),</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(n_deals))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
 <div id="tbl-expert-stats" class="cell quarto-float quarto-figure quarto-figure-center anchored">
@@ -498,19 +505,19 @@ Table&nbsp;3: Statistics for different kinds of experts
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">TransferAgent</td>
+<td style="text-align: right;">4,409</td>
+<td style="text-align: right;">5,901</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Auditor</td>
 <td style="text-align: right;">4,409</td>
 <td style="text-align: right;">4,621</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">CompanyCounsel</td>
 <td style="text-align: right;">4,409</td>
 <td style="text-align: right;">4,874</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">TransferAgent</td>
-<td style="text-align: right;">4,409</td>
-<td style="text-align: right;">5,901</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">LeadUnderwriter</td>
@@ -553,19 +560,19 @@ Table&nbsp;4: Statistics for IPOs without lead underwriters
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">Underwriter</td>
+<td style="text-align: right;">96</td>
+<td style="text-align: right;">249</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Auditor</td>
 <td style="text-align: right;">96</td>
 <td style="text-align: right;">115</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">CompanyCounsel</td>
 <td style="text-align: right;">96</td>
 <td style="text-align: right;">109</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Underwriter</td>
-<td style="text-align: right;">96</td>
-<td style="text-align: right;">249</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">TransferAgent</td>
@@ -647,14 +654,14 @@ Table&nbsp;5: Experts associated with GLMD IPO
 <p>First, there appear to be “two auditors”, albeit with names that appear to differ only in the point at which the names are truncated with “<code>...</code>”. Second, there are no identifiers for the experts other than their names. Names are problematic for many reasons. Firms can change names. Names can be abbreviated in different ways or misspelt or change in subtle ways that are not obvious to a human reader, but that make them unusable as identifiers in code. Third, at least for some expert types, there can be more than one expert for a given IPO.</p>
 <p>Before moving onto the data on auditors provided on Form APs, I compile data on auditors and IPOs from the IPO data and store it in <code>ipo_auditors</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ipo_auditors <span class="ot">&lt;-</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  ipos <span class="sc">|&gt;</span> </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, companyName, CIK, pricedDate, CompanyAddress) <span class="sc">|&gt;</span> </span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipo_experts, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(role <span class="sc">==</span> <span class="st">"Auditor"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cik =</span> CIK) <span class="sc">|&gt;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>role) <span class="sc">|&gt;</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ipo_auditors <span class="ot">&lt;-</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  ipos <span class="sc">|&gt;</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, companyName, CIK, pricedDate, CompanyAddress) <span class="sc">|&gt;</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipo_experts, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(role <span class="sc">==</span> <span class="st">"Auditor"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cik =</span> CIK) <span class="sc">|&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>role) <span class="sc">|&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="form-ap-data" class="level2" data-number="3.2">
@@ -662,23 +669,23 @@ Table&nbsp;5: Experts associated with GLMD IPO
 <p>According to the <a href="https://pcaobus.org/oversight/standards/implementation-resources-PCAOB-standards-rules/form-ap-auditor-reporting-certain-audit-participants">PCAOB</a>, “registered audit firms are required to submit Form AP, <em>Auditor Reporting of Certain Audit Participants</em>, to disclose the names of engagement partners and other accounting firms that participated in their audits of public companies.” The PCAOB provides a database constructed from Form AP filings on its website and I have written about this in a <a href="../form_ap_names.html">previous note</a>. The Form AP database is contained in the file <code>form_aps.parquet</code> that I have made available at <a href="https://go.unimelb.edu.au/4iq8" class="uri">https://go.unimelb.edu.au/4iq8</a>.</p>
 <p>Again you could download this data file into the <code>pcaob</code> schema of a data repository organized along the lines of that I discuss in <a href="https://iangow.github.io/far_book/parquet-wrds.html">Appendix E</a> of <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502"><em>Empirical Research in Accounting: Tools and Methods</em></a> and then load it into a DuckDB database using code like this:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>form_aps <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"form_aps"</span>, <span class="st">"pcaob"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>form_aps <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"form_aps"</span>, <span class="st">"pcaob"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Alternatively, you could put this file in (say) <code>~/ipo_auditors</code> and then load it as follows:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>form_aps <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"form_aps"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>form_aps <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="st">"form_aps"</span>, <span class="at">data_dir =</span> <span class="st">"~/ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We can collect auditor IDs associated with each CIK from <code>form_aps</code>. Of course, firms change auditors over time, but if we are interested in the auditors at the time of IPO, it might make sense to pick the first auditor associated with each CIK.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a> I close this subsection by creating <code>first_auditors</code>, a data frame with information on the first auditor for each issuer:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>first_auditors <span class="ot">&lt;-</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(issuer_cik) <span class="sc">|&gt;</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(audit_report_date <span class="sc">==</span> <span class="fu">min</span>(audit_report_date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cik =</span> issuer_cik) <span class="sc">|&gt;</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cik =</span> <span class="fu">if_else</span>(cik <span class="sc">==</span> <span class="st">"9999999999"</span>, <span class="cn">NA</span>, cik)) <span class="sc">|&gt;</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, firm_id, firm_name, firm_country, audit_report_date) <span class="sc">|&gt;</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>first_auditors <span class="ot">&lt;-</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(issuer_cik) <span class="sc">|&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(audit_report_date <span class="sc">==</span> <span class="fu">min</span>(audit_report_date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cik =</span> issuer_cik) <span class="sc">|&gt;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cik =</span> <span class="fu">if_else</span>(cik <span class="sc">==</span> <span class="st">"9999999999"</span>, <span class="cn">NA</span>, cik)) <span class="sc">|&gt;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cik, firm_id, firm_name, firm_country, audit_report_date) <span class="sc">|&gt;</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="creating-the-link-table" class="level2" data-number="3.3">
@@ -686,36 +693,36 @@ Table&nbsp;5: Experts associated with GLMD IPO
 <p>I now move onto the task of creating a <strong>link table</strong> between the IPO data and the Form AP data. Even if the ultimate goal is to produce a data set drawing on data on both IPOs and auditors, it is important to view the production of a link table as the final product of the linking task. In its simplest form, a link table contains primary-key values from each of the two data sources with the appropriate primary key being driven by the level at which observations are being linked.<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a> In the current context, we want to link each IPO—identified by <code>dealID</code>—with the auditor in the Form AP database.</p>
 <p>In the Form AP database, an auditor is identified by <code>firm_id</code>. It interesting to note that this is the case even though <code>firm_id</code> is in no way a primary key for the <code>form_aps</code> table. Instead, we might think of <code>firm_id</code> as the primary key of a <em>hypothetical</em> <code>auditors</code> table and we can create this table ourselves as follows:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>auditors <span class="ot">&lt;-</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(firm_id) <span class="sc">|&gt;</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">window_order</span>(<span class="fu">desc</span>(audit_report_date)) <span class="sc">|&gt;</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_name =</span> <span class="fu">first</span>(firm_name),</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">firm_country =</span> <span class="fu">first</span>(firm_country)) <span class="sc">|&gt;</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(firm_id, firm_name, firm_country) <span class="sc">|&gt;</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>auditors <span class="ot">&lt;-</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">window_order</span>(<span class="fu">desc</span>(audit_report_date)) <span class="sc">|&gt;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_name =</span> <span class="fu">first</span>(firm_name),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">firm_country =</span> <span class="fu">first</span>(firm_country)) <span class="sc">|&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(firm_id, firm_name, firm_country) <span class="sc">|&gt;</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>By construction, <code>firm_id</code> is the primary key for this <code>auditors</code> table. I include the names and countries for each audit firm to facilitate data collection later on. Because firms can change names over time, I use the latest name on <code>form_aps</code> for each <code>firm_id</code>.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a></p>
 <section id="name-based-links" class="level3" data-number="3.3.1">
 <h3 data-number="3.3.1" class="anchored" data-anchor-id="name-based-links"><span class="header-section-number">3.3.1</span> Name-based links</h3>
 <p>I start by matching the data on IPOs with data on auditors using CIKs. I conjecture that, if a match between <code>expertName</code> (from the IPO data) and <code>firm_id</code> and <code>firm_name</code> (from the Form AP data) shows up many times, there’s a good chance that it’s valid match. In constructing <code>top_matches</code>, I require that a match be present at least five times. This threshold is arbitrary, but it’s just a starting point in two ways. First, I will apply some judgement to the matches before flagging them as valid. Second, I will come back to additional candidate matches in subsequent analyses.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>top_matches <span class="ot">&lt;-</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  ipo_auditors <span class="sc">|&gt;</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(first_auditors, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(firm_name)) <span class="sc">|&gt;</span> </span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(firm_id, expertName, firm_name, <span class="at">sort =</span>  <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>top_matches <span class="ot">&lt;-</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  ipo_auditors <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(first_auditors, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(firm_name)) <span class="sc">|&gt;</span> </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(firm_id, expertName, firm_name, <span class="at">sort =</span>  <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I will use a Google Sheets document to collect the data. In the past in similar situations, I have often taken data such as that in <code>top_matches</code> and exported it to a CSV file that I then open in Google Sheets. Here I instead chose to create a new Google Sheets file using the <code>gs4_create()</code> from <code>googlesheets4</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">gargle_oauth_email =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors <span class="ot">&lt;-</span> <span class="fu">gs4_create</span>(<span class="at">name =</span> <span class="st">"ipo-auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">gargle_oauth_email =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors <span class="ot">&lt;-</span> <span class="fu">gs4_create</span>(<span class="at">name =</span> <span class="st">"ipo-auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Typing <code>gs_ipo_auditors</code> at the R console provides some information about the (initially empty) Google Sheets document:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <pre><code>── &lt;googlesheets4_spreadsheet&gt; ─────────────────────────────────────────────────────────────────────────
 Spreadsheet name: ipo-auditors                                
@@ -729,17 +736,17 @@ Spreadsheet name: ipo-auditors
       Sheet1: 1000 x 26</code></pre>
 <p>After I’ve created the Google Sheets file, I can access it using the key seen in the output above:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors <span class="ot">&lt;-</span> <span class="fu">as_sheets_id</span>(<span class="st">"1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>gs_ipo_auditors <span class="ot">&lt;-</span> <span class="fu">as_sheets_id</span>(<span class="st">"1m2F4nnhJyg81gj17-h3JWeeSbd4eyRP_SUYlX1OzR-8"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I can put the data from <code>top_matches</code> in the Google Sheets spreadsheet using <code>write_sheet()</code>. Note that this code will not work for you with my spreadsheet, as I have not given you writexaccess to that spreadsheet.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_sheet</span>(top_matches, <span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"top_matches"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_sheet</span>(top_matches, <span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"top_matches"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <pre><code>✔ Writing to ipo-auditors.
 ✔ Writing to sheet top_matches.</code></pre>
 <p>The next step I took was to open the spreadsheet in a browser:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gs4_browse</span>(gs_ipo_auditors)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gs4_browse</span>(gs_ipo_auditors)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I then inserted a new column <code>valid</code> to the right of the existing columns. I also renamed the sheet from <code>top_matches</code> to <code>name_matches</code>.<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a> I inspected the matches and classified those rows that looked good as valid by putting the value <code>TRUE</code> in the <code>valid</code> column. Most of the first 30 or so rows looked good. But a match of the <code>expertName</code> of “Ernst &amp; Young LLP” with the <code>firm_name</code> of “KPMG LLP” is clearly not valid, so I put <code>FALSE</code> in the <code>valid</code> column for this case.<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a></p>
 <p>Later I added more candidate matches to the <code>name_matches</code> sheet and marked as valid all those that looked good. In some cases it made sense to use the <a href="https://pcaobus.org/resources/auditorsearch">AuditorSearch</a> functionality provided by the PCAOB or to investigate data in SEC filings or the Form AP database.<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a> Note that I retained all variants of <code>expertName</code> in the IPO data so that name-based matches can be found for such variants.</p>
@@ -748,16 +755,16 @@ Spreadsheet name: ipo-auditors
 <h3 data-number="3.3.2" class="anchored" data-anchor-id="problematic-name-based-links"><span class="header-section-number">3.3.2</span> Problematic name-based links</h3>
 <p>The next step I took was to look at cases where <code>expertName</code> was associated with more than one distinct <code>firm_id</code> value.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>top_matches_processed <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"top_matches"</span>)</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>top_match_problems <span class="ot">&lt;-</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  top_matches_processed <span class="sc">|&gt;</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(expertName) <span class="sc">|&gt;</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(firm_id) <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>valid) <span class="sc">|&gt;</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(expertName, <span class="fu">desc</span>(n))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>top_matches_processed <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"top_matches"</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>top_match_problems <span class="ot">&lt;-</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  top_matches_processed <span class="sc">|&gt;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(expertName) <span class="sc">|&gt;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(firm_id) <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>valid) <span class="sc">|&gt;</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(expertName, <span class="fu">desc</span>(n))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Looking at <a href="#tbl-top-match-problems" class="quarto-xref">Table&nbsp;6</a>, we see that there are multiple <code>firm_id</code> values for some values of <code>expertName</code> even when we have deemed a match to be valid.<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a></p>
 <div class="cell">
@@ -903,7 +910,7 @@ Table&nbsp;7: Countries of firms in <code>top_match_problems</code>
 </tr>
 </tbody>
 </table>
-<p>Translation: Deloitte S.E.N.C.R.L./s.r.l.) |Canada | | 42|Ernst &amp; Young LLP |United States | | 1438|Ernst &amp; Young LLP |United Kingdom | | 711|Friedman LLP |United States | | 185|KPMG LLP |United States | | 85|KPMG LLP |Canada | | 1118|KPMG LLP |United Kingdom | | 5395|Marcum Asia CPAs LLP |United States | | 238|PricewaterhouseCoopers LLP |United States | | 876|PricewaterhouseCoopers LLP |United Kingdom |</p>
+<p>Translation: Deloitte S.E.N.C.R.L./s.r.l.) |Canada | | 42|Ernst &amp; Young LLP |United States | | 1438|Ernst &amp; Young LLP |United Kingdom | | 711|Friedman LLP |United States | | 85|KPMG LLP |Canada | | 1118|KPMG LLP |United Kingdom | | 185|KPMG LLP |United States | | 5395|Marcum Asia CPAs LLP |United States | | 876|PricewaterhouseCoopers LLP |United Kingdom | | 238|PricewaterhouseCoopers LLP |United States |</p>
 </div>
 </div>
 </figure>
@@ -915,35 +922,35 @@ Table&nbsp;7: Countries of firms in <code>top_match_problems</code>
 <p>One approach to handling these cases would be to get information on countries from the IPO data and use that to distinguish the <code>firm_id</code> values to be used for cases with multiple apparent name-based matches. However, given the relatively small number of non-US matches to be handled, I instead chose to grab the <code>dealID</code> values for those cases and proceed to validate matches on a deal-by-deal basis.</p>
 <p>To start with, I identified the most common <code>firm_id</code> value for each <code>expertName</code>. In effect, I will set these as the default for the name-based matches.<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>top_match_problem_top_ids <span class="ot">&lt;-</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  top_match_problems <span class="sc">|&gt;</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(expertName) <span class="sc">|&gt;</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">==</span> <span class="fu">max</span>(n, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(firm_id) <span class="sc">|&gt;</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>()</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>top_match_problem_top_ids</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>top_match_problem_top_ids <span class="ot">&lt;-</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  top_match_problems <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(expertName) <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">==</span> <span class="fu">max</span>(n, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>()</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>top_match_problem_top_ids</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1]   34   42  185 5395  238</code></pre>
 </div>
 </div>
 <p>I then collect data on all other cases where <code>expertName</code> is in <code>top_match_problems</code> and there is some match to Form AP data (i.e., <code>firm_name</code> is present).</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>top_match_problems_countries <span class="ot">&lt;-</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  ipo_auditors <span class="sc">|&gt;</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(first_auditors, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span>  </span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(expertName <span class="sc">%in%</span> top_match_problems<span class="sc">$</span>expertName,</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span>firm_id <span class="sc">%in%</span> top_match_problem_top_ids,</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span><span class="fu">is.na</span>(firm_name)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>top_match_problems_countries <span class="ot">&lt;-</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  ipo_auditors <span class="sc">|&gt;</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(first_auditors, <span class="at">by =</span> <span class="st">"cik"</span>) <span class="sc">|&gt;</span>  </span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(expertName <span class="sc">%in%</span> top_match_problems<span class="sc">$</span>expertName,</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span>firm_id <span class="sc">%in%</span> top_match_problem_top_ids,</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span><span class="fu">is.na</span>(firm_name)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I then export data related to these matches to an additional tab <code>deal_matches_add</code> that I can use to verify candidate matches for each <code>dealID</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>top_match_problems_countries <span class="sc">|&gt;</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, cik, CompanyAddress, firm_id, firm_name, </span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>         firm_country, audit_report_date) <span class="sc">|&gt;</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"deal_matches_add"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>top_match_problems_countries <span class="sc">|&gt;</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, cik, CompanyAddress, firm_id, firm_name, </span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>         firm_country, audit_report_date) <span class="sc">|&gt;</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"deal_matches_add"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In this case, I renamed this sheet to <code>deal_matches</code>, added a <code>valid</code> column much as before, and also added additional columns such as <code>sec_filings</code> and <code>notes</code>. I use <code>sec_filings</code> to create a formula-based hyperlink to the SEC filings around the time of the IPO that I can use to check cases where the information in the spreadsheet does not suffice to give me confidence in validating a match. Looking at the formula for cells with “SEC Filings” in the <code>sec_filings</code> column of the <code>deal_matches</code> sheet, you will see that the formula keys off values in <code>cik</code> and <code>pricedDate</code> to make it easy to get to the relevant filings.<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a> When I locate a filing with the necessary supporting information to make a call on whether a candidate match is value, I can include a link to that filing in the <code>notes</code> column of the spreadsheet.<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a> It is relatively straightforward to inspect the IPO prospectus and look for the auditor’s sign-off, which will mention the office (e.g., “London, United Kingdom”) that applies and the associated value can be entered under <code>firm_id</code> and <code>valid</code> can be set to <code>TRUE</code>.</p>
 <p>I repeated variants on the steps above until the tabs <code>name_matches</code> and <code>deal_matches</code> contained a fairly complete set of data on both name-based and deal-level matches of each IPO with the <code>firm_id</code> value for the auditor at the time of the IPO.</p>
@@ -952,35 +959,35 @@ Table&nbsp;7: Countries of firms in <code>top_match_problems</code>
 <h3 data-number="3.3.4" class="anchored" data-anchor-id="combining-data-to-produce-the-link-table"><span class="header-section-number">3.3.4</span> Combining data to produce the link table</h3>
 <p>Haivng populated <code>name_matches</code> and <code>deal_matches</code> with data on valid matches, the next step is to use the data in these sheets to create a link table between IPOs and <code>firm_id</code> values. We can start by loading data from the two key sheets in our Google Sheets file.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>name_matches <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"name_matches"</span>)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>deal_matches <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"deal_matches"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>name_matches <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"name_matches"</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>deal_matches <span class="ot">&lt;-</span> <span class="fu">read_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"deal_matches"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I start by loading the valid deal-level matches of IPOs to auditors. I label these as <code>"manual"</code> matches and store them in <code>deal_matches_processed</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>deal_matches_processed <span class="ot">&lt;-</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  deal_matches <span class="sc">|&gt;</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, firm_id) <span class="sc">|&gt;</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match_type =</span> <span class="st">"manual"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>deal_matches_processed <span class="ot">&lt;-</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  deal_matches <span class="sc">|&gt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match_type =</span> <span class="st">"manual"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I then process the name-based matches that I will use later on. Note that I give priority to deal-level matches: if an IPO has a valid match in <code>deal_matches</code>, I do not consider a potential match using names in <code>name_matches</code>. This is accomplished by putting all valid matches from <code>deal_matches</code> in <code>deal_matches_processed</code> and then using an anti-join when constructing <code>name_matches_processed</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>name_matches_processed <span class="ot">&lt;-</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  name_matches <span class="sc">|&gt;</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(firm_id, expertName) <span class="sc">|&gt;</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipo_auditors, <span class="at">by =</span> <span class="st">"expertName"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match_type =</span> <span class="st">"name-based"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(deal_matches_processed, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, firm_id, match_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>name_matches_processed <span class="ot">&lt;-</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  name_matches <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(valid) <span class="sc">|&gt;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(firm_id, expertName) <span class="sc">|&gt;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipo_auditors, <span class="at">by =</span> <span class="st">"expertName"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">match_type =</span> <span class="st">"name-based"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(deal_matches_processed, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, firm_id, match_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Having constructed <code>deal_matches_processed</code> and <code>name_matches_processed</code>, we can combine them using <code>union_all()</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>all_matches <span class="ot">&lt;-</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  deal_matches_processed <span class="sc">|&gt;</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">union_all</span>(name_matches_processed) <span class="sc">|&gt;</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(<span class="at">dest =</span> db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"all_matches"</span>,</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>all_matches <span class="ot">&lt;-</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  deal_matches_processed <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">union_all</span>(name_matches_processed) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">copy_to</span>(<span class="at">dest =</span> db, <span class="at">df =</span> _, <span class="at">name =</span> <span class="st">"all_matches"</span>,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Based on the data in the spreadsheet, <code>all_matches</code> is effectively the final link table.</p>
 </section>
@@ -991,39 +998,39 @@ Table&nbsp;7: Countries of firms in <code>top_match_problems</code>
 <p>I then compile data on all auditors associated with each issuer CIK, including the names and countries, and store the result in <code>all_ipo_auditors</code>. I store the <code>firm_id</code>, <code>firm_name</code> and <code>firm_country</code> values for each auditor for each firm in list columns.</p>
 <p>List columns in DuckDB are very much like their counterparts in R.<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a> Unfortunately, <code>dbplyr</code> does not provide the interface we need to directly invoke the <code>list()</code> aggregate with an <code>ORDER BY</code> clause. Fortunately, we can use <code>sql()</code> to inject precisely the SQL we need.<a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>all_ipo_auditors <span class="ot">&lt;-</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(issuer_cik, firm_id) <span class="sc">|&gt;</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(auditors, <span class="at">by =</span> <span class="st">"firm_id"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(issuer_cik) <span class="sc">|&gt;</span></span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_ids =</span> <span class="fu">sql</span>(<span class="st">"list(firm_id ORDER BY firm_id)"</span>),</span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_names =</span> <span class="fu">sql</span>(<span class="st">"list(firm_name ORDER BY firm_id)"</span>),</span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_countries =</span> <span class="fu">sql</span>(<span class="st">"list(firm_country ORDER BY firm_id)"</span>)</span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>all_ipo_auditors <span class="ot">&lt;-</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  form_aps <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(issuer_cik, firm_id) <span class="sc">|&gt;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(auditors, <span class="at">by =</span> <span class="st">"firm_id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(issuer_cik) <span class="sc">|&gt;</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_ids =</span> <span class="fu">sql</span>(<span class="st">"list(firm_id ORDER BY firm_id)"</span>),</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_names =</span> <span class="fu">sql</span>(<span class="st">"list(firm_name ORDER BY firm_id)"</span>),</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">firm_countries =</span> <span class="fu">sql</span>(<span class="st">"list(firm_country ORDER BY firm_id)"</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>I collect data on all name-based matches where the matched auditor in <code>firm_id</code> is not among the corresponding <code>firm_ids</code> found in <code>all_ipo_auditors</code> and store the result in <code>no_form_ap_matches</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>no_form_ap_matches <span class="ot">&lt;-</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  all_matches <span class="sc">|&gt;</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(match_type <span class="sc">==</span> <span class="st">"name-based"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipos, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, CIK, CompanyAddress, firm_id, pricedDate) <span class="sc">|&gt;</span></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">issuer_cik =</span> CIK) <span class="sc">|&gt;</span></span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(all_ipo_auditors, <span class="at">by =</span> <span class="st">"issuer_cik"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">list_contains</span>(firm_ids, firm_id)) <span class="sc">|&gt;</span></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>no_form_ap_matches <span class="ot">&lt;-</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  all_matches <span class="sc">|&gt;</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(match_type <span class="sc">==</span> <span class="st">"name-based"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(ipos, <span class="at">by =</span> <span class="st">"dealID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, CIK, CompanyAddress, firm_id, pricedDate) <span class="sc">|&gt;</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">issuer_cik =</span> CIK) <span class="sc">|&gt;</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(all_ipo_auditors, <span class="at">by =</span> <span class="st">"issuer_cik"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">list_contains</span>(firm_ids, firm_id)) <span class="sc">|&gt;</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Note that once IPOs have been added to the <code>deal_matches</code> tab, it probably makes sense to exclude them from <code>no_form_ap_matches</code> by adding a line such as <code>anti_join(deal_matches, copy = TRUE, by = "dealID")</code> after the <code>inner_join()</code> above.</p>
 <p>We can dump the data from <code>no_form_ap_matches</code> into a Google Sheets tab so that we can dig into them more deeply.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>no_form_ap_matches <span class="sc">|&gt;</span>  </span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(firm_ids, firm_names, firm_countries), as.character)) <span class="sc">|&gt;</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(dealID) <span class="sc">|&gt;</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"all_ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>no_form_ap_matches <span class="sc">|&gt;</span>  </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(firm_ids, firm_names, firm_countries), as.character)) <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(dealID) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"all_ipo_auditors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>To better understand how one can use the data that have been placed in the <code>all_ipo_auditors</code> tab, I describe how I used the data myself. The first thing I did was to copy the data from the <code>all_ipo_auditors</code> sheet over to the bottom of the <code>deal_matches</code> sheet. Initially I retained the column names in the data that I copied over so that I could check that the columns in the pasted data line up with those in the <code>deal_matches</code> tab. I then deleted the unnecessary extra row of column names once I had confirmed this. The next step was to code all these additional rows as invalid (i.e., by putting <code>FALSE</code> in the <code>valid</code> column) because these should not be used until they are confirmed. I now describe how I confirmed the data for two example IPOs.</p>
 <p>The first example IPO I considered was the NYSE IPO of Tamboran Resources Corp (<code>dealID</code> of <code>1295264-109998</code>). I first observed that the company has an Australian address.<a href="#fn33" class="footnote-ref" id="fnref33" role="doc-noteref"><sup>33</sup></a> Given that the <code>expertName</code> value is “Ernst &amp; Young”, a name-based match will associate this IPO with the US operations of Ernst &amp; Young. However, the Form AP filings have been made by the Australian affiliate of Ernst &amp; Young (<code>firm_id</code> of <code>1435</code>). So I put <code>1435</code> under <code>firm_id</code> and set <code>valid</code> to <code>TRUE</code> after doing so. As a result, this IPO will be correctly associated with Ernst &amp; Young Australia in the final link table.</p>
@@ -1039,13 +1046,13 @@ Table&nbsp;7: Countries of firms in <code>top_match_problems</code>
 <h3 data-number="3.3.6" class="anchored" data-anchor-id="checking-for-gaps"><span class="header-section-number">3.3.6</span> Checking for gaps</h3>
 <p>Finally, we look for any deals in <code>ipo_auditors</code> that are not matched in <code>all_matches</code> and add these to our Google Sheets file. One reason for these cases would be new IPO deals being added to the data with <code>expertName</code> values not handled already.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>ipo_auditors <span class="sc">|&gt;</span> </span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(all_matches, <span class="at">by =</span> <span class="st">"dealID"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_id =</span> <span class="cn">NA</span>, <span class="at">firm_name =</span> <span class="cn">NA</span>, <span class="at">firm_country =</span> <span class="cn">NA</span>) <span class="sc">|&gt;</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, cik, CompanyAddress, firm_id, expertName,</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>         firm_name, firm_country, pricedDate) <span class="sc">|&gt;</span></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"extra_deals"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ipo_auditors <span class="sc">|&gt;</span> </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(all_matches, <span class="at">by =</span> <span class="st">"dealID"</span>, <span class="at">copy =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_id =</span> <span class="cn">NA</span>, <span class="at">firm_name =</span> <span class="cn">NA</span>, <span class="at">firm_country =</span> <span class="cn">NA</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dealID, cik, CompanyAddress, firm_id, expertName,</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>         firm_name, firm_country, pricedDate) <span class="sc">|&gt;</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_sheet</span>(<span class="at">ss =</span> gs_ipo_auditors, <span class="at">sheet =</span> <span class="st">"extra_deals"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The cases in <code>extra_deals</code> sheet could be handled by adding additional name-based matches to <code>name_matches</code> or additional deal-level matches to <code>deal_matches</code> as seems most appropriate. For the most part I handled cases added to <code>extra_deals</code> by moving them to <code>deal_matches</code> as the first step and processing as I did for other cases above. One this has been done, we can run the “<code>extra_deals</code>” code again and, if all is well, there will be no additional deals in <code>extra_deals</code> after doing so.</p>
 </section>
@@ -1053,11 +1060,11 @@ Table&nbsp;7: Countries of firms in <code>top_match_problems</code>
 <h3 data-number="3.3.7" class="anchored" data-anchor-id="persisting-the-link-table"><span class="header-section-number">3.3.7</span> Persisting the link table</h3>
 <p>At that point, I can take the data in <code>all_matches</code> and—using the language of <a href="#fig-whole-game" class="quarto-xref">Figure&nbsp;1</a>—<em>Persist</em> it to disk. In my case, I add <code>ipo_auditors.parquet</code> to the <code>nasdaq</code> “schema” of my parquet-based data repository. More details on this data repository can be found in <a href="https://iangow.github.io/far_book/parquet-wrds.html">an appendix</a> of <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502"><em>Empirical Research in Accounting: Tools and Methods</em></a>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>all_matches <span class="sc">|&gt;</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_id =</span> <span class="fu">as.integer</span>(firm_id)) <span class="sc">|&gt;</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="at">sink =</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>), </span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"nasdaq"</span>, <span class="st">"ipo_auditors.parquet"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>all_matches <span class="sc">|&gt;</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">firm_id =</span> <span class="fu">as.integer</span>(firm_id)) <span class="sc">|&gt;</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="at">sink =</span> <span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"DATA_DIR"</span>), </span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"nasdaq"</span>, <span class="st">"ipo_auditors.parquet"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 </section>
