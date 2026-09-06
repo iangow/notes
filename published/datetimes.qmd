@@ -1,7 +1,7 @@
 ---
 title: "Working with date and times"
 author: Ian D. Gow
-date: 2024-08-13
+date: 2026-09-06
 date-format: "D MMMM YYYY"
 categories: [Datetimes, DuckDB]
 format:
@@ -30,7 +30,7 @@ The application I work with is based on the SEC submissions data I discussed in 
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 :::
 
-As discussed in a [recent post on LinkedIn](https://www.linken.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@gow2024empirical] is to provide a pathway to mastery of the contents of @Wickham:2023aa.^[@gow2024empirical was published in print form by CRC Press in December 2024 and remains free online.]
+As discussed in a [recent post on LinkedIn](https://www.linkedin.com/posts/iangow_working-with-json-data-the-case-of-sec-submissions-activity-7199520005409906690-XlFZ), one goal of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/) [@gow2024empirical] is to provide a pathway to mastery of the contents of @Wickham:2023aa.^[@gow2024empirical was published in print form by CRC Press in December 2024 and remains free online.]
 That said, I identified a few gaps, including spreadsheets, hierarchical data, and dates and times.
 [One recent note](sec_submissions.html) covered hierarchical data and a forthcoming note will address spreadsheets.
 
@@ -38,12 +38,13 @@ The purpose of this note is address the gap regarding dates and times in more de
 The application I work with is based on the SEC submissions data I discussed in [another recent note](sec_submissions.html).
 I study this application not only using R, but also DuckDB and PostgreSQL, as moving data between systems can be a pain point, especially with date-times.
 
-In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
+In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "scales", "farr"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
 The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/published/datetimes.qmd).
 
 ```{r}
 #| include: false
+if (file.exists(".env")) readRenviron(".env")
 options(width = 75,
         tibble.width = 75,
         pillar.print_min = 5)
@@ -200,18 +201,14 @@ sample |> mutate(hour = hour(a_datetime)) |> collect()
 
 ## Working with SEC filings data
 
-We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `data` subdirectory of our current project.^[Adjust `data_dir` to match the location of the downloaded file on your compute. The process for creating this file is described [here](sec_submissions.html). You can obtain a copy of this file [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0). 
-If you have set up a parquet data repository with this data in the `submissions` schema, then use `filings <- load_parquet(db, table = "filings", schema = "submissions")` instead.]
+We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `edgar` schema of our data repository.^[The code below assumes that `DATA_DIR` is set in the project `.env` file and points to the root of that repository.
+The process for creating this file is described [here](sec_submissions.html).
+You can obtain a copy of `filings.parquet` [here](https://www.dropbox.com/scl/fi/6pdu8ynwkmhg26zc1ekc9/filings.parquet?rlkey=nccfjunomj2l7lqd3clvqwk9u&dl=0).
+If you do not use a Parquet data repository, place `filings.parquet` in the `data` subdirectory of this project and use `filings <- load_parquet(db, table = "filings", data_dir = "data")` instead.]
+Because the SEC bulk submissions file is updated over time, the results below may differ from those in earlier rendered versions of this note.
 
 ```{r}
-#| include: false
 filings <- load_parquet(db, table = "filings", schema = "edgar")
-```
-
-
-```{r}
-#| eval: false
-filings <- load_parquet(db, table = "filings", data_dir = "data")
 ```
 
 An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC.
@@ -231,8 +228,9 @@ filing_times <-
          second = second(acceptanceDateTime),
          acceptance_time = make_timestamptz(2000L, 01L, 01L, 
                                             hour, minute, second)) |>
-  select(cik, year, accessionNumber, acceptanceDateTime, acceptance_time) |>
-  compute()
+  select(cik, year, accessionNumber, acceptanceDateTime, acceptance_time,
+         form, hour) |>
+  compute(name = "filing_times", overwrite = TRUE)
 ```
 
 @fig-time-all plots the acceptance times for all filings in our sample.
@@ -285,14 +283,54 @@ filing_times |>
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-@fig-time-later-timed focuses on non-midnight filings in 2002 or later, we see that the bulk of filings are between 06:00 and 22:00, consistent with the statement on [the SEC website](https://www.sec.gov/submit-filings) that "EDGAR is available to accept filings from 6 a.m. to 10 p.m. ET weekdays (except federal holidays)."
+@fig-time-later-timed focuses on post-2001 non-midnight filings, where we see that the bulk of filings are between 06:00 and 22:00, consistent with the statement on [the SEC website](https://www.sec.gov/submit-filings) that "EDGAR is available to accept filings from 6 a.m. to 10 p.m. ET weekdays (except federal holidays)."
 In fact, it was this information that allowed me to conclude that the timestamps in the underlying JSON files are in New York times, as interpreting them as UTC times put many filings outside this window.
 
 However, some pre-08:00 filings appear in @fig-time-later-timed.
+Filings accepted outside normal EDGAR hours---that is, after 22:00 and before 06:00---are not just a historical artifact.
+Many of these outside-hours observations are ownership filings, especially Form 4 filings, or `EFFECT` filings.
+@fig-outside-hours shows outside-hours filings from 2003 onward as a percentage of all filings in each year, split by form category.
+The concentration at 00:15 is largely driven by `EFFECT` filings, which suggests that at least some of these times reflect SEC processing rather than ordinary filer submission behavior.
+
+```{r}
+#| label: fig-outside-hours
+#| fig-cap: "Recent outside-hours filings by form category"
+year_totals <-
+  filing_times |>
+  filter(year >= 2003) |>
+  count(year, name = "year_filings") |>
+  collect() |>
+  mutate(year = as.integer(year))
+
+filing_times |>
+  filter(year >= 2003,
+         acceptance_time > "2000-01-01 22:00:00" |
+           acceptance_time < "2000-01-01 06:00:00") |>
+  mutate(filing_category = case_when(
+    form == "EFFECT" ~ "EFFECT",
+    form %in% c("3", "3/A", "4", "4/A", "5", "5/A") ~ "Ownership",
+    TRUE ~ "Other"
+  )) |>
+  count(year, filing_category) |>
+  collect() |>
+  mutate(year = as.integer(year)) |>
+  left_join(year_totals, by = "year") |>
+  mutate(filing_pct = n / year_filings,
+         filing_category = factor(
+           filing_category,
+           levels = c("Ownership", "EFFECT", "Other")
+         )) |>
+  ggplot(aes(x = year, y = filing_pct, fill = filing_category)) +
+  geom_col() +
+  scale_x_continuous(breaks = seq(2003, 2026, by = 2)) +
+  scale_y_continuous(labels = percent) +
+  labs(fill = NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
 ```{r}
 #| label: fig-time-later-timed
-#| fig-cap: "Distribution of acceptance time--post-2002 with times"
+#| fig-cap: "Distribution of acceptance time--post-2001 with times"
 filing_times |>
   filter(year >= 2002,
          acceptance_time > "2000-01-01") |>
@@ -303,12 +341,12 @@ filing_times |>
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-@fig-early-morning examines the pre-08:00 filings that appear in @fig-time-later-timed.
+@fig-early-morning zooms in on the earliest of the pre-08:00 filings that appear in @fig-time-later-timed, focusing on filings from just after midnight through 01:00.
 It appears that these are oddly concentrated at around 00:15 and are perhaps data errors.
 
 ```{r}
 #| label: fig-early-morning
-#| fig-cap: "Distribution of acceptance time--early-morning outliers"
+#| fig-cap: "Distribution of acceptance time--outliers before 01:00"
 filing_times |>
   filter(between(acceptance_time, "2000-01-01 00:00:01", "2000-01-01 01:00:00")) |>
   ggplot(aes(x = acceptance_time)) + 
@@ -327,10 +365,12 @@ filing_times |>
   mutate(year = year(acceptanceDateTime)) |> 
   filter(year > 2003,
          acceptance_time == "2000-01-01 00:00:00") |>
-  ggplot(aes(x = acceptanceDateTime)) + 
-  geom_histogram(binwidth = 60 * 60 * 24 * 7) +
-  scale_x_datetime(date_breaks = "1 month", date_labels = "%Y-%m-%d") +
-  theme(axis.text.x = element_text(angle = 90))
+  mutate(month = floor_date(acceptanceDateTime, "month")) |>
+  count(month) |>
+  ggplot(aes(x = month, y = n)) +
+  geom_col() +
+  scale_x_datetime(date_breaks = "1 year", date_labels = "%Y") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 Given the issues revealed above, @fig-valid---our final plot of acceptance times---focuses on filings after 2003 and with filing times after 05:00 and before 23:00.
@@ -376,8 +416,8 @@ In this case, we force DuckDB's `read_csv()` function to store `start_date` with
 
 ```{r}
 url <- "https://raw.githubusercontent.com/iangow/notes/main/data/sample_calls.csv"
-sql <- str_c("read_csv('", url, "', ", 
-                "columns = {'ticker': 'TEXT','start_date': 'TIMESTAMPTZ'})")
+sql <- dbplyr::sql(str_c("SELECT * FROM read_csv('", url, "', ",
+                         "columns = {'ticker': 'TEXT','start_date': 'TIMESTAMPTZ'})"))
 ```
 
 We create the variable `filingDate`, as we will merge using this variable and `ticker`.
@@ -424,7 +464,7 @@ url <- str_c("https://www.dropbox.com/scl/fi/04jv6e1gwx0ngbwgqde5a/",
              "tickers.parquet?rlkey=gic68c86u1rl05hig7j623jpr&dl=1")
 sql <- str_c("read_parquet('", url, "')")
 tickers <- 
-  tbl(db, sql) |> 
+  tbl(db, dbplyr::sql(str_c("SELECT * FROM ", sql))) |>
   compute(name = "tickers", overwrite = TRUE)
 ```
 
@@ -496,12 +536,12 @@ dbExecute(db, "ATTACH '' AS pg (TYPE POSTGRES, READ_WRITE)")
 The first step is to copy the data in `filings.parquet` to PostgreSQL.
 We need to go from the parquet file as we did not materialize a table with these data in DuckDB.
 This step takes some time, but would be a one-off step.
-I include `IF NOT EXISTS` to avoid overwriting any existing table you might have.
+I use `CREATE OR REPLACE` so that the PostgreSQL table reflects the same underlying data as the Parquet file.
 
 ```{r}
 #| include: false
 data_dir <- Sys.getenv("DATA_DIR")
-sql <- str_glue("CREATE TABLE IF NOT EXISTS pg.filings AS ",
+sql <- str_glue("CREATE OR REPLACE TABLE pg.filings AS ",
                 "SELECT * FROM '{data_dir}/edgar/filings.parquet'")
 dbExecute(db, sql) |> system_time()
 ```
@@ -509,7 +549,7 @@ dbExecute(db, sql) |> system_time()
 
 ```{r}
 #| eval: false
-sql <- "CREATE TABLE IF NOT EXISTS pg.filings AS
+sql <- "CREATE OR REPLACE TABLE pg.filings AS
         SELECT * FROM 'data/filings.parquet'"
 dbExecute(db, sql) |> system_time()
 ```
@@ -519,9 +559,9 @@ These small tables are populated very quickly.
 
 ```{r}
 #| results: false
-dbExecute(db, "CREATE TABLE IF NOT EXISTS pg.tickers AS
+dbExecute(db, "CREATE OR REPLACE TABLE pg.tickers AS
                SELECT * FROM tickers")
-dbExecute(db, "CREATE TABLE IF NOT EXISTS pg.sample_calls AS
+dbExecute(db, "CREATE OR REPLACE TABLE pg.sample_calls AS
                SELECT * FROM sample_calls")
 ```
 

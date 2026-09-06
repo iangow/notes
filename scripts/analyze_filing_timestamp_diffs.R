@@ -2,6 +2,8 @@ library(DBI)
 library(duckdb)
 library(glue)
 
+if (file.exists(".env")) readRenviron(".env")
+
 data_dir <- Sys.getenv(
   "DATA_DIR",
   file.path(path.expand("~"), "Dropbox", "pq_data")

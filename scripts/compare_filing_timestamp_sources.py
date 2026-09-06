@@ -13,9 +13,11 @@ import zlib
 from pathlib import Path
 
 import duckdb
+from dotenv import load_dotenv
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(REPO_ROOT / ".env")
 DATA_DIR = Path(
     os.environ.get("DATA_DIR", Path.home() / "Dropbox" / "pq_data")
 ).expanduser()
@@ -40,7 +42,10 @@ DEFAULT_NEW = Path(
     )
 )
 DEFAULT_OLD_ZIP = Path(
-    os.environ.get("OLD_SUBMISSIONS_ZIP", REPO_ROOT / "data" / "submissions.zip")
+    os.environ.get(
+        "OLD_SUBMISSIONS_ZIP",
+        RAW_DATA_DIR / "submissions" / "submissions-2024.zip",
+    )
 )
 DEFAULT_NEW_ZIP = Path(
     os.environ.get(

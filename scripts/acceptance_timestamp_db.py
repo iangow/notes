@@ -3,7 +3,11 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(REPO_ROOT / ".env")
 DATA_DIR = Path(
     os.environ.get("DATA_DIR", Path.home() / "Dropbox" / "pq_data")
 ).expanduser()
