@@ -141,6 +141,43 @@ def initialize_database(con):
           updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
         );
 
+        CREATE TABLE IF NOT EXISTS missing_sgml_timestamp_blocks (
+          snapshot_id VARCHAR NOT NULL,
+          cik BIGINT NOT NULL,
+          block_name VARCHAR NOT NULL,
+          block_sha256 VARCHAR NOT NULL,
+          n_records BIGINT NOT NULL,
+          n_samples BIGINT NOT NULL,
+          min_sample_filing_date DATE,
+          max_sample_filing_date DATE,
+          evidence_accessions VARCHAR NOT NULL,
+          reason VARCHAR NOT NULL,
+          active BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+          PRIMARY KEY (snapshot_id, block_name)
+        );
+
+        CREATE TABLE IF NOT EXISTS sgml_anchor_excluded_blocks (
+          snapshot_id VARCHAR NOT NULL,
+          cik BIGINT NOT NULL,
+          block_name VARCHAR NOT NULL,
+          block_sha256 VARCHAR NOT NULL,
+          n_records BIGINT NOT NULL,
+          category VARCHAR NOT NULL
+            CHECK (category IN (
+              'missing_acceptance_datetime',
+              'terminal_fetch_failure'
+            )),
+          evidence_accessions VARCHAR NOT NULL,
+          error_summary VARCHAR NOT NULL,
+          reason VARCHAR NOT NULL,
+          active BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+          PRIMARY KEY (snapshot_id, block_name)
+        );
+
         INSERT INTO schema_versions (component, version)
         VALUES ('acceptance_timestamp', 1)
         ON CONFLICT (component) DO UPDATE SET

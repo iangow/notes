@@ -24,12 +24,12 @@ DATA_DIR = Path(
 RAW_DATA_DIR = Path(
     os.environ.get("RAW_DATA_DIR", DATA_DIR.parent / "raw_data")
 ).expanduser()
+DEFAULT_OLD_FULL = DATA_DIR / "edgar" / "filings_2024_full.parquet"
+DEFAULT_OLD_BACKUP = DATA_DIR / "submissions" / "filings.parquet.bak-20260906-105247"
 DEFAULT_OLD = Path(
     os.environ.get(
         "OLD_FILINGS_PATH",
-        DATA_DIR
-        / "submissions"
-        / "filings.parquet.bak-20260906-105247",
+        DEFAULT_OLD_FULL if DEFAULT_OLD_FULL.exists() else DEFAULT_OLD_BACKUP,
     )
 )
 DEFAULT_BAD_TIMELINE = DATA_DIR / "edgar" / "filings.parquet.bak-20260906-bad-timeline"

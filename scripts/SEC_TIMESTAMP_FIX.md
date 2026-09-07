@@ -18,14 +18,17 @@ The scripts expect these Dropbox files:
 ```text
 $RAW_DATA_DIR/submissions/submissions-2024.zip
 $RAW_DATA_DIR/submissions/submissions.zip
+$DATA_DIR/edgar/filings_2024_full.parquet
 $DATA_DIR/submissions/filings.parquet.bak-20260906-105247
 $DATA_DIR/edgar/filings.parquet.bak-20260906-bad-timeline
 $DATA_DIR/edgar/acceptance_timestamp_reference.duckdb
 ```
 
-The first ZIP and Parquet file are the trusted May 2024 snapshot. The unqualified
-ZIP and `bad-timeline` Parquet are from 2026. Allow Dropbox to finish syncing
-before opening the DuckDB database, and use only one database writer at a time.
+The 2024 ZIP and `filings_2024_full.parquet` are the trusted May 2024 snapshot.
+The older `filings.parquet.bak-20260906-105247` file is also trusted, but it was
+created by an older CIK-limited extractor and has fewer rows. The unqualified ZIP
+and `bad-timeline` Parquet are from 2026. Allow Dropbox to finish syncing before
+opening the DuckDB database, and use only one database writer at a time.
 
 Install dependencies and test the timestamp-rule schema:
 
@@ -107,11 +110,99 @@ The schema is defined in `acceptance_timestamp_db.py`. Resolution precedence is:
 The database also contains `sgml_observations`, `block_samples`,
 `block_classifications`, `timestamp_rules`, and `rule_evidence`.
 
+## Build persisted rules
+
+Inventory the 2026 ZIP blocks and derive conservative block-level rules from
+the trusted 2024 overlap:
+
+```bash
+uv run python scripts/build_acceptance_timestamp_rules.py
+```
+
+This adds `zip_snapshots`, `zip_blocks`, and `zip_filing_records` tables to the
+DuckDB database. It uses `$DATA_DIR/edgar/filings_2024_full.parquet` when
+present, falling back to the older smaller trusted backup only if the full file
+does not exist. It then populates `block_classifications`,
+`timestamp_rules`, and `rule_evidence` for blocks and CIKs whose overlap
+observations are uniformly Eastern or UTC. Mixed blocks and CIKs remain
+unresolved unless a more specific block rule applies.
+
+To rebuild the ZIP inventory:
+
+```bash
+uv run python scripts/build_acceptance_timestamp_rules.py --force-inventory
+```
+
+After the inventory and rules exist, materialize a corrected Parquet file:
+
+```bash
+uv run python scripts/materialize_corrected_filings.py
+```
+
+By default, materialization refuses to write if new-only rows have no rule. To
+produce an audit file anyway, keeping unresolved ZIP clocks unchanged and
+marking their provenance, use:
+
+```bash
+uv run python scripts/materialize_corrected_filings.py --allow-unresolved
+```
+
+To collect SGML anchors for unresolved blocks and promote sampled evidence into
+verified rules:
+
+```bash
+uv run python scripts/fetch_sgml_anchors.py --max-blocks 100
+```
+
+The SGML anchor fetcher is resumable through `sgml_observations` and skips
+blocks that already have active rules. It creates block rules when all sampled
+SGML anchors agree and the valid evidence count reaches `--min-evidence`,
+capped by the number of filings in the block. For example, a two-filing block
+can be resolved from two agreeing SGML anchors even when `--min-evidence 3` is
+used for larger blocks. If older samples lack `<ACCEPTANCE-DATETIME>` but later
+usable anchors agree, it creates a dated segment rule starting at the first
+usable SGML sample date, leaving the older no-tag records unresolved for a
+separate exception pass. Increase `--max-blocks` gradually, and use
+`--order size` to prioritize row coverage or `--order hash` for a more
+representative deterministic pass. Use `--max-requests-per-second` to tune SEC
+network pacing; cache hits are not delayed.
+
+For longer runs, use concurrent SGML fetching with batched DuckDB writes:
+
+```bash
+uv run python scripts/fetch_sgml_anchors.py \
+  --max-blocks 100000 \
+  --samples-per-block 3 \
+  --min-evidence 3 \
+  --order size \
+  --max-requests-per-second 9.5 \
+  --workers 8 \
+  --write-batch-blocks 50 \
+  --write-lock-timeout 300
+```
+
+The worker threads only perform cache reads and network fetches. DuckDB writes
+are concentrated into short batch transactions, and write-lock conflicts are
+retried for up to `--write-lock-timeout` seconds.
+
+If a pass finds blocks where every sampled SGML response lacks
+`<ACCEPTANCE-DATETIME>`, mark those blocks so later SGML collection runs do not
+keep revisiting them:
+
+```bash
+uv run python scripts/mark_missing_sgml_timestamp_blocks.py
+```
+
+Use `--report-only` to inspect candidates without marking them. These blocks
+remain unresolved for timestamp materialization until a separate finite
+exception policy is applied.
+
 ## Important limitations
 
-The production-wide classifier is not implemented yet. In particular, the
-benchmark does not automatically promote classifications into `timestamp_rules`
-or create `submission_overrides`.
+The implemented classifier is intentionally conservative. It promotes uniform
+overlap evidence into verified block and CIK rules, and SGML anchor evidence
+into block or first-valid-date segment rules. It does not infer full dated
+segments within mixed modern blocks and does not create `submission_overrides`.
 
 `fix_filing_timeline.py` only replaces timestamps for accessions found in the
 trusted 2024 Parquet file. It does not fix new-only observations. Likewise,
