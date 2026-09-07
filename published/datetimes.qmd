@@ -240,7 +240,9 @@ One observation is that we have over a million filings right around midnight.
 #| label: fig-time-all
 #| fig-cap: Distribution of acceptance time for all filings
 filing_times |>
-  ggplot(aes(x = acceptance_time)) + 
+  count(acceptance_time) |>
+  collect() |>
+  ggplot(aes(x = acceptance_time, weight = n)) +
   geom_histogram(binwidth = 5 * 60) +
   scale_x_datetime(date_breaks = "1 hour",
                    date_labels = "%H:%M") +
@@ -260,8 +262,10 @@ The former value probably relates to errors, but a small number of filings did o
 filing_times |>
   mutate(midnight = acceptance_time == "2000-01-01") |>
   mutate(year = as.character(year)) |>
-  ggplot(aes(x = year, fill = midnight)) + 
-  geom_bar() +
+  count(year, midnight) |>
+  collect() |>
+  ggplot(aes(x = year, y = n, fill = midnight)) +
+  geom_col() +
   theme(axis.text.x = element_text(angle = 90))
 ```
 
@@ -276,7 +280,9 @@ filing_times |>
   filter(year < 2002,
          acceptance_time != "2000-01-01") |>
   mutate(year = as.character(year)) |>
-  ggplot(aes(x = acceptance_time, fill = year)) + 
+  count(acceptance_time, year) |>
+  collect() |>
+  ggplot(aes(x = acceptance_time, fill = year, weight = n)) +
   geom_histogram(binwidth = 5 * 60) +
   scale_x_datetime(date_breaks = "1 hour",
                    date_labels = "%H:%M") +
@@ -288,8 +294,8 @@ In fact, it was this information that allowed me to conclude that the timestamps
 
 However, some pre-08:00 filings appear in @fig-time-later-timed.
 Filings accepted outside normal EDGAR hours---that is, after 22:00 and before 06:00---are not just a historical artifact.
-Many of these outside-hours observations are ownership filings, especially Form 4 filings, or `EFFECT` filings.
 @fig-outside-hours shows outside-hours filings from 2003 onward as a percentage of all filings in each year, split by form category.
+The correspondence category combines `CORRESP`, `UPLOAD`, and `DRSLTR`.
 The concentration at 00:15 is largely driven by `EFFECT` filings, which suggests that at least some of these times reflect SEC processing rather than ordinary filer submission behavior.
 
 ```{r}
@@ -308,7 +314,7 @@ filing_times |>
            acceptance_time < "2000-01-01 06:00:00") |>
   mutate(filing_category = case_when(
     form == "EFFECT" ~ "EFFECT",
-    form %in% c("3", "3/A", "4", "4/A", "5", "5/A") ~ "Ownership",
+    form %in% c("CORRESP", "UPLOAD", "DRSLTR") ~ "Correspondence",
     TRUE ~ "Other"
   )) |>
   count(year, filing_category) |>
@@ -318,7 +324,7 @@ filing_times |>
   mutate(filing_pct = n / year_filings,
          filing_category = factor(
            filing_category,
-           levels = c("Ownership", "EFFECT", "Other")
+           levels = c("EFFECT", "Correspondence", "Other")
          )) |>
   ggplot(aes(x = year, y = filing_pct, fill = filing_category)) +
   geom_col() +
@@ -334,7 +340,9 @@ filing_times |>
 filing_times |>
   filter(year >= 2002,
          acceptance_time > "2000-01-01") |>
-  ggplot(aes(x = acceptance_time)) + 
+  count(acceptance_time) |>
+  collect() |>
+  ggplot(aes(x = acceptance_time, weight = n)) +
   geom_histogram(binwidth = 5 * 60) +
   scale_x_datetime(date_breaks = "1 hour",
                    date_labels = "%H:%M") +
@@ -349,7 +357,9 @@ It appears that these are oddly concentrated at around 00:15 and are perhaps dat
 #| fig-cap: "Distribution of acceptance time--outliers before 01:00"
 filing_times |>
   filter(between(acceptance_time, "2000-01-01 00:00:01", "2000-01-01 01:00:00")) |>
-  ggplot(aes(x = acceptance_time)) + 
+  count(acceptance_time) |>
+  collect() |>
+  ggplot(aes(x = acceptance_time, weight = n)) +
   geom_histogram(binwidth = 1 * 60) +
   scale_x_datetime(date_breaks = "5 min",
                    date_labels = "%H:%M") +
@@ -383,7 +393,9 @@ filing_times |>
          between(acceptance_time,
                  "2000-01-01 05:00:00",
                  "2000-01-01 23:00:00")) |>
-  ggplot(aes(x = acceptance_time)) + 
+  count(acceptance_time) |>
+  collect() |>
+  ggplot(aes(x = acceptance_time, weight = n)) +
   geom_histogram(binwidth = 5 * 60) +
   scale_x_datetime(date_breaks = "1 hour",
                    date_labels = "%H:%M") +
@@ -460,8 +472,8 @@ To merge `sample_calls` with `filings`, we need a mapping from tickers to CIKs.
 We can get the `tickers` file from Dropbox using the code below.^[See [the note](sec_submissions.html) discussed earlier for details on how this file was created from data on SEC EDGAR.]
 
 ```{r}
-url <- str_c("https://www.dropbox.com/scl/fi/04jv6e1gwx0ngbwgqde5a/", 
-             "tickers.parquet?rlkey=gic68c86u1rl05hig7j623jpr&dl=1")
+url <- str_c("https://www.dropbox.com/scl/fi/lertyk4twnphum0g8wrjv/",
+             "tickers.parquet?rlkey=mwm0m2m9c0ylg5h6yg1ivr38p&dl=1")
 sql <- str_c("read_parquet('", url, "')")
 tickers <- 
   tbl(db, dbplyr::sql(str_c("SELECT * FROM ", sql))) |>
