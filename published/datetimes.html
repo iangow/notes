@@ -649,11 +649,11 @@ Figure&nbsp;8: Distribution of acceptance times with valid times
 <span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>(<span class="at">n =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 4
-    cik accessionNumber      acceptanceDateTime  items                     
-  &lt;int&gt; &lt;chr&gt;                &lt;dttm&gt;              &lt;chr&gt;                     
-1    20 0000950123-10-031992 2010-04-05 12:25:23 2.01,3.01,3.03,5.01,5.02,…
-2    20 0000950123-10-001997 2010-01-12 15:50:54 1.01,3.03,9.01            
-3    20 0000950123-10-001732 2010-01-11 17:19:31 8.01,9.01                 </code></pre>
+    cik accessionNumber      acceptanceDateTime  items              
+  &lt;int&gt; &lt;chr&gt;                &lt;dttm&gt;              &lt;chr&gt;              
+1 19617 0001193125-25-020070 2025-02-04 16:30:10 3.03,5.03,8.01,9.01
+2 19617 0001193125-25-013396 2025-01-27 16:36:36 8.01,9.01          
+3 19617 0001193125-25-012230 2025-01-24 16:28:50 8.01,9.01          </code></pre>
 </div>
 </div>
 <p>We can use the DuckDB function <code>regexp_split_to_table()</code> to extract each item as a separate row. We will be interested in 8-K filings with item 2.02 (“Results of Operations and Financial Condition”).<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p>
@@ -667,15 +667,15 @@ Figure&nbsp;8: Distribution of acceptance times with valid times
 <pre><code># A tibble: 9 × 4
     cik accessionNumber      acceptanceDateTime  item 
   &lt;int&gt; &lt;chr&gt;                &lt;dttm&gt;              &lt;chr&gt;
-1    20 0000950123-10-031992 2010-04-05 12:25:23 2.01 
-2    20 0000950123-10-031992 2010-04-05 12:25:23 3.01 
-3    20 0000950123-10-031992 2010-04-05 12:25:23 3.03 
-4    20 0000950123-10-031992 2010-04-05 12:25:23 5.01 
-5    20 0000950123-10-031992 2010-04-05 12:25:23 5.02 
-6    20 0000950123-10-031992 2010-04-05 12:25:23 5.03 
-7    20 0000950123-10-031992 2010-04-05 12:25:23 5.07 
-8    20 0000950123-10-031992 2010-04-05 12:25:23 9.01 
-9    20 0000950123-10-001997 2010-01-12 15:50:54 1.01 </code></pre>
+1 19617 0001193125-25-020070 2025-02-04 16:30:10 3.03 
+2 19617 0001193125-25-020070 2025-02-04 16:30:10 5.03 
+3 19617 0001193125-25-020070 2025-02-04 16:30:10 8.01 
+4 19617 0001193125-25-020070 2025-02-04 16:30:10 9.01 
+5 19617 0001193125-25-013396 2025-01-27 16:36:36 8.01 
+6 19617 0001193125-25-013396 2025-01-27 16:36:36 9.01 
+7 19617 0001193125-25-012230 2025-01-24 16:28:50 8.01 
+8 19617 0001193125-25-012230 2025-01-24 16:28:50 9.01 
+9 19617 0000019617-25-000056 2025-01-23 16:15:44 5.02 </code></pre>
 </div>
 </div>
 <p>To merge <code>sample_calls</code> with <code>filings</code>, we need a mapping from tickers to CIKs. We can get the <code>tickers</code> file from Dropbox using the code below.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a></p>
@@ -755,7 +755,7 @@ Wickham, H., Çetinkaya-Rundel, M., Grolemund, G., 2023. <a href="https://books.
 <li id="fn5"><p>After rummaging through the depths of the SAS documentation, I <a href="https://github.com/iangow/wrds2pg/blob/565fce4afdee526830b2d5c92aadf20b35cf575b/wrds2pg/wrds2pg.py#L340-L341">landed on</a> <code>format=E8601DT19.</code> as the way to represent date-times being exported by SAS.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn6"><p>To see this, enter <code>as.Date("2024-01-31") + months(1)</code> and <code>as.Date("2024-02-29") + years(1)</code>, respectively.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn7"><p>The <code>INSTALL icu</code> command is only needed if you have not already installed it, but it’s harmless to run it if it’s already present.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn8"><p>The code below assumes that <code>DATA_DIR</code> is set in the project <code>.env</code> file and points to the root of that repository. The process for creating this file is described <a href="sec_submissions.html">here</a>. You can obtain a copy of <code>filings.parquet</code> <a href="https://www.dropbox.com/scl/fi/y2jfav071qf8c8dnubx1o/filings.parquet?rlkey=kn88j5suu4txtg8ecgh8tof4k&amp;dl=0">here</a>. If you do not use a Parquet data repository, place <code>filings.parquet</code> in the <code>data</code> subdirectory of this project and use <code>filings &lt;- load_parquet(db, table = "filings", data_dir = "data")</code> instead.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>The code below assumes that <code>DATA_DIR</code> is set in the project <code>.env</code> file and points to the root of that repository. The process for creating this file is described <a href="sec_submissions.html">here</a>. You can obtain a copy of <code>filings.parquet</code> <a href="https://www.dropbox.com/scl/fi/9osie7ln50z67uzi9zys5/filings.parquet?rlkey=5igrlb23tns4n8trunk3nstlt&amp;dl=0">here</a>. If you do not use a Parquet data repository, place <code>filings.parquet</code> in the <code>data</code> subdirectory of this project and use <code>filings &lt;- load_parquet(db, table = "filings", data_dir = "data")</code> instead.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn9"><p>See the <a href="https://en.m.wikipedia.org/wiki/ISO_8601">Wikipedia page for ISO 8601</a>.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn10"><p>Note that the information is stored in parquet files in UTC.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn11"><p>As mentioned above, R has no native type for times, but a set of date-times with the date fixed on a common date will provide us with what we need.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
