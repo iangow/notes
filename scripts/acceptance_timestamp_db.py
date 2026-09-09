@@ -85,6 +85,8 @@ def initialize_database(con):
           block_sha256 VARCHAR,
           valid_from_date DATE,
           valid_to_date DATE,
+          valid_from_record_index BIGINT,
+          valid_to_record_index BIGINT,
           interpretation VARCHAR NOT NULL
             CHECK (interpretation IN ('eastern', 'utc')),
           evidence_count BIGINT NOT NULL DEFAULT 0,
@@ -108,6 +110,11 @@ def initialize_database(con):
           CHECK (
             valid_from_date IS NULL OR valid_to_date IS NULL OR
             valid_from_date <= valid_to_date
+          ),
+          CHECK (
+            valid_from_record_index IS NULL OR
+            valid_to_record_index IS NULL OR
+            valid_from_record_index <= valid_to_record_index
           )
         );
 
@@ -137,6 +144,63 @@ def initialize_database(con):
             CHECK (evidence_source IN ('sgml', 'old_zip', 'manual')),
           source_url VARCHAR,
           reason VARCHAR NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
+        );
+
+        CREATE TABLE IF NOT EXISTS live_json_file_overrides (
+          accession_number VARCHAR PRIMARY KEY,
+          corrected_acceptance_datetime TIMESTAMP NOT NULL,
+          interpretation VARCHAR NOT NULL,
+          source_url VARCHAR NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
+        );
+
+        CREATE TABLE IF NOT EXISTS live_json_timestamp_overrides (
+          accession_number VARCHAR PRIMARY KEY,
+          cik BIGINT NOT NULL,
+          corrected_acceptance_datetime TIMESTAMP NOT NULL,
+          interpretation VARCHAR NOT NULL,
+          zip_acceptance_datetime TIMESTAMP NOT NULL,
+          live_acceptance_datetime TIMESTAMP NOT NULL,
+          source_url VARCHAR NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
+        );
+
+        CREATE TABLE IF NOT EXISTS live_json_comparison_runs (
+          snapshot_id VARCHAR NOT NULL,
+          block_name VARCHAR NOT NULL,
+          matched BIGINT NOT NULL,
+          missing BIGINT NOT NULL,
+          error VARCHAR,
+          checked_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+          PRIMARY KEY (snapshot_id, block_name)
+        );
+
+        CREATE TABLE IF NOT EXISTS live_json_timestamp_conflicts (
+          accession_number VARCHAR PRIMARY KEY,
+          detected_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
+        );
+
+        CREATE TABLE IF NOT EXISTS live_json_timestamp_observations (
+          source_url VARCHAR NOT NULL,
+          accession_number VARCHAR NOT NULL,
+          acceptance_datetime_text VARCHAR NOT NULL,
+          retrieved_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+          PRIMARY KEY (source_url, accession_number)
+        );
+
+        CREATE TABLE IF NOT EXISTS duplicate_accession_timestamp_overrides (
+          accession_number VARCHAR PRIMARY KEY,
+          corrected_acceptance_datetime TIMESTAMP NOT NULL,
+          corrected_acceptance_timestamptz TIMESTAMPTZ,
+          earlier_zip_datetime TIMESTAMP NOT NULL,
+          later_zip_datetime TIMESTAMP NOT NULL,
+          diff_min INTEGER NOT NULL CHECK (diff_min IN (240, 300)),
+          rows_n BIGINT NOT NULL,
+          ciks_n BIGINT NOT NULL,
+          outside_rows BIGINT NOT NULL,
+          method VARCHAR NOT NULL,
           created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
           updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
         );
@@ -178,18 +242,63 @@ def initialize_database(con):
           PRIMARY KEY (snapshot_id, block_name)
         );
 
+        CREATE TABLE IF NOT EXISTS outside_hours_scan_results (
+          snapshot_id VARCHAR NOT NULL,
+          block_name VARCHAR NOT NULL,
+          policy VARCHAR NOT NULL,
+          block_sha256 VARCHAR NOT NULL,
+          status VARCHAR NOT NULL,
+          report_json VARCHAR NOT NULL,
+          recorded_at TIMESTAMPTZ NOT NULL,
+          PRIMARY KEY (snapshot_id, block_name, policy)
+        );
+
         INSERT INTO schema_versions (component, version)
         VALUES ('acceptance_timestamp', 1)
         ON CONFLICT (component) DO UPDATE SET
           version = greatest(schema_versions.version, excluded.version),
           applied_at = now();
 
+        """
+    )
+    con.execute("DROP VIEW IF EXISTS active_timestamp_rules")
+    con.execute(
+        "ALTER TABLE duplicate_accession_timestamp_overrides "
+        "ADD COLUMN IF NOT EXISTS corrected_acceptance_timestamptz TIMESTAMPTZ"
+    )
+    con.execute("ALTER TABLE timestamp_rules ADD COLUMN IF NOT EXISTS valid_from_record_index BIGINT")
+    con.execute("ALTER TABLE timestamp_rules ADD COLUMN IF NOT EXISTS valid_to_record_index BIGINT")
+    con.execute(
+        """
         CREATE OR REPLACE VIEW active_timestamp_rules AS
         SELECT *
         FROM timestamp_rules
-        WHERE active AND status <> 'rejected';
+        WHERE active AND status <> 'rejected'
         """
     )
+    con.execute("""
+        CREATE OR REPLACE VIEW effective_submission_overrides AS
+        SELECT accession_number, corrected_acceptance_datetime, interpretation
+        FROM submission_overrides
+        UNION ALL
+        SELECT accession_number, corrected_acceptance_datetime, interpretation
+        FROM live_json_timestamp_overrides AS l
+        WHERE NOT EXISTS (
+          SELECT 1 FROM submission_overrides AS s
+          WHERE s.accession_number = l.accession_number
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM live_json_timestamp_conflicts AS c
+          WHERE c.accession_number = l.accession_number
+        )
+        UNION ALL
+        SELECT accession_number, corrected_acceptance_datetime, interpretation
+        FROM live_json_file_overrides AS f
+        WHERE NOT EXISTS (SELECT 1 FROM submission_overrides s WHERE s.accession_number=f.accession_number)
+          AND NOT EXISTS (SELECT 1 FROM live_json_timestamp_overrides l WHERE l.accession_number=f.accession_number)
+          AND NOT EXISTS (SELECT 1 FROM duplicate_accession_timestamp_overrides d WHERE d.accession_number=f.accession_number)
+          AND NOT EXISTS (SELECT 1 FROM live_json_timestamp_conflicts c WHERE c.accession_number=f.accession_number)
+    """)
     _create_resolver(con)
 
 
@@ -211,9 +320,17 @@ def _create_resolver(con):
                    'submission_override' AS provenance,
                    accession_number AS reference_id,
                    4 AS precedence
-            FROM submission_overrides
+            FROM effective_submission_overrides
             WHERE accession_number = p_accession_number
-              AND cik = p_cik
+          ),
+          duplicate_override AS (
+            SELECT corrected_acceptance_datetime,
+                   'duplicate_conflict' AS interpretation,
+                   'duplicate_accession_override' AS provenance,
+                   accession_number AS reference_id,
+                   3 AS precedence
+            FROM duplicate_accession_timestamp_overrides
+            WHERE accession_number = p_accession_number
           ),
           matching_rules AS (
             SELECT
@@ -228,9 +345,9 @@ def _create_resolver(con):
               rule_level || '_rule' AS provenance,
               rule_id AS reference_id,
               CASE rule_level
-                WHEN 'segment' THEN 3
-                WHEN 'block' THEN 2
-                WHEN 'cik' THEN 1
+                WHEN 'segment' THEN 2
+                WHEN 'block' THEN 1
+                WHEN 'cik' THEN 0
               END AS precedence,
               updated_at
             FROM active_timestamp_rules
@@ -258,8 +375,17 @@ def _create_resolver(con):
                    provenance,
                    reference_id,
                    precedence
+            FROM duplicate_override
+            WHERE NOT EXISTS (SELECT 1 FROM exact_override)
+            UNION ALL
+            SELECT corrected_acceptance_datetime,
+                   interpretation,
+                   provenance,
+                   reference_id,
+                   precedence
             FROM matching_rules
             WHERE NOT EXISTS (SELECT 1 FROM exact_override)
+              AND NOT EXISTS (SELECT 1 FROM duplicate_override)
           )
           SELECT corrected_acceptance_datetime,
                  interpretation,

@@ -21,7 +21,7 @@ load_dotenv(REPO_ROOT / ".env")
 RAW_DATA_DIR = Path(os.environ.get("RAW_DATA_DIR", Path.home() / "Dropbox/raw_data")).expanduser()
 DATA_DIR = Path(os.environ.get("DATA_DIR", Path.home() / "Dropbox/pq_data")).expanduser()
 DEFAULT_ZIP = RAW_DATA_DIR / "submissions/submissions.zip"
-DEFAULT_OUT = DATA_DIR / "edgar/filings_expanded.parquet"
+DEFAULT_OUT = DATA_DIR / "edgar/filings_raw.parquet"
 MAX_SECONDS = 150
 VERSION = 2
 FIELDS = [
@@ -50,9 +50,10 @@ def _identifier(value):
 
 
 def output_paths(out_path):
-    return {table: out_path if table == "filings" else
-            out_path.with_name(f"{out_path.stem}_{table}.parquet")
-            for table in TABLE_FIELDS}
+    return {
+        table: out_path if table == "filings" else out_path.with_name(f"{table}.parquet")
+        for table in TABLE_FIELDS
+    }
 
 
 def _recent_filings(data):
@@ -97,10 +98,14 @@ def _expression(table, key):
         table == "companies" and key.endswith("Exists")
     ) or (table == "addresses" and key == "isForeignLocation") or (table == "files" and key == "available"):
         kind = "BOOLEAN"
-    elif (table == "filings" and key in {"filingDate", "reportDate"}) or (
-        table == "files" and key in {"filingFrom", "filingTo"}
+    elif (
+        (table == "filings" and key in {"filingDate", "reportDate"})
+        or (table == "files" and key in {"filingFrom", "filingTo"})
+        or (table == "former_names" and key in {"from", "to"})
     ):
         kind = "DATE"
+    if kind == "DATE":
+        return f"TRY_CAST(NULLIF(substr({col}, 1, 10), '') AS DATE) AS {col}"
     return f"TRY_CAST({col} AS {kind}) AS {col}" if kind else col
 
 

@@ -18,7 +18,7 @@ TERMINAL_ERRORS = (
 )
 
 
-def terminal_fetch_failure_sql(limit: int | None) -> str:
+def terminal_fetch_failure_sql(limit: int | None, min_evidence: int) -> str:
     limit_sql = "" if limit is None else f"LIMIT {limit}"
     error_predicate = " OR ".join(f"o.error LIKE '{pattern}'" for pattern in TERMINAL_ERRORS)
     return f"""
@@ -27,13 +27,20 @@ def terminal_fetch_failure_sql(limit: int | None) -> str:
                  c.cik,
                  c.block_name,
                  c.block_sha256,
-                 c.n_records
+                 c.n_records,
+                 least({min_evidence}, c.n_records) AS required_evidence
           FROM block_classifications AS c
           INNER JOIN zip_blocks AS b
             ON c.snapshot_id = b.snapshot_id
            AND c.block_name = b.block_name
           WHERE c.snapshot_id = ?
-            AND c.classification = 'unresolved'
+            AND (
+              c.classification = 'unresolved'
+              OR (
+                c.stratum = 'sgml_anchor'
+                AND c.classification IN ('eastern', 'utc')
+              )
+            )
             AND c.n_records > 0
             AND NOT EXISTS (
               SELECT 1
@@ -64,6 +71,7 @@ def terminal_fetch_failure_sql(limit: int | None) -> str:
                  r.block_name,
                  r.block_sha256,
                  r.n_records,
+                 r.required_evidence,
                  count(*) AS n_samples,
                  count(*) FILTER (
                    WHERE o.acceptance_datetime IS NOT NULL
@@ -91,7 +99,8 @@ def terminal_fetch_failure_sql(limit: int | None) -> str:
                    r.cik,
                    r.block_name,
                    r.block_sha256,
-                   r.n_records
+                   r.n_records,
+                   r.required_evidence
         )
         SELECT snapshot_id,
                cik,
@@ -102,8 +111,9 @@ def terminal_fetch_failure_sql(limit: int | None) -> str:
                error_summary
         FROM sample_status
         WHERE n_samples > 0
-          AND n_valid_sgml = 0
-          AND n_terminal_errors = n_samples
+          AND n_valid_sgml < required_evidence
+          AND n_terminal_errors > 0
+          AND n_terminal_errors + n_valid_sgml = n_samples
         ORDER BY n_records DESC, cik, block_name
         {limit_sql}
     """
@@ -114,11 +124,14 @@ def main() -> None:
     parser.add_argument("--zip", type=Path, default=DEFAULT_NEW_ZIP)
     parser.add_argument("--database", type=Path, default=DEFAULT_DB)
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--min-evidence", type=int, default=3)
     parser.add_argument("--report-only", action="store_true")
     args = parser.parse_args()
 
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be positive")
+    if args.min_evidence < 1:
+        parser.error("--min-evidence must be positive")
 
     snapshot = snapshot_id(args.zip)
     con = duckdb.connect(str(args.database))
@@ -129,7 +142,9 @@ def main() -> None:
         con.close()
         con = duckdb.connect(str(args.database), read_only=True)
 
-    rows = con.execute(terminal_fetch_failure_sql(args.limit), [snapshot]).fetchall()
+    rows = con.execute(
+        terminal_fetch_failure_sql(args.limit, args.min_evidence), [snapshot]
+    ).fetchall()
     print(f"database: {args.database}")
     print(f"snapshot: {snapshot}")
     print(f"terminal SGML fetch failure blocks: {len(rows):,}")

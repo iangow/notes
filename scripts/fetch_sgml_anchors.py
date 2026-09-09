@@ -112,7 +112,7 @@ def block_sample_records(
     ).fetchall()
     if not rows:
         return []
-    if len(rows) == 1:
+    if len(rows) == 1 or sample_count == 1:
         indices = [0]
     else:
         indices = sorted(
