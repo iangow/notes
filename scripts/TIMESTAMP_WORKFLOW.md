@@ -5,6 +5,163 @@ This is the proposed streamlined workflow and its measured baseline as of
 that produced the 2026-09-07 reference file. The baseline below does not use
 that pipeline's inferred block/CIK rules, live JSON, or SGML.
 
+## Steps 6 and 7: evidence-coverage completion (September 9)
+
+Step 6 selects cached live JSON files lacking a JSON-only timezone rule,
+without inspecting differences from Monday. With
+`infer_live_file_timezones.py --sgml-anchor-unclassified`, successful cached
+SGML observations become file-specific anchors. SGML clocks are interpreted
+as America/New_York. The uniform-live-file assumption is unchanged: all
+available anchors must agree on UTC or Eastern; mixed or contradictory files
+receive no rule. Candidate accession instants must also agree across files
+and with existing validation evidence. `sgml_anchor_target_files` and
+`sgml_file_anchors` record selection and evidence separately. These anchors
+do not become mislabeled direct JSON-pair overrides.
+
+The initial unresolved-row screen covered 4,255 unclassified files; 4,254
+already had usable SGML anchors. The implementation checks all unclassified
+cached files, including files without unresolved current rows. No SGML was
+fetched. The frozen `step6_evaluation.duckdb` has:
+
+| Measure | Rows |
+|---|---:|
+| Evidence-supported | 14,079,322 |
+| Additional evidence-supported versus Step 5 | 103,457 |
+| Identical to Monday | 26,380,597 |
+| Evidence-backed differences from Monday | 51,639 |
+| Monday corrections still unresolved | 5,093 |
+
+There are zero disagreements between accepted evidence sources. Neither the
+production Parquet nor the Step 5 candidate was replaced.
+
+Step 7 independently selects rows with no accepted instant, a raw clock on
+or after 2024-01-01, and no cached live observation for the accession. There
+is no reference-timestamp or outside-hours predicate. Correspondence forms
+are eligible. `build_recent_live_targets.py` stores only selection fields,
+the cutoff, and a creation-time checkpoint. The current queue contains
+674,592 rows, 563,591 accessions, 95,190 blocks, and 95,106 CIKs.
+
+`run_recent_live_followup.py` fetches those blocks with the existing collector,
+including linked historical files, then reruns inference with cached SGML
+anchors and freezes an updated evaluation. Worker count and request rate are
+configurable independently. The initial eight-worker run was restarted with
+16 workers, retaining the shared eight requests/second limiter; writes occur
+in short bursts after 50-block batches.
+A 50-block trial took 12.53 seconds with 33,263 matches, zero missing matches,
+and zero errors. The full run resumes past completed blocks in this queue.
+The subsequent 16-worker trial completed 200 additional blocks in 41.28
+seconds, with 81,380 matches, zero missing matches, and zero errors. This is
+only a modest throughput improvement over the observed eight-worker run;
+the samples contain different blocks, so it is not a controlled benchmark.
+It updates evidence in DuckDB but does not replace production Parquet. The
+existing collector still excludes EFFECT rows from comparison, even though
+the coverage-selection counts above include all forms.
+The background log is `/private/tmp/edgar-recent-live-step7-20260909.log`.
+
+```bash
+uv run --frozen python scripts/infer_live_file_timezones.py \
+  --baseline output/timestamp_baseline/pair_baseline.duckdb \
+  --sgml-anchor-unclassified \
+  --output output/timestamp_baseline/live_file_inference_step6.duckdb
+
+uv run --frozen python scripts/evaluate_timestamp_workflow.py \
+  --baseline output/timestamp_baseline/pair_baseline.duckdb \
+  --live-inference output/timestamp_baseline/live_file_inference_step6.duckdb \
+  --sgml-queue output/timestamp_baseline/outside_hours_sgml_queue_v2.duckdb \
+  --output output/timestamp_baseline/step6_evaluation.duckdb
+
+uv run --frozen python scripts/build_recent_live_targets.py \
+  --workflow-database output/timestamp_baseline/step6_evaluation.duckdb \
+  --output output/timestamp_baseline/recent_live_targets.duckdb
+
+uv run --frozen python scripts/run_recent_live_followup.py \
+  --workers 16 --max-requests-per-second 8 \
+  --targets output/timestamp_baseline/recent_live_targets.duckdb \
+  --baseline output/timestamp_baseline/pair_baseline.duckdb \
+  --sgml-queue output/timestamp_baseline/outside_hours_sgml_queue_v2.duckdb \
+  --inference-output output/timestamp_baseline/live_file_inference_step7.duckdb \
+  --evaluation-output output/timestamp_baseline/step7_evaluation.duckdb
+```
+
+Use fresh output paths when rebuilding analyses; retain the target database
+when resuming collection. For subsequent ZIP snapshots, keep accepted
+accession instants and their evidence, rebuild unresolved coverage against
+the new raw data, and apply the same selection rules. Raw clocks alone must
+not override previously verified instants. The recent cutoff is explicit and
+configurable, not a claim that older unresolved clocks are verified.
+
+The operational target is to complete Steps 1 through 7 within 24 hours.
+Current individual-stage timings suggest this is feasible, but a complete
+timed run has not established it. More workers can hide network latency;
+they do not raise the shared request limit. Preserve caches and completed
+batch checkpoints, and avoid overlapping collectors with separate rate
+limiters. Historical-file selection and repeated per-batch scans/writes are
+further optimization candidates if network throughput is no longer limiting.
+
+## Completed Step 5 and candidate output (September 9)
+
+Step 5 completed successfully: all 29,001 target blocks have successful fetch
+records, with 2,123,058 matched rows and two missing matches. The continuation
+after the initial 50-block trial took 4,582 seconds (76.4 minutes). New live
+evidence resolves 93,215 of the 104,098 target rows: 90,633 match the old rule
+and 2,582 differ. Inference classified 28,191 live files as UTC and 32,998 as
+Eastern. One accession (`0001193125-09-224187`) was excluded from file-level
+inference because the inferred midnight clock disagreed with its cached SGML
+clock; it was not silently promoted.
+
+`evaluate_timestamp_workflow.py` freezes the entire workflow, including only
+queue-selected successful SGML observations from Step 4, in
+`output/timestamp_baseline/step5_evaluation.duckdb`. It stores all accepted
+accession evidence, its precedence, the selected `resolved_accessions`, and
+the per-row comparison with Monday's frozen reference. There are no conflicts
+between accepted evidence sources in this snapshot. Old block/CIK/segment
+rules supply neither corrections nor fallbacks in the new workflow.
+
+| Comparison with Monday | Rows |
+|---|---:|
+| Total current rows | 26,437,329 |
+| Identical instants | 26,374,849 (99.7637%) |
+| New evidence gives a different instant | 51,595 |
+| Old correction not reproduced; new workflow unresolved | 10,885 |
+
+The 51,595 evidence-backed differences comprise 40,703 rows where Monday used
+a fallback and 10,892 where it used a rule or override. The 10,885 missing
+corrections comprise 10,861 block-rule rows, 14 segment-rule rows, eight CIK-rule
+rows, and two exact-override rows. Agreement is not accuracy: Monday's output
+included known overgeneralized rules.
+
+Evidence coverage is 13,975,865 rows (52.8641%). The other 12,461,464 retain
+an explicitly labelled, unverified Eastern fallback. Most of those agree with
+Monday, but should not be described as verified by this workflow. The candidate
+has 10,679 non-EFFECT outside-hours rows from 2003 onward.
+
+The existing `materialize_corrected_filings.py` now accepts
+`--workflow-database` to use this frozen accession-only table. Its original
+mode remains available for the historical production pipeline. The new mode
+checks the raw input's recorded size and modification time, propagates the
+stored instant by accession, and requires `--allow-unresolved` to permit the
+labelled fallback. Provenance distinguishes `snapshot_pair`, `cross_cik_pair`,
+`live_pair`, `live_file_inferred`, `sgml`, and unresolved clocks.
+
+```bash
+uv run python scripts/evaluate_timestamp_workflow.py \
+  --baseline output/timestamp_baseline/pair_baseline.duckdb \
+  --live-inference output/timestamp_baseline/live_file_inference_step5.duckdb \
+  --sgml-queue output/timestamp_baseline/outside_hours_sgml_queue_v2.duckdb \
+  --output output/timestamp_baseline/step5_evaluation.duckdb
+
+uv run python scripts/materialize_corrected_filings.py \
+  --workflow-database output/timestamp_baseline/step5_evaluation.duckdb \
+  --allow-unresolved \
+  --output output/timestamp_baseline/filings_step5.parquet
+```
+
+These outputs now exist; use new output paths when repeating the evaluation.
+The separate candidate `filings_step5.parquet` retains all 26,437,329 rows and
+TIMESTAMPTZ acceptance times. Every written instant was checked against the
+frozen evaluation. Monday's live `filings.parquet` has not been replaced.
+The candidate is ready for review before deciding whether to promote it.
+
 ## Preserve the raw clocks
 
 Extract both the May 2024 and current `submissions.zip` snapshots with
@@ -247,10 +404,10 @@ rows unresolved; if a compatibility fallback is desired, label it explicitly.
 Later evidence should feed the same materialization path rather than editing
 Parquet timestamps through separate repair scripts.
 
-This experiment has **not** replaced the production database, integrated the
-new snapshot-pair table into the production materializer, or changed the live
-Parquet. Its results make that migration reviewable before changing the
-existing fallback and precedence behavior.
+The original two-step experiment did not change production data. The completed
+Step 5 section above describes the subsequently added accession-only
+materialization mode and its separate candidate file; the live Parquet remains
+unchanged pending review.
 
 ## Reproduce
 

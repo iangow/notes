@@ -10,8 +10,16 @@ from acceptance_timestamp_db import DEFAULT_DB, initialize_database
 from compare_filing_timestamp_sources import sql_string
 
 
-def infer(con):
-    con.execute("""
+def infer(con, sgml_file_anchors=False):
+    extra_evidence = """
+        UNION ALL
+        SELECT l.source_url,l.accession_number,l.retrieved_at,
+               CASE WHEN (try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'UTC')=s.instant THEN 'utc'
+                    WHEN (try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'America/New_York')=s.instant THEN 'eastern'
+                    ELSE 'contradiction' END
+        FROM live l JOIN sgml_file_anchors s USING(source_url,accession_number)
+    """ if sgml_file_anchors else ""
+    con.execute(f"""
         CREATE TABLE anchors AS
         SELECT accession, min(instant) instant FROM anchor_inputs
         GROUP BY accession HAVING count(DISTINCT instant)=1;
@@ -20,7 +28,8 @@ def infer(con):
                CASE WHEN (try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'UTC')=a.instant THEN 'utc'
                     WHEN (try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'America/New_York')=a.instant THEN 'eastern'
                     ELSE 'contradiction' END interpretation
-        FROM live l JOIN anchors a ON a.accession=l.accession_number;
+        FROM live l JOIN anchors a ON a.accession=l.accession_number
+        {extra_evidence};
         CREATE TABLE file_rules AS
         SELECT source_url,min(interpretation) interpretation,
                count(DISTINCT accession_number) evidence_count,
@@ -53,6 +62,8 @@ def main():
     p.add_argument('--database',type=Path,default=DEFAULT_DB)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--promote-overrides',action='store_true')
+    p.add_argument('--sgml-anchor-unclassified',action='store_true',
+                   help='Use cached SGML anchors for live files lacking a JSON-only timezone rule.')
     args=p.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -76,6 +87,22 @@ def main():
             FROM production.submission_overrides;
         """)
         infer(con)
+        if args.sgml_anchor_unclassified:
+            con.execute("""
+                CREATE TABLE sgml_anchor_target_files AS
+                SELECT DISTINCT source_url FROM live
+                WHERE source_url NOT IN (SELECT source_url FROM file_rules);
+                CREATE TABLE sgml_file_anchors AS
+                SELECT l.source_url,l.accession_number,
+                       s.acceptance_datetime AT TIME ZONE 'America/New_York' instant
+                FROM live l JOIN sgml_anchor_target_files t USING(source_url)
+                JOIN production.sgml_observations s USING(accession_number)
+                WHERE s.acceptance_datetime IS NOT NULL AND s.error IS NULL;
+            """)
+            for table in ('anchors','file_evidence','file_rules','file_candidates',
+                          'rejected_accessions','inferred_overrides'):
+                con.execute(f'DROP TABLE {table}')
+            infer(con, sgml_file_anchors=True)
         con.execute("""
             CREATE TABLE incremental AS
             SELECT c.*,i.instant inferred_instant FROM baseline.comparison c
