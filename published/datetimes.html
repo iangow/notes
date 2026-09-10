@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Ian D. Gow">
-<meta name="dcterms.date" content="2026-09-07">
+<meta name="dcterms.date" content="2026-09-10">
 
 <title>Working with date and times – notes</title>
 <style>
@@ -208,7 +208,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">7 September 2026</p>
+      <p class="date">10 September 2026</p>
     </div>
   </div>
   
@@ -359,7 +359,7 @@ This persists across sessions and is shared with the DuckDB CLI and other client
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>filings <span class="ot">&lt;-</span> <span class="fu">load_parquet</span>(db, <span class="at">table =</span> <span class="st">"filings"</span>, <span class="at">schema =</span> <span class="st">"edgar"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC. For example, the original text representation of <code>acceptanceDateTime</code> was of the form <code>2024-04-25T17:04:01.000Z</code>. The <code>Z</code> is meant to indicate that the timestamp is expressed in UTC.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> However, I ignored that in importing the data and interpreted these timestamps as relating to <code>America/New_York</code>. As we will see shortly, this interpretation is correct based on other information.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
+<p>An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC. For example, the original text representation of <code>acceptanceDateTime</code> was of the form <code>2024-04-25T17:04:01.000Z</code>. The <code>Z</code> is meant to indicate that the timestamp is expressed in UTC.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> However, the bulk JSON contains a mixture of UTC and <code>America/New_York</code> clock values despite this suffix. The current Parquet file reconciles timestamps using comparisons across snapshots, duplicate accessions, live SEC JSON, and selected SGML headers; it also uses file-level timezone inference where the available evidence agrees. Rows without supporting evidence retain an explicitly labelled Eastern-time fallback, rather than being treated as verified. The file includes <code>timestamp_provenance</code> and <code>timestamp_interpretation</code> columns so that these cases can be distinguished.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
 <p>To understand the date-times on <code>filings</code>, I extract some components of the timestamp to create a variable <code>acceptance_time</code> that converts the date component of each <code>acceptanceDateTime</code> to the same date (<code>2000-01-01</code>) as this facilitates plotting the times ignoring the dates.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>filing_times <span class="ot">&lt;-</span> </span>
@@ -447,7 +447,7 @@ Figure&nbsp;3: Distribution of acceptance time–pre-2002 with times
 </div>
 </div>
 </div>
-<p><a href="#fig-time-later-timed" class="quarto-xref">Figure&nbsp;5</a> focuses on post-2001 non-midnight filings, where we see that the bulk of filings are between 06:00 and 22:00, consistent with the statement on <a href="https://www.sec.gov/submit-filings">the SEC website</a> that “EDGAR is available to accept filings from 6 a.m. to 10 p.m. ET weekdays (except federal holidays).” In fact, it was this information that allowed me to conclude that the timestamps in the underlying JSON files are in New York times, as interpreting them as UTC times put many filings outside this window.</p>
+<p><a href="#fig-time-later-timed" class="quarto-xref">Figure&nbsp;5</a> focuses on post-2001 non-midnight filings, where we see that the bulk of filings are between 06:00 and 22:00, consistent with the statement on <a href="https://www.sec.gov/submit-filings">the SEC website</a> that “EDGAR is available to accept filings from 6 a.m. to 10 p.m. ET weekdays (except federal holidays).” These hours provide a useful diagnostic for timestamp problems, but they do not establish the timezone of an individual JSON clock. A UTC clock can fall within this window, and some genuinely Eastern timestamps fall outside it, so corrections require additional evidence.</p>
 <p>However, some pre-08:00 filings appear in <a href="#fig-time-later-timed" class="quarto-xref">Figure&nbsp;5</a>. Filings accepted outside normal EDGAR hours—that is, after 22:00 and before 06:00—are not just a historical artifact. <a href="#fig-outside-hours" class="quarto-xref">Figure&nbsp;4</a> shows outside-hours filings from 2003 onward as a percentage of all filings in each year, split by form category. The correspondence category combines <code>CORRESP</code>, <code>UPLOAD</code>, and <code>DRSLTR</code>. The concentration at 00:15 is largely driven by <code>EFFECT</code> filings, which suggests that at least some of these times reflect SEC processing rather than ordinary filer submission behavior.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>year_totals <span class="ot">&lt;-</span></span>
@@ -706,7 +706,7 @@ Figure&nbsp;8: Distribution of acceptance times with valid times
 <span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">system_time</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.387   0.047   0.097 </code></pre>
+  0.537   0.090   0.112 </code></pre>
 </div>
 </div>
 <p>We can now make a plot of <code>time_diff</code>, converting <code>time_diff</code> from seconds to minutes by dividing by 60 and converting to numeric.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a></p>
@@ -757,7 +757,7 @@ Wickham, H., Çetinkaya-Rundel, M., Grolemund, G., 2023. <a href="https://books.
 <li id="fn7"><p>The <code>INSTALL icu</code> command is only needed if you have not already installed it, but it’s harmless to run it if it’s already present.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn8"><p>The code below assumes that <code>DATA_DIR</code> is set in the project <code>.env</code> file and points to the root of that repository. The process for creating this file is described <a href="sec_submissions.html">here</a>. You can obtain a copy of <code>filings.parquet</code> <a href="https://www.dropbox.com/scl/fi/9osie7ln50z67uzi9zys5/filings.parquet?rlkey=5igrlb23tns4n8trunk3nstlt&amp;dl=0">here</a>. If you do not use a Parquet data repository, place <code>filings.parquet</code> in the <code>data</code> subdirectory of this project and use <code>filings &lt;- load_parquet(db, table = "filings", data_dir = "data")</code> instead.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn9"><p>See the <a href="https://en.m.wikipedia.org/wiki/ISO_8601">Wikipedia page for ISO 8601</a>.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn10"><p>Note that the information is stored in parquet files in UTC.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>The correction workflow is documented <a href="https://github.com/iangow/notes/blob/main/scripts/TIMESTAMP_WORKFLOW.md">here</a>. The timestamps are stored as timezone-aware instants in Parquet and displayed here in New York time.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn11"><p>As mentioned above, R has no native type for times, but a set of date-times with the date fixed on a common date will provide us with what we need.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn12"><p>Though we might expect a preponderance of these filings to occur in the years just before 2002 in this case, and the filings appear to be fairly spread out over the pre-2002 years.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn13"><p><a href="https://www.tradinghours.com/markets/nasdaq">NYSE and NASDAQ trading hours</a> are 09:30–16:00.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
