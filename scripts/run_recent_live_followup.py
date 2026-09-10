@@ -19,6 +19,7 @@ def main():
     p.add_argument('--evaluation-output',type=Path,required=True)
     p.add_argument('--workers',type=int,default=8)
     p.add_argument('--max-requests-per-second',type=float,default=8)
+    p.add_argument('--only-form',help='Restrict collection to this form for a targeted backfill.')
     args=p.parse_args()
     if args.workers<1 or args.max_requests_per_second<=0:
         p.error('Workers and request rate must be positive')
@@ -33,7 +34,8 @@ def main():
 
     run('compare_live_json_timestamps.py','--target-database',args.targets,
         '--include-correspondence','--follow-history','--promote-overrides',
-        '--workers',args.workers,'--max-requests-per-second',args.max_requests_per_second)
+        '--workers',args.workers,'--max-requests-per-second',args.max_requests_per_second,
+        *(['--only-form',args.only_form] if args.only_form else []))
     run('infer_live_file_timezones.py','--baseline',args.baseline,
         '--output',args.inference_output,'--sgml-anchor-unclassified')
     run('evaluate_timestamp_workflow.py','--baseline',args.baseline,

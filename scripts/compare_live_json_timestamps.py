@@ -176,6 +176,15 @@ def write_batch(args, snapshot, results):
             print('Consistent accession candidates:', con.execute('SELECT count(*) FROM candidates WHERE accession NOT IN (SELECT accession FROM conflicts)').fetchone()[0])
 
 
+def comparison_rows(con, snapshot, blocks, only_form=None):
+    return con.execute("""
+        SELECT block_name,cik,accession_number,zip_acceptance_datetime_text
+        FROM zip_filing_records WHERE snapshot_id=?
+          AND block_name IN (SELECT unnest(?))
+          AND (? IS NULL OR form=?)
+    """,[snapshot,blocks,only_form,only_form]).fetchall()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     selection = parser.add_mutually_exclusive_group(required=True)
@@ -187,7 +196,8 @@ def main():
                            help='Read source_file values from target_blocks in an analysis database.')
     parser.add_argument('--follow-history',action='store_true',help='Search linked historical JSON files for missing accessions.')
     parser.add_argument('--include-correspondence', action='store_true',
-                        help='Exclude only EFFECT from targeting and comparison.')
+                        help='Allow correspondence forms in outside-hours targeting; comparison includes all forms.')
+    parser.add_argument('--only-form',help='Compare only this form in explicitly selected blocks (for backfills).')
     parser.add_argument('--list-only', action='store_true', help='Count targets without fetching or writing.')
     parser.add_argument('--filings', type=Path, default=DATA_DIR/'edgar'/'filings.parquet')
     parser.add_argument('--since-date', default='2003-01-01')
@@ -201,6 +211,8 @@ def main():
     parser.add_argument('--max-requests-per-second', type=float, default=8)
     parser.add_argument('--write-lock-timeout', type=float, default=300)
     args = parser.parse_args()
+    if args.only_form and (args.baseline or args.all_outside_hours):
+        parser.error('--only-form requires explicit blocks or a target database')
     if min(args.batch_blocks,args.workers,args.max_requests_per_second,args.write_lock_timeout)<=0:
         parser.error('Batch size, workers, rate, and timeout must be positive')
     if args.max_blocks is not None and args.max_blocks<1:
@@ -256,11 +268,7 @@ def main():
             batch = targets[offset:offset+args.batch_blocks]
             inventory = {b: [] for b in batch}
             with duckdb.connect(str(args.database),read_only=True) as con:
-                rows = con.execute(f"""
-                    SELECT block_name,cik,accession_number,zip_acceptance_datetime_text
-                    FROM zip_filing_records WHERE snapshot_id=? AND block_name IN (SELECT unnest(?))
-                    AND coalesce(form,'') NOT IN ({excluded_forms})
-                """,[snapshot,batch]).fetchall()
+                rows = comparison_rows(con,snapshot,batch,args.only_form)
             for block,*row in rows:
                 inventory[block].append(row)
             results = list(executor.map(lambda item: fetch_block(item,limiter,args.follow_history),inventory.items()))

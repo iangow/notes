@@ -3,10 +3,23 @@ import unittest
 import duckdb
 
 from acceptance_timestamp_db import initialize_database
-from compare_live_json_timestamps import compare_clocks
+from compare_live_json_timestamps import compare_clocks, comparison_rows
 
 
 class LiveClockTests(unittest.TestCase):
+    def test_comparison_includes_effect_and_supports_backfill(self):
+        with duckdb.connect() as c:
+            c.execute('''CREATE TABLE zip_filing_records(snapshot_id VARCHAR,
+                block_name VARCHAR,cik BIGINT,accession_number VARCHAR,
+                zip_acceptance_datetime_text VARCHAR,form VARCHAR)''')
+            c.execute("""INSERT INTO zip_filing_records VALUES
+                ('s','b',1,'e','2025-01-01','EFFECT'),
+                ('s','b',1,'c','2025-01-01','CORRESP'),
+                ('s','b',1,'k','2025-01-01','10-K'),
+                ('s','other',2,'x','2025-01-01','EFFECT')""")
+            self.assertEqual(len(comparison_rows(c,'s',['b'])),3)
+            self.assertEqual([r[2] for r in comparison_rows(c,'s',['b'],'EFFECT')],['e'])
+
     def test_conversion_directions_and_daylight_saving(self):
         with duckdb.connect() as con:
             con.execute('CREATE TABLE input_clocks(zip_text VARCHAR, live_text VARCHAR)')

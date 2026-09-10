@@ -1,5 +1,15 @@
 # Accession-first timestamp repair
 
+The production Parquet was updated on September 10, 2026 using the frozen
+accession evidence. See [the release record](TIMESTAMP_RELEASE_20260910.md)
+for validation, the archived previous version and report publication details.
+Statements below about an unchanged production file describe earlier stages.
+
+Parquet-first storage and the non-destructive export/restore bridge are
+documented in [TIMESTAMP_STORAGE.md](TIMESTAMP_STORAGE.md). The first snapshots
+preserve the existing evidence, frozen accepted timestamps and paired audit;
+the collection scripts still use their current DuckDB databases during migration.
+
 This is the proposed streamlined workflow and its measured baseline as of
 2026-09-08. The older `SEC_TIMESTAMP_FIX.md` describes the exploratory pipeline
 that produced the 2026-09-07 reference file. The baseline below does not use
@@ -97,6 +107,433 @@ they do not raise the shared request limit. Preserve caches and completed
 batch checkpoints, and avoid overlapping collectors with separate rate
 limiters. Historical-file selection and repeated per-batch scans/writes are
 further optimization candidates if network throughput is no longer limiting.
+
+## Completed Step 7 and remaining-case classification (September 9)
+
+The restarted 16-worker collection completed its 92,790 blocks in 14,604.06
+seconds (4 hours 3 minutes). The frozen `step7_evaluation.duckdb` contains
+16,441,506 evidence-supported rows, 9,995,823 unresolved rows, 26,369,087
+instants matching Monday, 63,151 evidence-backed differences, and 5,091
+Monday corrections still unresolved. Accepted evidence has zero conflicting
+instants. Production Parquet remains unchanged.
+
+The diagnostic selection is `corrected_instant IS NULL AND
+prospective_instant IS DISTINCT FROM reference_instant` in the frozen
+evaluation's `comparison` table. It contains 5,091 rows, 4,961 accessions,
+2,657 ZIP blocks, and 2,656 CIKs. All lack cached live observations by
+accession; none are cases of unanchored live files or rejected inference.
+
+| Reason | Rows |
+|---|---:|
+| EFFECT, deliberately excluded by the live collector | 5,089 |
+| Other forms, not found by successful live/history searches | 2 |
+
+All selected rows were in the Step 7 target queue, but inclusion in a target
+block does not override the collector's EFFECT filter. Successful cached
+SGML covers 101 EFFECT rows (87 accessions): 100 agree with Monday, while
+one agrees with the current Eastern fallback. The other 4,990 rows have no
+cached SGML. Thus disagreement with Monday is not itself proof of an error.
+
+The two non-EFFECT cases are:
+
+| CIK | Accession | Form | ZIP block |
+|---|---|---|---|
+| 1354457 | 9999999997-25-003336 | 1 | CIK0001354457.json |
+| 1146132 | 9999999997-25-002866 | X-17A-5 | CIK0001146132.json |
+
+Their latest live comparison runs have no request error, but each records
+one missing match after following historical files. Neither has cached SGML.
+Monday classified both raw clocks as UTC using a block rule; that rule is
+not independent confirmation of their correct instants.
+
+A further reusable selection should therefore treat EFFECT separately,
+and identify other recent unresolved accessions that remain unmatched after
+a successful live/history search. Do not use the Monday differences as a
+production collection queue. This classification made no network requests
+and changed no evidence or Parquet data.
+
+## EFFECT backfill for Steps 5 and 7
+
+The collector previously reused the outside-hours form exclusions when
+comparing rows in any selected block. That incorrectly omitted EFFECT from
+Steps 5 and 7. `compare_live_json_timestamps.py` now compares all forms in
+selected blocks by default. EFFECT remains excluded from outside-hours
+target selection, where unusual hours are not useful evidence for that form.
+The optional `--only-form EFFECT` restricts a backfill to EFFECT comparisons;
+it cannot be combined with outside-hours selection.
+
+`build_effect_live_targets.py` unions the original Step 5 and Step 7 target
+blocks and selects EFFECT rows without any cached live clock for the
+accession. It uses neither Monday's instants nor unresolved-status filtering:
+even previously resolved EFFECT accessions can supply useful live evidence.
+The queue has 31,900 rows, 29,217 accessions, 8,017 blocks, and 8,005 CIKs.
+Its fresh metadata checkpoint prevents earlier non-EFFECT fetch records from
+being mistaken for completed backfill work. Retain this queue when resuming;
+do not reuse an EFFECT-only queue as a checkpoint for an all-form collection.
+
+```bash
+uv run --frozen python scripts/build_effect_live_targets.py \
+  --step5-targets output/timestamp_baseline/old_rule_live_targets.duckdb \
+  --step7-targets output/timestamp_baseline/recent_live_targets.duckdb \
+  --workflow-database output/timestamp_baseline/step7_evaluation.duckdb \
+  --output output/timestamp_baseline/effect_live_targets.duckdb
+
+uv run --frozen python scripts/run_recent_live_followup.py \
+  --targets output/timestamp_baseline/effect_live_targets.duckdb \
+  --only-form EFFECT --workers 16 --max-requests-per-second 8 \
+  --baseline output/timestamp_baseline/pair_baseline.duckdb \
+  --sgml-queue output/timestamp_baseline/outside_hours_sgml_queue_v2.duckdb \
+  --inference-output output/timestamp_baseline/live_file_inference_effect.duckdb \
+  --evaluation-output output/timestamp_baseline/effect_evaluation.duckdb
+```
+
+Only live JSON is fetched. Inference then uses the accumulated JSON evidence
+and cached SGML, applying the same conflict checks as Step 7. The frozen
+evaluation includes all forms; production Parquet is not replaced.
+The background log is `/private/tmp/edgar-effect-live-20260909.log`.
+The initial 50-block trial completed in 14.05 seconds: 234 matches, no missing
+matches or request errors, and 78 consistent timezone-pair candidates. The
+remaining 7,967 blocks resume separately; the trial checkpoints are retained.
+
+## Stratified fallback audit (September 10)
+
+`build_timestamp_audit.py` freezes a random row sample from the 9,973,450
+unverified Eastern fallback rows in `effect_evaluation.duckdb`, before
+consulting SGML availability. Acceptance-clock period allocations are:
+
+| Period | Population rows | Sample rows |
+|---|---:|---:|
+| Before 2003 | 1,782,771 | 300 |
+| 2003-2013 | 5,803,181 | 450 |
+| 2014-2023 | 2,332,490 | 750 |
+| 2024-2026 | 55,008 | 1,500 |
+
+Each period is subdivided by midnight/non-midnight clock and broad form
+group (ownership, periodic/current reports, correspondence, EFFECT, other).
+Each nonempty cell gets up to five initial places, with remaining places
+allocated proportionally to remaining cell population using largest
+remainders. Selection uses a seeded hash ranking within each cell. The
+frozen queue retains population counts, sample counts, inclusion
+probabilities, and inverse-probability weights. Its 3,000 rows represent
+2,990 accessions; SGML is fetched once per accession, but every selected row
+retains its own outcome and weight.
+
+The reproducibly shuffled 100-accession pilot took 16.2 seconds with eight
+workers and an eight requests/second limiter. Nine fetched headers lacked
+ACCEPTANCE-DATETIME; all 91 obtained timestamps agreed with Eastern. Including
+preexisting cache entries and sampled row multiplicity, the pilot report has
+92 Eastern-confirmed rows, 13 unverifiable rows, and 2,895 not yet checked.
+These incomplete pilot outcomes are not a population accuracy conclusion.
+
+The full audit was started after the user authorized proceeding if the
+projected runtime was under five hours; the pilot projects roughly eight
+minutes for remaining fetches. Missing tags and previously cached errors
+are retained, not silently replaced with new sample members. Transient
+errors can be retried later without changing sample membership.
+
+```bash
+uv run --frozen python scripts/build_timestamp_audit.py \
+  --workflow-database output/timestamp_baseline/effect_evaluation.duckdb \
+  --output output/timestamp_baseline/fallback_audit_3000.duckdb
+
+uv run --frozen python scripts/run_timestamp_audit.py \
+  --queue output/timestamp_baseline/fallback_audit_3000.duckdb \
+  --output output/timestamp_baseline/fallback_audit_3000_report.duckdb
+```
+
+`collect_queued_sgml.py --audit-only` stores observations but does not promote
+submission overrides. The report distinguishes Eastern confirmed, UTC
+indicated, other discrepancy, unverifiable, and not checked. Its weighted
+percentages use the entire target population, not only successfully verified
+rows, and are estimates rather than confidence bounds. The simple `3/n`
+zero-error bound is not directly applicable to this unequal-probability
+sample or to a sample with unverifiable observations. Future inference can
+read the newly cached SGML, but no inference or Parquet regeneration is
+automatically run by the audit.
+
+Log: `/private/tmp/edgar-fallback-audit-20260910.log`.
+
+The audit completed: remaining collection took 439.8 seconds, in addition
+to the 16.2-second pilot. Of 3,000 sampled rows, 2,741 were Eastern-confirmed
+and 259 unverifiable, all due to missing ACCEPTANCE-DATETIME tags. There were
+no observed UTC or other discrepancies among verifiable rows. Weighted
+population estimates are 84.1163% confirmed and 15.8837% unverifiable; these
+are not confidence bounds or evidence that unverifiable clocks are correct.
+
+### Midnight-clock diagnostic
+
+| Raw ZIP clock | Eastern confirmed | Missing SGML tag |
+|---|---:|---:|
+| Midnight (00:00:00) | 0 | 255 |
+| Non-midnight | 2,741 | 4 |
+
+All 255 sampled midnight clocks lacked a tag. Four non-midnight missing-tag
+exceptions occurred on 2002-04-29, 2002-04-30, 2002-05-10, and 2002-05-14;
+these were not midnight after a UTC-to-New-York conversion either. The three
+post-2002 missing-tag sample rows had midnight clocks dated 2009-03-23.
+
+An additional nonrandom cache check against the same frozen fallback
+population found 1,074 midnight rows (731 accessions) with missing tags,
+two midnight rows (one accession) with another error, and no midnight rows
+with usable SGML timestamps. Non-midnight rows included 8,801 with usable
+timestamps, eight with missing tags, and two with other errors. Cache counts
+include the audit and must not be treated as an independent random sample.
+
+This supports deprioritizing raw-midnight fallback clocks as likely
+unavailable time-of-day values, not marking them as verified instants.
+Known missing-tag accessions should not be repeatedly fetched. A future
+skip heuristic should retain occasional random midnight checks and keep
+non-midnight early-2002 exceptions distinct. No such skip rule has yet been
+enabled and no timestamps were changed by this diagnostic.
+
+### Broader midnight check: blanket exclusion is unsafe
+
+The earlier midnight diagnostic was restricted to fallback rows. A later
+check across all raw rows linked to cached SGML, including corrected rows,
+found eight literal `T00:00:00.000Z` rows representing six accessions with
+usable SGML timestamps. Five accessions have genuine UTC-midnight instants:
+their SGML clocks are 19:00 or 20:00 Eastern on the previous day. Examples:
+
+| Accession | JSON clock | SGML Eastern clock |
+|---|---|---|
+| 0000891092-20-002671 | 2020-03-05T00:00:00.000Z | 2020-03-04 19:00:00 |
+| 0000950103-24-011643 | 2024-08-03T00:00:00.000Z | 2024-08-02 20:00:00 |
+| 0001193125-09-224187 | 2009-11-05T00:00:00.000Z | 2009-11-04 19:50:02 |
+
+The last example is an anomalous clock rather than a pure timezone shift.
+The all-row missing-tag check also found non-midnight clocks: many become
+midnight in New York when interpreted as UTC, but 186 accessions (271 rows)
+were neither kind of midnight, with raw dates from April 26 to May 14, 2002.
+Counts are a snapshot of the growing cache, not results from a random sample.
+
+Therefore neither direction is an equivalence: missing tags do not imply
+literal midnight, and literal midnight does not imply a missing tag. Do not
+enable a global literal-midnight exclusion. Known missing-tag outcomes are
+already persisted in `sgml_observations.error` and skipped by default; keep
+them distinct from HTTP errors/timeouts and from verified timestamps. Any
+additional date- and evidence-dependent fetch heuristic needs validation.
+
+## Offline collection replay and logged costs (September 10)
+
+Historical logs provide the measured collection baseline below. JSON units
+are completed ZIP-block jobs, not individual HTTP requests: a job may follow
+historical files. SGML units are accession fetch attempts. These are separate
+background-log segments and exclude separately run pilots and retries.
+
+| Collection | Logged completed units | Collection seconds |
+|---|---:|---:|
+| Step 3 live JSON | 28,618 blocks | 4,519.49 |
+| Step 5 live JSON continuation | 28,951 blocks | 4,582.03 |
+| Step 7 before restart | 2,150 blocks | 461.8 |
+| Step 7 after restart | 92,790 blocks | 14,604.06 |
+| EFFECT backfill continuation | 7,967 blocks | 1,264.98 |
+| Outside-hours SGML continuation | 10,600 fetches | 3,345.3 |
+| Random audit continuation | 2,885 fetches | 439.8 |
+
+Totals: 160,476 JSON block jobs in 25,432.36 seconds and 13,485 SGML fetches
+in 3,785.1 seconds, or 8.116 hours combined. This is elapsed collection work,
+including parsing and batch writes, not a pure network-time measurement.
+Logs live in `/private/tmp/edgar-*.log`; the Step 7 log contains both runs.
+Retry/pilot costs and earlier exploratory fetching are additional. Counting
+attempted HTTP requests and unique URLs explicitly would improve future
+instrumentation, but these logs already support empirical cost estimates.
+
+`replay_timestamp_collections.py` compares cached coverage under three target
+plans. It reconstructs Step 3's 37,792 blocks and uses the frozen Step 5
+(29,001) and Step 7 (95,190) targets. It recomputes exact live clock pairs and
+file inference, holding pre-audit SGML evidence constant. EFFECT is included
+in comparison. It never fetches data or changes production outputs.
+
+| Plan | Unique target blocks | Supported rows | Timezone-shifted rows | Frozen shifts lost |
+|---|---:|---:|---:|---:|
+| Step 7 only | 95,190 | 14,837,287 | 9,020,892 | 723,278 |
+| Steps 3 + 7 | 130,036 | 16,315,825 | 9,652,416 | 91,754 |
+| Steps 3 + 5 + 7 | 155,816 | 16,396,471 | 9,731,490 | 12,680 |
+| Frozen EFFECT evaluation | not a collection plan | 16,463,879 | 9,744,170 | 0 |
+
+Shift means an evidence-backed instant different from the raw-Eastern
+fallback, not a change actually written to production Parquet. No accepted
+evidence conflicts appeared in these replays. Unique JSON URL lower bounds
+(requested block URLs plus reachable cached observation URLs) are 96,168,
+131,057, and 156,990 respectively; retries and unsuccessful history lookups
+are not represented. Historical cached observations are associated with a
+selected block by matching accession and CIK, not a retained fetch trace.
+
+The combined plan still loses support for 67,408 rows, including 12,680
+shifts. It is therefore NOT yet a validated replacement. Earlier exploratory
+cache coverage, globally recomputed pair decisions versus historical batch
+decisions, and cache reachability assumptions need reconciliation. Also,
+Step 5 targets depend on legacy rules and Step 7 targets were selected after
+earlier stages: these frozen-plan comparisons are not a from-scratch replay
+of target generation. Do not infer that later selectors subsume earlier
+ones. A merged fetch pass can deduplicate known targets, but dropping
+selectors or deploying the consolidated workflow requires further checks.
+
+Outputs: `output/timestamp_baseline/collection_replay/`, one DuckDB per plan,
+with targets, reachable observations, evidence, metrics, and assumptions.
+The replay regression test checks target filtering, EFFECT inclusion, and
+lost-support/lost-shift accounting.
+
+## JSON-first ordering replay (September 10)
+
+`replay_json_first.py` uses the same frozen union of Step 3/5/7 blocks and
+reachable cached JSON as the combined-target replay, but applies JSON-only
+pair and file inference before selecting SGML. It then rebuilds the
+non-EFFECT outside-hours queue and adds unmatched Step 5/7 accessions.
+Step 6 uses pre-audit cached SGML to anchor otherwise unclassified files.
+Known SGML evidence is also retained for validation. This isolates ordering
+from target coverage and makes no network requests or Parquet changes.
+
+| Measure | Result |
+|---|---:|
+| Outside-hours rows after JSON-only inference | 11,239 |
+| Outside-hours accessions | 8,699 |
+| Additional unmatched accessions | 4 |
+| Combined exact-SGML follow-up queue | 8,703 |
+| Usable cached SGML in frozen evidence | 8,639 |
+| Known missing-tag cases | 59 |
+| Cached request errors | 2 |
+| Uncached at the frozen cutoff | 3 |
+
+The old outside-hours queue held 11,106 accessions. All 8,699 newly selected
+outside-hours accessions are in that old queue: 2,407 outside-hours checks
+are removed, with four unmatched cases added. Final support (16,396,471
+rows), timezone shifts (9,731,490 rows), and every prospective row instant
+are identical to the previous combined-target replay. There are no accepted
+evidence conflicts. This is a 21.6% smaller follow-up queue, not a measured
+21.6% runtime improvement or a reduction in the separate cached-anchor work.
+
+The earlier combined replay's 67,408-row support gap and 12,680 lost shifts
+relative to the frozen historical workflow remain. This experiment supports
+JSON-before-SGML ordering conditional on identical target coverage; it does
+not yet establish a complete replacement for the historical process.
+
+Step 6 is cache-only by design, not proof that no useful new SGML anchors
+exist. After cached anchoring, 31,990 reachable live files remain unclassified;
+31,989 have no anchor evidence and one has conflicting evidence. Of the
+unclassified files, 30,590 contain unresolved accessions, including 30,586
+with at least one non-midnight live clock. These are potential anchor targets,
+not an authorized fetch queue; missing-time conventions and expected yield
+still need consideration.
+
+A production design can allow a bounded feedback pass: new SGML evidence
+may anchor cached live files, or select an affected live file for collection
+when no cached match exists. Recompute file consistency after adding such
+evidence, quarantine contradictions, and fetch only new required URLs or
+accessions. Do not repeatedly rerun all live collection or treat known
+missing SGML tags as a reason to fetch indefinitely.
+
+Output: `output/timestamp_baseline/json_first_replay.duckdb`.
+
+## Paired three-version audit (September 10)
+
+The broader audit samples all 26,437,329 current rows, not just unverified
+fallbacks. `build_paired_timestamp_audit.py` freezes 10,000 selected rows
+(9,973 accessions) and three predictions before reading SGML availability:
+
+1. Monday: frozen September 7 reference instants in `effect_evaluation`.
+2. Last night: `effect_evaluation` prospective instants, including EFFECT
+   backfill but not the still-unapplied four-case Step 8.
+3. Streamlined candidate: `json_first_replay` resolved instants plus Eastern
+   fallbacks. This is the provisional frozen-target ordering replay, not a
+   validated end-to-end iterative pipeline. Its known coverage gap remains.
+
+Acceptance-clock period allocations are 1,000 before 2003, 1,500 for
+2003-2013, 2,500 for 2014-2023, and 5,000 for 2024-2026. Within periods,
+strata also distinguish midnight, form group, last-night correction method,
+and whether predictions differ across versions. Each nonempty cell gets up
+to five initial places, with remaining capacity-proportional allocation.
+Population counts and inclusion probabilities are retained. The sample has
+3,913 raw-pair rows, 1,792 live-pair rows, 2,124 live-file-inferred rows,
+2,081 fallbacks, and 90 direct-SGML rows.
+
+`report_paired_timestamp_audit.py` evaluates all three predictions against
+the same SGML reference instants, assumed America/New_York. It reports
+weighted error rates among verifiable rows and weighted unavailable-reference
+rates. Whole-population lower/upper estimates treat all unverifiable rows
+as correct/incorrect respectively; those ranges are not sampling confidence
+intervals. Sampling uncertainty needs separate analysis before drawing
+statistical conclusions, especially for rare or zero observed errors.
+The frozen predictions are never repaired using the audit before scoring.
+
+```bash
+uv run --frozen python scripts/build_paired_timestamp_audit.py \
+  --workflow-database output/timestamp_baseline/effect_evaluation.duckdb \
+  --streamlined-database output/timestamp_baseline/json_first_replay.duckdb \
+  --output output/timestamp_baseline/paired_audit_10000.duckdb
+
+uv run --frozen python scripts/run_timestamp_audit.py --paired \
+  --queue output/timestamp_baseline/paired_audit_10000.duckdb \
+  --output output/timestamp_baseline/paired_audit_10000_report.duckdb
+```
+
+Collection is audit-only, reuses cached SGML, and makes no Parquet or
+submission-override changes. It does not enable the proposed midnight skip:
+that would introduce selective nonverification into this audit. Cached
+missing-tag failures are still retained rather than repeatedly fetched.
+Log: `/private/tmp/edgar-paired-audit-20260910.log`.
+The 100-fetch timing pilot took 35.4 seconds (15 missing tags and four HTTP
+503 errors). With 431 valid cached timestamps before the pilot, the projected
+remaining collection is about 55-60 minutes, below the user's two-hour
+threshold. The remaining collection was started in the background. No
+automatic retries or replacement sample members are added to this run.
+
+## Equal-cache replay correction (September 10)
+
+The first collection replay was not an equal-starting-cache comparison.
+Last night's workflow reused earlier exploratory live JSON evidence, but
+the replay admitted observations only through reconstructed Step 3/5/7
+target blocks. The 27 sampled streamlined errors came from 25 blocks whose
+live collection records date to September 7, 16:09-16:29 Eastern. Their
+evidence was already present in the pre-Step-5 live-file inference snapshot.
+
+The corrected replay restores all cached live observations retrieved before
+`2026-09-08T00:00:00-04:00`, independent of audit outcomes. That inherited
+set has 1,369,902 observations, 10,254 source files, and 1,309,696 accessions.
+Observations also reachable from current targets are deduplicated. Both
+orderings use the same frozen pre-audit SGML table from the original replay;
+the new audit SGML does not leak into correction inference.
+
+| Measure | Combined targets with inherited cache | JSON-first with same cache |
+|---|---:|---:|
+| Current rows | 26,437,329 | 26,437,329 |
+| Evidence-supported rows | 16,463,879 | 16,463,879 |
+| Evidence-backed shifts versus Eastern fallback | 9,744,170 | 9,744,170 |
+| Instants differing from last night's frozen output | 0 | 0 |
+| Lost evidence support versus last night | 0 | 0 |
+| Exact-SGML follow-up queue | 11,106 | 8,703 |
+
+This eliminates all 67,408 previously missing support rows and all 12,680
+lost shifts. Neither adjusted ordering has accepted-evidence conflicts.
+The smaller queue removes 2,407 outside-hours accessions and adds four
+unmatched accessions. It has 8,639 usable cached SGML timestamps, with the
+same remaining missing-tag/request-error/uncached cases as before.
+
+The separate `equal_cache_audit_rescore.duckdb` retains the original sample
+and SGML outcomes but scores adjusted predictions: 10,000 rows, 8,995
+verifiable, zero errors. Twenty-nine predictions change versus the original
+streamlined sample, including all 27 errors and two unverifiable cases.
+This is a post-audit descriptive rescore, not a fresh independent audit.
+The original audit databases were not modified.
+
+```bash
+uv run --frozen python scripts/replay_timestamp_collections.py \
+  --output output/timestamp_baseline/equal_cache_replay --union-only \
+  --inherited-before 2026-09-08T00:00:00-04:00 \
+  --fixed-sgml-from output/timestamp_baseline/collection_replay/steps3_5_7.duckdb
+
+uv run --frozen python scripts/replay_json_first.py \
+  --union-replay output/timestamp_baseline/equal_cache_replay/steps3_5_7.duckdb \
+  --output output/timestamp_baseline/json_first_equal_cache.duckdb
+```
+
+No SEC requests or production Parquet changes were made. This validates the
+ordering change conditional on the frozen targets and inherited evidence;
+it does not yet implement iterative target generation for a fresh ZIP or
+reconstruct a full historical HTTP trace. The inherited file acquisition
+cost is a shared starting cost, not zero-cost evidence in a cold-start run.
+The earlier cold-coverage replay results remain recorded for transparency
+but must not be interpreted as evidence that streamlining loses accuracy.
 
 ## Completed Step 5 and candidate output (September 9)
 

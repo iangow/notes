@@ -2,6 +2,7 @@
 """Collect and promote exact SGML evidence for a frozen accession queue."""
 
 import argparse
+import random
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import time
@@ -30,6 +31,9 @@ def save(args, fetched, accessions):
         c.execute('BEGIN TRANSACTION')
         for cik,accession,result in fetched:
             insert_sgml_observation(c,cik,accession,result)
+        if args.audit_only:
+            c.commit()
+            return
         c.execute("""
             INSERT INTO submission_overrides
               (accession_number,cik,zip_acceptance_datetime,corrected_acceptance_datetime,
@@ -63,6 +67,8 @@ def main():
     p.add_argument('--rate',type=float,default=8)
     p.add_argument('--batch-size',type=int,default=50)
     p.add_argument('--max-fetches',type=int)
+    p.add_argument('--audit-only',action='store_true',help='Cache SGML observations without promoting exact overrides.')
+    p.add_argument('--shuffle-seed',type=int,help='Shuffle the queue reproducibly before applying the fetch limit.')
     p.add_argument('--retry-errors',action='store_true')
     p.add_argument('--retry-transient-only',action='store_true',
                    help='Retry only cached HTTP 503 failures and timeouts; skip missing tags.')
@@ -82,10 +88,12 @@ def main():
     if args.retry_transient_only:
         pending=[(r[0],r[1]) for r in rows if r[4] and
                  ('HTTP Error 503' in r[4] or r[4].startswith('TimeoutError:'))]
+    if args.shuffle_seed is not None:
+        random.Random(args.shuffle_seed).shuffle(pending)
     if args.max_fetches is not None:
         pending=pending[:args.max_fetches]
     print(f'Queue={len(rows):,}; cached timestamps={len(cached):,}; fetching={len(pending):,}',flush=True)
-    for offset in range(0,0 if args.retry_transient_only else len(cached),500):
+    for offset in range(0,0 if args.retry_transient_only or args.audit_only else len(cached),500):
         save(args,[],cached[offset:offset+500])
     limiter=NetworkRateLimiter(1/args.rate)
     def fetch(row):
@@ -102,7 +110,8 @@ def main():
             failures=[(a,r['error']) for _,a,r in fetched if r['error']]
             errors+=len(failures)
             print(f'Progress={offset+len(batch):,}/{len(pending):,}; errors={errors}; elapsed={time.monotonic()-started:.1f}s; batch_errors={failures}',flush=True)
-    print('Finished; exact overrides stored; Parquet unchanged.',flush=True)
+    print('Finished; SGML observations cached; Parquet unchanged.' if args.audit_only
+          else 'Finished; exact overrides stored; Parquet unchanged.',flush=True)
 
 
 if __name__=='__main__':

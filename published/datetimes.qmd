@@ -1,7 +1,7 @@
 ---
 title: "Working with date and times"
 author: Ian D. Gow
-date: 2026-09-07
+date: 2026-09-10
 date-format: "D MMMM YYYY"
 categories: [Datetimes, DuckDB]
 format:
@@ -209,8 +209,10 @@ filings <- load_parquet(db, table = "filings", schema = "edgar")
 An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC.
 For example, the original text representation of `acceptanceDateTime` was of the form `2024-04-25T17:04:01.000Z`.
 The `Z` is meant to indicate that the timestamp is expressed in UTC.^[See the [Wikipedia page for ISO 8601](https://en.m.wikipedia.org/wiki/ISO_8601).]
-However, I ignored that in importing the data and interpreted these timestamps as relating to `America/New_York`.
-As we will see shortly, this interpretation is correct based on other information.^[Note that the information is stored in parquet files in UTC.]
+However, the bulk JSON contains a mixture of UTC and `America/New_York` clock values despite this suffix.
+The current Parquet file reconciles timestamps using comparisons across snapshots, duplicate accessions, live SEC JSON, and selected SGML headers; it also uses file-level timezone inference where the available evidence agrees.
+Rows without supporting evidence retain an explicitly labelled Eastern-time fallback, rather than being treated as verified.
+The file includes `timestamp_provenance` and `timestamp_interpretation` columns so that these cases can be distinguished.^[The correction workflow is documented [here](https://github.com/iangow/notes/blob/main/scripts/TIMESTAMP_WORKFLOW.md). The timestamps are stored as timezone-aware instants in Parquet and displayed here in New York time.]
 
 To understand the date-times on `filings`, I extract some components of the timestamp to create a variable `acceptance_time` that converts the date component of each `acceptanceDateTime` to the same date (`2000-01-01`) as this facilitates plotting the times ignoring the dates.^[As mentioned above, R has no native type for times, but a set of date-times with the date fixed on a common date will provide us with what we need.]
 
@@ -285,7 +287,8 @@ filing_times |>
 ```
 
 @fig-time-later-timed focuses on post-2001 non-midnight filings, where we see that the bulk of filings are between 06:00 and 22:00, consistent with the statement on [the SEC website](https://www.sec.gov/submit-filings) that "EDGAR is available to accept filings from 6 a.m. to 10 p.m. ET weekdays (except federal holidays)."
-In fact, it was this information that allowed me to conclude that the timestamps in the underlying JSON files are in New York times, as interpreting them as UTC times put many filings outside this window.
+These hours provide a useful diagnostic for timestamp problems, but they do not establish the timezone of an individual JSON clock.
+A UTC clock can fall within this window, and some genuinely Eastern timestamps fall outside it, so corrections require additional evidence.
 
 However, some pre-08:00 filings appear in @fig-time-later-timed.
 Filings accepted outside normal EDGAR hours---that is, after 22:00 and before 06:00---are not just a historical artifact.
