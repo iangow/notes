@@ -1,5 +1,130 @@
-/* Keep inline code in headings readable with either Bootstrap theme. */
-.quarto-dark :is(h1, h2, h3, h4, h5, h6) code {
+/* Shared palette for the collection and every note. No content re-render needed. */
+body.quarto-light {
+  --notes-ink: #203332;
+  --notes-muted: #596763;
+  --notes-accent: #17665c;
+  --notes-paper: #f8f7f2;
+  --notes-line: #dcded5;
+  --notes-surface: #fffefa;
+  --notes-tag: #f0f2ec;
+  --notes-tag-ink: #52665d;
+  --notes-hover: #e5ece3;
+  --notes-on-accent: #ffffff;
+}
+body.quarto-dark {
+  --notes-ink: #e4ebe4;
+  --notes-muted: #b1beb6;
+  --notes-accent: #97d1bb;
+  --notes-paper: #172220;
+  --notes-line: #394943;
+  --notes-surface: #202f2a;
+  --notes-tag: #2c3c34;
+  --notes-tag-ink: #c1d3c7;
+  --notes-hover: #354d41;
+  --notes-on-accent: #142d24;
+}
+body.quarto-light, body.quarto-dark {
+  --bs-body-bg: var(--notes-paper);
+  --bs-body-color: var(--notes-ink);
+  --bs-border-color: var(--notes-line);
+  --bs-secondary-color: var(--notes-muted);
+  --bs-tertiary-bg: var(--notes-tag);
+  --bs-link-color: var(--notes-accent);
+  --bs-link-hover-color: var(--notes-accent);
+  --bs-code-color: var(--notes-ink);
+  color: var(--notes-ink);
+  background-color: var(--notes-paper);
+}
+body a { color: var(--notes-accent); }
+body a:hover { color: var(--notes-accent); }
+#quarto-header .navbar {
+  background: var(--notes-paper);
+  border-bottom: 1px solid var(--notes-line);
+  --bs-navbar-color: var(--notes-ink);
+  --bs-navbar-hover-color: var(--notes-accent);
+  --bs-navbar-active-color: var(--notes-accent);
+}
+#quarto-header .navbar-brand {
+  color: var(--notes-ink);
+  font: bold 1.6rem Georgia, serif;
+  letter-spacing: -.06em;
+}
+#quarto-header .nav-link,
+#quarto-header .quarto-color-scheme-toggle,
+#quarto-header #quarto-search,
+#quarto-header .navbar-toggler { color: var(--notes-ink); }
+#quarto-header .nav-link:hover { color: var(--notes-accent); }
+#quarto-header .navbar-toggler-icon {
+  position: relative;
+  width: 1.4rem;
+  height: 1rem;
+  color: var(--notes-ink);
+  background-image: none;
+  border-block: 2px solid currentColor;
+}
+#quarto-header .navbar-toggler-icon::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: calc(50% - 1px);
+  border-top: 2px solid currentColor;
+}
+.dropdown-menu {
+  --bs-dropdown-bg: var(--notes-surface);
+  --bs-dropdown-color: var(--notes-ink);
+  --bs-dropdown-link-color: var(--notes-ink);
+  --bs-dropdown-link-hover-bg: var(--notes-hover);
+  --bs-dropdown-link-hover-color: var(--notes-ink);
+}
+#quarto-margin-sidebar { color: var(--notes-muted); }
+.sidebar nav[role="doc-toc"] ul > li > a.nav-link { color: var(--notes-muted); }
+.sidebar nav[role="doc-toc"] ul > li > a.nav-link.active,
+.sidebar nav[role="doc-toc"] ul > li > a.nav-link:hover {
+  color: var(--notes-accent) !important;
+  border-left-color: var(--notes-accent);
+}
+.quarto-title-meta-heading, .header-section-number,
+figcaption, .figure-caption, .table-caption, caption { color: var(--notes-muted); }
+.quarto-title .quarto-categories .quarto-category {
+  opacity: 1;
+  color: var(--notes-tag-ink);
+  background: var(--notes-tag);
+  border-color: var(--notes-line);
+}
+body h2, body blockquote { border-color: var(--notes-line); }
+body blockquote { color: var(--notes-muted); }
+body code:not(.sourceCode) {
+  color: var(--notes-ink);
+  background-color: var(--notes-tag);
+}
+body pre, body div.sourceCode, body pre.sourceCode {
+  background-color: var(--notes-surface);
+  border-color: var(--notes-line);
+}
+body pre code:not(.sourceCode) { background: transparent; }
+body :is(h1, h2, h3, h4, h5, h6) code:not(.sourceCode) {
   color: inherit;
   background-color: transparent;
 }
+.code-copy-button { color: var(--notes-muted); }
+body .table {
+  --bs-table-color: var(--notes-ink);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--notes-line);
+  --bs-table-striped-bg: var(--notes-tag);
+  --bs-table-striped-color: var(--notes-ink);
+  --bs-table-hover-bg: var(--notes-hover);
+  --bs-table-hover-color: var(--notes-ink);
+}
+/* Recolour informational callouts; retain warning/error colours and icons. */
+body .callout.callout-tip, body .callout.callout-note {
+  border-color: var(--notes-line);
+  border-left-color: var(--notes-accent);
+  background-color: var(--notes-surface);
+}
+body .callout.callout-tip > .callout-header,
+body .callout.callout-note > .callout-header {
+  color: var(--notes-ink);
+  background-color: var(--notes-hover);
+}
+body :focus-visible { outline: 3px solid #b5792f; outline-offset: 3px; }
