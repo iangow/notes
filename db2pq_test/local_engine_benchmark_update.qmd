@@ -55,7 +55,8 @@ Today, I can just install [Postgres.app](https://postgresapp.com) using a point-
 
 One of the cool things about Parquet files is that any modern data science tool can work with them.
 Here I consider pandas, Polars and DuckDB.
-The examples use local copies of the data, and all database queries executed for this update connect to my local PostgreSQL database, `igow`.
+The examples use local copies of the data.
+The benchmarks use copies from my local PostgreSQL database, `igow`, in a separate local PostgreSQL instance so that I can test the server extensions together.
 
 ## pandas
 
@@ -192,7 +193,7 @@ For this purposes, I pulled together a quick-and-dirty package `db2pq`, which cr
 Recently, I have noticed a lot of buzz around ADBC, which stands for Arrow Database Connectivity.
 The Apache Arrow project is closely related to the Apache Parquet project and I figured that that ADBC might provide a better way to get data from PostgreSQL to Parquet files.
 
-In this note, I give some first impressions of using ADBC for this purpose and compare it with two alternative approaches.
+In this note, I give some first impressions of using ADBC for this purpose and compare it with three alternative approaches.
 
 ## Method 1: The DuckDB path of `db2pq`
 
@@ -274,7 +275,7 @@ Finally, `numeric_mode="text"` falls back to the default handling described by t
 
 ## Method 3: The `pg_parquet` PostgreSQL extension
 
-The final contender is the  `pg_parquet` PostgreSQL extension.
+The third contender is the `pg_parquet` PostgreSQL extension.
 The [Postgres.app site](https://postgresapp.com/extensions/) offers a number of PostgreSQL extensions.
 These "are very easy to install -- just download and double click the installer package!
 After restarting the server [also very easy with Postgres,app], you can enable them with the `CREATE EXTENSION` command.""
@@ -293,11 +294,61 @@ COPY crsp.msf_v2 TO '/tmp/msf_v2.parquet' (format 'parquet')
 An obvious limitation of `pg_parquet` is that you need to have administrative privileges for the database you want to get data from.
 So clearly it's not useful to a user of the WRDS database (unless WRDS were to install it, of course).
 
+There is a complication if `pg_duckdb`, the next contender, is also installed: both extensions can handle the same `COPY` command.
+To give `pg_parquet` the first opportunity to handle it, I put `pg_duckdb` before `pg_parquet` in the server's `shared_preload_libraries` setting and restart the server:
+
+```ini
+shared_preload_libraries = 'pg_duckdb, pg_parquet'
+```
+
+I can then select `pg_parquet` explicitly for the session:
+
+```sql
+SET duckdb.force_execution = off;
+SET pg_parquet.enable_copy_hooks = on;
+COPY crsp.msf_v2 TO '/tmp/msf_v2.parquet' (format 'parquet');
+```
+
+Setting `pg_parquet.enable_copy_hooks = off` instead allows `pg_duckdb` to handle the command.
+The preload order matters here: changing this setting does not help if `pg_duckdb` gets the command first.
+For the benchmarks, I also check the `created_by` field in each Parquet file's metadata to verify which writer produced it.
+
+## Method 4: The `pg_duckdb` PostgreSQL extension
+
+The `pg_duckdb` extension puts DuckDB inside PostgreSQL.
+This is different from the DuckDB path of `db2pq`, where DuckDB runs in Python and reads data from a PostgreSQL server.
+
+For this update, I built [development revision `ee38d3b`](https://github.com/duckdb/pg_duckdb/commit/ee38d3b540ecea1d93683ba99bdcec5632a21eaf), which uses DuckDB 1.5.4.
+It reports SQL extension version 1.2.0, but this is not a released version of `pg_duckdb`.
+The [build script](https://github.com/iangow/notes/blob/main/db2pq_test/build_pg_duckdb_postgresapp.py) records the source revision, builds for Apple Silicon using Postgres.app's headers, and keeps a matching copy of the DuckDB library alongside the extension.
+
+The current build still has a problem with a column called `at` when it rewrites an ordinary `COPY` query.
+But I can avoid that rewriting by sending the query directly to DuckDB:
+
+```sql
+SELECT duckdb.raw_query($$
+    COPY (SELECT * FROM pgduckdb.comp.funda)
+    TO '/tmp/funda.parquet' (format 'parquet')
+$$);
+```
+
+Here `pgduckdb` is the name DuckDB uses for the PostgreSQL catalog.
+This exports all 949 columns of `comp.funda`, including `at`, and is the path I use for `pg_duckdb` below.^[I also encountered a hang in a separate one-row `duckdb.raw_query()` export with this development build. The full-table benchmarks below completed, but that small-query issue remains unresolved.]
+
+This also appears to explain a mystery in the March note.
+In separate tests, `pg_parquet` 0.4.0 and 0.5.1 both exported `at` without difficulty and took about 198 and 196 seconds, respectively, to export `comp.funda`.
+When I loaded my February build of `pg_duckdb` alongside `pg_parquet`, the `at` error returned and the export took 16.8 seconds after excluding that column, compared with 17.8 seconds in March.
+For `crsp.msf_v2`, the same test took 7.66 seconds, compared with 7.65 seconds in March.
+The files from these tests identify DuckDB as their writer.
+So the March results labelled `pg_parquet` were probably produced by `pg_duckdb`, although I do not have the original server configuration or exported files to establish that conclusively.
+
 # Benchmark analysis
 
-Now that I have my three contenders, I run some benchmarks.
-I have copies of `comp.company`, `comp.funda`, and `crsp.msf_v2` in my local database and I use the code like `db_to_pq("msf_v2", "crsp", engine="duckdb")` to export the data to Parquet form for the first two contenders and `COPY` code like that above for `pg_parquet`.
+Now that I have my four contenders, I run some benchmarks.
+I copied 50,000 rows of `comp.company`, all 935,204 rows of `comp.funda`, and all 5,240,606 rows of `crsp.msf_v2` into the test instance.
+All four engines use those same tables, with `db_to_pq()` used for the first two contenders, `COPY` for `pg_parquet`, and `duckdb.raw_query()` for `pg_duckdb`.
 Each export includes all columns.
+In particular, none of the `comp.funda` exports excludes `at`.
 Each bar represents a single export, with ADBC run twice for the small table to show first-run overhead.
 The benchmarks below were rerun on 8 October 2026 using the following versions.
 
@@ -328,6 +379,8 @@ benchmark_environment = json.loads(
 print("| Package or server | Version |")
 print("|:--|:--|")
 for package, package_version in benchmark_environment["versions"].items():
+    if package == "DuckDB (inside pg_duckdb)":
+        package_version = package_version.split()[2]
     print(f"| {package} | {package_version} |")
 ```
 
@@ -340,6 +393,7 @@ for package, package_version in benchmark_environment["versions"].items():
 palette = {
     "duckdb": "#F7C948",      # warm yellow, inspired by DuckDB branding
     "pg_parquet": "#1F77B4",  # blue
+    "pg_duckdb": "#3A8F65",   # green
     "adbc": "#4A4A4A",        # dark grey
 }
 ```
@@ -348,8 +402,9 @@ palette = {
 
 The first export I look at is 50,000 rows from `comp.company`, which results in Parquet files of about 9 MiB.
 This small export allows me to demonstrate the cost of the first ADBC export within a Python instance.
-For the ADBC engine I run the query twice and you can see that the first time (`adbc_init` in @fig-company) is about five seconds longer than the second time (`adbc`).
+For the ADBC engine I run the query twice and you can see that the first time (`adbc_init` in @fig-company) is about half a second longer than the second time (`adbc`).
 This difference includes initialization and connection setup; it is not a separate measurement of connection time.
+The test instance contains only the three benchmark tables, so it has much less metadata to inspect than my usual database.
 
 In the original March 2026 tests, this setup took at least 20 seconds on the WRDS server.
 It seems that ADBC is doing a lot of "introspection" of the database each time a new database is established and this is a cost that is incurred for each run of Python (at least).
@@ -385,9 +440,9 @@ ax.figure.tight_layout()
 
 For the next query, I look at `comp.funda`, a table of financial statement information for (primarily) US companies.
 This table has over 900,000 rows and more than 900 variables, so it's a fairly wide table.
-The resulting Parquet files range from 405 to 454 MiB in size.
+The resulting Parquet files range from 407 to 455 MiB in size.
 
-As can be seen in @fig-funda, the DuckDB engine is fastest with this table at about 26 seconds, followed by ADBC at 55 seconds and `pg_parquet` at 189 seconds.
+As can be seen in @fig-funda, `pg_duckdb` is fastest with this table at about 18 seconds, followed by the DuckDB engine of `db2pq` at 26 seconds, ADBC at 57 seconds, and `pg_parquet` at 194 seconds.
 
 ```{python}
 #| echo: false
@@ -416,14 +471,18 @@ if ax.legend_ is not None:
 ax.figure.tight_layout()
 ```
 
+```{=typst}
+#pagebreak(weak: true)
+```
+
 ## Larger query, long table
 
 For the next query, I look at `crsp.msf_v2`, a table of monthly data on the stock prices of US companies.
 This table has over 5,000,000 rows and 45 columns.
 It also has several columns that are stored in PostgreSQL as `NUMERIC` types (e.g., `mthret`).
-The resulting Parquet files range from 219 to 231 MiB in size.
+The resulting Parquet files range from 206 to 231 MiB in size.
 
-As can be seen in @fig-msf, ADBC is more competitive with this table at about 15 seconds, compared with 12 seconds for the DuckDB engine and 53 seconds for `pg_parquet`.
+As can be seen in @fig-msf, `pg_duckdb` again leads at about 8 seconds, followed by the DuckDB engine of `db2pq` at 12 seconds, ADBC at 15 seconds, and `pg_parquet` at 54 seconds.
 
 ```{python}
 #| echo: false
