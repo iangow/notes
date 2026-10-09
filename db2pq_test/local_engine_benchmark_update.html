@@ -340,6 +340,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#method-1-the-duckdb-path-of-db2pq" id="toc-method-1-the-duckdb-path-of-db2pq" class="nav-link" data-scroll-target="#method-1-the-duckdb-path-of-db2pq"><span class="header-section-number">3.1</span> Method 1: The DuckDB path of <code>db2pq</code></a></li>
   <li><a href="#method-2-the-adbc-path-of-db2pq" id="toc-method-2-the-adbc-path-of-db2pq" class="nav-link" data-scroll-target="#method-2-the-adbc-path-of-db2pq"><span class="header-section-number">3.2</span> Method 2: The ADBC path of <code>db2pq</code></a></li>
   <li><a href="#method-3-the-pg_parquet-postgresql-extension" id="toc-method-3-the-pg_parquet-postgresql-extension" class="nav-link" data-scroll-target="#method-3-the-pg_parquet-postgresql-extension"><span class="header-section-number">3.3</span> Method 3: The <code>pg_parquet</code> PostgreSQL extension</a></li>
+  <li><a href="#method-4-the-pg_duckdb-postgresql-extension" id="toc-method-4-the-pg_duckdb-postgresql-extension" class="nav-link" data-scroll-target="#method-4-the-pg_duckdb-postgresql-extension"><span class="header-section-number">3.4</span> Method 4: The <code>pg_duckdb</code> PostgreSQL extension</a></li>
   </ul></li>
   <li><a href="#benchmark-analysis" id="toc-benchmark-analysis" class="nav-link" data-scroll-target="#benchmark-analysis"><span class="header-section-number">4</span> Benchmark analysis</a>
   <ul class="collapse">
@@ -409,15 +410,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="whats-the-deal-with-parquet" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> What’s the deal with Parquet?</h1>
-<p>One of the cool things about Parquet files is that any modern data science tool can work with them. Here I consider pandas, Polars and DuckDB. The examples use local copies of the data, and all database queries executed for this update connect to my local PostgreSQL database, <code>igow</code>.</p>
+<p>One of the cool things about Parquet files is that any modern data science tool can work with them. Here I consider pandas, Polars and DuckDB. The examples use local copies of the data. The benchmarks use copies from my local PostgreSQL database, <code>igow</code>, in a separate local PostgreSQL instance so that I can test the server extensions together.</p>
 <section id="pandas" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="pandas"><span class="header-section-number">2.1</span> pandas</h2>
 <p>If you are a user of Python for data analysis, no doubt you do a lot of work with pandas, which has been the de facto standard data frame library in Python since about 2012.</p>
-<div id="d2e09f7f" class="cell" data-execution_count="2">
+<div id="48947923" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Unlike systems such as Stata or SAS, there is no “pandas data file” format as such. My impression is that many pandas users store data as CSV files. Here I will focus on <code>crsp.msf_v2</code>, a data set that is at about the sweet spot in terms of size and complexity for illustrating some key ideas. For comparison, I also create a CSV copy of this data:</p>
-<div id="5518d3b0" class="cell" data-execution_count="3">
+<div id="56b3a0e7" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>parquet_file <span class="op">=</span> Path(<span class="st">"msf_v2.parquet"</span>)</span>
@@ -425,51 +426,51 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>pd.read_parquet(parquet_file).to_csv(csv_file, index<span class="op">=</span><span class="va">False</span>, header<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>If I have <code>crsp.msf_v2</code> as a CSV file, I can read it in using <code>pd.read_csv()</code>:</p>
-<div id="40be5752" class="cell" data-execution_count="4">
+<div id="d342866e" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pd.read_csv(csv_file, low_memory<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 16.8 s, sys: 2.24 s, total: 19 s
-Wall time: 19.3 s</code></pre>
+<pre><code>CPU times: user 16.1 s, sys: 2.29 s, total: 18.4 s
+Wall time: 18.7 s</code></pre>
 </div>
 </div>
 <p>But if I had it as a Parquet file, I might be impressed with the performance of <code>pd.read_parquet()</code>:</p>
-<div id="d9ea5639" class="cell" data-execution_count="5">
+<div id="8d20c685" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pd.read_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 8.74 s, sys: 6.25 s, total: 15 s
-Wall time: 12.7 s</code></pre>
+<pre><code>CPU times: user 8.36 s, sys: 4.16 s, total: 12.5 s
+Wall time: 10.2 s</code></pre>
 </div>
 </div>
 </section>
 <section id="polars" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="polars"><span class="header-section-number">2.2</span> Polars</h2>
 <p>OK, I would only be impressed if I’d never used Polars, but I have used it and I import it here.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
-<div id="f0baf884" class="cell" data-execution_count="6">
+<div id="f229a25d" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Now, how does <code>pl.read_parquet()</code> do with this file?</p>
-<div id="10d21927" class="cell" data-execution_count="7">
+<div id="d67533c9" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pl.read_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 1.08 s, sys: 1.7 s, total: 2.78 s
-Wall time: 1.78 s</code></pre>
+<pre><code>CPU times: user 1.05 s, sys: 1.87 s, total: 2.91 s
+Wall time: 2.05 s</code></pre>
 </div>
 </div>
 <p>Again, if I didn’t know Polars, I might be impressed. But in general you don’t want to use something as <em>slow</em> as <code>pl.read_parquet()</code> for many tasks. Instead, just use <code>pl.scan_parquet()</code>.</p>
-<div id="b0222278" class="cell" data-execution_count="8">
+<div id="237487fb" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pl.scan_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 1.98 ms, sys: 13.3 ms, total: 15.3 ms
-Wall time: 16.2 ms</code></pre>
+<pre><code>CPU times: user 1.8 ms, sys: 20.2 ms, total: 21.9 ms
+Wall time: 22.2 ms</code></pre>
 </div>
 </div>
 <p>OK, now I’m starting to be impressed. The surprising performance of <code>pl.scan_parquet()</code> comes from the fact that it’s not actually reading all the data into memory. And this saves both time <em>and</em> memory.</p>
 <p>Why is this helpful? Well, the reality is that we rarely want all the columns or all the rows, and the Parquet file format allows Polars to quickly pull in precisely the data that the analyst wants. Suppose we were interested in data from 2023 and just wanted returns and prices. This will do the trick:</p>
-<div id="19a4fcb2" class="cell" data-execution_count="9">
+<div id="5cf268cd" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>msf_v2_2023 <span class="op">=</span> (</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    msf_v2</span>
@@ -478,12 +479,12 @@ Wall time: 16.2 ms</code></pre>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
 <span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 67.3 ms, sys: 34.8 ms, total: 102 ms
-Wall time: 28.7 ms</code></pre>
+<pre><code>CPU times: user 64.3 ms, sys: 49.1 ms, total: 113 ms
+Wall time: 33.7 ms</code></pre>
 </div>
 </div>
 <p>And to prove that something happened, let’s look at the data:</p>
-<div id="52847484" class="cell" data-execution_count="10">
+<div id="eb894862" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>msf_v2_2023</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <div><style>
@@ -586,20 +587,20 @@ Wall time: 28.7 ms</code></pre>
 <section id="duckdb" class="level2" data-number="2.3">
 <h2 data-number="2.3" class="anchored" data-anchor-id="duckdb"><span class="header-section-number">2.3</span> DuckDB</h2>
 <p>Another tool that works well with Parquet files is DuckDB. DuckDB offers a rich SQL covering much of what PostgreSQL and in many areas even more. Unlike PostgreSQL, one does not need to set up a server to use DuckDB. I can simply import the library.</p>
-<div id="2069c564" class="cell" data-execution_count="11">
+<div id="5d242544" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> duckdb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Then I can use the <code>duckdb.read_parquet()</code> function to do much the same thing as <code>pl.scan_parquet()</code>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
-<div id="f03aab56" class="cell" data-execution_count="12">
+<div id="fe36ffec" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> duckdb.read_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 4.25 ms, sys: 1.66 ms, total: 5.9 ms
-Wall time: 7.83 ms</code></pre>
+<pre><code>CPU times: user 3.93 ms, sys: 1.58 ms, total: 5.51 ms
+Wall time: 6.54 ms</code></pre>
 </div>
 </div>
 <p>And much like with Polars I can then quickly get precisely the data I need. There are many ways to work with DuckDB and one interface uses SQL.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> The <code>.pl()</code> at the end returns a Polars data frame (<code>.df()</code> would give me a pandas data frame).</p>
-<div id="36c9c080" class="cell" data-execution_count="13">
+<div id="6ae3e93c" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>msf_v2_2023 <span class="op">=</span> duckdb.sql(<span class="st">"""</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT permno, mthprcdt, mthret, mthprc</span></span>
@@ -607,12 +608,12 @@ Wall time: 7.83 ms</code></pre>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE year(mthprcdt) = 2023</span></span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>).pl()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU times: user 99.2 ms, sys: 24.7 ms, total: 124 ms
-Wall time: 23.9 ms</code></pre>
+<pre><code>CPU times: user 97.6 ms, sys: 24.5 ms, total: 122 ms
+Wall time: 22 ms</code></pre>
 </div>
 </div>
 <p>From the following, we can see that we’ve got the same data we got through the Polars path above:</p>
-<div id="a314eee3" class="cell" data-execution_count="14">
+<div id="2da3f1fb" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>msf_v2_2023</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="13">
 <div><style>
@@ -717,7 +718,7 @@ Wall time: 23.9 ms</code></pre>
 <p>In late 2023, I decided to make a “Parquet path” for the book I was then working on <em>Empirical Research in Accounting: Tools and Methods</em>, which was later <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502">published with CRC Press</a> and which used R for data analysis. This “Parquet path” combined Parquet files with DuckDB and the <code>dbplyr</code> library in R to create a an alternative to the main “PostgreSQL path” of that book with only very minor tweaks to the code.</p>
 <p>For this purposes, I pulled together a quick-and-dirty package <code>db2pq</code>, which creates Parquet files from PostgreSQL sources, including special functions to manage a local repository of WRDS data.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p>
 <p>Recently, I have noticed a lot of buzz around ADBC, which stands for Arrow Database Connectivity. The Apache Arrow project is closely related to the Apache Parquet project and I figured that that ADBC might provide a better way to get data from PostgreSQL to Parquet files.</p>
-<p>In this note, I give some first impressions of using ADBC for this purpose and compare it with two alternative approaches.</p>
+<p>In this note, I give some first impressions of using ADBC for this purpose and compare it with three alternative approaches.</p>
 <section id="method-1-the-duckdb-path-of-db2pq" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="method-1-the-duckdb-path-of-db2pq"><span class="header-section-number">3.1</span> Method 1: The DuckDB path of <code>db2pq</code></h2>
 <p>The <code>db2pq</code> Python package allows a user to export a table from PostgreSQL to Parquet with a number of options, including the ability to select certain columns or filter only rows meaning certain conditions. It also allows the user to modify data types (e.g., have a floating-point number be read as an integer).</p>
@@ -737,16 +738,16 @@ Note
 <p>The <code>wrds_update_pq()</code> examples in this section and the next retain their output from March 2026. I no longer have access to WRDS, so these examples are not rerun when rendering this note. The updated benchmarks below use my local PostgreSQL database.</p>
 </div>
 </div>
-<div id="915e164c" class="cell" data-execution_count="15">
+<div id="19c0a643" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="44461628" class="cell" data-execution_count="16">
+<div id="fff36bbc" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"msf_v2"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <pre><code>Updated crsp.msf_v2 is available.
 Beginning file download at 2026-03-26 19:56:53 UTC.
 Completed file download at 2026-03-26 20:00:28 UTC.</code></pre>
-<div id="a458d237" class="cell" data-execution_count="17">
+<div id="39e06759" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"msf_v2"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <pre><code>crsp.msf_v2 already up to date.</code></pre>
@@ -755,7 +756,7 @@ Completed file download at 2026-03-26 20:00:28 UTC.</code></pre>
 <h2 data-number="3.2" class="anchored" data-anchor-id="method-2-the-adbc-path-of-db2pq"><span class="header-section-number">3.2</span> Method 2: The ADBC path of <code>db2pq</code></h2>
 <p>In March 2026, I decided to add an ADBC “engine” to <code>db2pq</code>. I was interested to know whether it would deliver better performance. It turns out that it doesn’t—at least, not yet—but it was a useful exercise to understand a little more about ADBC.</p>
 <p>To use the ADBC engine with <code>db2pq</code>, I simply say <code>engine="adbc"</code> when calling <code>wrds_update_pq()</code>.</p>
-<div id="4e9dea17" class="cell" data-execution_count="18">
+<div id="9d969522" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"msf_v2"</span>, <span class="st">"crsp"</span>, engine<span class="op">=</span><span class="st">"adbc"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <pre><code>crsp.msf_v2 already up to date.</code></pre>
@@ -766,16 +767,35 @@ Completed file download at 2026-03-26 20:00:28 UTC.</code></pre>
 </section>
 <section id="method-3-the-pg_parquet-postgresql-extension" class="level2" data-number="3.3">
 <h2 data-number="3.3" class="anchored" data-anchor-id="method-3-the-pg_parquet-postgresql-extension"><span class="header-section-number">3.3</span> Method 3: The <code>pg_parquet</code> PostgreSQL extension</h2>
-<p>The final contender is the <code>pg_parquet</code> PostgreSQL extension. The <a href="https://postgresapp.com/extensions/">Postgres.app site</a> offers a number of PostgreSQL extensions. These “are very easy to install – just download and double click the installer package! After restarting the server [also very easy with Postgres,app], you can enable them with the <code>CREATE EXTENSION</code> command.””</p>
+<p>The third contender is the <code>pg_parquet</code> PostgreSQL extension. The <a href="https://postgresapp.com/extensions/">Postgres.app site</a> offers a number of PostgreSQL extensions. These “are very easy to install – just download and double click the installer package! After restarting the server [also very easy with Postgres,app], you can enable them with the <code>CREATE EXTENSION</code> command.””</p>
 <p>The <code>pg_parquet</code> PostgreSQL extension is one of several made available on the Postgres.app website. There it says: “Apache Parquet is gaining popularity as an interchange format for datasets. This extension allows you to read and write Parquet files using the <code>COPY</code> command. The extension was developed by CrunchyData and documentation is available at <code>github.com/CrunchyData/pg_parquet</code>.”</p>
 <p>With this extension I can run SQL like this:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> crsp.msf_v2 <span class="kw">TO</span> <span class="st">'/tmp/msf_v2.parquet'</span> (format <span class="st">'parquet'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>An obvious limitation of <code>pg_parquet</code> is that you need to have administrative privileges for the database you want to get data from. So clearly it’s not useful to a user of the WRDS database (unless WRDS were to install it, of course).</p>
+<p>There is a complication if <code>pg_duckdb</code>, the next contender, is also installed: both extensions can handle the same <code>COPY</code> command. To give <code>pg_parquet</code> the first opportunity to handle it, I put <code>pg_duckdb</code> before <code>pg_parquet</code> in the server’s <code>shared_preload_libraries</code> setting and restart the server:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="dt">shared_preload_libraries </span><span class="ot">=</span><span class="st"> 'pg_duckdb, pg_parquet'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>I can then select <code>pg_parquet</code> explicitly for the session:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SET</span> duckdb.force_execution <span class="op">=</span> <span class="kw">off</span>;</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">SET</span> pg_parquet.enable_copy_hooks <span class="op">=</span> <span class="kw">on</span>;</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> crsp.msf_v2 <span class="kw">TO</span> <span class="st">'/tmp/msf_v2.parquet'</span> (format <span class="st">'parquet'</span>);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Setting <code>pg_parquet.enable_copy_hooks = off</code> instead allows <code>pg_duckdb</code> to handle the command. The preload order matters here: changing this setting does not help if <code>pg_duckdb</code> gets the command first. For the benchmarks, I also check the <code>created_by</code> field in each Parquet file’s metadata to verify which writer produced it.</p>
+</section>
+<section id="method-4-the-pg_duckdb-postgresql-extension" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="method-4-the-pg_duckdb-postgresql-extension"><span class="header-section-number">3.4</span> Method 4: The <code>pg_duckdb</code> PostgreSQL extension</h2>
+<p>The <code>pg_duckdb</code> extension puts DuckDB inside PostgreSQL. This is different from the DuckDB path of <code>db2pq</code>, where DuckDB runs in Python and reads data from a PostgreSQL server.</p>
+<p>For this update, I built <a href="https://github.com/duckdb/pg_duckdb/commit/ee38d3b540ecea1d93683ba99bdcec5632a21eaf">development revision <code>ee38d3b</code></a>, which uses DuckDB 1.5.4. It reports SQL extension version 1.2.0, but this is not a released version of <code>pg_duckdb</code>. The <a href="https://github.com/iangow/notes/blob/main/db2pq_test/build_pg_duckdb_postgresapp.py">build script</a> records the source revision, builds for Apple Silicon using Postgres.app’s headers, and keeps a matching copy of the DuckDB library alongside the extension.</p>
+<p>The current build still has a problem with a column called <code>at</code> when it rewrites an ordinary <code>COPY</code> query. But I can avoid that rewriting by sending the query directly to DuckDB:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> duckdb.raw_query($$</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">COPY</span> (<span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> pgduckdb.comp.funda)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">TO</span> <span class="st">'/tmp/funda.parquet'</span> (format <span class="st">'parquet'</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>$$);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Here <code>pgduckdb</code> is the name DuckDB uses for the PostgreSQL catalog. This exports all 949 columns of <code>comp.funda</code>, including <code>at</code>, and is the path I use for <code>pg_duckdb</code> below.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
+<p>This also appears to explain a mystery in the March note. In separate tests, <code>pg_parquet</code> 0.4.0 and 0.5.1 both exported <code>at</code> without difficulty and took about 198 and 196 seconds, respectively, to export <code>comp.funda</code>. When I loaded my February build of <code>pg_duckdb</code> alongside <code>pg_parquet</code>, the <code>at</code> error returned and the export took 16.8 seconds after excluding that column, compared with 17.8 seconds in March. For <code>crsp.msf_v2</code>, the same test took 7.66 seconds, compared with 7.65 seconds in March. The files from these tests identify DuckDB as their writer. So the March results labelled <code>pg_parquet</code> were probably produced by <code>pg_duckdb</code>, although I do not have the original server configuration or exported files to establish that conclusively.</p>
 </section>
 </section>
 <section id="benchmark-analysis" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Benchmark analysis</h1>
-<p>Now that I have my three contenders, I run some benchmarks. I have copies of <code>comp.company</code>, <code>comp.funda</code>, and <code>crsp.msf_v2</code> in my local database and I use the code like <code>db_to_pq("msf_v2", "crsp", engine="duckdb")</code> to export the data to Parquet form for the first two contenders and <code>COPY</code> code like that above for <code>pg_parquet</code>. Each export includes all columns. Each bar represents a single export, with ADBC run twice for the small table to show first-run overhead. The benchmarks below were rerun on 8 October 2026 using the following versions.</p>
+<p>Now that I have my four contenders, I run some benchmarks. I copied 50,000 rows of <code>comp.company</code>, all 935,204 rows of <code>comp.funda</code>, and all 5,240,606 rows of <code>crsp.msf_v2</code> into the test instance. All four engines use those same tables, with <code>db_to_pq()</code> used for the first two contenders, <code>COPY</code> for <code>pg_parquet</code>, and <code>duckdb.raw_query()</code> for <code>pg_duckdb</code>. Each export includes all columns. In particular, none of the <code>comp.funda</code> exports excludes <code>at</code>. Each bar represents a single export, with ADBC run twice for the small table to show first-run overhead. The benchmarks below were rerun on 8 October 2026 using the following versions.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -832,11 +852,23 @@ Completed file download at 2026-03-26 20:00:28 UTC.</code></pre>
 <td style="text-align: left;">pg_parquet</td>
 <td style="text-align: left;">0.5.1</td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">pg_duckdb (SQL version)</td>
+<td style="text-align: left;">1.2.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">DuckDB (inside pg_duckdb)</td>
+<td style="text-align: left;">v1.5.4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pg_duckdb (source commit)</td>
+<td style="text-align: left;">ee38d3b540ec</td>
+</tr>
 </tbody>
 </table>
 <section id="small-queries" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="small-queries"><span class="header-section-number">4.1</span> Small queries</h2>
-<p>The first export I look at is 50,000 rows from <code>comp.company</code>, which results in Parquet files of about 9 MiB. This small export allows me to demonstrate the cost of the first ADBC export within a Python instance. For the ADBC engine I run the query twice and you can see that the first time (<code>adbc_init</code> in <a href="#fig-company" class="quarto-xref">Figure&nbsp;1</a>) is about five seconds longer than the second time (<code>adbc</code>). This difference includes initialization and connection setup; it is not a separate measurement of connection time.</p>
+<p>The first export I look at is 50,000 rows from <code>comp.company</code>, which results in Parquet files of about 9 MiB. This small export allows me to demonstrate the cost of the first ADBC export within a Python instance. For the ADBC engine I run the query twice and you can see that the first time (<code>adbc_init</code> in <a href="#fig-company" class="quarto-xref">Figure&nbsp;1</a>) is about half a second longer than the second time (<code>adbc</code>). This difference includes initialization and connection setup; it is not a separate measurement of connection time. The test instance contains only the three benchmark tables, so it has much less metadata to inspect than my usual database.</p>
 <p>In the original March 2026 tests, this setup took at least 20 seconds on the WRDS server. It seems that ADBC is doing a lot of “introspection” of the database each time a new database is established and this is a cost that is incurred for each run of Python (at least).</p>
 <div id="cell-fig-company" class="cell" data-execution_count="23">
 <div class="cell-output cell-output-display">
@@ -855,8 +887,8 @@ Figure&nbsp;1: Export times for <code>comp.company</code>
 </section>
 <section id="larger-query-wide-table" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="larger-query-wide-table"><span class="header-section-number">4.2</span> Larger query, wide table</h2>
-<p>For the next query, I look at <code>comp.funda</code>, a table of financial statement information for (primarily) US companies. This table has over 900,000 rows and more than 900 variables, so it’s a fairly wide table. The resulting Parquet files range from 405 to 454 MiB in size.</p>
-<p>As can be seen in <a href="#fig-funda" class="quarto-xref">Figure&nbsp;2</a>, the DuckDB engine is fastest with this table at about 26 seconds, followed by ADBC at 55 seconds and <code>pg_parquet</code> at 189 seconds.</p>
+<p>For the next query, I look at <code>comp.funda</code>, a table of financial statement information for (primarily) US companies. This table has over 900,000 rows and more than 900 variables, so it’s a fairly wide table. The resulting Parquet files range from 407 to 455 MiB in size.</p>
+<p>As can be seen in <a href="#fig-funda" class="quarto-xref">Figure&nbsp;2</a>, <code>pg_duckdb</code> is fastest with this table at about 18 seconds, followed by the DuckDB engine of <code>db2pq</code> at 26 seconds, ADBC at 57 seconds, and <code>pg_parquet</code> at 194 seconds.</p>
 <div id="cell-fig-funda" class="cell" data-execution_count="24">
 <div class="cell-output cell-output-display">
 <div id="fig-funda" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -874,8 +906,8 @@ Figure&nbsp;2: Export times for <code>comp.funda</code>
 </section>
 <section id="larger-query-long-table" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="larger-query-long-table"><span class="header-section-number">4.3</span> Larger query, long table</h2>
-<p>For the next query, I look at <code>crsp.msf_v2</code>, a table of monthly data on the stock prices of US companies. This table has over 5,000,000 rows and 45 columns. It also has several columns that are stored in PostgreSQL as <code>NUMERIC</code> types (e.g., <code>mthret</code>). The resulting Parquet files range from 219 to 231 MiB in size.</p>
-<p>As can be seen in <a href="#fig-msf" class="quarto-xref">Figure&nbsp;3</a>, ADBC is more competitive with this table at about 15 seconds, compared with 12 seconds for the DuckDB engine and 53 seconds for <code>pg_parquet</code>.</p>
+<p>For the next query, I look at <code>crsp.msf_v2</code>, a table of monthly data on the stock prices of US companies. This table has over 5,000,000 rows and 45 columns. It also has several columns that are stored in PostgreSQL as <code>NUMERIC</code> types (e.g., <code>mthret</code>). The resulting Parquet files range from 206 to 231 MiB in size.</p>
+<p>As can be seen in <a href="#fig-msf" class="quarto-xref">Figure&nbsp;3</a>, <code>pg_duckdb</code> again leads at about 8 seconds, followed by the DuckDB engine of <code>db2pq</code> at 12 seconds, ADBC at 15 seconds, and <code>pg_parquet</code> at 54 seconds.</p>
 <div id="cell-fig-msf" class="cell" data-execution_count="25">
 <div class="cell-output cell-output-display">
 <div id="fig-msf" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -907,6 +939,7 @@ Figure&nbsp;3: Export times for <code>crsp.msf_v2</code>
 <li id="fn6"><p>You can also use an SQL interface with Polars.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn7"><p>For more on this, see <a href="https://iangow.github.io/notes/published/data_mgt.html">here</a>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn8"><p>A similar story is seen with connecting to ADBC databases with R, though it’s only nine seconds for WRDS to tell ABDC about itself. An issue with having an ADBC engine for the R version of <code>db2pq</code> is that the CRAN version of <code>adbcpostgresql</code> does not come with SSL support and I don’t want to be asking <code>db2pq</code> users to be compiling libraries against versions of <code>libpq</code>, etc.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>I also encountered a hang in a separate one-row <code>duckdb.raw_query()</code> export with this development build. The full-table benchmarks below completed, but that small-query issue remains unresolved.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
