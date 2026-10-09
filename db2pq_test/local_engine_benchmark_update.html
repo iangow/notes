@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-10-08">
+
+<title>Getting data out of Postgres: an update – notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f418161beb48e0141c760e455f12af2c.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-5685cd926c25366c96d9f1407e584118.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../assets/notes-theme.css?v=0c9637d092a0">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#postgresql" id="toc-postgresql" class="nav-link active" data-scroll-target="#postgresql"><span class="header-section-number">1</span> PostgreSQL</a></li>
+  <li><a href="#whats-the-deal-with-parquet" id="toc-whats-the-deal-with-parquet" class="nav-link" data-scroll-target="#whats-the-deal-with-parquet"><span class="header-section-number">2</span> What’s the deal with Parquet?</a>
+  <ul class="collapse">
+  <li><a href="#pandas" id="toc-pandas" class="nav-link" data-scroll-target="#pandas"><span class="header-section-number">2.1</span> pandas</a></li>
+  <li><a href="#polars" id="toc-polars" class="nav-link" data-scroll-target="#polars"><span class="header-section-number">2.2</span> Polars</a></li>
+  <li><a href="#duckdb" id="toc-duckdb" class="nav-link" data-scroll-target="#duckdb"><span class="header-section-number">2.3</span> DuckDB</a></li>
+  </ul></li>
+  <li><a href="#getting-data-into-parquet-form" id="toc-getting-data-into-parquet-form" class="nav-link" data-scroll-target="#getting-data-into-parquet-form"><span class="header-section-number">3</span> Getting data into Parquet form</a>
+  <ul class="collapse">
+  <li><a href="#method-1-the-duckdb-path-of-db2pq" id="toc-method-1-the-duckdb-path-of-db2pq" class="nav-link" data-scroll-target="#method-1-the-duckdb-path-of-db2pq"><span class="header-section-number">3.1</span> Method 1: The DuckDB path of <code>db2pq</code></a></li>
+  <li><a href="#method-2-the-adbc-path-of-db2pq" id="toc-method-2-the-adbc-path-of-db2pq" class="nav-link" data-scroll-target="#method-2-the-adbc-path-of-db2pq"><span class="header-section-number">3.2</span> Method 2: The ADBC path of <code>db2pq</code></a></li>
+  <li><a href="#method-3-the-pg_parquet-postgresql-extension" id="toc-method-3-the-pg_parquet-postgresql-extension" class="nav-link" data-scroll-target="#method-3-the-pg_parquet-postgresql-extension"><span class="header-section-number">3.3</span> Method 3: The <code>pg_parquet</code> PostgreSQL extension</a></li>
+  </ul></li>
+  <li><a href="#benchmark-analysis" id="toc-benchmark-analysis" class="nav-link" data-scroll-target="#benchmark-analysis"><span class="header-section-number">4</span> Benchmark analysis</a>
+  <ul class="collapse">
+  <li><a href="#small-queries" id="toc-small-queries" class="nav-link" data-scroll-target="#small-queries"><span class="header-section-number">4.1</span> Small queries</a></li>
+  <li><a href="#larger-query-wide-table" id="toc-larger-query-wide-table" class="nav-link" data-scroll-target="#larger-query-wide-table"><span class="header-section-number">4.2</span> Larger query, wide table</a></li>
+  <li><a href="#larger-query-long-table" id="toc-larger-query-long-table" class="nav-link" data-scroll-target="#larger-query-long-table"><span class="header-section-number">4.3</span> Larger query, long table</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="local_engine_benchmark_update.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Getting data out of Postgres: an update</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Python</div>
+    <div class="quarto-category">Parquet</div>
+    <div class="quarto-category">db2pq</div>
+    <div class="quarto-category">benchmarks</div>
+    <div class="quarto-category">PostgreSQL</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">8 October 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>The Arrow Parquet file format has emerged in recent years as a key enabler of several technologies that have the potential to revolutionalize data analysis. For example, Polars is a “next-generation” data frame library that is much faster and more memory-efficient than pandas, the dominant data frame library for Python. However, the performance and efficiency of Polars depends on having the data in an efficient form such as is offered by the Parquet format. Polars really loses its edge when the data it wants are located in a relational database. In such a case, a natural question is: How do get data out of the database and into Parquet files?</p>
+    <p>This note explores a few ways of getting Parquet files from a PostgreSQL database, showing how to use them and comparing them with each other.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<p>This is an update to my <a href="local_engine_benchmark.html">26 March 2026 note</a>, with new package versions and benchmarks using my local PostgreSQL database.</p>
+<section id="postgresql" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> PostgreSQL</h1>
+<p>In 2011, I was looking for a place to store my data that didn’t require SAS, or zillions of Stata files. After dabbling with SQLite and MySQL, I landed on PostgreSQL as the best system for storing my data. PostgreSQL allowed me extremely reliable storage of large amounts of data with fast access from R, Python, Stata and more.</p>
+<p>The challenge back then was: How do I get my data into PostgreSQL? At the time, I was a faculty member at Northwestern University and a lot of my data came from Wharton Research Data Services, more commonly referred to as WRDS (pronounced “words”), and at that time WRDS provided data as SAS data files.</p>
+<p>To get data from SAS data files into PostgreSQL, I used SAS <code>PROC EXPORT</code> to create CSV files and the PostgreSQL commands to get the data from the CSV files into PostgreSQL. Over time, this approach morphed into Perl scripts, then Python scripts, and finally the Python package <code>wrds2pg</code>, which was <a href="https://pypi.org/project/wrds2pg/">published on PyPI</a> in April 2020. This package essentially runs SAS code that emits CSV data that is piped directly in to PostgreSQL.</p>
+<p>When I first started using PostgreSQL, I remember I often had to compile it from source and it was pretty complicated. Today, I can just install <a href="https://postgresapp.com">Postgres.app</a> using a point-and-click package and I can have a PostgreSQL database running with the simplest defaults ready to receive data in minutes.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+</section>
+<section id="whats-the-deal-with-parquet" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> What’s the deal with Parquet?</h1>
+<p>One of the cool things about Parquet files is that any modern data science tool can work with them. Here I consider pandas, Polars and DuckDB. The examples use local copies of the data, and all database queries executed for this update connect to my local PostgreSQL database, <code>igow</code>.</p>
+<section id="pandas" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="pandas"><span class="header-section-number">2.1</span> pandas</h2>
+<p>If you are a user of Python for data analysis, no doubt you do a lot of work with pandas, which has been the de facto standard data frame library in Python since about 2012.</p>
+<div id="d2e09f7f" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Unlike systems such as Stata or SAS, there is no “pandas data file” format as such. My impression is that many pandas users store data as CSV files. Here I will focus on <code>crsp.msf_v2</code>, a data set that is at about the sweet spot in terms of size and complexity for illustrating some key ideas. For comparison, I also create a CSV copy of this data:</p>
+<div id="5518d3b0" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>parquet_file <span class="op">=</span> Path(<span class="st">"msf_v2.parquet"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>csv_file <span class="op">=</span> Path(<span class="st">"msf_v2.csv"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>pd.read_parquet(parquet_file).to_csv(csv_file, index<span class="op">=</span><span class="va">False</span>, header<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If I have <code>crsp.msf_v2</code> as a CSV file, I can read it in using <code>pd.read_csv()</code>:</p>
+<div id="40be5752" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pd.read_csv(csv_file, low_memory<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 16.8 s, sys: 2.24 s, total: 19 s
+Wall time: 19.3 s</code></pre>
+</div>
+</div>
+<p>But if I had it as a Parquet file, I might be impressed with the performance of <code>pd.read_parquet()</code>:</p>
+<div id="d9ea5639" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pd.read_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 8.74 s, sys: 6.25 s, total: 15 s
+Wall time: 12.7 s</code></pre>
+</div>
+</div>
+</section>
+<section id="polars" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="polars"><span class="header-section-number">2.2</span> Polars</h2>
+<p>OK, I would only be impressed if I’d never used Polars, but I have used it and I import it here.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<div id="f0baf884" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now, how does <code>pl.read_parquet()</code> do with this file?</p>
+<div id="10d21927" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pl.read_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 1.08 s, sys: 1.7 s, total: 2.78 s
+Wall time: 1.78 s</code></pre>
+</div>
+</div>
+<p>Again, if I didn’t know Polars, I might be impressed. But in general you don’t want to use something as <em>slow</em> as <code>pl.read_parquet()</code> for many tasks. Instead, just use <code>pl.scan_parquet()</code>.</p>
+<div id="b0222278" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> pl.scan_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 1.98 ms, sys: 13.3 ms, total: 15.3 ms
+Wall time: 16.2 ms</code></pre>
+</div>
+</div>
+<p>OK, now I’m starting to be impressed. The surprising performance of <code>pl.scan_parquet()</code> comes from the fact that it’s not actually reading all the data into memory. And this saves both time <em>and</em> memory.</p>
+<p>Why is this helpful? Well, the reality is that we rarely want all the columns or all the rows, and the Parquet file format allows Polars to quickly pull in precisely the data that the analyst wants. Suppose we were interested in data from 2023 and just wanted returns and prices. This will do the trick:</p>
+<div id="19a4fcb2" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>msf_v2_2023 <span class="op">=</span> (</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    msf_v2</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"mthprcdt"</span>).dt.year() <span class="op">==</span> <span class="dv">2023</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"permno"</span>,<span class="st">"mthprcdt"</span>, <span class="st">"mthret"</span>, <span class="st">"mthprc"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 67.3 ms, sys: 34.8 ms, total: 102 ms
+Wall time: 28.7 ms</code></pre>
+</div>
+</div>
+<p>And to prove that something happened, let’s look at the data:</p>
+<div id="52847484" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>msf_v2_2023</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (113_695, 4)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">permno</th>
+<th data-quarto-table-cell-role="th">mthprcdt</th>
+<th data-quarto-table-cell-role="th">mthret</th>
+<th data-quarto-table-cell-role="th">mthprc</th>
+</tr>
+<tr class="even">
+<td>i32</td>
+<td>date</td>
+<td>decimal[10,6]</td>
+<td>decimal[13,6]</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>10026</td>
+<td>2023-01-31</td>
+<td>-0.042816</td>
+<td>143.300000</td>
+</tr>
+<tr class="even">
+<td>10026</td>
+<td>2023-02-28</td>
+<td>-0.014585</td>
+<td>141.210000</td>
+</tr>
+<tr class="odd">
+<td>10026</td>
+<td>2023-03-31</td>
+<td>0.054785</td>
+<td>148.220000</td>
+</tr>
+<tr class="even">
+<td>10026</td>
+<td>2023-04-28</td>
+<td>0.033599</td>
+<td>153.200000</td>
+</tr>
+<tr class="odd">
+<td>10026</td>
+<td>2023-05-31</td>
+<td>0.004896</td>
+<td>153.950000</td>
+</tr>
+<tr class="even">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2023-08-31</td>
+<td>-0.034962</td>
+<td>258.080000</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2023-09-29</td>
+<td>-0.030456</td>
+<td>250.220000</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2023-10-31</td>
+<td>-0.197346</td>
+<td>200.840000</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2023-11-30</td>
+<td>0.195379</td>
+<td>240.080000</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2023-12-29</td>
+<td>0.034988</td>
+<td>248.480000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>So, if <code>msf_v2_2023</code> were what we wanted, Polars gets it us hundreds of times faster than using pandas does, and while using much less RAM.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> These differences are probably not such a big deal with “medium-sized” tables such as <code>crsp.msf_v2</code>. But, if you’re working with larger data, it can quickly become simply impossible to work with data in pandas without using various complicating approaches, such as batching analyses and pasting together the results.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+</section>
+<section id="duckdb" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="duckdb"><span class="header-section-number">2.3</span> DuckDB</h2>
+<p>Another tool that works well with Parquet files is DuckDB. DuckDB offers a rich SQL covering much of what PostgreSQL and in many areas even more. Unlike PostgreSQL, one does not need to set up a server to use DuckDB. I can simply import the library.</p>
+<div id="2069c564" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> duckdb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Then I can use the <code>duckdb.read_parquet()</code> function to do much the same thing as <code>pl.scan_parquet()</code>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<div id="f03aab56" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>msf_v2 <span class="op">=</span> duckdb.read_parquet(parquet_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 4.25 ms, sys: 1.66 ms, total: 5.9 ms
+Wall time: 7.83 ms</code></pre>
+</div>
+</div>
+<p>And much like with Polars I can then quickly get precisely the data I need. There are many ways to work with DuckDB and one interface uses SQL.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> The <code>.pl()</code> at the end returns a Polars data frame (<code>.df()</code> would give me a pandas data frame).</p>
+<div id="36c9c080" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>time</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>msf_v2_2023 <span class="op">=</span> duckdb.sql(<span class="st">"""</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT permno, mthprcdt, mthret, mthprc</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM msf_v2</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE year(mthprcdt) = 2023</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>).pl()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CPU times: user 99.2 ms, sys: 24.7 ms, total: 124 ms
+Wall time: 23.9 ms</code></pre>
+</div>
+</div>
+<p>From the following, we can see that we’ve got the same data we got through the Polars path above:</p>
+<div id="a314eee3" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>msf_v2_2023</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (113_695, 4)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">permno</th>
+<th data-quarto-table-cell-role="th">mthprcdt</th>
+<th data-quarto-table-cell-role="th">mthret</th>
+<th data-quarto-table-cell-role="th">mthprc</th>
+</tr>
+<tr class="even">
+<td>i32</td>
+<td>date</td>
+<td>decimal[10,6]</td>
+<td>decimal[13,6]</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>10026</td>
+<td>2023-01-31</td>
+<td>-0.042816</td>
+<td>143.300000</td>
+</tr>
+<tr class="even">
+<td>10026</td>
+<td>2023-02-28</td>
+<td>-0.014585</td>
+<td>141.210000</td>
+</tr>
+<tr class="odd">
+<td>10026</td>
+<td>2023-03-31</td>
+<td>0.054785</td>
+<td>148.220000</td>
+</tr>
+<tr class="even">
+<td>10026</td>
+<td>2023-04-28</td>
+<td>0.033599</td>
+<td>153.200000</td>
+</tr>
+<tr class="odd">
+<td>10026</td>
+<td>2023-05-31</td>
+<td>0.004896</td>
+<td>153.950000</td>
+</tr>
+<tr class="even">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2023-08-31</td>
+<td>-0.034962</td>
+<td>258.080000</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2023-09-29</td>
+<td>-0.030456</td>
+<td>250.220000</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2023-10-31</td>
+<td>-0.197346</td>
+<td>200.840000</td>
+</tr>
+<tr class="even">
+<td>93436</td>
+<td>2023-11-30</td>
+<td>0.195379</td>
+<td>240.080000</td>
+</tr>
+<tr class="odd">
+<td>93436</td>
+<td>2023-12-29</td>
+<td>0.034988</td>
+<td>248.480000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="getting-data-into-parquet-form" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Getting data into Parquet form</h1>
+<p>In late 2023, I decided to make a “Parquet path” for the book I was then working on <em>Empirical Research in Accounting: Tools and Methods</em>, which was later <a href="https://www.routledge.com/Empirical-Research-in-Accounting-Tools-and-Methods/Ding-Gow/p/book/9781032586502">published with CRC Press</a> and which used R for data analysis. This “Parquet path” combined Parquet files with DuckDB and the <code>dbplyr</code> library in R to create a an alternative to the main “PostgreSQL path” of that book with only very minor tweaks to the code.</p>
+<p>For this purposes, I pulled together a quick-and-dirty package <code>db2pq</code>, which creates Parquet files from PostgreSQL sources, including special functions to manage a local repository of WRDS data.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p>
+<p>Recently, I have noticed a lot of buzz around ADBC, which stands for Arrow Database Connectivity. The Apache Arrow project is closely related to the Apache Parquet project and I figured that that ADBC might provide a better way to get data from PostgreSQL to Parquet files.</p>
+<p>In this note, I give some first impressions of using ADBC for this purpose and compare it with two alternative approaches.</p>
+<section id="method-1-the-duckdb-path-of-db2pq" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="method-1-the-duckdb-path-of-db2pq"><span class="header-section-number">3.1</span> Method 1: The DuckDB path of <code>db2pq</code></h2>
+<p>The <code>db2pq</code> Python package allows a user to export a table from PostgreSQL to Parquet with a number of options, including the ability to select certain columns or filter only rows meaning certain conditions. It also allows the user to modify data types (e.g., have a floating-point number be read as an integer).</p>
+<p>The main “engine” of <code>db2pq</code> has DuckDB read data from PostgreSQL and produce batches of Arrow output that are written to disk. The batching is necessary to ensure that large tables can be processed without swamping the memory of the user’s computer.</p>
+<p>While DuckDB supports writing directly to Parquet files, when I worked with this in 2023, I found it very difficult to prevent DuckDB from flooding RAM, and so I implemented a suite of functions that make up the core of the <code>db2pq</code> package.</p>
+<p>The <code>db2pq</code> package also offers other goodies, such as only writing files when the data in PostgreSQL is newer than that in the Parquet file, as illustrated here:</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>wrds_update_pq()</code> examples in this section and the next retain their output from March 2026. I no longer have access to WRDS, so these examples are not rerun when rendering this note. The updated benchmarks below use my local PostgreSQL database.</p>
+</div>
+</div>
+<div id="915e164c" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> db2pq <span class="im">import</span> wrds_update_pq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="44461628" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"msf_v2"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<pre><code>Updated crsp.msf_v2 is available.
+Beginning file download at 2026-03-26 19:56:53 UTC.
+Completed file download at 2026-03-26 20:00:28 UTC.</code></pre>
+<div id="a458d237" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"msf_v2"</span>, <span class="st">"crsp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<pre><code>crsp.msf_v2 already up to date.</code></pre>
+</section>
+<section id="method-2-the-adbc-path-of-db2pq" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="method-2-the-adbc-path-of-db2pq"><span class="header-section-number">3.2</span> Method 2: The ADBC path of <code>db2pq</code></h2>
+<p>In March 2026, I decided to add an ADBC “engine” to <code>db2pq</code>. I was interested to know whether it would deliver better performance. It turns out that it doesn’t—at least, not yet—but it was a useful exercise to understand a little more about ADBC.</p>
+<p>To use the ADBC engine with <code>db2pq</code>, I simply say <code>engine="adbc"</code> when calling <code>wrds_update_pq()</code>.</p>
+<div id="4e9dea17" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>wrds_update_pq(<span class="st">"msf_v2"</span>, <span class="st">"crsp"</span>, engine<span class="op">=</span><span class="st">"adbc"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<pre><code>crsp.msf_v2 already up to date.</code></pre>
+<p>Here I discuss two among several things I learnt about ABDC. First, the ADBC drivers incur a significant one-time cost when setting a database for connection. As we will see, the first export takes longer on my computer; in the original March 2026 tests, setting up the connection took over 20 seconds for the WRDS server. I infer that ADBC driver wants to know everything about the database it is connecting to before doing any work and it takes a lot longer for the WRDS database to tell its story that it does for my cheerful little home database.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+<p>The second thing I learnt is that the ADBC drivers are very conservative when it comes to mapping data types. For example, the <code>mthret</code> column from the <code>crsp.msf_v2</code> table that we saw above is stored in PostgreSQL as <code>NUMERIC(10, 6)</code>, which means its a precise representation of a number with 10 digits, 6 of which come after the decimal point. You might think that the ABDC driver would immediately think “hey, that’s the same thing as <code>pa.decimal128(10, 6)</code>” (here <code>pa</code> stands for <code>pyarrow</code>, the Python package for Arrow). But instead, the <a href="https://arrow.apache.org/adbc/current/driver/postgresql.html#numeric-utf8">driver documentation</a> for the ADBC driver for PostgreSQL states that “<code>NUMERIC</code> types are read as the string representation of the value, because the PostgreSQL <code>NUMERIC</code> type cannot be losslessly converted to the Arrow decimal types.”</p>
+<p>In implementing the ADBC “engine”, I tweaked the implementation of functions such as <code>wrds_update_pq()</code> so that the one-time cost of setting up a database for connections with ADBC only happens once in a Python session. This is often fine even if that set-up takes more than 20 seconds because the Python session will run for minutes or even hours to download data.</p>
+<p>I also gave the user the flexibility to specify how <code>NUMERIC</code> types are handled using the <code>numeric_mode</code> argument. With <code>numeric_mode="float64"</code> the values are cast by PostgreSQL to <code>DOUBLE PRECISION</code> before the ADBC driver sees them, so they end up as <code>Float64</code> types. If <code>numeric_mode="decimal"</code> the values are given to the ADBC driver as text, but these values are converted to nearest Arrow decimal types using the precision-scale metadata for the columns provided by PostgreSQL. Finally, <code>numeric_mode="text"</code> falls back to the default handling described by the Arrow documentation above.</p>
+</section>
+<section id="method-3-the-pg_parquet-postgresql-extension" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="method-3-the-pg_parquet-postgresql-extension"><span class="header-section-number">3.3</span> Method 3: The <code>pg_parquet</code> PostgreSQL extension</h2>
+<p>The final contender is the <code>pg_parquet</code> PostgreSQL extension. The <a href="https://postgresapp.com/extensions/">Postgres.app site</a> offers a number of PostgreSQL extensions. These “are very easy to install – just download and double click the installer package! After restarting the server [also very easy with Postgres,app], you can enable them with the <code>CREATE EXTENSION</code> command.””</p>
+<p>The <code>pg_parquet</code> PostgreSQL extension is one of several made available on the Postgres.app website. There it says: “Apache Parquet is gaining popularity as an interchange format for datasets. This extension allows you to read and write Parquet files using the <code>COPY</code> command. The extension was developed by CrunchyData and documentation is available at <code>github.com/CrunchyData/pg_parquet</code>.”</p>
+<p>With this extension I can run SQL like this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> crsp.msf_v2 <span class="kw">TO</span> <span class="st">'/tmp/msf_v2.parquet'</span> (format <span class="st">'parquet'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>An obvious limitation of <code>pg_parquet</code> is that you need to have administrative privileges for the database you want to get data from. So clearly it’s not useful to a user of the WRDS database (unless WRDS were to install it, of course).</p>
+</section>
+</section>
+<section id="benchmark-analysis" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Benchmark analysis</h1>
+<p>Now that I have my three contenders, I run some benchmarks. I have copies of <code>comp.company</code>, <code>comp.funda</code>, and <code>crsp.msf_v2</code> in my local database and I use the code like <code>db_to_pq("msf_v2", "crsp", engine="duckdb")</code> to export the data to Parquet form for the first two contenders and <code>COPY</code> code like that above for <code>pg_parquet</code>. Each export includes all columns. Each bar represents a single export, with ADBC run twice for the small table to show first-run overhead. The benchmarks below were rerun on 8 October 2026 using the following versions.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Package or server</th>
+<th style="text-align: left;">Version</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">db2pq</td>
+<td style="text-align: left;">0.3.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">duckdb</td>
+<td style="text-align: left;">1.5.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">adbc-driver-postgresql</td>
+<td style="text-align: left;">1.12.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">adbc-driver-manager</td>
+<td style="text-align: left;">1.12.0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pyarrow</td>
+<td style="text-align: left;">25.0.1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">pandas</td>
+<td style="text-align: left;">3.0.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">polars</td>
+<td style="text-align: left;">2.0.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">psycopg</td>
+<td style="text-align: left;">3.3.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">matplotlib</td>
+<td style="text-align: left;">3.11.2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">seaborn</td>
+<td style="text-align: left;">0.13.2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PostgreSQL</td>
+<td style="text-align: left;">18.6 (Postgres.app)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">pg_parquet</td>
+<td style="text-align: left;">0.5.1</td>
+</tr>
+</tbody>
+</table>
+<section id="small-queries" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="small-queries"><span class="header-section-number">4.1</span> Small queries</h2>
+<p>The first export I look at is 50,000 rows from <code>comp.company</code>, which results in Parquet files of about 9 MiB. This small export allows me to demonstrate the cost of the first ADBC export within a Python instance. For the ADBC engine I run the query twice and you can see that the first time (<code>adbc_init</code> in <a href="#fig-company" class="quarto-xref">Figure&nbsp;1</a>) is about five seconds longer than the second time (<code>adbc</code>). This difference includes initialization and connection setup; it is not a separate measurement of connection time.</p>
+<p>In the original March 2026 tests, this setup took at least 20 seconds on the WRDS server. It seems that ADBC is doing a lot of “introspection” of the database each time a new database is established and this is a cost that is incurred for each run of Python (at least).</p>
+<div id="cell-fig-company" class="cell" data-execution_count="23">
+<div class="cell-output cell-output-display">
+<div id="fig-company" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-company-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="local_engine_benchmark_update_files/figure-html/fig-company-output-1.png" width="656" height="464" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-company-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Export times for <code>comp.company</code>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="larger-query-wide-table" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="larger-query-wide-table"><span class="header-section-number">4.2</span> Larger query, wide table</h2>
+<p>For the next query, I look at <code>comp.funda</code>, a table of financial statement information for (primarily) US companies. This table has over 900,000 rows and more than 900 variables, so it’s a fairly wide table. The resulting Parquet files range from 405 to 454 MiB in size.</p>
+<p>As can be seen in <a href="#fig-funda" class="quarto-xref">Figure&nbsp;2</a>, the DuckDB engine is fastest with this table at about 26 seconds, followed by ADBC at 55 seconds and <code>pg_parquet</code> at 189 seconds.</p>
+<div id="cell-fig-funda" class="cell" data-execution_count="24">
+<div class="cell-output cell-output-display">
+<div id="fig-funda" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-funda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="local_engine_benchmark_update_files/figure-html/fig-funda-output-1.png" width="656" height="464" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-funda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Export times for <code>comp.funda</code>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="larger-query-long-table" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="larger-query-long-table"><span class="header-section-number">4.3</span> Larger query, long table</h2>
+<p>For the next query, I look at <code>crsp.msf_v2</code>, a table of monthly data on the stock prices of US companies. This table has over 5,000,000 rows and 45 columns. It also has several columns that are stored in PostgreSQL as <code>NUMERIC</code> types (e.g., <code>mthret</code>). The resulting Parquet files range from 219 to 231 MiB in size.</p>
+<p>As can be seen in <a href="#fig-msf" class="quarto-xref">Figure&nbsp;3</a>, ADBC is more competitive with this table at about 15 seconds, compared with 12 seconds for the DuckDB engine and 53 seconds for <code>pg_parquet</code>.</p>
+<div id="cell-fig-msf" class="cell" data-execution_count="25">
+<div class="cell-output cell-output-display">
+<div id="fig-msf" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-msf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="local_engine_benchmark_update_files/figure-html/fig-msf-output-1.png" width="656" height="464" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-msf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Export times for <code>crsp.msf_v2</code>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Unfortunately, Postgres.app is MacOS only.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>When I wrote the original March note, I had only been using Polars for about two months.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>The pandas version of <code>msf_v2</code> occupies more than 8 GB of RAM.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Another benefit is that the Parquet file occupies about 243 MB, versus 1.45 GB for the CSV file.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Yes, this is a bit confusing.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>You can also use an SQL interface with Polars.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>For more on this, see <a href="https://iangow.github.io/notes/published/data_mgt.html">here</a>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>A similar story is seen with connecting to ADBC databases with R, though it’s only nine seconds for WRDS to tell ABDC about itself. An issue with having an ADBC engine for the R version of <code>db2pq</code> is that the CRAN version of <code>adbcpostgresql</code> does not come with SSL support and I don’t want to be asking <code>db2pq</code> users to be compiling libraries against versions of <code>libpq</code>, etc.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
