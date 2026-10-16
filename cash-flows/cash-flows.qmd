@@ -1,0 +1,1929 @@
+---
+title: "How common are direct-method cash flow statements?"
+subtitle: "A tutorial on working with XBRL data compiled using `dera.pq`"
+author: Ian D. Gow
+date: 2026-06-11
+date-format: "D MMMM YYYY"
+abstract: |
+  This note illustrates how data compiled using my `dera.pq` R package can be used to analyse XBRL data from SEC filings.
+  Using these data, I show that direct-method cash flow statements have become even rarer for US firms than they were in 2011, when the last *Accounting Trends and Techniques* survey was published.
+format:
+  pdf:
+    number-sections: true
+    pdf-engine: xelatex
+    mainfont: "TeX Gyre Pagella"
+    mathfont: "TeX Gyre Pagella Math"
+    colorlinks: true
+    urlcolor: blue
+    linkcolor: blue
+    citecolor: blue
+bibliography: cash-flows-references.bib
+csl: cash-flows.csl
+knitr:
+  opts_chunk:
+    dev: "ragg_png"
+    dpi: 300
+---
+
+# Introduction
+
+Many filings with the Securities and Exchange Commission (SEC) are tagged using XBRL (eXtensible Business Reporting Language), a global framework for encoding and sharing business information.
+The SEC's Division of Economic and Risk Analysis (DERA) provides bulk files compiled from these filings and my recently published R package, [`dera.pq`](https://iangow.github.io/dera_pq/index.html), is designed to facilitate fast analysis of these data sets.
+This note provides a case study of how data compiled with the `dera.pq` can be used and provides a kind of tutorial on parts of the XBRL data set provided by DERA.
+
+The specific question I explore here is: How many US firms provide direct-method cash flow statements?
+*Accounting Trends and Techniques*, an AICPA publication, was long the source for an answer to this question and it typically reported that about 1% of firms used the direct method.
+However, the effective demise of *Accounting Trends and Techniques* in 2011 has deprived us of an easy answer to this question.
+
+Can we get an answer from XBRL filings?
+Well, yes.
+While it is surprisingly difficult to corral the messy, error-ridden XBRL data provided by individual filers into a clean answer, it seems that the headline 1% number is out of date.
+During the period I study, the popularity(?) of direct-method cash flow statements has been in steady decline and today perhaps 0.2% of firms use direct-method cash flow statements.
+
+Despite their rarity, the belief that direct-method cash flow statements would be useful to investors seems to persist.
+As recently as December 2023, the Chief Accountant of the SEC issued a [call](https://www.sec.gov/newsroom/speeches-statements/munter-statement-cash-flows-120423) for more firms to use the direct method.
+Interestingly, even the SEC Chief Accountant appears to rely on statistics from no later than 2002 to describe the state of play regarding direct-method reporting by firms.
+So perhaps more recent data would be helpful.
+
+## Some observations on the SEC's XBRL data
+
+While my initial goal with this note was the illustration of how data collated with my [`dera.pq`](https://iangow.github.io/dera_pq/index.html) package can be used, a side effect of of preparing this note is that I am able to make some observations on the utility of the XBRL data based on my experience.
+While these observations are based on my limited use of the data in preparing this note, I conjecture that they may hold up in a more comprehensive analysis.
+
+First, I view the XBRL data as having greatest utility when analysing longer time periods or comparing larger samples of firms.
+In April 2025, the SEC published some [Python code](https://github.com/sec-gov/python-for-dera-financial-datasets/tree/main) illustrating the use of DERA data.
+However, these examples typically quickly move to looking at particular fields for a particular firm for a small number of periods (say, two quarters).
+If that were the goal, there is arguably little value in using XBRL at all; one can quickly go to the relevant filing and view the few required numbers in context and quickly type them into Excel.^[See @harris2012xbrl for some quotes of analysts making precisely this point.]
+But the approach suggested in the SEC code would quickly become unworkable for the kinds of analyses for which having XBRL would be more useful.^[The SEC Python code uses individually downloaded and unzipped text files, limiting easy reproducibility.
+Second, it uses pandas, a data frame library that struggles with data sets as large as the DERA Notes data used here, even though ~400 GB is not "big data" by any stretch.]
+In this regard, the [`dera.pq`](https://iangow.github.io/dera_pq/index.html) package provides a better approach.
+
+Second, the minimum quality of the XBRL data is disappointingly low.
+For bulk analyses, it is probably the *lower bound* of data quality that is most relevant.
+Having 90% of the data above a certain quality does not help with comprehensive analyses if the other 10% cannot be ignored.
+If the bad 10% needs to be included, then a lot of work is needed to patch it up, likely much more than dealing with the better 90%.
+Even then, one's confidence in the resulting data will be lower than if greater assurance had been built into the process of producing it.
+
+While I use the data in a very limited way in this note, data issues plague my analysis.^[As an example of how limited my use is, I really do nothing with the *numeric* data in the DERA Notes database.]
+Many firms do not provide the data explaining how various data points are aggregated and organized in a way that can be understood by a computer.
+On top of this, there are too many tags provided by the US GAAP taxonomy and many firms use custom tags, seemingly without good reason.
+I have seen many incorrectly tagged items in my limited use.
+
+Finally, while one might not choose the general approach of tagging used in XBRL if starting with a clean sheet of paper, I think that the fundamental technology is perfectly workable.
+@harris2012xbrl suggest that XBRL was out of date even in 2012.
+However, I have found working with the XBRL data in the form created using the [`dera.pq`](https://iangow.github.io/dera_pq/index.html) package based on the files supplied by DERA to be fast and facile.
+The much bigger problem is that the quality of the data is too low.
+
+Given how long the XBRL project has been around and how poor the data quality appears to be, I must say I would assess a low likelihood that the XBRL data in SEC filings will be improved any time soon, if ever.
+The solution seems straightforward in principle: there should be some assurance around the XBRL data in terms of how the items are tagged, how they relate to each other, and how taxonomies are used.
+This is a solution that would have been viable fifteen years ago and clearly the decision was made not to take XBRL data seriously.
+As such, it's unclear that anything fundamental has changed to make it more attractive to invest time, money, and political capital in improving the quality of data that surely few really use.
+
+Even in our current AI age, this seems to be a shame, because I conjecture that what AI can do with high-quality curated data sets is quite different from what it can do if dealing with messy, dirty data of the kind currently seen in the XBRL data set provided by the SEC.^[I eschew any attempt to enumerate what I think would be needed to make the data more useful, as this seems to stray too far from the limited nature of this note.]
+
+# Background
+
+## Cash flow reporting under US GAAP
+
+US GAAP has required most public firms to provide statements of cash flows since FAS 95, which was issued by the Financial Accounting Standards Board (FASB) in 1987.
+When the FASB created the Accounting Standards Codification (ASC) in 2009, the substance of FAS 95 became ASC Topic 230, Statement of Cash Flows.
+
+ASC 230-10-45-24 requires a statement of cash flows that reports net cash provided or used by operating, investing, and financing activities.
+In effect, the statement of cash flows reconciles beginning and ending balances of cash and cash equivalents.^[The standard refers to "cash, cash equivalents, and amounts generally described as restricted cash or restricted cash equivalents."]
+
+ASC 230-10-45-25 says (emphasis added) "entities are *encouraged* to report ... net cash flow from operating activities [using] the direct method."
+230-10-45-30 requires that a firm that "uses the direct method" provide a "reconciliation of net income to net cash flow from operating activities shall be provided in a separate schedule."
+
+## Accounting Trends and Techniques
+
+Despite being "encouraged" to report cash flow from operating activities using the direct method, @mulford2005creative [p. 52] report that "only about 1 percent of firms present the statement of cash flows in the direct format."
+The statistic reported by @mulford2005creative comes from the much-cited *Accounting Trends and Techniques*, which was an annual publication of the American Institute of Certified Public Accountants (AICPA), the principal professional association for certified public accountants (CPAs) in the United States.
+
+@mulford2005creative cite the 2002 edition of *Accounting Trends and Techniques*, which surveyed 600 firms for its statistics.
+It appears that the 2008 edition of *Accounting Trends and Techniques*, was the last to cover 600 firms.
+From 2009 to 2011, the annual survey covered 500 firms.
+Starting in 2012, the *Accounting Trends and Techniques* title was changed, the annual survey dropped to 350 firms and statistical tables were omitted.^[Past editions of *Accounting Trends and Techniques* and its successors can be found at [a website](https://egrove.olemiss.edu/aicpa_att/) maintained by the University of Mississippi.]
+In effect, the annual survey element of *Accounting Trends and Techniques* ceased in 2011.
+
+## XBRL data
+
+With the demise of *Accounting Trends and Techniques*, it is not clear that anyone is compiling statistics on the prevalence of the indirect method for reporting cash flows from operating activities.^[This view seems to receive confirmation in the use of outdated statistics by the SEC Chief Accountant in December 2023, as noted above.]
+
+However, such a survey may be unnecessary as, in January 2009, the SEC adopted rules requiring public companies to furnish financial statements in eXtensible Business Reporting Language (XBRL).
+XBRL was developed in the late 1990s under the auspices of what became XBRL International.
+The US effort was led by XBRL US, which worked with the Securities and Exchange Commission to develop GAAP taxonomies.
+While the SEC launched a voluntary XBRL filing program in 2005, only a small number of firms participated and data quality was often poor.
+By mid-2011, essentially all public companies were filing XBRL exhibits with their 10-Ks and 10-Qs.
+In 2018, the SEC adopted rules requiring Inline XBRL (iXBRL) in which human-readable filings and XBRL tags are combined and today essentially all SEC filers use Inline XBRL.
+
+The SEC publishes two bulk XBRL data libraries that are useful for financial statement research: [*Financial Statement*](https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets) and [*Financial Statement and Notes*](https://www.sec.gov/data-research/financial-statement-notes-data-sets).
+The latter SEC website explains that "the Financial Statement and Notes Data Sets ... provide the text and detailed numeric information from all financial statements and their notes ... in a flattened format to help users analyze and compare corporate disclosure information over time and across registrants. "
+
+The *Financial Statement and Notes* data library comprises eight tables:
+
+ - `sub` includes one record for each XBRL submission. 
+    It also includes fields pertinent to the submission and the filing entity.
+ - `tag` contains all standard taxonomy tags (not just those appearing in submissions to date) and all custom taxonomy tags defined in the submissions.
+The standard tags are derived from taxonomies in the SEC's [standard taxonomies file](https://www.sec.gov/info/edgar/edgartaxonomies.shtml) as of the date of submission.
+ - `dim` contains all of the combinations of XBRL axis and member used to tag any submission.
+ - `num` contains numeric data, one row per data point in the financial statements. 
+ - `txt` contains non-numeric data, one row per data point in the financial statements.
+ - `ren` summarizes "rendering" the data provided by filers about each presentation group as defined in EDGAR filer manual. 
+ - `pre` contains one row for each line of the financial statements tagged by the filer.
+ - `cal` is the calculation data set and provides information about arithmetic relations between tagged amounts in a filing.
+
+My [`dera.pq` package](https://iangow.github.io/dera_pq/index.html) downloads those zip files and writes their component tables as Parquet files in a local Parquet repository.
+More information about making a Parquet repository is found in *Empirical Research in Accounting: Tools and Methods*, which has both [R](https://iangow.github.io/far_book/parquet-wrds.html) and [Python](https://iangow.github.io/era_pl_book/parquet-wrds.html) editions.
+
+# Analysis
+
+## Extracting cash flow data from XBRL data
+
+In this version of the note, I use R to analyse the data.
+Specifically, I use the [Tidyverse](https://tidyverse.org) packages along with [DuckDB](https://duckdb.org).
+DuckDB allows me to spin up a fast and powerful database process using a single line of code.
+I access the DERA Notes data using the `load_parquet()` function from my `farr` package, which understands the structure of my Parquet data repository.
+
+```{r}
+#| include: false
+library(tidyverse)
+library(DBI)
+library(farr)
+library(gt)
+```
+
+```{r}
+#| include: false
+db <- dbConnect(duckdb::duckdb())
+dbExecute(db, "INSTALL icu")
+dbExecute(db, "LOAD icu")
+
+pre_notes <- load_parquet(db, "pre_notes_*", "dera_notes")
+cal_notes <- load_parquet(db, "cal_notes_*", "dera_notes")
+sub_notes <- load_parquet(db, "sub_notes_*", "dera_notes")
+num_notes <- load_parquet(db, "num_notes_*", "dera_notes")
+```
+
+```{r}
+#| eval: false
+#| include: false
+txt_notes <- load_parquet(db, "txt_notes_*", "dera_notes")
+```
+
+In my analysis for this note, I primarily use three tables from those described above, namely, `sub`, `pre`, and `cal`.
+In the discussion below, I append a `_notes` suffix to make it clear that I am using the DERA Notes (`dera_notes`) version of these tables.
+I also use `num_notes` for examples focused on Costco's 2025 10-K.
+
+## Submissions data
+
+The `sub_notes` table contains data on submissions, including the firm identifier (`cik`), the SIC code (`sic`), the period for the filing (`period`), the type of filings (`form`) and the timestamp on which the filing was accepted (`accepted`).
+In this note, I focus exclusively on 10-K filings (`10-K`), ignoring amended 10-K filings (`10-K/A`), filings by foreign issuers (e.g., `20-F`) and transition filings (`10-KT`).
+While @tbl-annual-forms shows that there are other annual report forms on `sub_notes`, 10-K filings are the vast majority of filings.^[The amended filings potentially introduce issues of double-counting.]
+
+```{r}
+#| label: tbl-annual-forms
+#| tbl-cap: Annual report forms on `sub_notes`
+#| echo: false
+annual_forms <- tribble(
+  ~form      , ~form_desc                                                             ,
+  "10-K"     , "Annual report"                                                        ,
+  "10-K/A"   , "Amended 10-K (restated financials, corrections)"                      ,
+  "20-F"     , "Foreign private issuers (non-Canadian, US listed)"                    ,
+  "20-F/A"   , "Amended 20-F"                                                         ,
+  "40-F"     , "Qualifying Canadian companies"                                        ,
+  "40-F/A"   , "Amended 40-F"                                                         ,
+  "10-KT"    , "Covers short periods when changing fiscal year-ends"                  ,
+  "10-KT/A"  , "Amended 10-KT"                                                        ,
+  "10-KSB"   , "Small business annual report, phased out ~2008"                       ,
+  "10-KSB/A" , "Amended 10-KSB"                                                       ,
+  "10-K405"  , "Older variant (pre-2002) distinguished only by a cover-page checkbox"
+)
+
+sub_notes |>
+  inner_join(
+    annual_forms,
+    by = join_by(form),
+    copy = TRUE
+  ) |>
+  count(form, form_desc, sort = TRUE) |>
+  gt() |>
+  fmt_integer(columns = c(n)) |>
+  cols_label(
+    form = md("`form`"),
+    form_desc = "Description",
+    n = "Number of filings",
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+## The case of Costco's 2025 10-K filing
+
+```{r}
+#| include: false
+selected_filing <- "0000909832-25-000101"
+```
+
+The **accession number** for Costco's 2025 10-K filing is `{r} selected_filing`.
+@tbl-costco-sub shows some selected data from `sub_notes` for this filing.^[Note that I have displayed the `accepted` value in the original `US/Eastern` time zone.]
+Looking at `accepted` in @tbl-costco-sub causes me to wonder if a filing after 9pm EDT is normal for Costco.^[The `US/Eastern` time zone is "EDT" for most of the year, with a switch to "EST" occurring shortly after Halloween at the end of October.]
+As it is quite trivial to address this question using the `dera.pq` data, I create @tbl-costco-accepted.
+From @tbl-costco-accepted, it does seem that most filings are after standard business hours for the US East Coast (Costco is headquartered in the `US/Pacific` time zone), but rarely as late as 9pm EDT.
+
+@tbl-costco-accepted also includes `lag`, which is the time (in days) between `period` and `accepted`.
+Interestingly, there's no clear pattern to `lag` over time, though it does appear to be trending downwards and to vary from one year to the next.
+
+```{r}
+#| label: tbl-costco-sub
+#| tbl-cap: Selected `sub_notes` data for Costco's 2025 10-K filing
+#| echo: false
+sub_notes |>
+  filter(adsh == selected_filing) |>
+  select(cik, name, period, form, accepted) |>
+  collect() |>
+  mutate(
+    period = format(period, "%Y-%m-%d"),
+    accepted = format(with_tz(accepted, "US/Eastern"), "%Y-%m-%d %H:%M:%S")
+  ) |>
+  gt() |>
+  tab_options(
+    table.font.size = 12,
+  )
+```
+
+```{r}
+#| label: tbl-costco-accepted
+#| tbl-cap: Filing times and lags for Costco's 10-K filings
+#| echo: false
+sub_notes |>
+  filter(
+    cik == 909832,
+    form %in% c("10-K", "10-K/A")
+  ) |>
+  mutate(lag = date_part('day', accepted - period)) |>
+  select(cik, period, form, accepted, lag) |>
+  arrange(desc(period)) |>
+  collect() |>
+  mutate(
+    period = format(period, "%Y-%m-%d"),
+    accepted = format(with_tz(accepted, "US/Eastern"), "%Y-%m-%d %H:%M:%S")
+  ) |>
+  gt() |>
+  tab_options(
+    table.font.size = 12,
+  )
+```
+
+### Presentation data
+
+I now turn to the `pre_notes` table, which provides information about the *presentation* of XBRL data in the associated SEC filing.
+The variable `stmt` describes the statement to which each row of the data relates.
+@tbl-stmt-dist provides information about the distribution of this variable across all 10-K filings on the DERA Notes data.
+
+As might be expected, most data items are not associated with any statement (i.e., `stmt` is `NA`), presumably because they are contained in the footnotes to the financial statements.
+Comparing @tbl-stmt-dist with @tbl-annual-forms confirms that the vast majority of 10-K filings have all four core financial statements (i.e., `BS`, `CF`, `IS`, and `EQ`) on `pre_notes`.
+Further research would be required to understand whether the cases without one or more of these financial statements can be attributed to the absence of these statements in the filings, absence from the XBRL data supplied with the filing, or some failure in the extraction of the data into the `pre_notes` data supplied with DERA Notes.
+
+```{r}
+#| include: false
+filings_10k <-
+  sub_notes |>
+  filter(form == "10-K") |>
+  select(adsh, cik, sic, form, period, accepted) |>
+  compute()
+```
+
+```{r}
+#| include: false
+stmt_labels <- tribble(
+  ~stmt , ~stmt_desc                 ,
+  "BS"  , "Balance Sheet"            ,
+  "CF"  , "Cash Flow"                ,
+  "IS"  , "Income Statement"         ,
+  "EQ"  , "Equity"                   ,
+  "CI"  , "Comprehensive Income"     ,
+  "CP"  , "Cover Page"               ,
+  "UN"  , "Unclassifiable Statement" ,
+  "SI"  , "Schedule of Investments"
+)
+```
+
+```{r}
+#| label: tbl-stmt-dist
+#| tbl-cap: Distribution of `stmt` for 10-K filings
+#| echo: false
+pre_notes |>
+  semi_join(
+    filings_10k,
+    by = join_by(adsh)
+  ) |>
+  group_by(stmt) |>
+  summarize(
+    n_rows = n(),
+    n_adsh = n_distinct(adsh, na.rm = TRUE),
+  ) |>
+  left_join(stmt_labels, by = "stmt", copy = TRUE) |>
+  select(stmt, stmt_desc, n_adsh, n_rows) |>
+  mutate(rows_per_filing = n_rows / n_adsh) |>
+  arrange(desc(n_rows)) |>
+  collect() |>
+  gt() |>
+  fmt_integer(columns = c(n_rows, n_adsh)) |>
+  fmt_number(columns = rows_per_filing, decimals = 2) |>
+  cols_label(
+    stmt = md("`stmt`"),
+    stmt_desc = "Statement",
+    n_adsh = "Number of filings",
+    n_rows = "Total rows",
+    rows_per_filing = "Rows per filing",
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+The fields I use from `pre_notes` are `adsh`, `line`, `tag`, `plabel`, `prole`, and `negating`.
+To better understand the content of `pre_notes`, I present a sample of the underlying data in @tbl-costco-pre ordered by `line` (for reasons of space, I omit `adsh`; it is always `{r} selected_filing` here).
+As can be seen there, each line is associated with a `tag` and `negating` will be used to handle the values I get from `cal_notes` in later tables.
+
+For my analysis here, the only use I make of `prole` is to filter out the difficult-to-handle row where `prole` equals "periodStartLabel".^[This row relates to the beginning-of-period balance of cash and cash equivalents.
+The complication is that these rows share the same `tag` and `ddate` values as the end-of-period balances and some jiggering of the data would be needed to put the values in the right column.
+Given that this would be distraction from my task here, I simply omit that row.]
+
+Due to space constraints, I present `plabel` values in a separate table [@tbl-costco-pre-plabel].
+The SEC DERA documentation describes `plabel` as "the text presented on the line item, also known as a 'preferred' label".
+That `plabel` is a little more human-readable can be seen in @tbl-costco-pre-plabel.
+
+```{r}
+#| include: false
+#| label: costco-pre
+costco_pre <-
+  pre_notes |>
+  filter(adsh == selected_filing) |>
+  filter(stmt == "CF") |>
+  select(adsh, line, tag, plabel, prole, negating) |>
+  compute()
+```
+
+```{r}
+#| label: tbl-costco-pre
+#| tbl-cap: Data from `pre_notes` for Costco 2025 cash flows
+#| echo: false
+costco_pre |>
+  # filter(line <= 12) |>
+  select(-adsh, -plabel) |>
+  mutate(tag = str_sub(tag, 1, 80)) |>
+  arrange(line) |>
+  gt() |>
+  fmt_integer(columns = where(is.numeric), accounting = TRUE) |>
+  sub_missing(missing_text = "") |>
+  tab_options(
+    table.font.size = 10,
+  ) |>
+  cols_width(
+    line ~ pct(4),
+    tag ~ pct(72),
+    prole ~ pct(16),
+    negating ~ pct(8)
+  )
+```
+
+```{r}
+#| label: tbl-costco-pre-plabel
+#| tbl-cap: Label values from `pre_notes` for Costco 2025 operating cash flows
+#| echo: false
+costco_pre |>
+  # filter(line <= 12) |>
+  select(line, plabel) |>
+  arrange(line) |>
+  gt() |>
+  tab_options(
+    table.font.size = 10,
+  ) |>
+  cols_width(
+    line ~ pct(4),
+    plabel ~ pct(96),
+  )
+```
+
+```{r}
+#| label: tbl-costco-prole
+#| tbl-cap: Values of `prole` in Costco's 2025 10-K
+#| echo: false
+#| include: false
+costco_pre |>
+  count(prole, sort = TRUE) |>
+  gt() |>
+  fmt_integer(columns = n) |>
+  tab_options(
+    table.font.size = 10,
+  )
+```
+
+### Numeric data
+
+The `num_notes` table contains numeric data, one row per data point in the financial statements and the notes thereto.
+@tbl-costco-num provides a sample of such data related to Costco's 2025 statement of cash flows.
+Note that the values in `uom` (the unit of measure) do not vary within this Costco data set.
+However, `qtrs` does vary: while most items on Costco's statement of cash flows have `qtrs` equal to 4, the value of `qtrs` for beginning and ending balances of cash and cash equivalents equals 0, as these are point-in-time balances.^["Cash dividend declared, but not yet paid", as seen in @tbl-costco-pre-rem, also has `qtrs` equal to 0, as it's effectively a balance sheet amount.]
+
+Note that I filter for `iprx == 0`, where `iprx` is "a positive integer to distinguish different reported facts that otherwise would have the same primary key. 
+For most purposes, data with `iprx` greater than 1 are not needed."
+I also filter for `dimn == 0`, as values with `dimn` greater than zero in this context represent segment data.
+
+@tbl-costco-num also includes data on `datp`.
+According to the DERA Notes documentation `datp` represents "the difference between the reported fact date and the month-end rounded date (`ddate`), expressed as a fraction of 1. 
+For example, a fact reported for 29/Dec, with `ddate` rounded to 31/Dec, has a `datp` value of minus 2/31 = -0.0645."
+This provides a nice illustration of the reality that, pace the views of [RTFM](https://en.wikipedia.org/wiki/RTFM) proponents, one should *not* always trust what one Reads in The Flaming Manual.
+If you look at the 10-K for Costco, you will see references to "August 31, 2025" (i.e., 0 days before 31 August), "September 1, 2024" (-1 days before 31 August), and "September 3, 2023" (-3 days before 31 August) and these values line up with `datp` representing the number of days between the fiscal year-end and the month-end (31 August).
+The field `tdate` in @tbl-costco-num is not actually a field in `num_notes`, but is a column I calculate using `ddate` and `datp`.
+
+Finally, the column `dcml` indicates the decimal precision of the `value` column, with `-6` meaning the data are reported in millions of the units in `uom` (i.e., USD).
+
+```{r}
+#| include: false
+#| label: costco-num
+costco_num <-
+  num_notes |>
+  filter(adsh == selected_filing) |>
+  filter(iprx == 0, dimn == 0) |>
+  semi_join(
+    costco_pre,
+    by = join_by(adsh, tag)
+  ) |>
+  compute()
+```
+
+```{r}
+#| label: tbl-costco-num
+#| tbl-cap: Sample of data from `num_notes` for Costco 2025 cash flows
+#| echo: false
+costco_num |>
+  filter(nchar(tag) < 20) |>
+  mutate(tdate = ddate - as.integer(datp)) |>
+  select(tag, ddate, qtrs, uom, value, datp, tdate, dcml) |>
+  collect() |>
+  mutate(
+    ddate = format(ddate, "%Y-%m-%d"),
+    tdate = format(tdate, "%Y-%m-%d")
+  ) |>
+  gt() |>
+  fmt_integer(columns = where(is.numeric)) |>
+  tab_options(
+    table.font.size = 10,
+  )
+```
+
+### Merged data
+
+Now that we understand the data in `pre_notes` and `num_notes`, we can merge the data for Costco's 2025 10-K to produce Tables [-@tbl-costco-pre-cfo]--[-@tbl-costco-pre-rem].
+I merge data from `pre_notes` with data from `cal_notes` using `adsh` and `tag` as the linking variables.^[In merging a larger data set, it might make sense to include `version` as an additional linking variable, but this does not affect the merge in the current case.]
+
+I present the data from Costco's 2025 statement of cash flows over several tables partly for reasons of space, starting with cash flows from operating activities in @tbl-costco-pre-cfo.
+I scale the data by dividing the values by one million and I multiply any value where `negating` is true by minus one.
+
+From @tbl-costco-num, it can be seen that the `num_notes` data are in a **long** form with `ddate` arranged in a single column, while the typical presentation of statements of cash flows will have the dates organized as columns.
+Therefore I use the `pivot_wider()` function to reorganize the data for presentation.^[A wrinkle is that the conventional presentation of financial statement information has the more recent periods to the left, but the `names_sort = TRUE` argument of `pivot_wider()` will produce data with more recent periods to the right.
+But using `mutate(ddate = fct_rev(factor(ddate)))` yields the desired (conventional) presentation.]
+
+```{r}
+#| include: false
+#| label: costco
+costco <-
+  costco_pre |>
+  left_join(
+    costco_num,
+    by = join_by(adsh, tag),
+  ) |>
+  select(adsh, line, tag, plabel, prole, negating, ddate, value) |>
+  mutate(value = if_else(negating, -value, value)) |>
+  mutate(value = value / 1e6) |>
+  filter(prole != "periodStartLabel") |>
+  collect() |>
+  mutate(ddate = fct_rev(factor(ddate))) |>
+  pivot_wider(
+    id_cols = c(line, tag, plabel),
+    names_from = ddate,
+    values_from = value,
+    names_sort = TRUE
+  ) |>
+  arrange(line) |>
+  select(-tag, -`NA`)
+```
+
+@tbl-costco-pre-cfo presents the first 12 lines of the merged data set, which relate to cash flows from operating activities.
+Costco's cash flows from operating activities are larger than net income---due to the add-back of depreciation and amortization---and growing.
+
+@tbl-costco-pre-inv presents the next six lines of the merged data set, which relate to cash flows from investing activities.
+The largest item is capital expenditure ("additions to property and equipment").
+That capital expenditures are roughly double depreciation and amortization suggests that Costco is, despite its maturity, still a growing firm.
+
+For reasons I would need to explain in a different note, for standard financial analysis purposes, cash flows would generally be categorized as either operating or financing, with investing cash flows for GAAP purposes relating either  to operating activities (e.g., capital expenditures) or to financing activities (e.g., the purchase or sale of short-term investment securities).
+
+A rough-and-ready measure of **free cash flows** can be calculated by subtracting capital expenditures from cash flows from operating activities.
+I say rough-and-ready because a more refined measure would do a better job of separating financing cash flows from operating cash flows.
+For example, it might be appropriate to view the tax withholding on stock-based awards or some portion of the financing lease payments---see @tbl-costco-pre-fin---as operating cash flows despite their classification as financing cash flows in US GAAP.^[There's some complexity here. For instance, it might make sense to treat the additions to right-of-use assets under leases as involving offsetting constructive cash flows, with an operating outflow offset by a financing inflow.]
+It is also probably appropriate to view the interest paid---see @tbl-costco-pre-rem---as financing, not operating, as it is considered in US GAAP.
+Similarly, some portion of the income taxes paid could be allocated to financing (e.g., the tax savings on interest).
+
+In the case of Costco, the small amount of interest paid means that the rough-and-ready measure will be quite close to a more refined measure.
+
+```{r}
+#| label: tbl-costco-pre-cfo
+#| tbl-cap: Costco 2025 operating cash flows from `pre_notes`
+#| echo: false
+costco |>
+  filter(line <= 12) |>
+  select(-line, -`2022-08-31`) |>
+  gt() |>
+  fmt_integer(columns = where(is.numeric), accounting = TRUE) |>
+  sub_missing(missing_text = "") |>
+  tab_options(
+    table.font.size = 10,
+  ) |>
+  cols_label(plabel = "") |>
+  cols_width(plabel ~ pct(67))
+```
+
+```{r}
+#| label: tbl-costco-pre-inv
+#| tbl-cap: Costco 2025 investing cash flows from `pre_notes`
+#| echo: false
+costco |>
+  filter(between(line, 13, 18)) |>
+  select(-line, -`2022-08-31`) |>
+  gt() |>
+  fmt_integer(columns = where(is.numeric), accounting = TRUE) |>
+  sub_missing(missing_text = "") |>
+  tab_options(
+    table.font.size = 10,
+  ) |>
+  cols_label(plabel = "") |>
+  cols_width(plabel ~ pct(67))
+```
+
+```{r}
+#| label: tbl-costco-pre-fin
+#| tbl-cap: Costco 2025 finance cash flows from `pre_notes`
+#| echo: false
+costco |>
+  filter(between(line, 19, 28)) |>
+  select(-line, -`2022-08-31`) |>
+  gt() |>
+  fmt_integer(columns = where(is.numeric), accounting = TRUE) |>
+  sub_missing(missing_text = "") |>
+  tab_options(
+    table.font.size = 10,
+  ) |>
+  cols_label(plabel = "") |>
+  cols_width(plabel ~ pct(67))
+```
+
+```{r}
+#| label: tbl-costco-pre-rem
+#| tbl-cap: Remaining Costco 2025 cash flow data from `pre_notes`
+#| echo: false
+costco |>
+  filter(line > 28) |>
+  select(-line) |>
+  gt() |>
+  fmt_integer(columns = where(is.numeric), accounting = TRUE) |>
+  sub_missing(missing_text = "") |>
+  tab_options(
+    table.font.size = 10,
+  ) |>
+  cols_label(plabel = "") |>
+  cols_width(plabel ~ pct(55))
+```
+
+### Calculation data
+
+Finally, I turn to the data in `cal_notes`, which has the fields `adsh`, `grp`, `arc`, `negative`, `ptag`, `pversion`, `ctag`, and `cversion`.
+@tbl-cal-sample provides a sample of observations from that table for Costco's 10-K filing.
+It turns out that rows with `grp` equal to `7` relate to the [income statement](https://www.sec.gov/ix?doc=/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm#ie1561bbf248347fbab0c7507ac97c984_88), those with  `grp` equal to `9` relate to the [balance sheet](https://www.sec.gov/ix?doc=/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm#ie1561bbf248347fbab0c7507ac97c984_94) and those with `grp` equal to `14` relate to the [statement of comprehensive income](https://www.sec.gov/ix?doc=/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm#ie1561bbf248347fbab0c7507ac97c984_91).
+The rows related to the statement of cash flows have `grp` equal to `3`.
+These rows are shown in @tbl-cal-cf-sample.
+
+```{r}
+#| label: tbl-cal-sample
+#| tbl-cap: Data on `cal_notes` for Costco's 2025 10-K
+#| echo: false
+#| message: false
+cal_notes |>
+  filter(adsh == selected_filing) |>
+  filter(grp %in% c(7, 9, 14)) |>
+  group_by(grp) |>
+  dbplyr::window_order(arc) |>
+  # filter(row_number() <= 9) |>
+  ungroup() |>
+  dbplyr::window_order() |>
+  mutate(across(c(ptag, ctag), \(x) str_sub(x, 1, 45))) |>
+  select(grp, arc, ptag, ctag, cversion) |>
+  arrange(grp, arc) |>
+  collect() |>
+  gt() |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| include: false
+#| label: costco-cal
+costco_cal <-
+  cal_notes |>
+  filter(adsh == selected_filing, grp == 3) |>
+  compute()
+```
+
+```{r}
+#| label: tbl-cal-cf-sample
+#| tbl-cap: Data on `cal_notes` for Costco's 2025 10-K
+#| echo: false
+#| message: false
+costco_cal |>
+  mutate(across(c(ptag, ctag), \(x) str_sub(x, 1, 45))) |>
+  select(arc, ptag, ctag) |>
+  arrange(arc) |>
+  collect() |>
+  gt() |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| label: fig-cal-tree
+#| fig-cap: Calculation hierarchy for Costco cash flow statements
+#| fig-height: 10
+#| echo: false
+#| message: false
+library(igraph)
+library(ggraph)
+library(tidygraph)
+
+# Build directed graph: ptag → ctag edges
+cal_data <-
+  costco_cal |>
+  mutate(negative = negative < 0) |>
+  collect()
+
+node_versions <-
+  bind_rows(
+    cal_data |> select(name = ptag, version = pversion),
+    cal_data |> select(name = ctag, version = cversion)
+  ) |>
+  distinct(name, version)
+
+g <-
+  cal_data |>
+  select(from = ptag, to = ctag, negative) |>
+  graph_from_data_frame(directed = TRUE) |>
+  as_tbl_graph() |>
+  left_join(node_versions, by = "name") |>
+  mutate(label = str_sub(name, 1, 43))
+
+layout <- create_layout(g, layout = "tree")
+layout$x <- layout$x * 2
+
+ggraph(layout) +
+  geom_edge_diagonal(aes(color = negative)) +
+  geom_node_label(aes(label = label, fill = version), size = 2.5, hjust = 0) +
+  scale_fill_brewer(palette = "Pastel1") +
+  coord_flip(clip = "off") +
+  scale_y_reverse(expand = expansion(mult = c(0.03, 0.8))) +
+  theme_graph() +
+  theme(legend.position = "bottom")
+```
+
+From @tbl-cal-sample and @tbl-cal-cf-sample, it should be clear that the data in `cal_notes` describe a hierarchy of calculations, with `ctag` representing an item that is a "child" of the item represented by `ptag` (i.e., "parent tag").
+I represent the hierarchy embedded in @tbl-cal-cf-sample in @fig-cal-tree.
+
+In some ways, the calculation hierarchy in @fig-cal-tree resembles a typical statement of cash flows, with an overall change in cash sitting at the root of the tree as the parent of the tags representing cash flows from operating activities, investing activities, financing activities and the effect of exchange rate changes.
+This second level of the tree then has child nodes representing more detailed cash flow items.
+Each item can be aggregated up the tree to produce the cash flow totals at the higher levels, with due note being taken of `negative` in doing so.
+
+Looking at @fig-cal-tree, we can see also that Costco uses three custom tags in its cash flow calculations.
+In each case, it seems Costco has combined multiple standard taxonomy items into a single line.
+`FinancingLeasePaymentsAndOtherFinancingActivitiesNet` seems to combine `FinanceLeasePrincipalPayments`, which covers the principal portion of finance lease payments, and "other" financing cash flows.^[For example, `PaymentsForProceedsFromOtherFinancingActivities`.]
+`ImpairmentOfAssetsAndOtherNonCashOperatingActivitiesNet` combines `AssetImpairmentCharges` and some catch-all item like `OtherNoncashIncomeExpense`.
+`OperatingandFinancingLeaseRightofUseAssetAmortization` presumably combines amortization of both operating and financing leases.^[That is, both `OperatingLeaseRightOfUseAssetAmortization` and `FinanceLeaseRightOfUseAssetAmortization`.]
+
+While it seems clear that Costco has used custom tags to combine multiple standard taxonomy items to align with its chosen presentation in the statement of cash flows, the use of custom tags does have the unfortunate effect of making it more difficult to compare the cash flow data across firms, as other firms may not make the same presentation choices and therefore may use standard US GAAP tags or use different custom tags.
+In cases like this, perhaps the better approach would be to require the use of standard tags at a lower level but allow firms to aggregate amounts using custom tags purely for presentation purposes.
+
+## Population analysis
+
+Now that we have a better understanding of the data from examination of Costco's statements of cash flows, I move on to an analysis of the broader population of 10-K filings on DERA Notes.
+
+### Calculation data
+
+Recall that my goal is the classification of the operating portions of statements of cash flows based on tags used for operating cash flows in the XBRL data available in DERA Notes.
+For filings like that provided by Costco's 2025 10-K filing, it seems that using the data in `cal_notes` will provide the most reliable approach.
+In effect, all I have to do is to start at the top of the hierarchy of calculation relationships and then work down to identify the tag that represents cash flows from operating activities and then to identify the tags that are children of that tag in the calculation hierarchy.
+
+Once I have identified the tags representing cash flows from operating activities, it should be fairly straightforward to link specific tags to either the direct-method presentation or the indirect-method presentation.^[See @tbl-direct-tags and @tbl-indirect-tags for the most common tags for each presentation method.]
+
+For this reason, my approach to classifying the presentation method of each filing prioritizes `cal_notes` data where available and reliable.
+
+Unfortunately, not all filings have `cal_notes` data and, of those that do, not all have a `cal` structure that is regular enough to allow for the reliable identification of the operating-section leaf-node tags.
+
+@tbl-on-cal provides periods from 2009 through 2025 and filings on Form 10-K.
+On the basis of @tbl-on-cal, I focus on periods between 2014 and 2025, because earlier filings do not reliably include `cal_notes` data and 2026 is incomplete at the time of writing.^[Note that this conclusion is based on the DERA Notes data, not the underlying XBRL filings themselves.]
+
+@tbl-cal-regularity provides information on the regularity of the structure for filings with available `cal` data.
+Using **recursive common table expressions** (CTEs), I create trees for each filing on `cal_notes` and classify the structure of the `cal_notes` data for each filing as either regular or irregular, with regularity defined in terms of the presence of an operating cash flow node alongside nodes for investing and financing cash flows.
+
+For filings classified as regular in @tbl-cal-regularity, I use operating-section leaf-node tags identified through the `cal_notes` linkbase to determine the reporting method, as shown in @tbl-dist-regular.
+
+```{r}
+#| include: false
+filings_10k_sample <-
+  filings_10k |>
+  filter(between(year(period), 2009, 2025))
+
+on_cal_filings <-
+  cal_notes |>
+  distinct(adsh) |>
+  mutate(on_cal = TRUE)
+```
+
+```{r}
+#| label: tbl-on-cal
+#| tbl-cap: Presence of `cal` data in 10-K filings
+#| echo: false
+filings_10k_sample |>
+  left_join(on_cal_filings, by = join_by(adsh)) |>
+  mutate(on_cal = coalesce(on_cal, FALSE)) |>
+  distinct(adsh, period, on_cal) |>
+  filter(!is.na(period)) |>
+  mutate(year = year(period)) |>
+  group_by(year) |>
+  count(on_cal) |>
+  ungroup() |>
+  pivot_wider(
+    id_cols = year,
+    names_from = on_cal,
+    values_from = n
+  ) |>
+  mutate(
+    total = `FALSE` + `TRUE`,
+    percent = `TRUE` / total,
+  ) |>
+  arrange(year) |>
+  collect() |>
+  gt() |>
+  fmt_percent(columns = percent) |>
+  fmt_integer(columns = c(`TRUE`, `FALSE`, total)) |>
+  cols_label(
+    `TRUE` = md("On `cal`"),
+    `FALSE` = md("No `cal` data"),
+    total = "Total filings",
+    percent = md("Percent on `cal`")
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| include: false
+sample_filings <-
+  filings_10k_sample |>
+  left_join(on_cal_filings, by = join_by(adsh)) |>
+  mutate(on_cal = coalesce(on_cal, FALSE)) |>
+  filter(
+    on_cal,
+    between(year(period), 2014, 2025)
+  )
+```
+
+
+```{r}
+#| include: false
+cf_reports <-
+  pre_notes |>
+  inner_join(sub_notes |> select(adsh, form, period), by = join_by(adsh)) |>
+  filter(form == "10-K", year(period) >= 2014) |>
+  filter(stmt == "CF", !inpth) |>
+  distinct(adsh, report) |>
+  compute()
+
+cf_report_tags <-
+  pre_notes |>
+  inner_join(cf_reports, by = join_by(adsh, report)) |>
+  filter(!inpth) |>
+  distinct(adsh, report, tag, version) |>
+  compute()
+
+cf_anchor_re <-
+  paste0(
+    "NetCashProvidedByUsedIn(Operating|Investing|Financing)",
+    "|ProceedsFromOperatingActivities",
+    "|CashAndCashEquivalentsPeriodIncreaseDecrease",
+    "|CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecrease"
+  )
+
+cf_candidate_grps <-
+  cal_notes |>
+  inner_join(cf_reports |> distinct(adsh), by = join_by(adsh)) |>
+  filter(str_detect(ptag, cf_anchor_re)) |>
+  distinct(adsh, grp) |>
+  compute()
+
+cf_cal_edges <-
+  cal_notes |>
+  inner_join(cf_candidate_grps, by = join_by(adsh, grp)) |>
+  compute()
+
+cf_cal_nodes <-
+  cf_cal_edges |>
+  select(adsh, grp, tag = ptag, version = pversion) |>
+  union_all(
+    cf_cal_edges |> select(adsh, grp, tag = ctag, version = cversion)
+  ) |>
+  distinct() |>
+  compute()
+
+cf_grp_report_edge_scores <-
+  cf_cal_edges |>
+  inner_join(
+    cf_report_tags,
+    by = join_by(adsh, ptag == tag, pversion == version)
+  ) |>
+  inner_join(
+    cf_report_tags,
+    by = join_by(adsh, report, ctag == tag, cversion == version)
+  ) |>
+  group_by(adsh, report, grp) |>
+  summarize(n_edge_hits = n_distinct(arc), .groups = "drop") |>
+  compute()
+
+cf_grp_report_tag_scores <-
+  cf_cal_nodes |>
+  inner_join(cf_report_tags, by = join_by(adsh, tag, version)) |>
+  group_by(adsh, report, grp) |>
+  summarize(n_tag_hits = n_distinct(tag, version), .groups = "drop") |>
+  compute()
+
+cf_grp_report_scores <-
+  cf_grp_report_edge_scores |>
+  full_join(cf_grp_report_tag_scores, by = join_by(adsh, report, grp)) |>
+  mutate(
+    n_edge_hits = coalesce(n_edge_hits, 0L),
+    n_tag_hits = coalesce(n_tag_hits, 0L)
+  ) |>
+  compute()
+
+cf_grp_report_map <-
+  cf_grp_report_scores |>
+  group_by(adsh, report) |>
+  mutate(max_edge_hits = max(n_edge_hits, na.rm = TRUE)) |>
+  filter(n_edge_hits == max_edge_hits) |>
+  mutate(rank = min_rank(desc(n_tag_hits))) |>
+  ungroup() |>
+  filter(rank == 1) |>
+  compute()
+```
+
+```{r}
+#| include: false
+cf_edges <-
+  cal_notes |>
+  inner_join(
+    cf_grp_report_map |> distinct(adsh, grp),
+    by = join_by(adsh, grp)
+  ) |>
+  distinct(adsh, ptag, ctag) |>
+  compute(name = "cf_edges", overwrite = TRUE)
+
+cf_roots <-
+  cf_edges |>
+  anti_join(cf_edges, by = c("adsh", "ptag" = "ctag")) |>
+  distinct(adsh, root_tag = ptag) |>
+  compute(name = "cf_roots", overwrite = TRUE)
+
+cf_hierarchy <- tbl(
+  db,
+  sql(
+    "
+  WITH RECURSIVE cf_hierarchy AS (
+    SELECT adsh, root_tag AS tag, root_tag AS category_tag, 0 AS depth,
+           [root_tag] AS visited
+    FROM cf_roots
+    UNION ALL
+    SELECT e.adsh, e.ctag,
+           CASE WHEN h.depth = 0 THEN e.ctag ELSE h.category_tag END,
+           h.depth + 1,
+           list_append(h.visited, e.ctag)
+    FROM cf_edges e
+    JOIN cf_hierarchy h ON e.adsh = h.adsh AND e.ptag = h.tag
+    WHERE NOT list_contains(h.visited, e.ctag)
+      AND h.depth < 10
+  )
+  SELECT adsh, tag, category_tag, depth FROM cf_hierarchy
+"
+  )
+) |>
+  compute()
+```
+
+```{r}
+#| include: false
+valid_root_re <- "PeriodIncreaseDecrease|^NetCashProvidedByUsedInContinuingOperations$"
+
+# Matches Operating/Investing/Financing with optional ContinuingOperations suffix
+section_tag_re <- paste0(
+  "^NetCashProvidedByUsedIn(Operating|Investing|Financing)",
+  "Activities(ContinuingOperations)?$"
+)
+
+cf_regularity <-
+  cf_roots |>
+  filter(str_detect(root_tag, valid_root_re)) |>
+  inner_join(cf_edges, by = join_by(adsh, root_tag == ptag)) |>
+  filter(str_detect(ctag, section_tag_re)) |>
+  mutate(
+    section = case_when(
+      str_detect(ctag, "Operating") ~ "operating",
+      str_detect(ctag, "Investing") ~ "investing",
+      str_detect(ctag, "Financing") ~ "financing"
+    )
+  ) |>
+  left_join(
+    cf_edges |> distinct(adsh, ptag) |> mutate(has_items = TRUE),
+    by = join_by(adsh, ctag == ptag)
+  ) |>
+  filter(section != "operating" | coalesce(has_items, FALSE)) |>
+  group_by(adsh) |>
+  summarize(
+    has_operating = any(section == "operating", na.rm = TRUE),
+    has_investing = any(section == "investing", na.rm = TRUE),
+    has_financing = any(section == "financing", na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(is_regular = has_operating & has_investing & has_financing) |>
+  compute()
+
+cf_almost_regular <-
+  cf_roots |>
+  semi_join(sample_filings, by = "adsh") |>
+  anti_join(
+    cf_roots |> filter(str_detect(root_tag, valid_root_re)),
+    by = "adsh"
+  ) |>
+  filter(str_detect(root_tag, section_tag_re)) |>
+  mutate(
+    section = case_when(
+      str_detect(root_tag, "Operating") ~ "operating",
+      str_detect(root_tag, "Investing") ~ "investing",
+      str_detect(root_tag, "Financing") ~ "financing"
+    )
+  ) |>
+  left_join(
+    cf_edges |> distinct(adsh, ptag) |> mutate(has_items = TRUE),
+    by = join_by(adsh, root_tag == ptag)
+  ) |>
+  filter(section != "operating" | coalesce(has_items, FALSE)) |>
+  group_by(adsh) |>
+  summarize(
+    has_operating = any(section == "operating", na.rm = TRUE),
+    has_investing = any(section == "investing", na.rm = TRUE),
+    has_financing = any(section == "financing", na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(is_almost_regular = has_operating & has_investing & has_financing) |>
+  compute()
+
+cf_classification <-
+  sample_filings |>
+  distinct(adsh, period) |>
+  mutate(year = year(period)) |>
+  left_join(cf_regularity, by = "adsh") |>
+  left_join(
+    cf_almost_regular |>
+      filter(is_almost_regular) |>
+      select(adsh, is_almost_regular),
+    by = "adsh"
+  ) |>
+  mutate(
+    across(starts_with("has_") | starts_with("is_"), \(x) coalesce(x, FALSE)),
+    cf_type = case_when(
+      is_regular ~ "regular",
+      is_almost_regular ~ "almost_regular",
+      .default = "irregular"
+    )
+  ) |>
+  compute()
+
+# Trend table
+cf_classification |>
+  group_by(year) |>
+  summarize(
+    n_total = n(),
+    n_regular = sum(as.integer(is_regular)),
+    n_almost = sum(as.integer(is_almost_regular)),
+    n_irregular = sum(as.integer(cf_type == "irregular")),
+    pct_regular = mean(as.integer(is_regular)),
+    .groups = "drop"
+  ) |>
+  arrange(year)
+```
+
+
+
+```{r}
+#| label: tbl-cal-regularity
+#| tbl-cap: Regular and irregular `cal` observations in 10-K filings
+#| echo: false
+cf_classification |>
+  group_by(year) |>
+  summarize(
+    on_cal = n(),
+    regular = sum(
+      as.integer(cf_type %in% c("regular", "almost_regular")),
+      na.rm = TRUE
+    ),
+    irregular = sum(as.integer(cf_type == "irregular"), na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(pct_regular = regular / on_cal) |>
+  arrange(year) |>
+  collect() |>
+  gt() |>
+  fmt_percent(columns = pct_regular) |>
+  fmt_integer(columns = c(on_cal, regular, irregular)) |>
+  cols_label(
+    year = "Year",
+    on_cal = md("On `cal`"),
+    regular = "Regular",
+    irregular = "Irregular",
+    pct_regular = "Percent regular"
+  ) |>
+  tab_footnote(
+    footnote = paste(
+      "A filing is regular if its cal linkbase has operating, investing,",
+      "and financing sections under a period-increase-decrease root,",
+      "or all three section subtotals appear as top-level roots."
+    ),
+    locations = cells_column_labels(columns = regular)
+  ) |>
+  tab_footnote(
+    footnote = paste(
+      "A filing is irregular if the cal linkbase does not yield a",
+      "complete set of operating, investing, and financing sections."
+    ),
+    locations = cells_column_labels(columns = irregular)
+  ) |>
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = cells_footnotes()
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| include: false
+op_section_re <- paste0(
+  "^(NetCashProvidedByUsedInOperatingActivities(ContinuingOperations|DirectMethod)?",
+  "|ProceedsFromOperatingActivities)$"
+)
+
+cf_op_section <-
+  cf_hierarchy |>
+  inner_join(
+    cf_classification |> filter(cf_type == "regular") |> select(adsh),
+    by = "adsh"
+  ) |>
+  filter(depth == 1, str_detect(tag, op_section_re)) |>
+  select(adsh, op_section_tag = tag) |>
+  union_all(
+    cf_roots |>
+      inner_join(
+        cf_classification |>
+          filter(cf_type == "almost_regular") |>
+          select(adsh),
+        by = "adsh"
+      ) |>
+      filter(str_detect(root_tag, op_section_re)) |>
+      select(adsh, op_section_tag = root_tag)
+  ) |>
+  compute(name = "cf_op_section", overwrite = TRUE)
+
+# Some filings split operating activities into continuing/discontinued sub-groups
+# that live in a separate cal group not captured by cf_grp_report_map. Extend by
+# one level through those section tags so actual line items are reachable.
+continuation_section_re <- paste0(
+  "^(NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
+  "|CashProvidedByUsedInOperatingActivitiesDiscontinuedOperations",
+  "|NetCashProvidedByUsedInDiscontinuedOperations)$"
+)
+
+cf_op_edges <-
+  cf_edges |>
+  union_all(
+    cal_notes |>
+      inner_join(
+        cf_edges |>
+          filter(str_detect(ctag, continuation_section_re)) |>
+          distinct(adsh, ptag = ctag),
+        by = join_by(adsh, ptag)
+      ) |>
+      distinct(adsh, ptag, ctag)
+  ) |>
+  distinct(adsh, ptag, ctag) |>
+  compute(name = "cf_op_edges", overwrite = TRUE)
+
+cf_op_hierarchy <- tbl(
+  db,
+  sql(
+    "
+    WITH RECURSIVE cf_op_hierarchy AS (
+      SELECT adsh, op_section_tag AS tag, 0 AS depth,
+             [op_section_tag] AS visited
+      FROM cf_op_section
+      UNION ALL
+      SELECT e.adsh, e.ctag, h.depth + 1,
+             list_append(h.visited, e.ctag)
+      FROM cf_op_edges e
+      JOIN cf_op_hierarchy h ON e.adsh = h.adsh AND e.ptag = h.tag
+      WHERE NOT list_contains(h.visited, e.ctag)
+        AND h.depth < 10
+    )
+    SELECT adsh, tag, depth FROM cf_op_hierarchy
+  "
+  )
+) |>
+  compute()
+
+cf_op_leaves <-
+  cf_op_hierarchy |>
+  filter(depth > 0) |>
+  anti_join(cf_op_edges, by = join_by(adsh, tag == ptag)) |>
+  compute()
+```
+
+```{r}
+#| include: false
+indirect_tag_re <- paste0(
+  "^(IncreaseDecreaseIn|DecreaseIncreaseIn", # working capital changes
+  "|Depreciation|Amortization", # non-cash charges
+  "|Impairment|WriteOff|WriteDown", # impairments
+  "|GainLoss|LossGain|GainsLosses|LossesGains", # non-cash gains/losses
+  "|DeferredIncomeTax|DeferredTax", # deferred taxes
+  "|ShareBasedCompensation|StockBased", # non-cash compensation
+  "|NetIncomeLoss|ProfitLoss", # starting line
+  "|ProvisionFor", # provisions/allowances
+  "|UnrealizedGainLoss", # unrealized items
+  ")|(GainLoss|LossGain)$" # gains/losses as suffix (e.g., DebtSecuritiesTradingGainLoss)
+)
+direct_method_tags <- c(
+  "ProceedsFromCustomers",
+  "PaymentsToSuppliersAndEmployees",
+  "IncomeTaxesPaidNet",
+  "InterestPaidNet",
+  "InterestPaid",
+  "ProceedsFromInterestAndDividendsReceived",
+  "ProceedsFromInterestReceived",
+  "ProceedsFromFeesReceived",
+  "PaymentsForOtherOperatingActivities",
+  "IncomeTaxesPaid",
+  "TotalProceedsFromOperatingActivities",
+  "PaymentsForOperatingActivities",
+  "PaymentsForFarmExpense",
+  "ProceedsFromWarrantExercises",
+  "PaymentsToEmployees",
+  "PaymentsToSuppliers"
+)
+cf_op_method_cal <-
+  cf_op_leaves |>
+  inner_join(
+    cf_classification |>
+      filter(cf_type %in% c("regular", "almost_regular")) |>
+      select(adsh, cf_type),
+    by = "adsh"
+  ) |>
+  group_by(adsh, cf_type) |>
+  summarize(
+    n_direct = sum(as.integer(tag %in% direct_method_tags), na.rm = TRUE),
+    n_indirect = sum(
+      as.integer(str_detect(tag, indirect_tag_re)),
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  )
+```
+
+```{r}
+#| label: tbl-dist-regular
+#| tbl-cap: "Direct- and indirect-method regular filers by year"
+#| echo: false
+cf_classification |>
+  filter(cf_type %in% c("regular", "almost_regular")) |>
+  select(adsh, year) |>
+  left_join(
+    cf_op_method_cal |>
+      mutate(
+        n_classifiable = n_direct + n_indirect,
+        method = case_when(
+          n_classifiable == 0 ~ "indirect",
+          n_direct / n_classifiable >= 0.8 ~ "direct",
+          .default = "indirect"
+        )
+      ) |>
+      select(adsh, method),
+    by = "adsh"
+  ) |>
+  mutate(method = coalesce(method, "indirect")) |>
+  count(year, method) |>
+  pivot_wider(
+    id_cols = year,
+    names_from = method,
+    values_from = n,
+    values_fill = 0L
+  ) |>
+  collect() |>
+  mutate(
+    total = direct + indirect,
+    percent = direct / total
+  ) |>
+  arrange(year) |>
+  mutate(year = as.character(year)) |>
+  (\(x) {
+    bind_rows(
+      x,
+      tibble(
+        year = "Total",
+        direct = sum(x$direct),
+        indirect = sum(x$indirect),
+        total = sum(x$total),
+        percent = sum(x$direct) / sum(x$total)
+      )
+    )
+  })() |>
+  gt(rowname_col = "year") |>
+  fmt_percent(columns = percent) |>
+  fmt_integer(columns = c(indirect, direct, total)) |>
+  cols_label(
+    year = "Year",
+    total = "Total",
+    percent = md("Percent direct")
+  ) |>
+  tab_footnote(
+    footnote = paste(
+      "A filing is classified as direct-method if at least 80% of",
+      "classifiable operating-activity leaf-node tags in the cal",
+      "linkbase are direct-method XBRL tags."
+    ),
+    locations = cells_column_labels(columns = direct)
+  ) |>
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = list(cells_footnotes(), cells_source_notes())
+  ) |>
+  tab_source_note(md(paste(
+    "Regular filings are those where the `cal` linkbase identifies",
+    "operating, investing, and financing sections with a standard structure",
+    "(either under a period-increase-decrease root, or as top-level roots).",
+    "Method classification uses `cal_notes`."
+  ))) |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| include: false
+direct_threshold <- 0.8
+
+cf_pre <-
+  pre_notes |>
+  filter(
+    stmt == "CF",
+    !str_detect(tag, "Abstract$|Axis$|Domain$|Table$|LineItems$")
+  )
+
+cf_pre_op_line <-
+  cf_pre |>
+  filter(str_detect(tag, op_section_re)) |>
+  group_by(adsh) |>
+  summarize(op_line = min(line, na.rm = TRUE), .groups = "drop")
+
+cf_pre_op <-
+  cf_pre |>
+  left_join(cf_pre_op_line, by = "adsh") |>
+  filter(is.na(op_line) | line < op_line)
+
+missing_cal_filings <-
+  filings_10k_sample |>
+  filter(between(year(period), 2014, 2025)) |>
+  anti_join(sample_filings, by = "adsh") |>
+  select(adsh, period) |>
+  mutate(year = year(period)) |>
+  compute()
+
+missing_cal_method <-
+  missing_cal_filings |>
+  left_join(
+    cf_pre_op |>
+      group_by(adsh) |>
+      summarize(
+        n_direct_pre = sum(
+          as.integer(tag %in% direct_method_tags),
+          na.rm = TRUE
+        ),
+        n_indirect_pre = sum(
+          as.integer(str_detect(tag, indirect_tag_re)),
+          na.rm = TRUE
+        ),
+        .groups = "drop"
+      ),
+    by = "adsh"
+  ) |>
+  mutate(
+    n_direct_pre = coalesce(n_direct_pre, 0L),
+    n_indirect_pre = coalesce(n_indirect_pre, 0L),
+    n_classifiable = n_direct_pre + n_indirect_pre,
+    method = case_when(
+      n_classifiable == 0 ~ "unknown",
+      n_direct_pre / n_classifiable >= direct_threshold ~ "direct",
+      n_indirect_pre / n_classifiable >= direct_threshold ~ "indirect",
+      .default = "ambiguous"
+    )
+  ) |>
+  compute()
+```
+
+```{r}
+#| include: false
+irregular_pre_method <-
+  cf_classification |>
+  filter(cf_type == "irregular") |>
+  select(adsh, year) |>
+  left_join(
+    cf_pre_op |>
+      group_by(adsh) |>
+      summarize(
+        n_direct_pre = sum(
+          as.integer(tag %in% direct_method_tags),
+          na.rm = TRUE
+        ),
+        n_indirect_pre = sum(
+          as.integer(str_detect(tag, indirect_tag_re)),
+          na.rm = TRUE
+        ),
+        .groups = "drop"
+      ),
+    by = "adsh"
+  ) |>
+  mutate(
+    n_direct_pre = coalesce(n_direct_pre, 0L),
+    n_indirect_pre = coalesce(n_indirect_pre, 0L),
+    n_classifiable = n_direct_pre + n_indirect_pre,
+    method = case_when(
+      n_classifiable == 0 ~ "unknown",
+      n_direct_pre / n_classifiable >= direct_threshold ~ "direct",
+      n_indirect_pre / n_classifiable >= direct_threshold ~ "indirect",
+      .default = "ambiguous"
+    )
+  ) |>
+  compute()
+```
+
+```{r}
+#| include: false
+cf_op_method_all <-
+  cf_op_method_cal |>
+  inner_join(
+    cf_classification |> select(adsh, year),
+    by = "adsh"
+  ) |>
+  mutate(
+    n_classifiable = n_direct + n_indirect,
+    method = case_when(
+      n_classifiable == 0 ~ "unknown",
+      n_direct / n_classifiable >= direct_threshold ~ "direct",
+      n_indirect / n_classifiable >= direct_threshold ~ "indirect",
+      .default = "ambiguous"
+    )
+  ) |>
+  select(adsh, year, method) |>
+  union_all(irregular_pre_method |> select(adsh, year, method)) |>
+  union_all(missing_cal_method |> select(adsh, year, method)) |>
+  compute()
+```
+
+```{r}
+#| label: tbl-pre-method
+#| tbl-cap: "Direct- and indirect-method filers without regular `cal` data"
+#| echo: false
+irregular_cf <-
+  irregular_pre_method |>
+  select(adsh, year, method) |>
+  mutate(source = "irregular") |>
+  union_all(
+    missing_cal_method |>
+      select(adsh, year, method) |>
+      mutate(source = "no_cal")
+  )
+
+irregular_cf |>
+  group_by(year) |>
+  summarize(
+    no_cal = sum(as.integer(source == "no_cal"), na.rm = TRUE),
+    irregular = sum(as.integer(source == "irregular"), na.rm = TRUE),
+    direct = sum(as.integer(method == "direct"), na.rm = TRUE),
+    indirect = sum(as.integer(method == "indirect"), na.rm = TRUE),
+    unclassifiable = sum(
+      as.integer(method %in% c("unknown", "ambiguous")),
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  ) |>
+  mutate(
+    total = no_cal + irregular,
+    pct_direct = direct / (direct + indirect)
+  ) |>
+  arrange(year) |>
+  collect() |>
+  mutate(year = as.character(year)) |>
+  (\(x) {
+    bind_rows(
+      x,
+      tibble(
+        year = "Total",
+        no_cal = sum(x$no_cal),
+        irregular = sum(x$irregular),
+        total = sum(x$total),
+        direct = sum(x$direct),
+        indirect = sum(x$indirect),
+        unclassifiable = sum(x$unclassifiable),
+        pct_direct = sum(x$direct) / (sum(x$direct) + sum(x$indirect))
+      )
+    )
+  })() |>
+  select(
+    year,
+    no_cal,
+    irregular,
+    total,
+    unclassifiable,
+    direct,
+    indirect,
+    pct_direct
+  ) |>
+  gt(rowname_col = "year") |>
+  fmt_percent(columns = pct_direct) |>
+  fmt_integer(
+    columns = c(no_cal, irregular, total, unclassifiable, direct, indirect)
+  ) |>
+  cols_label(
+    year = "Year",
+    no_cal = md("No `cal` data"),
+    irregular = "Irregular",
+    total = "Total",
+    unclassifiable = "Unclassifiable",
+    direct = "Direct",
+    indirect = "Indirect",
+    pct_direct = "Percent direct"
+  ) |>
+  tab_footnote(
+    footnote = paste(
+      "A filing is unclassifiable if fewer than 80% of its cash flow",
+      "statement tags on `pre_notes` are recognisable as either",
+      "direct- or indirect-method tags."
+    ),
+    locations = cells_column_labels(columns = unclassifiable)
+  ) |>
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = list(cells_footnotes(), cells_source_notes())
+  ) |>
+  tab_source_note(md(paste(
+    "Filings without `cal` data or with irregular `cal` structure are classified",
+    "using all cash flow statement tags on `pre_notes`.",
+    "The direct-method threshold is 80% of classifiable tags."
+  ))) |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| label: tbl-method-combined
+#| tbl-cap: "Combined direct- and indirect-method classification by year"
+#| echo: false
+cf_op_method_all |>
+  filter(method %in% c("direct", "indirect")) |>
+  count(year, method) |>
+  collect() |>
+  pivot_wider(names_from = method, values_from = n, values_fill = 0L) |>
+  mutate(
+    total = direct + indirect,
+    pct_direct = direct / total
+  ) |>
+  arrange(year) |>
+  mutate(year = as.character(year)) |>
+  (\(x) {
+    bind_rows(
+      x,
+      tibble(
+        year = "Total",
+        direct = sum(x$direct),
+        indirect = sum(x$indirect),
+        total = sum(x$total),
+        pct_direct = sum(x$direct) / sum(x$total)
+      )
+    )
+  })() |>
+  gt(rowname_col = "year") |>
+  fmt_percent(columns = pct_direct) |>
+  fmt_integer(columns = c(direct, indirect, total)) |>
+  cols_label(
+    year = "Year",
+    total = "Total",
+    pct_direct = md("Percent direct")
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+### Presentation data
+
+For the remaining filings---those lacking `cal_notes` data or with irregular `cal_notes` data---I fall back on `pre_notes` data, applying the same tag-based direct- versus indirect-method classification to all cash flow statement tags on `pre_notes`.
+A filing is unclassifiable under this approach if none of its cash flow tags are recognisable as either direct- or indirect-method tags.
+@tbl-pre-method reports the results of this `pre_notes`-based classification; the "No `cal` data" and "Irregular" columns match the corresponding entries in @tbl-on-cal and @tbl-cal-regularity, respectively.
+
+@tbl-stmt-pres shows that almost all 10-K filings have *some* data on `pre_notes`.
+However, a small percentage of 10-K filings have no data for one or more of the key statements: balance sheet ("No BS data"), income statement ("No IS data"), or cash flows ("No CF data").
+The "No FS data" indicates the number of cases where there is no data on `pre_notes` for *any* of these three key financial statements.
+@tbl-stmt-pres also suggests that the availability of filings on `pre_notes` is high from 2011 onwards, apart from a blip in 2013.
+As might be expected at the time of writing (June 2026), few firms have filed 10-Ks for periods ending in calendar 2026.
+
+From @tbl-stmt-pres-sub, we see that there are 706 filings with no CF data on `pre_notes` during the period I focus on (2014--2025).
+All of the cases are either irregular or no-`cal` filings, so they fall within the 971 unclassifiable cases in @tbl-pre-method.
+For these filings, with no usable data from either `cal_notes` or `pre_notes`, there is no systematic basis for classification.
+
+```{r}
+#| label: tbl-stmt-pres
+#| tbl-cap: "Presence of `stmt` for 10-K filings: All years"
+#| echo: false
+filings_10k_sample |>
+  filter(between(year(period), 2014, 2025)) |>
+  left_join(
+    pre_notes |>
+      mutate(on_pre = TRUE),
+    by = join_by(adsh)
+  ) |>
+  mutate(
+    year = year(period),
+    on_pre = coalesce(on_pre, FALSE),
+  ) |>
+  group_by(adsh, year) |>
+  summarize(
+    no_pre = !any(on_pre, na.rm = TRUE),
+    no_bs = !any(stmt == "BS", na.rm = TRUE),
+    no_is = !any(stmt == "IS", na.rm = TRUE),
+    no_cf = !any(stmt == "CF", na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    across(
+      starts_with("no_"),
+      \(x) coalesce(x, TRUE)
+    )
+  ) |>
+  mutate(no_stmts = no_bs & no_is & no_cf) |>
+  group_by(year) |>
+  summarize(
+    across(
+      starts_with("no_"),
+      \(x) sum(as.double(x), na.rm = TRUE)
+    ),
+    n_adsh = n_distinct(adsh, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  arrange(year) |>
+  collect() |>
+  mutate(year = as.character(year)) |>
+  select(year, no_pre, no_stmts, everything()) |>
+  gt(rowname_col = "year") |>
+  fmt_integer(columns = where(is.numeric), accounting = TRUE) |>
+  cols_label(
+    year = "Year",
+    no_pre = md("No `pre` data"),
+    no_bs = "No BS data",
+    no_is = "No IS data",
+    no_cf = "No CF data",
+    no_stmts = "No FS data",
+    n_adsh = "Number of filings"
+  ) |>
+  grand_summary_rows(
+    columns = where(is.numeric),
+    fns = list(Total = ~ sum(.)),
+    fmt = ~ fmt_integer(., accounting = TRUE)
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| label: tbl-stmt-pres-sub
+#| tbl-cap: Presence of `stmt` for 10-K filings
+#| echo: false
+filings_10k_sample |>
+  filter(between(year(period), 2014, 2025)) |>
+  left_join(
+    pre_notes |>
+      mutate(on_pre = TRUE),
+    by = join_by(adsh)
+  ) |>
+  mutate(
+    year = year(period),
+    on_pre = coalesce(on_pre, FALSE),
+  ) |>
+  group_by(adsh, year) |>
+  summarize(
+    no_pre = !any(on_pre, na.rm = TRUE),
+    no_bs = !any(stmt == "BS", na.rm = TRUE),
+    no_is = !any(stmt == "IS", na.rm = TRUE),
+    no_cf = !any(stmt == "CF", na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    across(
+      starts_with("no_"),
+      \(x) coalesce(x, TRUE)
+    )
+  ) |>
+  mutate(no_stmts = no_bs & no_is & no_cf) |>
+  group_by(year) |>
+  summarize(
+    across(
+      starts_with("no_"),
+      \(x) sum(as.double(x), na.rm = TRUE)
+    ),
+    n_adsh = n_distinct(adsh, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  arrange(year) |>
+  collect() |>
+  mutate(year = as.character(year)) |>
+  select(year, no_pre, no_stmts, everything()) |>
+  gt(rowname_col = "year") |>
+  fmt_integer(columns = where(is.numeric), accounting = TRUE) |>
+  cols_label(
+    year = "Year",
+    no_pre = md("No `pre` data"),
+    no_bs = "No BS data",
+    no_is = "No IS data",
+    no_cf = "No CF data",
+    no_stmts = "No FS data",
+    n_adsh = "Number of filings"
+  ) |>
+  grand_summary_rows(
+    columns = where(is.numeric),
+    fns = list(Total = ~ sum(.)),
+    fmt = ~ fmt_integer(., accounting = TRUE)
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+### Overall classification results
+
+@tbl-method-combined combines the data from @tbl-pre-method and @tbl-cal-regularity to show the overall distribution of direct- and indirect-method filers by year.
+
+@tbl-direct-tags and @tbl-indirect-tags identify the most common tags for direct-method and indirect-method statements of cash flows, respectively.
+These tables confirm that these tags are disjoint sets.
+
+@fig-direct-over-time presents trends on direct-method filers over time in a graphical form.
+Interestingly, the largest group of direct-method filers are in the Fama-French 12-industry group labelled "Money", which includes banks and insurance companies where cash flow analyses are often considered less useful.
+
+@tbl-direct-2025 identifies those few firms who filed direct-method statements of cash flows for 10-Ks filed for periods ending in 2025.
+
+```{r}
+#| include: false
+filer_details <-
+  sub_notes |>
+  mutate(sic = as.integer(sic)) |>
+  left_join(
+    farr::get_ff_ind(12),
+    join_by(between(sic, sic_min, sic_max)),
+    copy = TRUE
+  ) |>
+  mutate(ff_ind = coalesce(ff_ind_short_desc, "Unknown")) |>
+  select(adsh, cik, name, period, sic, ff_ind) |>
+  compute()
+```
+
+
+```{r}
+#| label: cf_sections_cal
+#| include: false
+cf_sections_cal <-
+  cal_notes |>
+  filter(str_detect(
+    ptag,
+    "NetCashProvidedByUsedIn(Operating|Investing|Financing)|ProceedsFromOperatingActivities"
+  )) |>
+  mutate(
+    section = case_when(
+      str_detect(ptag, "Operating") ~ "operating",
+      str_detect(ptag, "Investing") ~ "investing",
+      str_detect(ptag, "Financing") ~ "financing"
+    )
+  ) |>
+  rename(weight = negative) |>
+  compute()
+```
+
+
+```{r}
+#| include: false
+regular_cf_cal <-
+  cal_notes |>
+  semi_join(
+    sub_notes |>
+      filter(form == "10-K"),
+    by = join_by(adsh)
+  ) |>
+  filter(str_detect(
+    ptag,
+    "NetCashProvidedByUsedIn(Operating|Investing|Financing)|ProceedsFromOperatingActivities"
+  )) |>
+  mutate(
+    section = case_when(
+      str_detect(ptag, "Operating") ~ "operating",
+      str_detect(ptag, "Investing") ~ "investing",
+      str_detect(ptag, "Financing") ~ "financing"
+    )
+  ) |>
+  group_by(adsh, grp) |>
+  summarize(
+    has_operating = any(section == "operating", na.rm = TRUE),
+    has_investing = any(section == "investing", na.rm = TRUE),
+    has_financing = any(section == "financing", na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    has_all = has_operating & (has_investing | has_financing)
+  ) |>
+  arrange(adsh, grp) |>
+  compute()
+
+cf_with_section_cal <-
+  cf_pre |>
+  left_join(
+    cf_sections_cal,
+    by = c("adsh", "tag" = "ctag", "version" = "cversion")
+  ) |>
+  group_by(adsh) |>
+  filter(report == min(report, na.rm = TRUE)) |>
+  ungroup() |>
+  compute()
+
+cf_section_starts <-
+  cf_with_section_cal |>
+  group_by(adsh, section) |>
+  filter(!is.na(section)) |>
+  summarize(
+    section_start = min(line, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(section_start = as.double(section_start)) |>
+  pivot_wider(
+    id_cols = adsh,
+    names_from = "section",
+    values_from = "section_start"
+  ) |>
+  mutate(
+    odd = coalesce(investing, Inf) < operating |
+      coalesce(financing, Inf) < operating |
+      is.na(operating)
+  ) |>
+  compute()
+```
+
+```{r}
+#| include: false
+direct_method_filers <-
+  cf_op_method_all |>
+  filter(method == "direct") |>
+  select(adsh) |>
+  inner_join(filer_details, by = join_by(adsh)) |>
+  compute()
+
+indirect_method_filers <-
+  cf_op_method_all |>
+  filter(method == "indirect") |>
+  select(adsh) |>
+  inner_join(filer_details, by = join_by(adsh)) |>
+  compute()
+```
+
+```{r}
+#| label: tbl-direct-tags
+#| tbl-cap: "Most common tags: direct-method operating activities"
+#| echo: false
+cf_with_section_cal |>
+  inner_join(cf_section_starts, by = join_by(adsh)) |>
+  semi_join(direct_method_filers, by = join_by(adsh)) |>
+  filter(
+    section == "operating",
+    line < coalesce(financing, Inf),
+    line < coalesce(investing, Inf),
+  ) |>
+  count(tag, sort = TRUE) |>
+  collect(n = 25) |>
+  gt() |>
+  tab_options(table.font.size = 10) |>
+  fmt_integer(columns = n, accounting = TRUE)
+```
+
+```{r}
+#| label: tbl-indirect-tags
+#| tbl-cap: "Most common tags: indirect-method operating activities"
+#| echo: false
+cf_with_section_cal |>
+  inner_join(cf_section_starts, by = join_by(adsh)) |>
+  semi_join(indirect_method_filers, by = join_by(adsh)) |>
+  filter(
+    section == "operating",
+    line < coalesce(financing, Inf),
+    line < coalesce(investing, Inf),
+  ) |>
+  count(tag, sort = TRUE) |>
+  collect(n = 25) |>
+  gt() |>
+  tab_options(table.font.size = 10) |>
+  fmt_integer(columns = n, accounting = TRUE)
+```
+
+```{r}
+#| label: fig-direct-over-time
+#| fig-cap: Direct-method filers over time by industry group
+#| echo: false
+direct_method_filers |>
+  collect() |>
+  mutate(
+    year = as.character(year(period)),
+    ff_ind = fct_rev(fct_infreq(ff_ind))
+  ) |>
+  distinct(adsh, year, ff_ind) |>
+  ggplot(aes(x = year, fill = ff_ind)) +
+  geom_bar()
+```
+
+```{r}
+#| label: fig-customer-proceeds
+#| fig-cap: Filers with `ProceedsFromCustomers` over time
+#| echo: false
+#| include: false
+cf_with_section_cal |>
+  filter(
+    tag == "ProceedsFromCustomers",
+    section == "operating",
+  ) |>
+  inner_join(sample_filings, by = join_by(adsh)) |>
+  mutate(year = year(period)) |>
+  mutate(year = as.character(year)) |>
+  ggplot(aes(x = year, group = year)) +
+  geom_bar(fill = "steelblue") +
+  theme(legend.position = "none")
+```
+
+
+
+
+
+
+
+
+```{r}
+#| label: tbl-direct-2025
+#| tbl-cap: Direct-method filers with periods ending in 2025
+#| echo: false
+direct_method_filers |>
+  filter(year(period) == 2025) |>
+  select(name, sic, ff_ind) |>
+  arrange(name) |>
+  collect() |>
+  left_join(
+    farr::get_ff_ind(48) |> select(sic_min, sic_max, ff_ind_desc),
+    join_by(between(sic, sic_min, sic_max))
+  ) |>
+  mutate(ff_ind_48 = coalesce(ff_ind_desc, "Unknown")) |>
+  select(name, sic, ff_ind, ff_ind_48) |>
+  arrange(ff_ind) |>
+  gt() |>
+  cols_label(
+    name = "Filer",
+    sic = "SIC code",
+    ff_ind = "Industry (12)",
+    ff_ind_48 = "Industry (48)"
+  ) |>
+  tab_options(table.font.size = 10)
+```
+
+```{r}
+#| include: false
+browse_filing <- function(cik, adsh) {
+  url <- str_c(
+    "https://www.sec.gov/Archives/edgar/data/",
+    cik,
+    "/",
+    str_remove_all(adsh, "-"),
+    "/"
+  )
+  browseURL(url)
+}
+```
+
+\newpage
+
+# References {-}
