@@ -1,4 +1,21 @@
-/* The original table sizes were chosen for the PDF. */
-#quarto-document-content .gt_table {
+/* Match the site's active palette instead of gt's fixed white backgrounds. */
+#quarto-document-content table.gt_table {
+  /* The original table sizes were chosen for the PDF. */
   font-size: 0.85rem !important;
+  color: var(--notes-ink);
+  background-color: var(--notes-surface);
+  border-color: var(--notes-line);
+}
+
+#quarto-document-content .gt_table :is(thead, tbody, tfoot, tr, th, td, .gt_column_spanner) {
+  color: var(--notes-ink);
+  background-color: var(--notes-surface);
+  border-color: var(--notes-line);
+  /* Apply stripes directly, without Bootstrap's inset colour overlay. */
+  box-shadow: none;
+}
+
+#quarto-document-content .gt_table tbody tr:nth-child(odd) > :is(th, td),
+#quarto-document-content .gt_table .gt_striped {
+  background-color: var(--notes-tag);
 }
