@@ -3,11 +3,18 @@ title: "How common are direct-method cash flow statements?"
 subtitle: "A tutorial on working with XBRL data compiled using `dera.pq`"
 author: Ian D. Gow
 date: 2026-06-11
+date-modified: 2026-10-23
 date-format: "D MMMM YYYY"
 abstract: |
   This note illustrates how data compiled using my `dera.pq` R package can be used to analyse XBRL data from SEC filings.
   Using these data, I show that direct-method cash flow statements have become even rarer for US firms than they were in 2011, when the last *Accounting Trends and Techniques* survey was published.
 format:
+  html:
+    output-file: index.html
+    number-sections: true
+    toc: true
+    format-links: false
+    css: cash-flows.css
   pdf:
     number-sections: true
     pdf-engine: xelatex
@@ -19,11 +26,17 @@ format:
     citecolor: blue
 bibliography: cash-flows-references.bib
 csl: cash-flows.csl
+execute:
+  freeze: true
 knitr:
   opts_chunk:
     dev: "ragg_png"
     dpi: 300
 ---
+
+::: {.content-visible when-format="html"}
+[PDF version (11 June 2026)](cash-flows.pdf)
+:::
 
 # Introduction
 
@@ -1544,7 +1557,7 @@ A filing is unclassifiable under this approach if none of its cash flow tags are
 However, a small percentage of 10-K filings have no data for one or more of the key statements: balance sheet ("No BS data"), income statement ("No IS data"), or cash flows ("No CF data").
 The "No FS data" indicates the number of cases where there is no data on `pre_notes` for *any* of these three key financial statements.
 @tbl-stmt-pres also suggests that the availability of filings on `pre_notes` is high from 2011 onwards, apart from a blip in 2013.
-As might be expected at the time of writing (June 2026), few firms have filed 10-Ks for periods ending in calendar 2026.
+The 2026 data cover only part of the year, so relatively few firms have filed 10-Ks for periods ending in calendar 2026.
 
 From @tbl-stmt-pres-sub, we see that there are 706 filings with no CF data on `pre_notes` during the period I focus on (2014--2025).
 All of the cases are either irregular or no-`cal` filings, so they fall within the 971 unclassifiable cases in @tbl-pre-method.
@@ -1554,8 +1567,8 @@ For these filings, with no usable data from either `cal_notes` or `pre_notes`, t
 #| label: tbl-stmt-pres
 #| tbl-cap: "Presence of `stmt` for 10-K filings: All years"
 #| echo: false
-filings_10k_sample |>
-  filter(between(year(period), 2014, 2025)) |>
+filings_10k |>
+  filter(!is.na(period)) |>
   left_join(
     pre_notes |>
       mutate(on_pre = TRUE),
