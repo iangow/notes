@@ -2,6 +2,7 @@ project:
   type: website
   render:
     - index.qmd
+    - blog.qmd
     - published/*.qmd
     - db2pq_test/*.qmd
     - plotnine_test/*.qmd
@@ -15,6 +16,8 @@ project:
     - cash-flows/cash-flows.csl
     - db2pq_test/*.pdf
     - plotnine_test/*.pdf
+  pre-render:
+    - python3 scripts/build-blog.py
   post-render:
     - python3 scripts/version-site-assets.py
 
@@ -27,6 +30,8 @@ website:
     right:
       - href: index.qmd
         text: Home
+      - href: blog.qmd
+        text: By date
 
 format:
   html:
