@@ -1,0 +1,99 @@
+---
+title: "GitHub for accounting researchers"
+author: Ian D. Gow
+# Date of the original Pages version (GitHub.pages, Index/Document.iwa).
+date: 2021-07-28
+date-modified: 2026-10-23
+date-format: D MMMM YYYY
+format: html
+---
+
+In July 2021, a [retraction notice in the *Journal of Finance*](https://onlinelibrary.wiley.com/doi/10.1111/jofi.13064) reported that "the original data and code that produced the published results were lost."
+The natural response is: if only the authors had used GitHub.
+
+There is something to this response, but opening a GitHub account does not make research reproducible.
+GitHub cannot preserve code that never makes it into a repository, and preserving code does not establish that the code produces the results in a paper.
+The more useful question is how GitHub might fit into a research workflow in which losing the code, or losing track of which code produced which results, becomes much less likely.
+
+# What is GitHub?
+
+[Git](https://docs.github.com/en/get-started/start-your-journey/what-is-github) is software for tracking changes in files.
+GitHub hosts Git repositories and provides tools for collaboration around them.
+There are alternatives to GitHub, including GitLab and Bitbucket, but I will focus on GitHub here.
+
+Git is particularly useful for text files: code for your favourite statistical package, LaTeX source, Markdown documents, and configuration files.
+A *commit* records a version of those files along with a message explaining the change.
+The resulting history lets you inspect changes, compare versions, and return to an earlier state of the project.
+Pushing commits to GitHub makes that history available beyond your own computer.
+
+These features are useful even if you work alone.
+They become more useful when several people are changing code and text, trying alternative analyses, and wondering which version of a table belongs in the paper.
+
+# Some case studies
+
+Here are some ways I had used GitHub when I first wrote this note in 2021.
+These are examples, rather than a claim to best practice.
+
+The code and text for *Causal Inference in Accounting Research* are available in a [public repository](https://github.com/iangow/jar_methods).
+The repository brings together the LaTeX source and the analysis code, and its history records earlier versions of the paper.
+On this project, my two co-authors worked on the paper using Overleaf.
+I managed the GitHub side of the project using Overleaf's integration with GitHub.
+My co-authors could continue using their preferred editor while the project benefited from version control.
+
+*Non-Answers During Conference Calls*, co-authored with David Larcker and Anastasia Zakolyukina, was also managed using GitHub.
+Some analysis code was kept in private repositories, while other elements were made public.
+For example, the [performance analysis of the paper's core measure](https://github.com/iangow/non_answer_perf) is available in a public repository.
+
+Related to that paper, the core measure was made available in the Python package `ling_features`.
+Its [GitHub repository](https://github.com/iangow/ling_features) provides a place for others to inspect the code, report problems, and suggest changes through pull requests.
+A research project can thus produce something that other researchers can use and improve, rather than a collection of files that remains untouched after publication.
+
+I also used a private repository to manage data obtained through an institutional subscription to WhaleWisdom, together with the code used to update those data.
+This made it easier to share work with authorised colleagues and return to earlier versions when necessary.
+That example does not mean that all research data belong in Git.
+Large data sets often belong elsewhere, and access arrangements must follow the data licence.
+The important connection is between a version of the code and the particular data on which it was run.
+
+In 2021, I was writing a book for an introductory course on accounting research.
+The book's source was maintained using GitHub, while a separate [public repository for the FARR R package](https://github.com/iangow/farr) held data and code for readers.
+This separation made it possible to develop the book and provide reusable materials alongside it.
+
+Finally, starting with the SAS and Stata code and data supplied by Fang, Huang, and Karpoff (2016), I reproduced their analyses using R.
+The [archived replication repository](https://github.com/iangow/fhk_analysis) illustrates a straightforward use of GitHub: make the code behind a replication available for others to inspect and run.
+
+# More than a shared folder
+
+Returning to the lost-code problem, a shared folder on Dropbox, Box, or Google Drive could also have helped.
+What does Git add?
+
+One answer is an explicit record of the project's development.
+A commit can connect a particular change in the code to the reason for making it.
+A tag can identify the version used for a submission.
+Branches can keep an alternative analysis separate while it is being developed, and a pull request can make the proposed changes available for discussion before they become part of the main version.
+
+None of this requires a research project to imitate a large software company.
+But research projects do have some of the same needs: collaboration, task management, version control, and a way to connect outputs to the inputs and code that produced them.
+The familiar `FINAL_rev.6.COMMENTS.doc` approach does not meet those needs very well.
+
+A modest workflow might look like this:
+
+1. Keep the paper's source, analysis code, and instructions for running it in a repository from the start.
+2. Commit meaningful changes with messages that explain them, and push those commits to the shared repository.
+3. Record the data sources, data versions, and software environment needed to run the analysis.
+4. Before a submission, check that the recorded code and inputs reproduce the reported results, and tag that version.
+5. Give another person enough information to repeat that check.
+
+The last two steps matter.
+Version control can faithfully preserve code that never produced the published tables.
+Reproducibility requires testing the connection between the preserved materials and the reported results.
+
+# Learning the workflow
+
+There is a learning curve.
+Terms such as *commit*, *branch*, and *merge* are unfamiliar at first, and resolving a conflict between two people's edits can be frustrating.
+Starting with a small project is easier than introducing Git halfway through a complicated collaboration.
+
+The broader benefit is a change in how research is organised.
+Code, data documentation, and the paper become parts of a project with an inspectable history.
+Others can build on the work, identify errors, and propose improvements.
+That is a useful foundation for the kind of [replication and correction](jf_retraction.qmd) that helps a literature accumulate knowledge.
