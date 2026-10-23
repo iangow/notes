@@ -13,13 +13,18 @@ import re
 def main():
     site = Path('_site')
     versions = {}
-    for name in ('notes-theme.css', 'notes-home.css', 'notes-home.js'):
-        asset = site / 'assets' / name
+    for relative in (
+        'assets/notes-theme.css',
+        'assets/notes-home.css',
+        'assets/notes-home.js',
+        'cash-flows/cash-flows.css',
+    ):
+        asset = site / relative
         if asset.is_file():
-            versions[name] = hashlib.sha256(asset.read_bytes()).hexdigest()[:12]
+            versions[asset.name] = hashlib.sha256(asset.read_bytes()).hexdigest()[:12]
     pattern = re.compile(
         r'(<(?:link|script)\b[^>]*\b(?:href|src)=")'
-        r'([^"?]*assets/(notes-theme\.css|notes-home\.css|notes-home\.js))'
+        r'([^"?]*(notes-theme\.css|notes-home\.css|notes-home\.js|cash-flows\.css))'
         r'(?:\?[^\"]*)?("[^>]*>)'
     )
     changed = 0
