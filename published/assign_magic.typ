@@ -411,13 +411,12 @@
 
 #show: doc => article(
   title: [Explaining some #NormalTok(".assign()"); idioms],
-  subtitle: [Draft for review],
   authors: (
     ( name: [Ian D. Gow],
       affiliation: [],
       email: [] ),
     ),
-  date: [7 February 2026],
+  date: [26 October 2026],
   font: ("Libertinus Serif",),
   heading-family: ("Libertinus Serif",),
   sectionnumbering: "1.1.a",
