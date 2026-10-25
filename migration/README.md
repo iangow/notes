@@ -11,11 +11,16 @@ were verified against LinkedIn's public `datePublished` metadata. Original
 short links were expanded. The Mixtape link was updated after its old chapter
 URL returned 404. The Boeing chart has been rebuilt with Matplotlib from the reported figures in
 Boeing's Q2 2026 Form 10-Q, Note 2. Ian's original image remains as a source
-asset; the draft uses the corrected vector chart, omits y-axis tick labels,
+asset; the published entry uses the corrected vector chart, omits y-axis tick labels,
 and omits the quoted follow-up comment. The original LinkedIn post and comment
 have not been changed.
 
+The three reviewed entries were approved for publication on 26 October 2026
+and now live under `posts/`, retaining their original LinkedIn dates.
+
 Inventory statuses:
+
+- `published`: the approved migration has been published; `site_url` records its location.
 
 - `draft_prepared`: a verified source has a review draft; not yet published.
 - `represented_by_existing_note`: an earlier reviewed adaptation exists.
@@ -38,8 +43,8 @@ keep them distinct from the original post and from editorial additions.
 
 Run `python3 scripts/plot_spirit_goodwill.py` with Matplotlib installed. The
 script reads `migration/data/boeing-spirit-purchase-price-allocation.csv` and
-writes SVG and PNG files to `drafts/linkedin/images/`. Use `--output-dir` to
-change the destination when the post is moved for publication.
+writes SVG and PNG files to `posts/images/`. Use `--output-dir` to change the
+destination.
 
 The CSV contains the individual reported amounts in US$ millions. Liabilities
 are positive magnitudes that the chart subtracts; the positive `Other` line

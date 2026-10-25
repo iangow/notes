@@ -108,7 +108,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path,
                         default=ROOT / "migration/data/boeing-spirit-purchase-price-allocation.csv")
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "drafts/linkedin/images")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "posts/images")
     args = parser.parse_args()
     totals = read_totals(args.data)
     args.output_dir.mkdir(parents=True, exist_ok=True)

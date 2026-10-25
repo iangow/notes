@@ -361,14 +361,13 @@
 )
 
 #show: doc => article(
-  title: [The SEC's timestamp “fix”],
-  subtitle: [Migration draft],
+  title: [Spirit of Goodwill],
   authors: (
     ( name: [Ian D. Gow],
       affiliation: [],
       email: [] ),
     ),
-  date: [7 September 2026],
+  date: [4 September 2026],
   font: ("Libertinus Serif",),
   heading-family: ("Libertinus Serif",),
   mathfont: ("New Computer Modern Math",),
@@ -378,12 +377,22 @@
   doc,
 )
 
-#emph[Originally shared on #link("https://www.linkedin.com/posts/iangow_in-2024-i-wrote-a-short-note-on-dates-and-share-7502772582102806528-izyQ/")[LinkedIn].]
+#emph[Originally shared on #link("https://www.linkedin.com/posts/iangow_very-nice-article-by-jonathan-weil-but-i-share-7501442346006261760-7kec/")[LinkedIn].]
 
-In 2024, I wrote a short note on dates and times using SEC EDGAR submissions data as a case study. At that time the timestamps in the data were all in US/Eastern time zone, though incorrectly labelled as UTC.
+Very nice #link("https://www.wsj.com/business/boeings-8-4-billion-deal-is-bleeding-red-ink-6a7bfb69")[article by Jonathan Weil], but I feel the included chart doesn't do a good job of conveying the relationships between the numbers. Using AI (it needed a good deal of coaxing), I made a (hopefully) better version.
 
-Recently, I received an email from someone and, after some digging, it turns out that the SEC has "fixed" some, but not all, timestamps. And there's no clear pattern to which ones are now UTC and which are US/Eastern. So not a very helpful "fix"!
+The chart below is an updated version, drawn with Matplotlib.
 
-I have attempted to use my old data plus a bit of data sleuthing (assuming the SGML files are still all in US/Eastern) to correct the data. There are still some issues, but what I have seems pretty close.
+#figure([
+#box(image("images/boeing-spirit-goodwill.svg", alt: "Two waterfall charts of Boeing's preliminary purchase price allocation for Spirit AeroSystems. For December 31, 2025, identifiable assets of 4.99 less liabilities of 6.62 give net liabilities of 1.63; consideration of 8.37 implies goodwill of 10.00. For June 30, 2026, identifiable assets of 5.12 less liabilities of 7.01 give net liabilities of 1.89; consideration of 8.39 implies goodwill of 10.28. All amounts are US dollars in billions, rounded independently from the reported millions."))
+], caption: figure.caption(
+position: bottom,
+[
+Purchase price allocation for Spirit AeroSystems (\$ billions).
+]),
+kind: "quarto-float-fig",
+supplement: "Figure",
+)
 
-Here is the #link("https://iangow.github.io/notes/published/datetimes.html")[updated note] (link to download the data is in the footnotes).
+
+Source: #link("https://www.sec.gov/Archives/edgar/data/12927/000162828026050038/ba-20260630.htm")[Boeing's second-quarter 2026 Form 10-Q, Note 2]. The figures for 2025 also agree with #link("https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm")[Note 2 of Boeing's 2025 Form 10-K].

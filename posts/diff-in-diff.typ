@@ -362,7 +362,6 @@
 
 #show: doc => article(
   title: [Diff-in-diff as a causal design],
-  subtitle: [Migration draft],
   authors: (
     ( name: [Ian D. Gow],
       affiliation: [],
