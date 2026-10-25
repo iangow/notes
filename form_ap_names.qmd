@@ -2,10 +2,20 @@
 title: "Working with Form AP data"
 author: Ian D. Gow
 date: 2024-05-16
+date-modified: 2026-10-25
 date-format: "D MMMM YYYY"
+categories: [PCAOB, Form AP, R, DuckDB, Data curation]
+keywords: [PCAOB, Form AP, R, DuckDB, Data curation]
 format:
   html:
     colorlinks: true
+    fig-format: png
+    include-in-header:
+      text: |
+        <style>
+        main .cell-output-display { overflow-x: auto; }
+        main :not(pre) > code { white-space: normal; overflow-wrap: anywhere; }
+        </style>
   pdf: 
     colorlinks: true
     geometry:
@@ -15,7 +25,14 @@ format:
     mainfont: TeX Gyre Pagella
     mathfont: TeX Gyre Pagella Math
 bibliography: papers.bib
+execute:
+  freeze: auto
 ---
+
+This note was first shared on [LinkedIn on 16 May 2024](https://www.linkedin.com/posts/iangow_working-with-form-ap-data-activity-7196971381010432001-Isyc).
+This restored HTML version retains the original case study, with updated code and data-location instructions.
+The [original PDF](form_ap_names.pdf) preserves the earlier output; counts below depend on the version of the PCAOB data used to run the code.
+The follow-up note, [Missing Form APs?](published/missing_form_aps.html), compares Form AP filings with auditor information in SEC filings.
 
 The United States Public Company Accounting Oversight Board (PCAOB) requires registered public accounting firms to file on Form AP for each audit report.^[Discussion of the history of the PCAOB is provided by @Gow:2018vf.]
 Data from these filings are made available by the PCAOB as part of its AuditorSearch page.
@@ -28,7 +45,7 @@ The purpose of this note is to demonstrate how one can work with Form AP data us
 Working with these data is a nice exercise for developing some basic data science skills.
 All the software needed to produce the analyses in this note is free and can be installed in less than ten minutes.
 So it should be easy to work through everything I do here.^[An internet connection is required to download the data and software.]
-A fast-paced hands-on tutorial for R and some of the ideas here is provided in Chapter 2 of *Empirical Research in Accounting: Tools and Methods* [here](https://iangow.github.io/far_book/r-intro.html).^[*Empirical Research in Accounting: Tools and Methods* will be published in print form by CRC Press later in 2024 and will remain free online after publication.]
+A fast-paced hands-on tutorial for R and some of the ideas here is provided in Chapter 2 of *Empirical Research in Accounting: Tools and Methods* [here](https://iangow.github.io/far_book/r-intro.html).^[*Empirical Research in Accounting: Tools and Methods* was published in print form by CRC Press in 2024 and remains free online.]
 
 In writing this note, I use the packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "dbplyr", "duckdb", "jsonlite", "arrow"))` within R to install all the packages you need to run the code in this note.]
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R.
@@ -53,18 +70,26 @@ library(arrow)
 ## Getting Form AP data
 
 The Form AP data are made available by the PCAOB as a single compressed comma-separated value (CSV) file.
-The PCAOB requires use to provide an email address when downloading data using a script and we can set this using the `HTTPUserAgent` option as in the R code below.^[Use your actual email address here.]
-
-```{r}
-#| cache: true
-#| include: false
-options(HTTPUserAgent = "iandgow@gmail.com")
-```
+Set the `HTTPUserAgent` option to include your email address when downloading data using a script, as in the R code below.^[Use your actual email address here.]
 
 ```{r}
 #| eval: false
 options(HTTPUserAgent = "your_name@some_email.com")
 ```
+
+The download script uses two environment variables: `RAW_DATA_DIR` for downloaded source files and `DATA_DIR` for processed Parquet files.
+If you already use these variables, keep your existing settings.
+Otherwise, choose directories on your computer, for example:
+
+```{r}
+#| eval: false
+Sys.setenv(RAW_DATA_DIR = "~/research/raw_data",
+           DATA_DIR = "~/research/parquet")
+```
+
+The script creates a `pcaob` subdirectory under each directory.
+It saves the original download as `RAW_DATA_DIR/pcaob/FirmFilings.zip` and the processed data as `DATA_DIR/pcaob/form_aps.parquet`.
+An existing ZIP is reused, so rerunning the script does not replace the raw download.
 
 ```{r}
 #| include: false
@@ -94,8 +119,16 @@ For reasons we will explain below, we use a DuckDB database connection to work w
 We start by creating that connection and loading the parquet file we just created.
 
 ```{r}
+#| message: false
 db <- dbConnect(duckdb::duckdb())
-form_aps <- tbl(db, sql("SELECT * FROM 'data/form_aps.parquet'"))
+data_dir <- Sys.getenv("DATA_DIR")
+if (!nzchar(data_dir)) stop("Set DATA_DIR before running this note.")
+parquet_file <- file.path(path.expand(data_dir), "pcaob", "form_aps.parquet")
+if (!file.exists(parquet_file)) {
+  stop("Run get_form_aps.R to create ", parquet_file)
+}
+form_aps <- tbl(db, sql(paste0("SELECT * FROM read_parquet(",
+                             dbQuoteString(db, parquet_file), ")")))
 ```
 
 For the most part, the data in the Form AP file are straightforward.
@@ -113,13 +146,13 @@ JSON stands for "Javascript object notation" and is a common form of data on the
 For example, many web APIs return data in JSON form.
 More on JSON can be found in [Chapter 23](https://r4ds.hadley.nz/rectangling.html#json) of *R for Data Science*.
 
-The script we used to create `form_aps.parquet` does not process the JSON data; these are retained as simple text date.
+The script we used to create `form_aps.parquet` does not process the JSON data; these are retained as simple text data.
 However, we could easily process these columns if we wanted to do so.
-While DuckDB has native functions for processing JSON, these are mostly predicated on JSON data being found in files, not in a single field of a table.
-In this case it is easier to bring the data into R (using the `collect()` function) and use the `parse_json()` function from the `jsonlite` library to parse these fields.
+DuckDB also has functions for processing JSON values stored in table columns.
+Here I bring the data into R (using the `collect()` function) and use the `parse_json()` function from the `jsonlite` library to illustrate an alternative approach.
 
 Here we illustrate one approach using the column `audit_fund_series`.
-We use `rowwise()` because `parse_json()` is design to work with one value at a time and `list()` to allow multiple values to be stored in a single row.
+We use `rowwise()` because `parse_json()` is designed to work with one value at a time and `list()` to allow multiple values to be stored in a single row.
 To understand what the `unnest_longer()` and `unnest_wider()` functions are doing, it may be helpful to examine the input to and output from those functions.
 This can be achieved by selecting and executing the code preceding the pipes (i.e., `|>`) before and after the respective functions.
 More about pipes can be found in [Chapter 4](https://r4ds.hadley.nz/workflow-style.html#sec-pipes) of *R for Data Science*.
@@ -160,7 +193,8 @@ The `audit_dual_date` field can contain multiple dates and requires special hand
 Finally, `filing_date` contains both a date and a time and I process it accordingly.
 According to the PCAOB-provided [data dictionary](https://assets.pcaobus.org/pcaob-dev/docs/default-source/rusdocuments/auditorsearch-form-ap-data-references.pdf), "dates and times are provided based on the U.S. Eastern time zone" and I process these fields using that assumption.
 
-We can see from the following code that the Form AP data is updated frequently (on at least a daily basis) and with date-times for `filing_date` as recent as a couple of hours ago as I write.^[You will see more recent dates if you download after the date of writing.]
+The following code shows the most recent dates in the local data.
+These dates describe the downloaded snapshot; rerunning the analysis with a newer download will change the results.
 
 ```{r}
 form_aps |> 
@@ -208,6 +242,7 @@ form_aps_names <-
 
 Note that `dplyr` is quietly translating our code into SQL, as can be seen by applying `show_query()` to `form_aps_names`.
 Here `str_c()` is translated into the SQL function `concat_ws()` (see [here](https://duckdb.org/docs/sql/functions/char#concat_wsseparator-string-) for details).
+For display below, I abbreviate the configured data directory as `DATA_DIR`.
 
 ```{r}
 #| eval: false
@@ -217,6 +252,7 @@ form_aps_names |>
 ```{r}
 #| echo: false
 sql <- remote_query(form_aps_names)
+sql <- str_replace(sql, fixed(parquet_file), "DATA_DIR/pcaob/form_aps.parquet")
 cat("<SQL>\n", str_wrap(sql, width = 80, exdent = 4))
 ```
 
@@ -225,7 +261,7 @@ More on SQL is provided in [an appendix](https://iangow.github.io/far_book/sql-p
 
 In @tbl-mult-names, we show the number of different names associated with a sample of engagement partners.
 While we could provide a table the number of names associated with each value of `engagement_partner_id`, `engagement_partner_id` has no real meaning for readers.
-Instead, for each value of `engagement_partner_id`, we identify a unique name (the most frequent value of `engagement_partner_name`) that we use for this purpose and store this value in `most_common_names`.^[We use `group_by(engagement_partner_id)` then ``window_order(desc(n_forms))` to organize the data in descending order of the frequency a name appears for a given `engagement_partner_id` and then `filter(row_number() == 1)` to pick off the first row for each value of `engagement_partner_id`.]
+Instead, for each value of `engagement_partner_id`, we identify a unique name (the most frequent value of `engagement_partner_name`) that we use for this purpose and store this value in `most_common_names`.^[We use `group_by(engagement_partner_id)` then `window_order(desc(n_forms))` to organize the data in descending order of the frequency a name appears for a given `engagement_partner_id` and then `filter(row_number() == 1)` to pick off the first row for each value of `engagement_partner_id`.]
 
 ```{r}
 most_common_names <-
@@ -317,7 +353,8 @@ form_aps |>
   select(engagement_partner_name, n_audits) |>
   collect(n = 10)
 ```
-From @tbl-many-audits, we see that Borgers barely cracks the top ten.
+In the original analysis, Borgers barely cracked the top ten.
+The ranking changes as more filings become available; @tbl-many-audits shows the result for the local snapshot.
 What's going on here?
 
 In @tbl-many-audits-type, I add information about the value of `audit_report_type`.
