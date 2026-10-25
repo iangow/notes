@@ -103,3 +103,10 @@ separate from the published PDF.
 
 Keep topic tags consistent between each note's `categories` and its topic list in
 `index.qmd`. Apply tool tags such as Polars when the note actually uses the tool.
+
+## Parked drafts
+
+`published/valuation_methods.qmd` remains on `main` as an unfinished draft.
+It is marked `draft: true` and excluded from the website render list. Its Typst
+source and generated PDF are also excluded from website resources. Keep these
+exclusions until publication is explicitly approved.
