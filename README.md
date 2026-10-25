@@ -37,12 +37,16 @@ note there also adds it to the chronological portal. Short summaries and optiona
 display-title overrides live in `_blog-metadata.json`.
 
 Dates come from each note's explicit `date: YYYY-MM-DD` front matter. Revisions
-(`date-modified`), filesystem dates, and Git commit dates do not affect ordering.
+(`date-modified`) and filesystem dates do not affect ordering; Git commit dates
+are used only when explicitly recorded as a fallback below.
 If a future note has no date, a verified LinkedIn post date (or another documented
 publication date) can be recorded in its `_blog-metadata.json` entry as `date`,
 with the exact source URL in `date-source`. This fallback is used only when the
 note has no date, and its source is linked in the archive. A note with no verified
 date appears under **Undated**, rather than receiving an inferred date.
+When the original publication date is unknown, the first Git commit containing the
+note can serve as a documented fallback. Set `date-source-label` to
+`First Git commit` so the archive identifies the basis for that date.
 
 Render or preview the portal without executing the research notes:
 

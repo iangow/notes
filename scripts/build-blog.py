@@ -70,6 +70,7 @@ def collect_posts():
             "description": metadata.get("description", ""),
             "date": published,
             "date-source": provenance,
+            "date-source-label": metadata.get("date-source-label", "Source for date"),
             "year": str(published.year) if published else "Undated",
         })
     # Alphabetical order makes ties stable. Undated posts follow every dated one.
@@ -116,7 +117,7 @@ def render(posts):
             out.append('<p class="blog-date">Date not yet established</p>')
         if post["date-source"]:
             out.append(f'<p class="blog-date-source"><a href="{escape(post["date-source"])}">'
-                       'Source for date</a></p>')
+                       f'{escape(post["date-source-label"])}</a></p>')
         out.append(f'<h3><a href="{escape(post["href"])}">{inline(post["title"])}</a></h3>')
         if post["description"]:
             out.append(f'<p class="blog-summary">{escape(post["description"])}</p>')
