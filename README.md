@@ -26,6 +26,21 @@ Check the Python environment seen by `uv`:
 uv run python -c "import sys; print(sys.executable)"
 ```
 
+## The pandas `.assign()` draft
+
+`unpublished/assign_magic.qmd` uses pandas 3.1 and includes an executed R comparison.
+It uses Quarto's knitr engine with reticulate, plus the R packages dplyr, readr,
+and tibble. Create its separate Python environment and preview it with:
+
+```sh
+uv venv .venv-assign --python 3.13
+uv pip install --python .venv-assign/bin/python -r unpublished/assign_magic-requirements.txt
+RETICULATE_PYTHON="$PWD/.venv-assign/bin/python" \
+  quarto preview unpublished/assign_magic.qmd --no-browser
+```
+
+The requirements file records the Python packages used to execute the draft.
+
 ## The chronological portal
 
 `blog.qmd` offers a blog-style view of the same notes linked in `index.qmd`.

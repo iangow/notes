@@ -1,220 +1,396 @@
 ---
-title: "Explaining some `.assign()` idioms."
+title: "Explaining some `.assign()` idioms"
+subtitle: "Draft for review"
 author: Ian D. Gow
+# Date of the original unpublished draft.
 date: 2026-02-07
-date-format: "D MMMM YYYY"
+date-modified: 2026-10-26
+date-format: D MMMM YYYY
+language:
+  title-block-published: "Draft dated"
+categories: [Python, pandas, Data cleaning]
 number-sections: true
+engine: knitr
+knitr:
+  opts_chunk:
+    dev: pdf
 format:
   html:
     colorlinks: true
-  pdf: 
+  typst:
     colorlinks: true
-    geometry:
-      - left=2cm
-      - right=2cm
+    linkcolor: "#0000FF"
     papersize: a4
-    mainfont: TeX Gyre Pagella
-    mathfont: TeX Gyre Pagella Math
-bibliography: papers.bib
-csl: jfe.csl
-engine: jupyter
-jupyter: python3
+    margin:
+      x: 2cm
+      y: 2cm
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    monofont: Menlo
+    code-overflow: wrap
+    keep-typ: true
+    include-in-header:
+      text: |
+        #show block.where(fill: rgb("#f1f3f5")): set block(breakable: false)
+format-links: false
 ---
 
-Users of pandas will know about the `.assign` method of the pandas DataFrame.
+```{r}
+#| include: false
+options(width = 88, pillar.sigfig = 7)
+knitr::opts_chunk$set(comment = NA)
+```
+
+::: {.content-visible when-format="html"}
+[Download the draft PDF](assign_magic.pdf).
+:::
+
+Users of pandas will know about the `.assign()` method of the DataFrame.
+But some code using it can look a little mysterious, particularly when `lambda`, `**`, and dictionary comprehensions appear together.
+In this note, I work through some examples to explain what these pieces do.
+I ran the examples with pandas 3.1.0.
+
+## Assigning a column
+
+I borrow the toy data frame below from the [pandas documentation](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.assign.html).
 
 ```{python}
 import pandas as pd
-```
 
-I borrow the toy example data frame from [pandas documentation](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.assign.html), which is `df` below.
-
-```{python}
-df = pd.DataFrame({"temp_c": [17.0, 25.0]}, 
-                  index=["Portland", "Berkeley"])
-df
-```
-
-The documentation tells us that the return value of the method is "a new DataFrame with the new columns in addition to all the existing columns."^[Existing columns that are re-assigned will be overwritten.]
-We can see this here:
-
-```{python}
-df.assign(state=["WA", "CA"])
-```
-
-Note that the original DataFrame is unchanged.
-
-```{python}
-df
-```
-However, if we assign the value returned by `.assign()` to the variable associated with the original DataFrame, it will be practically as if we had modified that DataFrame. 
-
-```{python}
-df = df.assign(state=["WA", "CA"])
-```
-
-Looking at the [pandas documentation](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.assign.html) for the `.assign()` method, we see that its signature is `.assign(**kwargs)`.
-This tells use that `.assign()` only takes keyword arguments.
-In the example above, the keyword was `state`.
-
-A more "traditional" approach might be the assignment to a Series as in the following.^[A good proxy for the "traditional" might be "Python for Data Analysis", written by the creator of pandas. The [third edition](https://wesmckinney.com/book/) of that book appears to contain not a single instance of `.assign()`.]
-
-```{python}
-df["state"] = ["WA", "CA"]
-df
-```
-
-The documentation tells us that "if the values [passed to `.assign()`] are not callable, (e.g. a Series, scalar, or array), they are simply assigned."
-This is precisely the behaviour we see above: the value is a list (`["WA", "CA"]`) and this is assigned to `temp_f` in the returned DataFrame.
-
-But it is probably more common for the arguments to be a callable, such as in the following example, where an anonymous function (or lambda) is given as the value of the keyword `temp_f`.
-
-```{python}
-df.assign(temp_f=lambda x: x.temp_c * 9 / 5 + 32)
-```
-
-According to the documentation, "if the values are callable, they are computed on the DataFrame and assigned to the new columns", precisely the behaviour we see above.^[Another point made by the documentation is that "the callable must not change input DataFrame (though pandas doesn’t check it)."
-This is fairly cryptic remark is perhaps alluding to the (seemingly) historical mutability of DataFrames.
-I struggled, but was unable to contrive an example of actually violating this behaviour.]
-
-Even this could be accomplished with the "traditional" approach:
-
-```{python}
-df["temp_f"] = df["temp_c"] * 9 / 5 + 32
-df
-```
-
-So why depart from the "traditional" approach?
-One reason is that `.assign()` fits nicely into the "method pipeline" approach that seems to have gained currency with data analysts in recent years.
-
-```{python}
-df = (
-    pd.DataFrame({"temp_c": [17.0, 25.0]}, 
-                  index=["Portland", "Berkeley"])
-    .assign(temp_f=lambda x: x.temp_c * 9 / 5 + 32)
-    .assign(temp_k=lambda x: (x.temp_f - 32) * 5 / 9 + 273.15)
+df = pd.DataFrame(
+    {"temp_c": [17.0, 25.0]},
+    index=["Portland", "Berkeley"],
 )
 df
 ```
 
-```{python}
-raw_data = {"city": ["Portland", "Berkeley"],
-                   "temp_c": ["17", "25"],
-                   "area_land": ["345.73 sq km", "27.02 sq km"],
-                   "area_water": ["29.82 sq km", "18.71 sq km"],
-                   "area_total": ["375.55 sq km", "45.73 sq km"],
-                   "pop": ["652,503", "124,321"]}
+The `.assign()` method returns a new DataFrame containing the existing columns and any columns we supply.
+Supplying an existing column name replaces that column in the returned DataFrame.
+Here I add a `state` column:
 
-df = pd.DataFrame(raw_data)
+```{python}
+with_state = df.assign(state=["OR", "CA"])
+with_state
+```
+
+The original DataFrame is unchanged:
+
+```{python}
 df
 ```
 
 ```{python}
-df = (
-    pd.DataFrame(raw_data)
+#| include: false
+assert "state" not in df.columns
+assert with_state["state"].tolist() == ["OR", "CA"]
+```
+
+We can make the name `df` refer to the returned DataFrame:
+
+```{python}
+df = df.assign(state=["OR", "CA"])
+```
+
+This replaces what the name `df` refers to; it does not modify the old object.
+If another name referred to that old DataFrame, it would still see the original data.
+In contrast, the more traditional assignment below changes the DataFrame that `df` refers to:
+
+```{python}
+df["state"] = ["OR", "CA"]
+```
+
+Pandas 3 uses [Copy-on-Write](https://pandas.pydata.org/docs/user_guide/copy_on_write.html), so a new DataFrame can initially share data with the original while behaving as a separate copy.
+Changing one does not change the other.
+This does not make DataFrames immutable: direct assignment such as `df["state"] = ...` still changes the object, and two names referring to that same object still see the same changes.
+
+## Why the lambda?
+
+The signature `.assign(**kwargs)` tells us that column names are supplied as keyword arguments.
+In the example above, the keyword is `state` and its value is a list.
+Pandas assigns that list to the new column.
+
+The value can also be a **callable**, such as an anonymous function created using `lambda`:
+
+```{python}
+df.assign(temp_f=lambda d: d["temp_c"] * 9 / 5 + 32)
+```
+
+Here `.assign()` calls the function with the DataFrame as its argument.
+The function returns the values for `temp_f`.
+The name `d` has no special meaning; I could have used `x` or another name.
+
+For this simple example, we could calculate those values directly:
+
+```{python}
+df.assign(temp_f=df["temp_c"] * 9 / 5 + 32)
+```
+
+The distinction matters in a pipeline.
+A callable receives the DataFrame at that point in the pipeline, including columns created in earlier steps.
+It can even use a column created earlier in the *same* `.assign()` call:
+
+```{python}
+temperatures = (
+    pd.DataFrame({"temp_c": [17.0, 25.0]})
     .assign(
-      temp_c=lambda d: pd.to_numeric(d["temp_c"], errors="raise"),
-      area_land=lambda d: pd.to_numeric(d["area_land"]
-                          .str.replace(" sq km", "", regex=False), errors="raise"),
-      area_water=lambda d: pd.to_numeric(d["area_water"]
-                          .str.replace(" sq km", "", regex=False), errors="raise"),
-      area_total=lambda d: pd.to_numeric(d["area_total"]
-                          .str.replace(" sq km", "", regex=False), errors="raise"),
-      pop=lambda d: pd.to_numeric(d["pop"]
-                          .str.replace(",", "", regex=False), errors="raise"),
+        temp_f=lambda d: d["temp_c"] * 9 / 5 + 32,
+        temp_k=lambda d: (d["temp_f"] - 32) * 5 / 9 + 273.15,
     )
 )
-df
+temperatures
+```
+
+The keyword arguments are processed in order, so `temp_f` exists when the second function runs.
+Using the name `df` inside these functions would instead refer to whatever object that name happened to identify outside the pipeline.
+
+The documentation also says that a callable should not modify the DataFrame it receives.
+For example, `lambda d: d.pop("temp_c")` would remove `temp_c` while calculating the new column.
+The point of the callable is to calculate values, not to change the data structure as a side effect.
+
+## Cleaning several columns
+
+Now consider some messier toy data.
+The temperatures include a `C` suffix, the areas include units, and the populations include commas.
+
+```{python}
+raw_data = {
+    "city": ["Portland", "Berkeley"],
+    "temp_c": ["17C", "25C"],
+    "area_land": ["345.73 sq km", "27.02 sq km"],
+    "area_water": ["29.82 sq km", "18.71 sq km"],
+    "area_total": ["375.55 sq km", "45.73 sq km"],
+    "pop": ["652,503", "124,321"],
+}
+
+pd.DataFrame(raw_data)
+```
+
+We can clean each column separately:
+
+```{python}
+clean_explicit = (
+    pd.DataFrame(raw_data)
+    .assign(
+        temp_c=lambda d: pd.to_numeric(
+            d["temp_c"].str.removesuffix("C"), errors="raise"
+        ),
+        area_land=lambda d: pd.to_numeric(
+            d["area_land"].str.removesuffix(" sq km"), errors="raise"
+        ),
+        area_water=lambda d: pd.to_numeric(
+            d["area_water"].str.removesuffix(" sq km"), errors="raise"
+        ),
+        area_total=lambda d: pd.to_numeric(
+            d["area_total"].str.removesuffix(" sq km"), errors="raise"
+        ),
+        pop=lambda d: pd.to_numeric(
+            d["pop"].str.replace(",", "", regex=False), errors="raise"
+        ),
+    )
+)
+clean_explicit
 ```
 
 Ew!
 That's some ugly code.
+One improvement is to put the repeated operations into functions.
+The `errors="raise"` arguments make unexpected non-numeric values cause an error rather than quietly become missing values.
 
 ```{python}
 def parse_area(s: pd.Series) -> pd.Series:
     return pd.to_numeric(
-        s.str.replace(" sq km", "", regex=False),
-        errors="raise",
+        s.str.removesuffix(" sq km"), errors="raise"
     )
+
 
 def parse_pop(s: pd.Series) -> pd.Series:
     return pd.to_numeric(
-        s.str.replace(",", "", regex=False),
-        errors="raise",
-    )                       
+        s.str.replace(",", "", regex=False), errors="raise"
+    )
 ```
 
+We can now write:
+
 ```{python}
-df = (
+clean_helpers = (
     pd.DataFrame(raw_data)
     .assign(
-        temp_c=lambda d: pd.to_numeric(d["temp_c"], errors="raise"),
+        temp_c=lambda d: pd.to_numeric(
+            d["temp_c"].str.removesuffix("C"), errors="raise"
+        ),
         area_land=lambda d: parse_area(d["area_land"]),
         area_water=lambda d: parse_area(d["area_water"]),
         area_total=lambda d: parse_area(d["area_total"]),
         pop=lambda d: parse_pop(d["pop"]),
     )
 )
-df
 ```
+
+This is better, but we are still repeating ourselves for the three area columns.
+
+## Unpacking a dictionary of functions
+
+The three area arguments above can be generated using a dictionary comprehension:
 
 ```{python}
 area_cols = ["area_land", "area_water", "area_total"]
 
-df = (
+clean_dict = (
     pd.DataFrame(raw_data)
     .assign(
-        temp_c=lambda d: pd.to_numeric(d["temp_c"], errors="raise"),
+        temp_c=lambda d: pd.to_numeric(
+            d["temp_c"].str.removesuffix("C"), errors="raise"
+        ),
         pop=lambda d: parse_pop(d["pop"]),
-        **{c: (lambda d, c=c: parse_area(d[c]))
-           for c in area_cols}
+        **{c: (lambda d, c=c: parse_area(d[c])) for c in area_cols},
     )
 )
-df
-```
-  
-```{r}
-#| message: false
-library(tidyverse)
 ```
 
+There are two pieces of Python syntax to unpack here.
+First, the comprehension creates a dictionary whose keys are the area-column names and whose values are functions.
+The `**` then [unpacks that dictionary into keyword arguments](https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists).
+For example, `**{"area_land": some_function}` supplies the keyword argument `area_land=some_function`.
+
+Second, `c=c` gives each function its own default value for the column name.
+That value is set when the function is created.
+Without it, the functions would look up `c` when called, by which time the loop would have reached `"area_total"`.
+We would therefore use the total-area values for all three columns.
+This is a standard [Python closure issue](https://docs.python.org/3/faq/programming.html#why-do-lambdas-defined-in-a-loop-with-different-values-all-return-the-same-result), rather than something specific to pandas.
+
+## A pandas 3 alternative: `pd.col()`
+
+Pandas 3 introduced [`pd.col()`](https://pandas.pydata.org/docs/whatsnew/v3.0.0.html#initial-support-for-pd-col-syntax-to-create-expressions), which lets us build expressions referring to columns by name.
+For example, the temperature calculation can be written as:
+
+```{python}
+df.assign(temp_f=pd.col("temp_c") * 9 / 5 + 32)
+```
+
+The expression is evaluated against the DataFrame supplied by `.assign()`.
+It therefore serves the same purpose as `lambda d: d["temp_c"] * 9 / 5 + 32`.
+
+Expressions can also use Series methods.
+Here `.pipe(parse_area)` passes the selected Series to `parse_area()` when the expression is evaluated:
+
+```{python}
+clean_expr = (
+    pd.DataFrame(raw_data)
+    .assign(
+        temp_c=pd.col("temp_c").str.removesuffix("C").pipe(pd.to_numeric),
+        pop=pd.col("pop").pipe(parse_pop),
+        **{c: pd.col(c).pipe(parse_area) for c in area_cols},
+    )
+)
+clean_expr
+```
+
+Each expression records its column name when it is constructed, so there is no `c=c` to explain in this version.
+I find this easier to read, though understanding the callable version is still useful when reading existing pandas code.
+
+```{python}
+#| include: false
+for candidate in (clean_helpers, clean_dict, clean_expr):
+    pd.testing.assert_frame_equal(clean_explicit, candidate)
+assert clean_dict["area_land"].tolist() == [345.73, 27.02]
+assert clean_dict["area_water"].tolist() == [29.82, 18.71]
+assert pd.__version__.startswith("3.")
+```
+
+## Something like `across()`
+
+R users might wonder why we are working so hard.
+Using `dplyr` and `readr`, the cleaning can be written as follows:
+
 ```{r}
-raw_data <- list(
+#| message: false
+library(dplyr)
+library(readr)
+
+raw_data_r <- list(
   city = c("Portland", "Berkeley"),
-  temp = c("17C", "25C"),
-  area_land  = c("345.73 sq km", "27.02 sq km"),
+  temp_c = c("17C", "25C"),
+  area_land = c("345.73 sq km", "27.02 sq km"),
   area_water = c("29.82 sq km", "18.71 sq km"),
   area_total = c("375.55 sq km", "45.73 sq km"),
   pop = c("652,503", "124,321")
 )
 
-df <- 
-  raw_data |>
-  as_tibble() |>
+clean_r <-
+  tibble::as_tibble(raw_data_r) |>
   mutate(across(-city, parse_number))
 
-df
+clean_r
 ```
+
+The `across()` call applies `parse_number()` to every column except `city`.
+The parser handles the units and commas in these values.
+
+For this particular data set, we can write a small Python helper that removes everything except digits, decimal points, and minus signs before converting to numbers:
 
 ```{python}
 def parse_number(s: pd.Series) -> pd.Series:
     return (
         s.astype("string")
-         .str.replace(r"[^\d\.\-]+", "", regex=True)
-         .pipe(pd.to_numeric, errors="coerce")
+        .str.replace(r"[^\d.\-]+", "", regex=True)
+        .pipe(pd.to_numeric, errors="raise")
     )
 ```
+
+This is not a general replacement for `readr::parse_number()`.
+For example, it would turn `"12 to 15"` into `1215` and would not correctly interpret scientific notation.
+It is suitable here because we know the limited formats used in our toy data.
+
+To select columns from the current DataFrame, I use [`.pipe()`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.pipe.html).
+It passes that DataFrame to a function; here, the function calls `.assign()` with a generated argument for every column except `city`.
 
 ```{python}
-df = (
+clean_all = (
     pd.DataFrame(raw_data)
-    .pipe(lambda d: d.assign(**{c: parse_number(d[c])
-                                for c in d.columns if c != "city"})
+    .pipe(
+        lambda d: d.assign(
+            **{
+                c: pd.col(c).pipe(parse_number)
+                for c in d.columns if c != "city"
+            }
+        )
     )
-    .rename({"temp": "temp_c"})
-    .assign(temp_f=lambda x: x.temp_c * 9 / 5 + 32)
-    .assign(temp_k=lambda x: (x.temp_f - 32) * 5 / 9 + 273.15)
+    .assign(
+        temp_f=pd.col("temp_c") * 9 / 5 + 32,
+        temp_k=(pd.col("temp_f") - 32) * 5 / 9 + 273.15,
+    )
 )
-
-df
+clean_all[["city", "temp_c", "temp_f", "temp_k"]]
 ```
+
+The output shows the temperature columns; the other cleaned columns remain in `clean_all`.
+The last `.assign()` illustrates the point about evaluation order again: the expression for `temp_k` uses the newly created `temp_f`.
+
+```{python}
+#| include: false
+import numpy as np
+
+pd.testing.assert_frame_equal(
+    clean_all[list(raw_data)], clean_explicit, check_dtype=False
+)
+np.testing.assert_allclose(clean_all["temp_f"], [62.6, 77.0])
+np.testing.assert_allclose(clean_all["temp_k"], [290.15, 298.15])
+```
+
+```{r}
+#| include: false
+python_result <- reticulate::py$clean_all
+stopifnot(isTRUE(all.equal(
+  as.data.frame(clean_r), python_result[names(clean_r)],
+  check.attributes = FALSE
+)))
+```
+
+## Some choices
+
+For one or two columns, spelling out the arguments to `.assign()` is often clearest.
+When several columns need the same treatment, a dictionary comprehension can avoid repetition.
+Callables let those calculations use the DataFrame at the current step in a pipeline, and pandas 3's `pd.col()` expressions can make some of them easier to read.
+
+The goal is readable code.
+A pipeline is useful when it makes the sequence of transformations easier to follow; there is no need to put an entire analysis into one expression.
