@@ -43,7 +43,11 @@ The requirements file records the Python packages used to execute the note.
 
 ## The chronological portal
 
-`blog.qmd` offers a blog-style view of the same notes linked in `index.qmd`.
+`blog.qmd` combines the notes linked in `index.qmd` with short blog posts.
+Short posts have `kind: post`, a title, a topic list, and a description in
+`_blog-metadata.json`; they do not need to be added to the home-page note collection.
+Published short posts live in `posts/`. LinkedIn migration drafts live in
+`drafts/linkedin/` until reviewed and approved for publication.
 The [Quarto pre-render hook](https://quarto.org/docs/projects/scripts.html#pre-and-post-render)
 runs `scripts/build-blog.py`, which refreshes `_blog-listing.qmd`. The generated
 include is checked in because Quarto resolves includes before running its hooks.
@@ -86,6 +90,35 @@ quarto preview blog.qmd --no-browser
    their code requires; the two portals do not execute the posts they link to.
 
 New posts do not need a LinkedIn counterpart or a LinkedIn date.
+
+### Migrating LinkedIn posts
+
+The goal is to preserve original posts and articles, including short observations,
+updates, and commentary on links. A post introducing an existing note can become
+its own dated entry linking to that note. A link to an existing note does not by
+itself mean the post's introductory text has been migrated.
+
+`migration/linkedin-inventory.json` tracks the captured feed and articles, related
+notes, draft paths, and remaining source checks. It distinguishes Ian's own text
+from third-party reposts. Preserve source URLs, exact publication timestamps,
+authorship, attachments, and the basis for the displayed date. For the first batch,
+dates use the UTC calendar date supplied by LinkedIn's `datePublished` metadata.
+
+Drafts are omitted from the archive by default and are outside the normal website
+render/resource paths. To build a local migration preview, first run:
+
+```sh
+BLOG_INCLUDE_DRAFTS=1 python3 scripts/build-blog.py
+BLOG_INCLUDE_DRAFTS=1 quarto render blog.qmd --profile migration-preview --to html --no-execute
+```
+
+Render individual draft files with the same profile and environment flag. Restore
+the checked-in listing with `python3 scripts/build-blog.py` after previewing.
+The profile writes to `_migration-preview/`, separate from the publication output.
+When approved, move a draft and its downloads to `posts/`, update its registered
+path and relative asset/filter paths, and remove `draft: true`. Keep its original
+publication date. Retain original charts unless a revision is clearly identified;
+record unresolved issues for review.
 
 ### Republishing existing material
 
