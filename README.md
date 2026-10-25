@@ -82,6 +82,9 @@ Keep the original PDF available as an archive, and produce HTML and a new Typst 
 from the combined source. Keep the intermediate Typst source when useful.
 Typst documents can use `filters/pdf-links.lua` with `pdf-link-base` to make
 relative links absolute in downloaded PDFs while retaining relative HTML links.
+For a short post introducing a slide deck, the original PDF deck can accompany the
+HTML note without recreating the slides. Keep the editable presentation master
+separate from the published PDF.
 
 Keep topic tags consistent between each note's `categories` and its topic list in
 `index.qmd`. Apply tool tags such as Polars when the note actually uses the tool.
