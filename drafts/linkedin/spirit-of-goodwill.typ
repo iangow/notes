@@ -349,7 +349,6 @@
   inset: 6pt,
   stroke: none
 )
-#import "@preview/fontawesome:0.5.0": *
 #let brand-color = (:)
 #let brand-color-background = (:)
 #let brand-logo = (:)
@@ -383,47 +382,18 @@
 
 Very nice #link("https://www.wsj.com/business/boeings-8-4-billion-deal-is-bleeding-red-ink-6a7bfb69")[article by Jonathan Weil], but I feel the included chart doesn't do a good job of conveying the relationships between the numbers. Using AI (it needed a good deal of coaxing), I made a (hopefully) better version.
 
+The chart below is an updated version, drawn with Matplotlib.
+
 #figure([
-#box(image("images/boeing-spirit-goodwill.jpg", alt: "Two waterfall charts showing Boeing's allocation of the purchase price for Spirit AeroSystems at December 31, 2025 and June 30, 2026. The charts compare identifiable assets, liabilities, consideration paid, and goodwill."))
+#box(image("images/boeing-spirit-goodwill.svg", alt: "Two waterfall charts of Boeing's preliminary purchase price allocation for Spirit AeroSystems. For December 31, 2025, identifiable assets of 4.99 less liabilities of 6.62 give net liabilities of 1.63; consideration of 8.37 implies goodwill of 10.00. For June 30, 2026, identifiable assets of 5.12 less liabilities of 7.01 give net liabilities of 1.89; consideration of 8.39 implies goodwill of 10.28. All amounts are US dollars in billions, rounded independently from the reported millions."))
 ], caption: figure.caption(
 position: bottom,
 [
-My AI-assisted redrawing from the original LinkedIn post, reproduced unchanged.
+Purchase price allocation for Spirit AeroSystems (\$ billions).
 ]),
 kind: "quarto-float-fig",
 supplement: "Figure",
 )
 
 
-In a #link("https://www.linkedin.com/posts/iangow_very-nice-article-by-jonathan-weil-but-i-share-7501442346006261760-7kec/")[follow-up comment on the original post], I added on 10 September 2026:
-
-#quote(block: true)[
-Looking at this again, I should probably lose the y-axis labels (they aren't adding anything).
-]
-
-#block[
-#callout(
-body:
-[
-This check was added during migration and was not part of the LinkedIn post: in the left panel, $4.93 - 6.72 = - 1.79$, whereas the grey bar is labelled $- 1.63$. The original chart is retained here while this discrepancy is checked.
-
-]
-,
-title:
-[
-Migration review note
-]
-,
-background_color:
-rgb("#fcefdc")
-,
-icon_color:
-rgb("#EB9113")
-,
-icon:
-fa-exclamation-triangle()
-,
-body_background_color:
-white
-)
-]
+Source: #link("https://www.sec.gov/Archives/edgar/data/12927/000162828026050038/ba-20260630.htm")[Boeing's second-quarter 2026 Form 10-Q, Note 2]. The figures for 2025 also agree with #link("https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm")[Note 2 of Boeing's 2025 Form 10-K].
