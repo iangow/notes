@@ -1,0 +1,113 @@
+---
+title: "Trump's tariff formula"
+author: Ian D. Gow
+# Date of the original LinkedIn post and PDF.
+date: 2025-04-07
+date-modified: 2026-10-25
+date-format: D MMMM YYYY
+categories: [Economics, Trade, Tariffs]
+format:
+  html:
+    colorlinks: true
+  typst:
+    colorlinks: true
+    linkcolor: "#0000FF"
+    papersize: a4
+    margin:
+      x: 2cm
+      y: 2cm
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    monofont: Menlo
+    keep-typ: true
+    filters:
+      - ../filters/pdf-links.lua
+pdf-link-base: https://iangow.github.io/notes/published/
+format-links: [html, typst]
+---
+
+*This note combines my [LinkedIn post of 7 April 2025](https://www.linkedin.com/posts/iangow_trumps-tariff-formula-activity-7315012826006196225-gQX2) with its [attached PDF](../tariffs.pdf), with light editing and clarifications. It discusses the tariff announcement of April 2025 and retains the historical figures used then.*
+
+As it's not often that a mathematical formula with Greek letters gets so much attention, lovers of equations might be excited(?) about the publicity for Trump's tariff formula … though they might be less thrilled about the impact on their stock portfolios, etc.
+The formula is:
+
+$$
+\Delta \tau_i = \frac{x_i - m_i}{\epsilon\,\varphi\,m_i}.
+$$
+
+While one explanation was provided by President Trump "himself" on [Saturday Night Live](https://youtu.be/VEle3pZRqmI?t=192), in this note I will offer a slightly different one.
+First, $x_i$ represents US exports of goods to country $i$, and $m_i$ means US imports of goods from that country.
+
+## The elasticity term
+
+What is $\epsilon$?
+If you know any economics (and even if you don't), you probably understand that increases in the price of a good generally lead to less demand for that good.
+But how much less?
+This is where $\epsilon$ comes in.
+It represents the price elasticity of demand for imports, where $q$ is quantity demanded, $p$ is price, and $\Delta$ represents the change in the indicated quantity:
+
+$$
+\epsilon = \frac{\Delta q}{q} \div \frac{\Delta p}{p}.
+$$
+
+In other words, $\epsilon$ indicates the estimated percentage change in quantity ($\Delta q/q$) for a given percentage change in price ($\Delta p/p$).^[Strictly speaking, "percentages" mean multiplying by 100, but this happens in both the numerator and the denominator, thus cancelling out.]
+With this sign convention, a fall in demand as prices rise means $\epsilon < 0$.
+
+If the goal of trade policy is to eliminate goods trade deficits, the required proportional change in imports is approximated by $(x_i-m_i)/m_i$, holding exports fixed and valuing imports at their initial prices.^[Much has been written on the folly (e.g., [by Maurice Obstfeld](https://www.brookings.edu/articles/the-us-trade-deficit-myths-and-realities/)) of having this as a goal of trade policy, so I see little chance that I can add much to that here.]
+So, using this approximation, we have:
+
+$$
+\epsilon = \frac{x_i - m_i}{m_i} \div \frac{\Delta p}{p}.
+$$
+
+{{< pagebreak >}}
+
+## From tariffs to prices
+
+Now we just need to figure out $\Delta p/p$.
+This is where tariffs come in.
+If the existing tariff is zero and we impose a tariff of $\tau_i$, then the change in the tariff rate is $\Delta\tau_i=\tau_i$.
+But perhaps the full amount of the tariff will not be passed along as a price increase.
+This is where $\varphi$, the assumed passthrough rate, comes in.
+Given an increase in tariff rates of $\Delta \tau_i$ and passthrough rate of $\varphi$, the proportional increase in prices will be $\Delta \tau_i\,\varphi$:
+
+$$
+\epsilon = \frac{x_i - m_i}{m_i} \div \left(\Delta \tau_i\,\varphi\right).
+$$
+
+Moving $\Delta \tau_i$ to the left and $\epsilon$ to the right, we have the now-famous formula:
+
+$$
+\Delta \tau_i = \frac{x_i - m_i}{\epsilon\,\varphi\,m_i}.
+$$
+
+The [USTR explanation](https://ustr.gov/sites/default/files/files/Issue_Areas/Presidential%20Tariff%20Action/Reciprocal%20Tariff%20Calculations.pdf) selects an import-demand elasticity with magnitude 4 and a passthrough rate of $\varphi=0.25$.
+In the signed notation above, that elasticity is $\epsilon=-4$.
+The formula then reduces to the goods trade deficit divided by imports:
+
+$$
+\Delta\tau_i = \frac{m_i-x_i}{m_i}.
+$$
+
+This is the calculated rate for eliminating the deficit in the simplified model.
+The announced rates were "generous" in that they were roughly half the calculated balancing rates, with a 10% baseline for other countries.^[The [April 2 announcement](https://www.whitehouse.gov/fact-sheets/2025/04/fact-sheet-president-donald-j-trump-declares-national-emergency-to-increase-our-competitive-edge-protect-our-sovereignty-and-strengthen-our-national-and-economic-security/) describes the 10% baseline and higher country-specific rates, with product and country exceptions. Apart from ignoring existing US tariffs, the USTR calculation assumes away offsetting exchange-rate effects, general-equilibrium effects, and retaliation.]
+
+## What the formula assumes
+
+The whole premise of the formula is that tariffs are, in part, passed along as increases in the prices of imports … so much for the idea that the suppliers of the imports would necessarily wear all the effects of the tariffs!
+Without price increases, the formula's demand channel implies there would be no change in imports, hence no narrowing of the trade deficit in goods.
+
+With the 2024 [imports of \$438.9 billion](https://ustr.gov/countries-regions/china-mongolia-taiwan/peoples-republic-china) used in my original note and the [announced tariff rate of 34%](https://www.whitehouse.gov/wp-content/uploads/2025/04/Annex-I.pdf), a fixed-quantity calculation puts the increase in the import bill from China at about \$37 billion under the assumed passthrough rate:
+
+$$
+\$438.9\text{ billion}\times 0.34\times 0.25
+\approx \$37\text{ billion}.
+$$
+
+However, researchers quoted by [FT Alphaville](https://www.ft.com/content/bbaa8daf-b7b0-4dca-bc23-c2e8eee6835d) argued that $\varphi=0.25$ was too low and a better estimate would be "very close to 1".
+With $\varphi=1$, the increase on this fixed-quantity basis would be close to \$150 billion.
+For the [European Union](https://ustr.gov/countries-regions/europe-middle-east/europe/european-union), the corresponding illustration in the original note exceeded \$120 billion.^[These illustrations use the 2024 trade figures quoted in April 2025; the live country pages now show later data. Here I also get to set aside general-equilibrium effects! They hold import quantities fixed to illustrate the price change, rather than estimating the final import bill or the net economic cost after trade adjusts.]
+
+To paraphrase one-time US senator [Everett Dirksen](https://web.archive.org/web/20040816153245/http://www.dirksencenter.org/print_emd_billionhere.htm), "a [few hundred] billion here, a [few hundred] billion there, and pretty soon you're talking real money."
+
+The [Typst source](tariffs.typ) for this version is also available.

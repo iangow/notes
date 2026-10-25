@@ -67,3 +67,17 @@ quarto preview blog.qmd --no-browser
    their code requires; the two portals do not execute the posts they link to.
 
 New posts do not need a LinkedIn counterpart or a LinkedIn date.
+
+### Republishing existing material
+
+When a LinkedIn post introduces an attached note, combine complementary material
+from the post and attachment into one Quarto source, removing duplicated openings.
+Use the verified original publication date, record substantial changes with
+`date-modified`, and identify the original post and any historical context.
+Keep the original PDF available as an archive, and produce HTML and a new Typst PDF
+from the combined source. Keep the intermediate Typst source when useful.
+Typst documents can use `filters/pdf-links.lua` with `pdf-link-base` to make
+relative links absolute in downloaded PDFs while retaining relative HTML links.
+
+Keep topic tags consistent between each note's `categories` and its topic list in
+`index.qmd`. Apply tool tags such as Polars when the note actually uses the tool.
