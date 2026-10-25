@@ -1,0 +1,116 @@
+---
+title: "Comparing skylines"
+author: Ian D. Gow
+date: 2025-08-28
+date-modified: 2026-10-25
+date-format: "D MMMM YYYY"
+categories: [Melbourne, R, Data curation]
+keywords: [Melbourne, Skylines, R, Web data]
+format:
+  html:
+    colorlinks: true
+    include-in-header:
+      text: |
+        <style>
+        main .cell-output-display { overflow-x: auto; }
+        main :not(pre) > code { white-space: normal; overflow-wrap: anywhere; }
+        </style>
+execute:
+  freeze: auto
+---
+
+*First published on [LinkedIn on 28 August 2025](https://www.linkedin.com/pulse/comparing-skylines-ian-gow-mspne/). The code and data snapshots below have been added for this version.*
+
+![Melbourne from the Shrine of Remembrance in January 2024. Photograph: [Shkuru Afshar / Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Melbourne_CBD_and_Ceremonial_Avenue_(in_2024)_as_seen_from_the_rooftop_of_Shrine_of_Remembrance.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).](skylines/melbourne-skyline-2024.jpg){fig-alt="Melbourne's skyline viewed from the rooftop of the Shrine of Remembrance, with the Ceremonial Avenue in the foreground."}
+
+As I enter my penultimate month in Melbourne, I find myself looking out the window more often than usual.
+Staying on the edge of the CBD (the Australian term for "downtown" or "city centre"), I was reminded of something I have often wondered: Where would the Melbourne skyline rank among the cities of the United States on the basis of its skyline?
+
+My intuition had told me that it would clearly fall behind New York and Chicago, but I found it difficult to think of a third-place US city that would outdo Melbourne's skyline.
+(Note I am thinking in largely quantitative terms---the scale and scope of the skyline---not aesthetic ones.)
+LA? No. Miami? Nup. And so on.
+
+But is there a meaningful way to measure skylines?
+A quick internet search turned up [this ranking](https://stacker.com/stories/travel/most-impressive-skylines-america-numbers) of the "most impressive skylines" in the US.
+This ranking uses two metrics: "skyscrapers taller than 150 meters" and "total height of skyscrapers taller than 150 meters".
+Using either metric, New York is first and Chicago is second.^[The Stacker article was published on 2 April 2018. The comparison here uses its published US figures alongside the Melbourne data available in August 2025.]
+
+Third place goes to Miami, with 42 skyscrapers over 150 metres and 7,251 metres on the second metric.
+Fourth is Houston, Texas, with 36 and 5,939.
+Los Angeles comes in fifth with 24 and 4,063.
+(I haven't been to Houston in a long time, but my recollection is of multiple clusters of skyscrapers, so I wonder if this metric combines them all.)
+
+But how do I get data for Melbourne?
+The linked article identifies its data source as [The Skyscraper Center](https://www.skyscrapercenter.com/explore-data), which does have data on other countries including Australia.
+However, getting these would cost money, so I looked for a free source.
+
+Fortunately, Wikipedia has [a page listing tall buildings in Melbourne](https://en.wikipedia.org/wiki/List_of_tallest_buildings_in_Melbourne), and ChatGPT got me close to having code to scrape the data for analysis (see [the original code](https://gist.github.com/iangow/c02b785072278006397e0e49a2573422)).
+There are a few decisions to be made.
+First, which metric of height?
+Wikipedia offers two metrics: *spire*, which includes spires and architectural details but not antenna masts, and *roof*, the roof height reported in its table.
+I focus on the roof metric, as it is more conservative (i.e., lower).
+Second, what should I do with buildings at exactly 150 metres?
+I excluded the one building in Melbourne with a listed roof height of exactly 150 metres, using the strict condition `roof_m > 150`.
+
+The punchline?
+With 76 buildings over 150 metres and a total roof height of 14,751 metres, Melbourne is well ahead of third-placed Miami in this table, but clearly behind Chicago (118 and 18,390 metres).
+My intuition is confirmed against these published benchmarks: Melbourne would slot into third place.
+
+## Reproducing the Melbourne numbers
+
+The code below uses a [small CSV snapshot](skylines/melbourne_2025-08-18.csv) extracted from the [Wikipedia revision of 18 August 2025](https://en.wikipedia.org/w/index.php?title=List_of_tallest_buildings_in_Melbourne&oldid=1306544759), the latest revision before I posted the original article.
+Keeping that snapshot makes the calculation reproducible as the live page changes.
+
+```{r}
+#| message: false
+library(dplyr)
+library(readr)
+
+melbourne <- read_csv("skylines/melbourne_2025-08-18.csv",
+                      show_col_types = FALSE)
+
+melbourne_summary <- melbourne |>
+  filter(roof_m > 150) |>
+  summarize(buildings = n(), total_roof_height_m = sum(roof_m))
+
+knitr::kable(melbourne_summary,
+             col.names = c("Buildings", "Total roof height (metres)"),
+             digits = 1, format.args = list(big.mark = ","))
+```
+
+The total is 14,750.8 metres, rounded to 14,751 in the original post.
+The [download script](https://github.com/iangow/notes/blob/main/scripts/get_skyline_data.R) recreates this CSV from the fixed Wikipedia revision.
+It caches the response under `RAW_DATA_DIR/skylines/` and writes the processed CSV under `DATA_DIR/skylines/`.
+The snapshot supplied with this note lets you run the analysis without downloading the page again.
+
+## The comparison
+
+```{r}
+#| label: tbl-comparison
+#| tbl-cap: Melbourne alongside the five US benchmarks used in the original post
+#| echo: false
+us <- read_csv("skylines/us_stacker_2018.csv", show_col_types = FALSE)
+
+comparison <- bind_rows(
+  us |> mutate(source = "Stacker, April 2018"),
+  melbourne_summary |>
+    transmute(city = "Melbourne", buildings,
+              total_height_m = total_roof_height_m,
+              source = "Wikipedia, August 2025")
+) |>
+  arrange(desc(buildings), desc(total_height_m)) |>
+  select(city, buildings, total_height_m, source)
+
+knitr::kable(comparison,
+             col.names = c("City", "Buildings", "Total height (metres)", "Source"),
+             digits = 0, format.args = list(big.mark = ","))
+```
+
+There are limits to the comparison.
+The two sources describe different dates, and I have retained the US totals as Stacker reported them.
+The Melbourne calculation uses roof heights and a strict cutoff; Stacker's introduction describes buildings *at or above* 150 metres and cites The Skyscraper Center, whose standard rankings use [architectural height](https://www.skyscrapercenter.com/criteria), including spires.
+Roof height is also distinct from height to the highest occupied floor.
+A comparison for a common date would require reconciling these choices and the geographical boundaries of each city.
+
+The [data-source record](skylines/sources.json) documents the original post, code, data revisions, and photograph attribution.
+The source for this note is [available on GitHub](https://github.com/iangow/notes/blob/main/published/skylines.qmd).
