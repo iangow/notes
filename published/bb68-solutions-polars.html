@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-10-26">
+
+<title>Solutions for Ball and Brown (1968) – notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f418161beb48e0141c760e455f12af2c.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bda65858d638fb4c085804bc14c4d351.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-aaa1e35cf1f5b6230ece6ed5b6fa3d4a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bda65858d638fb4c085804bc14c4d351.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../assets/notes-theme.css?v=0c9637d092a0">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../blog.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#principal-results-of-ball1968ub" id="toc-principal-results-of-ball1968ub" class="nav-link active" data-scroll-target="#principal-results-of-ball1968ub"><span class="header-section-number">1</span> Principal results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (1968)</span></a>
+  <ul class="collapse">
+  <li><a href="#discussion-questions" id="toc-discussion-questions" class="nav-link" data-scroll-target="#discussion-questions"><span class="header-section-number">1.1</span> Discussion questions</a></li>
+  </ul></li>
+  <li><a href="#replicating-ball1968ub" id="toc-replicating-ball1968ub" class="nav-link" data-scroll-target="#replicating-ball1968ub"><span class="header-section-number">2</span> Replicating <span class="citation" data-cites="Ball:1968ub">Ball and Brown (1968)</span></a>
+  <ul class="collapse">
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises"><span class="header-section-number">2.1</span> Exercises</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">3</span> References</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="bb68-solutions-polars.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Solutions for Ball and Brown (1968)</h1>
+<p class="subtitle lead">Updated Python Polars solutions</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Accounting research</div>
+    <div class="quarto-category">Replication</div>
+    <div class="quarto-category">Python</div>
+    <div class="quarto-category">Polars</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">26 October 2026</p>
+    </div>
+  </div>
+  
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">26 October 2026</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>These solutions accompany the <a href="https://iangow.github.io/era_pl_book/bb68.html">Ball and Brown (1968) chapter</a> of <em>Empirical Research in Accounting: Tools and Methods</em>. This notes edition updates the solutions discussed in the original 2026-05-12 post with subsequent corrections and clarifications; it is not a facsimile of the original LinkedIn attachment. The calculations were freshly executed on 26 October 2026.</p>
+<p>The calculations use a local Parquet repository, with <code>DATA_DIR</code> pointing to that repository. See the book’s <a href="https://iangow.github.io/era_pl_book/intro.html">data setup instructions</a> and the accompanying <a href="linkedin-solutions-requirements.txt">Python requirements</a>. The QMD uses the existing <code>era_pl_sols</code> Jupyter kernel, whose environment supplies those packages; its code does not import either solutions repository. Changes in the input data or software can change estimates and timings.</p>
+<section id="principal-results-of-ball1968ub" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Principal results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span></h1>
+<section id="discussion-questions" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="discussion-questions"><span class="header-section-number">1.1</span> Discussion questions</h2>
+<ol type="1">
+<li>What is the research question of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span>? Do you find the paper to be persuasive?</li>
+</ol>
+<p>There are a number of possible answers here. One answer is that the paper examines whether accounting numbers are <em>meaningful</em> in a way that seems necessary (but not sufficient) for a claim that they are <em>useful</em>. This is (by design) a fairly limited question, but one that is counterposed to a claim that accounting numbers are meaningless.</p>
+<p>Relative to the limited question that it asks, the evidence in <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> seems quite persuasive.</p>
+<ol start="2" type="1">
+<li>What do you notice about the references in <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968, pp. 177–178</a>)</span>?</li>
+</ol>
+<p>The striking thing for me is how recent (at that time) most of the references are. Most come from 1964 or later. Clearly this was an exciting time to be doing empirical accounting research.</p>
+<ol start="3" type="1">
+<li>Given that “the most fundamental result” of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> relates to an association or correlation, is it correct to say that the paper provides no evidence on causal linkages? Does this also mean that <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> is a “merely” descriptive paper according to the taxonomy of research papers outlined in <a href="https://iangow.github.io/era_pl_book/causal-inf.html">Chapter 4</a>? How might the results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> be represented in a causal diagram assuming that accounting information is meaningful and markets are efficient? Would an alternative causal diagram be assumed by a critic who viewed accounting information as meaningless?</li>
+</ol>
+<p>One possible causal diagram is given in <a href="#fig-bb68-dag" class="quarto-xref">Figure&nbsp;1</a>.<br>
+Note that there is no solid directed arrow connecting <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> here. Clearly, if markets are efficient (so do not respond to useless or meaningless information) then an arrow from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span> would imply that accounting information is useful.</p>
+<p>But arguably <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> only seek to show that accounting information is meaningful in that it is driven by fundamental information in a way that is correlated with how fundamental information affects share prices. This will lead to accounting reporting being associated with stock returns (represented as a dashed line), which is precisely what <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> find.</p>
+<div id="cell-fig-bb68-dag" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div id="fig-bb68-dag" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bb68-dag-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="bb68-solutions-polars_files/figure-html/fig-bb68-dag-output-1.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bb68-dag-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: BB68 causal diagram
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>One alternative causal diagram would be <a href="#fig-bb68-dag-alt" class="quarto-xref">Figure&nbsp;2</a>, which has accounting reports directly causing stock returns but having no connection to fundamental information. In an efficient market, reports without connection to fundamental information should have no effect on returns, so finding an association between returns and such reports would imply market inefficiency.</p>
+<div id="cell-fig-bb68-dag-alt" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div id="fig-bb68-dag-alt" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bb68-dag-alt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="bb68-solutions-polars_files/figure-html/fig-bb68-dag-alt-output-1.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bb68-dag-alt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Alternative causal diagram
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Under the taxonomy in <a href="https://iangow.github.io/era_pl_book/causal-inf.html">Chapter 4</a>, I would not classify BB68 as merely descriptive. Its association is used to assess an explanation in which underlying economic information causes both accounting earnings and returns. That is a causal interpretation involving a common cause, even though it does not identify the causal effect of publishing an accounting report on prices. The empirical association by itself cannot establish that particular causal explanation; its force depends on the assumptions about reporting and market efficiency.</p>
+<ol start="4" type="1">
+<li>Describe how Figure 1 of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> supports each of principal results identified by <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>.</li>
+</ol>
+<p><span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019, p. 414</a>)</span> identify three main results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span>: “The most fundamental result was that accounting earnings and stock returns were correlated. … Nevertheless, annual accounting earnings lacked timeliness. … After the earnings announcement month, the API (which cumulated abnormal returns) continued to drift in the same direction.”</p>
+<p>The first result (correlation) is shown by the divergence of the two lines for each variable in Figure 1. The second result (limited timeliness) is evidenced by most of the separation occurring before <span class="math inline">\(t = 0\)</span>. This does not require a literally zero announcement response: much of the information has already been reflected in prices. The third result is evinced by the lines appearing to continue to diverge further after <span class="math inline">\(t = 0\)</span>.</p>
+<ol start="5" type="1">
+<li>Consider the causal diagrams you created above. Do the results of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> provide more support for one causal diagram than the other?</li>
+</ol>
+<p>The results provide more support for the diagram in which accounting reports reflect fundamental information. If accounting reports were unrelated to fundamentals, an efficient market should not price them. The evidence is not a clean causal test, but it is difficult to reconcile with a strong claim that accounting income is meaningless.</p>
+<ol start="6" type="1">
+<li>Compare Figure 1 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span> with Figure 1 of BB68. What is common between the two figures? What is different?</li>
+</ol>
+<p>Both figures show divergence between good-news and bad-news portfolios, and both show evidence consistent with post-earnings announcement drift. The <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span> figure suggests somewhat more information being conveyed around the earnings announcement, while still showing that much of the return movement occurs before the announcement. The <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span> lines are also constructed to be mirror images after subtracting their average; the BB68 lines are not.</p>
+<ol start="7" type="1">
+<li>What does “less their average” mean in the title of Figure 1 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>? What effect does this have on the plot? (Does it make this plot different from Figure 1 of BB68? Is information lost in the process?)</li>
+</ol>
+<p>It means that, in each period, the average of the two plotted series is subtracted from each series. This centers the plot and makes the lines symmetric. That differs from Figure 1 of BB68 because the separate levels of the good-news and bad-news lines are no longer visible. Some information is lost, as while the transformation preserves the spread, the two original paths are lost.</p>
+<ol start="8" type="1">
+<li><span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019, p. 418</a>)</span> say “in this replication we address two issues with the BB68 significance tests.” Do you understand the points being made here?</li>
+</ol>
+<p>Clearly, “no” is a possible answer here. If you answered “yes”, then hopefully you explained that the statistical significance tests in <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> used <span class="math inline">\(\chi^2\)</span> statistics for each month from <span class="math inline">\(t-11\)</span> to <span class="math inline">\(t+6\)</span>. However, the hypotheses more clearly relate to the pre-announcement, announcement, and post-announcement periods, not to individual months. Hence, the <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span> approach of aggregating data from these periods makes sense.</p>
+<p>The second difference is that they use randomization inference to evaluate significance. Randomly reassigning news groups constructs an empirical null distribution rather than relying on the original monthly tests. This does not automatically make a test robust to every form of time-series or cross-firm dependence. See the <a href="https://iangow.github.io/era_pl_book/natural-revisited.html#fhk-inference">discussion of randomization inference</a>.</p>
+<ol start="9" type="1">
+<li><span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019, p. 418</a>)</span> also say “the persistence of PEAD over time is evidence it does not constitute market inefficiency.” What do you make of this argument?</li>
+</ol>
+<p>This is an unconventional argument to be sure. Persistence could mean the anomaly reflects risk, limits to arbitrage, trading costs, or some other rational mechanism. But persistence alone does not establish that PEAD is not an inefficiency. We will return to this topic when we study PEAD in Chapter 14.</p>
+<ol start="10" type="1">
+<li>What is the minimum amount of information that our hypothetical genie needs to provide to enable formation of the portfolios underlying <em>TI</em>, <em>NI</em>, and <em>II</em>? What are the rules for construction of each of these portfolios?</li>
+</ol>
+<div id="tbl-bb68-letters" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-bb68-letters-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Information and portfolio rules
+</figcaption>
+<div aria-describedby="tbl-bb68-letters-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Measure</th>
+<th>Information from the genie</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>TI</em></td>
+<td>The sign of each stock’s monthly abnormal return</td>
+<td>Choose the favorable direction separately each month.</td>
+</tr>
+<tr class="even">
+<td><em>NI</em></td>
+<td>The sign of each stock’s compounded abnormal return over months <span class="math inline">\(-11\)</span> through <span class="math inline">\(0\)</span></td>
+<td>Choose a long or short direction once at the start and retain it.</td>
+</tr>
+<tr class="odd">
+<td><em>II</em> (called <em>AI</em> here)</td>
+<td>The sign of each stock’s annual income surprise</td>
+<td>Choose the direction once at the start: long for good income news, short for bad news.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The relevant returns are abnormal returns, not raw returns. BB68’s indexes abstract from market effects and begin with equal amounts assigned to each stock; <em>II</em> uses equal initial exposure per firm, rather than allocating one half of the capital to each news group irrespective of their sizes. <em>TI</em> allows the direction to change each month, while <em>NI</em> and <em>II</em> fix it for the 12-month period. As returns accumulate, the values of individual positions can change, so equal initial amounts do not mean equal position values throughout the year. The genie supplies no magnitudes or rankings needed to optimize unequal initial allocations. For <em>II</em>, the income information must be supplied before the investment window, making this an informational thought experiment rather than a feasible trading strategy.</p>
+<ol start="11" type="1">
+<li><span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> observe a ratio of <em>NI</em> to <em>TI</em> of about 0.23. What do we expect this ratio to be? Does this ratio depend on the information content of accounting information?</li>
+</ol>
+<p>A simple illustrative model is a coin game in which a correct guess wins $1 and an incorrect guess loses $1. Independent, equally likely wins and losses let us compare knowing every monthly outcome with knowing only the sign of their annual total. This is an additive, equal-magnitude approximation, not an exact model of compounded stock returns.</p>
+<p>If we have 12 coin tosses, the information we can use for <em>TI</em> is the outcome of each toss. As such, <em>TI</em> should give us $12. The information we can use for <em>NI</em> is whether there are more heads (in which case we would bet “heads” on each toss) or more tails. We can use the <code>get_ni</code> function below to work out the value of <em>NI</em> in this coin game.</p>
+<div id="3cda90c0" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_ni(n_tosses):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    n_heads <span class="op">=</span> np.arange(n_tosses <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    prob <span class="op">=</span> np.fromiter(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        (math.comb(n_tosses, <span class="bu">int</span>(x)) <span class="cf">for</span> x <span class="kw">in</span> n_heads),</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        dtype<span class="op">=</span><span class="bu">float</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    prob <span class="op">=</span> prob <span class="op">/</span> prob.<span class="bu">sum</span>()</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> n_heads <span class="op">-</span> (n_tosses <span class="op">-</span> n_heads)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>((prob <span class="op">*</span> np.<span class="bu">abs</span>(value)).<span class="bu">sum</span>())</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>get_ni(<span class="dv">12</span>) <span class="op">/</span> <span class="dv">12</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<pre><code>0.2255859375</code></pre>
+</div>
+</div>
+<p>This is almost exactly the ratio implied by values reported in <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span>: <span class="math inline">\(0.2257 \approxeq 0.165 / 0.731\)</span>. This ratio does not depend on the information content of accounting information. It’s not clear that this ratio is relevant to the research questions of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>. Its agreement with the toy calculation can be interpreted as some evidence consistent with market efficiency under the analogy’s assumptions, rather than as a general or uniquely identifying prediction.</p>
+<ol start="12" type="1">
+<li>Consider the paragraph in <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019, p. 418</a>)</span> beginning “an innovation in BB68 was to estimate …”. How do the discussions of these results differ between <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> and <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>?</li>
+</ol>
+<p>While <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> does talk about portfolios, the main difference seems to be in how the two papers describe the portfolio construction. By 2019, constructing hedge (long-short) portfolios had become a common part of research examining how capital markets process information. But in 1968, the approach used in <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> was novel. In fact, the calculation of the ratio of <em>II</em> to <em>NI</em> is a rather astounding innovation relative to research at the time (consider the innovative FFJR study, published in 1969).</p>
+<ol start="13" type="1">
+<li>Consider column (4) of Table 2 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>. Is an equivalent set of numbers reported in BB68? What is the underlying investment strategy associated with this column?</li>
+</ol>
+<p>Not exactly. We can calculate it for the entire sample period of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> as <span class="math inline">\(1.060 - 0.914 = 0.146\)</span>. This appears to be lower than the value in most years reported in Table 2 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>.</p>
+<p>The underlying investment strategy involves going long in the good news firms and short the bad news firms<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>BB68’s Table 5 reports pooled net-income-model APIs at month <span class="math inline">\(-1\)</span>, rather than a year-by-year column of these portfolio spreads. The <span class="math inline">\(0.146\)</span> calculation illustrates that pooled spread; it is neither a year-specific reproduction of the later paper’s Table 2 nor the original BB68 <em>AI</em> statistic. A long position in an equal-weighted good-news portfolio and an equally sized short position in a bad-news portfolio compares two group averages. BB68’s <em>AI</em> calculation additionally weights groups by their numbers of firm-year observations. The strategy also uses future earnings signs before they are available, so this is an informational thought experiment with lookahead, rather than a feasible pre-announcement trading rule. Month <span class="math inline">\(-1\)</span> is only the closest monthly comparison to the later paper’s more precisely defined daily event boundary.</p>
+<ol start="14" type="1">
+<li>Heading 6.3 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span> is “Does ‘useful’ disprove ‘meaningless’?” Do you think that “not meaningless” implies “not useless”? Which questions (or facts) does BB68 address in these terms?</li>
+</ol>
+<p>I would say that “not meaningless” is a necessary, but not sufficient, condition for “not useless”. <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> seem content with a “not meaningless” conclusion, leaving “not useless” to future research (arguably they had done enough for one paper already).</p>
+</section>
+</section>
+<section id="replicating-ball1968ub" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Replicating <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span></h1>
+<div id="cell-fig-bb-1" class="cell" data-execution_count="6">
+<div class="cell-output cell-output-display" data-execution_count="6">
+<div id="fig-bb-1" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Cumulative abnormal returns for good versus bad earnings news around annual earnings announcements.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bb-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="bb68-solutions-polars_files/figure-html/fig-bb-1-output-1.png" alt="Cumulative abnormal returns for good versus bad earnings news around annual earnings announcements." width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bb-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Replication of Figure 1 of Ball and Brown (1968).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="exercises" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="exercises"><span class="header-section-number">2.1</span> Exercises</h2>
+<ol type="1">
+<li>From the data below, we see that the upper bound for the tenth decile is about US$544 billion. How can we reconcile this with the existence of firms with market capitalizations over US$1 trillion? <em>Bonus:</em> Using data from <code>crsp.msf</code>, identify the firm whose market capitalization was US$544 billion in December 2020? Why do we need to group by <code>permco</code>, not <code>permno</code>, to find the answer? (<em>Hint:</em> For the bonus question, you can use data from <code>crsp.msf</code> and <code>crsp.stocknames</code>. Why do we need to group by <code>permco</code>, not <code>permno</code>, to find the answer?)</li>
+</ol>
+<div id="1e6906bc" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    me_breakpoints_raw</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"month"</span>) <span class="op">==</span> pl.date(<span class="dv">2020</span>, <span class="dv">12</span>, <span class="dv">1</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<div>
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">month</th>
+<th data-quarto-table-cell-role="th">decile</th>
+<th data-quarto-table-cell-role="th">cutoff</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2020-12-01</td>
+<td>1</td>
+<td>327.37</td>
+</tr>
+<tr class="even">
+<td>2020-12-01</td>
+<td>2</td>
+<td>772.82</td>
+</tr>
+<tr class="odd">
+<td>2020-12-01</td>
+<td>3</td>
+<td>1464.26</td>
+</tr>
+<tr class="even">
+<td>2020-12-01</td>
+<td>4</td>
+<td>2466.2</td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="even">
+<td>2020-12-01</td>
+<td>7</td>
+<td>9723.16</td>
+</tr>
+<tr class="odd">
+<td>2020-12-01</td>
+<td>8</td>
+<td>17140.12</td>
+</tr>
+<tr class="even">
+<td>2020-12-01</td>
+<td>9</td>
+<td>37015.1</td>
+</tr>
+<tr class="odd">
+<td>2020-12-01</td>
+<td>10</td>
+<td>543614.58</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="349eb6ac" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>co_names <span class="op">=</span> (</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    stocknames</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"permco"</span>, <span class="st">"namedt"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"permco"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    .agg(comnam<span class="op">=</span>pl.col(<span class="st">"comnam"</span>).last())</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>top_stocks <span class="op">=</span> (</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    msf</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"date"</span>) <span class="op">==</span> pl.date(<span class="dv">2020</span>, <span class="dv">12</span>, <span class="dv">31</span>))</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    .with_columns(mktcap<span class="op">=</span>pl.col(<span class="st">"prc"</span>).<span class="bu">abs</span>() <span class="op">*</span> pl.col(<span class="st">"shrout"</span>) <span class="op">/</span> <span class="dv">1000</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    .join(</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        stocknames</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        .select(<span class="st">"permno"</span>, <span class="st">"permco"</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        .unique(), </span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span><span class="st">"permno"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"permco"</span>, <span class="st">"date"</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    .agg(</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        totmktcap<span class="op">=</span>pl.col(<span class="st">"mktcap"</span>).<span class="bu">sum</span>(),</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        n_stocks<span class="op">=</span>pl.<span class="bu">len</span>(),</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"totmktcap"</span>) <span class="op">&gt;=</span> math.floor(max_cutoff))</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    .join(co_names, on<span class="op">=</span><span class="st">"permco"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"totmktcap"</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>top_stocks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<div>
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">permco</th>
+<th data-quarto-table-cell-role="th">date</th>
+<th data-quarto-table-cell-role="th">totmktcap</th>
+<th data-quarto-table-cell-role="th">n_stocks</th>
+<th data-quarto-table-cell-role="th">comnam</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>540</td>
+<td>2020-12-31</td>
+<td>543614.57524</td>
+<td>2</td>
+<td>"BERKSHIRE HATHAWAY INC DEL"</td>
+</tr>
+<tr class="even">
+<td>54084</td>
+<td>2020-12-31</td>
+<td>657222.96</td>
+<td>1</td>
+<td>"META PLATFORMS INC"</td>
+</tr>
+<tr class="odd">
+<td>53453</td>
+<td>2020-12-31</td>
+<td>677340.152983</td>
+<td>1</td>
+<td>"TESLA INC"</td>
+</tr>
+<tr class="even">
+<td>41593</td>
+<td>2020-12-31</td>
+<td>707732.98458</td>
+<td>13</td>
+<td>"VANGUARD INDEX FUNDS"</td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="even">
+<td>15473</td>
+<td>2020-12-31</td>
+<td>1.6382e6</td>
+<td>1</td>
+<td>"AMAZON COM INC"</td>
+</tr>
+<tr class="odd">
+<td>8048</td>
+<td>2020-12-31</td>
+<td>1.6784e6</td>
+<td>1</td>
+<td>"MICROSOFT CORP"</td>
+</tr>
+<tr class="even">
+<td>37493</td>
+<td>2020-12-31</td>
+<td>1.8526e6</td>
+<td>306</td>
+<td>"ISHARES TRUST"</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>2020-12-31</td>
+<td>2.2323e6</td>
+<td>1</td>
+<td>"APPLE INC"</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>This firm is “BERKSHIRE HATHAWAY INC DEL”. Note that the cut-offs provided by <a href="https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_me_breakpoints.html">Ken French</a> are for “NYSE stocks that have a CRSP share code of 10 or 11 and have good shares and price data” and “exclude closed end funds and REITs”. There are larger stocks, but these are not listed on the NYSE (e.g., Microsoft and Apple are listed on the NASDAQ).</p>
+<p>There are two classes of stock for Berkshire Hathaway, so we need to add these to get the total market capitalization. Each class will have its own <code>permno</code>, but will share a <code>permco</code> with the other class.</p>
+<ol start="2" type="1">
+<li>To keep things straightforward, we focused on firms that have returns for each month in the <span class="math inline">\((t - 11, t+ 6)\)</span> window. Can you tell what approach <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span> took with regard to this issue?</li>
+</ol>
+<p>It is not clear from <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span> exactly what they did. Our restriction makes the plot easier to interpret because every event contributes a complete event-window return path, but it may also discard valid partial histories.</p>
+<ol start="3" type="1">
+<li>Table 2 of <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span> measures cumulative abnormal returns as the “cumulative raw return minus cumulative size decile portfolio to which the firm begins.” Apart from the use of a size-decile portfolio rather than some other market index, how does this measure differ from the Abnormal Performance Index (API) defined on p.168 of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span>? Adjust the measure depicted in the replication of Figure 1 to more closely reflect the API definition used in <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span>. Does this tweak significantly affect the results? Which approach seems most appropriate?</li>
+</ol>
+<p><span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> instead accumulate monthly abnormal returns. Each approach is feasible (conditional on having a genie supply the income information needed), but implies different strategies for reweighting the market index over time. It seems that <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> will involve more trading to rebalance the market side of the portfolio, so may be more costly to implement in practice.</p>
+<div id="00c74f18" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>alt_plot_data <span class="op">=</span> (</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    merged</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"ret"</span>).is_not_null())</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        aret_ew<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"ew_ret"</span>),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        aret_vw<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"vw_ret"</span>),</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"gvkey"</span>, <span class="st">"datadate"</span>, <span class="st">"rel_td"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        cs.starts_with(<span class="st">"aret"</span>).add(<span class="dv">1</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        .cum_prod().over(<span class="st">"gvkey"</span>, <span class="st">"datadate"</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"rel_td"</span>, <span class="st">"earn_gn"</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    .agg(cs.starts_with(<span class="st">"aret"</span>).mean())</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        pl.when(pl.col(<span class="st">"earn_gn"</span>))</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        .then(pl.lit(<span class="st">"Good"</span>))</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        .otherwise(pl.lit(<span class="st">"Bad"</span>))</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        .alias(<span class="st">"Earnings news"</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>As can be seen in <a href="#fig-alt-api" class="quarto-xref">Figure&nbsp;4</a>, making this tweak does not materially change the qualitative pattern in the figure.</p>
+<div id="cell-fig-alt-api" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    alt_plot_data</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    .ggplot(</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        aes(x<span class="op">=</span><span class="st">"rel_td"</span>, y<span class="op">=</span><span class="st">"aret_ew"</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>            linetype<span class="op">=</span><span class="st">"Earnings news"</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>            group<span class="op">=</span><span class="st">"Earnings news"</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    .add_theme(legend_position<span class="op">=</span><span class="st">"bottom"</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<div id="fig-alt-api" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-alt-api-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="bb68-solutions-polars_files/figure-html/fig-alt-api-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-alt-api-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Plot with alternative approach to accumulating returns
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The baseline difference of buy-and-hold returns is</p>
+<p><span class="math display">\[\prod_m(1+r_{jm})-\prod_m(1+r^b_{jm}),\]</span></p>
+<p>whereas a BB68-style API averages firm-level products of monthly abnormal gross returns:</p>
+<p><span class="math display">\[API_M=\frac{1}{N}\sum_j\prod_{m=-11}^{M}(1+r_{jm}-r^b_{jm}).\]</span></p>
+<p>Subtracting one from the API aligns its starting value with an abnormal-return series starting at zero. These quantities generally differ because subtracting a compounded benchmark is not the same as compounding monthly differences. The persistence of good/bad-news separation in the plot is a qualitative comparison, not a statistical test of equality between the methods. For a fixed stock-versus-benchmark buy-and-hold comparison, the first measure has the clearer interpretation. For reproducing BB68’s API and its <em>AI</em>/<em>NI</em> calculations, the monthly-abnormal-return product is the relevant definition. The choice should follow the intended investment or informational comparison.</p>
+<ol start="4" type="1">
+<li>Create an alternative version of <a href="#fig-bb-1" class="quarto-xref">Figure&nbsp;3</a> using the sign of “news” about cash flows in the place of income news. Do your results broadly line up with those in Panel A of Figure 2 of <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span>? Do these results imply that accounting income is inherently more informative than cash flows from operations? Why or why not?</li>
+</ol>
+<p>The four curves in <a href="#fig-cfo-news" class="quarto-xref">Figure&nbsp;5</a> broadly follow the ordering in Panel A of Nichols and Wahlen’s Figure 2. The larger separation between the income-news portfolios suggests a stronger return association in this sample under these definitions of news. It does not establish that accounting income is inherently more informative than cash flows from operations. Accrual accounting can reduce timing noise in cash receipts and payments, making income a better measure of current performance in some settings. The comparison also depends on the expectations model, firms, periods, and return window. Separate sorts place different firms in the good- and bad-news portfolios; they do not hold the other signal constant. Cash flows may add to information in income, and vice versa. An incremental-information analysis would examine both signals together; these plots alone do not establish a universal ranking or a causal disclosure effect.</p>
+<p>Note that I make a small <code>portfolio_plot_data()</code> function that creates a <code>portfolio</code> variable that is a string that can be used to label a plot, as seen in <a href="#fig-cfo-news" class="quarto-xref">Figure&nbsp;5</a>.</p>
+<div id="f76b284c" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> portfolio_plot_data(signal):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        plot_data_raw</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        .group_by(<span class="st">"rel_td"</span>, signal)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>        .agg(cs.ends_with(<span class="st">"ret"</span>).mean())</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        .with_columns(</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>            aret_ew<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"ew_ret"</span>),</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>            aret_vw<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"vw_ret"</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>            portfolio<span class="op">=</span>pl.when(pl.col(signal))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>            .then(pl.lit(signal))</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>            .otherwise(pl.lit(signal.replace(<span class="st">"_gn"</span>, <span class="st">"_bn"</span>))),</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        .select(<span class="st">"rel_td"</span>, <span class="st">"portfolio"</span>, <span class="st">"aret_ew"</span>, <span class="st">"aret_vw"</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>plot_data_news <span class="op">=</span> pl.concat([</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    portfolio_plot_data(<span class="st">"cfo_gn"</span>),</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    portfolio_plot_data(<span class="st">"earn_gn"</span>),</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>]).collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-fig-cfo-news" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    plot_data_news</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .ggplot(</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        aes(x<span class="op">=</span><span class="st">"rel_td"</span>, y<span class="op">=</span><span class="st">"aret_ew"</span>, color<span class="op">=</span><span class="st">"portfolio"</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    .add_theme(legend_position<span class="op">=</span><span class="st">"bottom"</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<div id="fig-cfo-news" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cfo-news-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="bb68-solutions-polars_files/figure-html/fig-cfo-news-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cfo-news-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Abnormal performance index by sign of cash flow and earnings news
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ol start="5" type="1">
+<li>Create an alternative version of the figure above focused on the extreme earnings deciles in place of the good-bad news dichotomy. Do your results broadly line up with those in Panel B of Figure 2 of <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span>?</li>
+</ol>
+<p>In the code below, I use <code>pl.concat()</code> to stack two data frames—one for extreme deciles of earnings news and one for extreme deciles of cash-flow news—to create <code>plot_data_extreme</code>.</p>
+<div id="d8535cf0" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>plot_data_extreme <span class="op">=</span> (</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    pl.concat([</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        (</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>            plot_data_raw</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>            .<span class="bu">filter</span>(pl.col(<span class="st">"earn_decile"</span>).is_in([<span class="dv">1</span>, <span class="dv">10</span>]))</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>            .group_by(<span class="st">"rel_td"</span>, <span class="st">"earn_decile"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>            .agg(cs.ends_with(<span class="st">"ret"</span>).mean())</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>            .with_columns(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>                aret_ew<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"ew_ret"</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                aret_vw<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"vw_ret"</span>),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                portfolio<span class="op">=</span>pl.when(pl.col(<span class="st">"earn_decile"</span>) <span class="op">==</span> <span class="dv">10</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>                .then(pl.lit(<span class="st">"earn_decile_10"</span>))</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>                .otherwise(pl.lit(<span class="st">"earn_decile_1"</span>)),</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>            .select(<span class="st">"rel_td"</span>, <span class="st">"portfolio"</span>, <span class="st">"aret_ew"</span>, <span class="st">"aret_vw"</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        (</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>            plot_data_raw</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>            .<span class="bu">filter</span>(pl.col(<span class="st">"cfo_decile"</span>).is_in([<span class="dv">1</span>, <span class="dv">10</span>]))</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>            .group_by(<span class="st">"rel_td"</span>, <span class="st">"cfo_decile"</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>            .agg(cs.ends_with(<span class="st">"ret"</span>).mean())</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>            .with_columns(</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>                aret_ew<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"ew_ret"</span>),</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>                aret_vw<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"vw_ret"</span>),</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>                portfolio<span class="op">=</span>pl.when(pl.col(<span class="st">"cfo_decile"</span>) <span class="op">==</span> <span class="dv">10</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>                .then(pl.lit(<span class="st">"cfo_decile_10"</span>))</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>                .otherwise(pl.lit(<span class="st">"cfo_decile_1"</span>)),</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>            .select(<span class="st">"rel_td"</span>, <span class="st">"portfolio"</span>, <span class="st">"aret_ew"</span>, <span class="st">"aret_vw"</span>)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    ])</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>It is then easy to plot the data in <code>plot_data_extreme</code> to create <a href="#fig-ext-decs" class="quarto-xref">Figure&nbsp;6</a>.</p>
+<div id="cell-fig-ext-decs" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    plot_data_extreme</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    .ggplot(aes(x<span class="op">=</span><span class="st">"rel_td"</span>, y<span class="op">=</span><span class="st">"aret_ew"</span>, color<span class="op">=</span><span class="st">"portfolio"</span>))</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    .add_theme(legend_position<span class="op">=</span><span class="st">"bottom"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="15">
+<div id="fig-ext-decs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ext-decs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="bb68-solutions-polars_files/figure-html/fig-ext-decs-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ext-decs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Plot with extreme deciles
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The results broadly line up with Panel B of Figure 2 in <span class="citation" data-cites="Nichols:2004tb">Nichols and Wahlen (<a href="#ref-Nichols:2004tb" role="doc-biblioref">2004</a>)</span>. Using extreme deciles produces a cleaner spread than simply splitting at zero, which is what we would expect if the magnitude of the earnings or cash-flow surprise matters.</p>
+<ol start="6" type="1">
+<li>Calculate <em>AI</em> by year following the formula on p.&nbsp;175 of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> (there denoted as <span class="math inline">\(II_0\)</span>).</li>
+</ol>
+<div id="5fa11e7b" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>api_returns <span class="op">=</span> (</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    merged</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"ret"</span>).is_not_null())</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        api_ew<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"ew_ret"</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        api_vw<span class="op">=</span>pl.col(<span class="st">"ret"</span>) <span class="op">-</span> pl.col(<span class="st">"vw_ret"</span>),</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"gvkey"</span>, <span class="st">"datadate"</span>, <span class="st">"rel_td"</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"api_ew"</span>, <span class="st">"api_vw"</span>).add(<span class="dv">1</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        .cum_prod().over(<span class="st">"gvkey"</span>, <span class="st">"datadate"</span>).sub(<span class="dv">1</span>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"rel_td"</span>) <span class="op">==</span> <span class="dv">0</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    .select(<span class="st">"gvkey"</span>, <span class="st">"datadate"</span>, <span class="st">"year"</span>, <span class="st">"earn_gn"</span>, <span class="st">"api_ew"</span>, <span class="st">"api_vw"</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    .collect()</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>ai_data <span class="op">=</span> (</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    api_returns</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    .with_columns(news_sign<span class="op">=</span>pl.when(pl.col(<span class="st">"earn_gn"</span>)).then(<span class="dv">1</span>).otherwise(<span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"year"</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    .agg(</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>        ai_ew<span class="op">=</span>(pl.col(<span class="st">"news_sign"</span>) <span class="op">*</span> pl.col(<span class="st">"api_ew"</span>)).mean(),</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>        ai_vw<span class="op">=</span>(pl.col(<span class="st">"news_sign"</span>) <span class="op">*</span> pl.col(<span class="st">"api_vw"</span>)).mean(),</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"year"</span>)</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>ai_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<div>
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">year</th>
+<th data-quarto-table-cell-role="th">ai_ew</th>
+<th data-quarto-table-cell-role="th">ai_vw</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1988</td>
+<td>0.115339</td>
+<td>0.116284</td>
+</tr>
+<tr class="even">
+<td>1989</td>
+<td>0.166923</td>
+<td>0.164199</td>
+</tr>
+<tr class="odd">
+<td>1990</td>
+<td>0.198726</td>
+<td>0.203671</td>
+</tr>
+<tr class="even">
+<td>1991</td>
+<td>0.163895</td>
+<td>0.185409</td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="even">
+<td>1999</td>
+<td>0.098588</td>
+<td>0.082749</td>
+</tr>
+<tr class="odd">
+<td>2000</td>
+<td>0.214325</td>
+<td>0.241051</td>
+</tr>
+<tr class="even">
+<td>2001</td>
+<td>0.183881</td>
+<td>0.18344</td>
+</tr>
+<tr class="odd">
+<td>2002</td>
+<td>0.107628</td>
+<td>0.104399</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>AI weights every firm equally; it is not an equal-weighted average of two news-group means when their counts differ. The stock-level API increments use the assigned compounded-monthly-abnormal-return definition.</p>
+<ol start="7" type="1">
+<li>Calculate <em>NI</em> by year following the formula on p.&nbsp;175 of <span class="citation" data-cites="Ball:1968ub">Ball and Brown (<a href="#ref-Ball:1968ub" role="doc-biblioref">1968</a>)</span> (there denoted as <span class="math inline">\(NI_0\)</span>).</li>
+</ol>
+<div id="040023c1" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ni_data <span class="op">=</span> (</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    api_returns</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"year"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    .agg(</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        ni_ew<span class="op">=</span>pl.col(<span class="st">"api_ew"</span>).<span class="bu">abs</span>().mean(),</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        ni_vw<span class="op">=</span>pl.col(<span class="st">"api_vw"</span>).<span class="bu">abs</span>().mean(),</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"year"</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>ni_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="17">
+<div>
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">year</th>
+<th data-quarto-table-cell-role="th">ni_ew</th>
+<th data-quarto-table-cell-role="th">ni_vw</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1988</td>
+<td>0.255044</td>
+<td>0.254519</td>
+</tr>
+<tr class="even">
+<td>1989</td>
+<td>0.303139</td>
+<td>0.301249</td>
+</tr>
+<tr class="odd">
+<td>1990</td>
+<td>0.360228</td>
+<td>0.363337</td>
+</tr>
+<tr class="even">
+<td>1991</td>
+<td>0.361835</td>
+<td>0.372625</td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="even">
+<td>1999</td>
+<td>0.723941</td>
+<td>0.720743</td>
+</tr>
+<tr class="odd">
+<td>2000</td>
+<td>0.463129</td>
+<td>0.50265</td>
+</tr>
+<tr class="even">
+<td>2001</td>
+<td>0.415014</td>
+<td>0.412924</td>
+</tr>
+<tr class="odd">
+<td>2002</td>
+<td>0.376163</td>
+<td>0.37465</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<ol start="8" type="1">
+<li>Using the data on <em>NI</em> and <em>AI</em> from above, create a plot of <span class="math inline">\(AI/NI\)</span> like that in Figure 2 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>. Do you observe similar results to those shown in Figure 2 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>?</li>
+</ol>
+<p>Credit for this question goes to Philip Brown. I start by joining the <em>NI</em> and <em>AI</em> data calculated in the responses to the previous questions. I then calculate both value-weighted and equal-weighted versions of the ratios, then <code>.unpivot()</code> the data so that it is easier to plot both series on one plot.</p>
+<div id="2d9f5e50" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ai_ni_data <span class="op">=</span> (</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    ni_data</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    .join(ai_data, on<span class="op">=</span><span class="st">"year"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        ai_to_ni_ew<span class="op">=</span>pl.col(<span class="st">"ai_ew"</span>) <span class="op">/</span> pl.col(<span class="st">"ni_ew"</span>),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        ai_to_ni_vw<span class="op">=</span>pl.col(<span class="st">"ai_vw"</span>) <span class="op">/</span> pl.col(<span class="st">"ni_vw"</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    .unpivot(</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span>[<span class="st">"ai_to_ni_ew"</span>, <span class="st">"ai_to_ni_vw"</span>],</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        index<span class="op">=</span><span class="st">"year"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        variable_name<span class="op">=</span><span class="st">"measure"</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        value_name<span class="op">=</span><span class="st">"value"</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In <a href="#fig-ai-ni" class="quarto-xref">Figure&nbsp;7</a>, we see similar results to those in Figure 2 of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span>, but not exactly the same numbers in each year. For example, we have less volatility in the ratio in our data and 1999 (the peak of the “dot-com boom”) is more clearly an outlier in our data.</p>
+<div id="cell-fig-ai-ni" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    ai_ni_data</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    .ggplot(aes(x<span class="op">=</span><span class="st">"year"</span>, y<span class="op">=</span><span class="st">"value"</span>, color<span class="op">=</span><span class="st">"measure"</span>))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    .geom_point()</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    .geom_line()</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    .add_theme(legend_position<span class="op">=</span><span class="st">"bottom"</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="19">
+<div id="fig-ai-ni" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ai-ni-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="bb68-solutions-polars_files/figure-html/fig-ai-ni-output-1.png" width="672" height="480" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ai-ni-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: AI-to-NI plot
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="references" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Ball:2019wu" class="csl-entry" role="listitem">
+Ball, R., Brown, P., 2019. <span>B</span>all and <span>B</span>rown (1968) after fifty years. Pacific-Basin Finance Journal 53, 410–431. <a href="https://doi.org/10.1016/j.pacfin.2018.12.008">https://doi.org/10.1016/j.pacfin.2018.12.008</a>
+</div>
+<div id="ref-Ball:1968ub" class="csl-entry" role="listitem">
+Ball, R., Brown, P., 1968. An empirical evaluation of accounting income numbers. Journal of Accounting Research 6, 159–178. <a href="https://doi.org/10.2307/2490232">https://doi.org/10.2307/2490232</a>
+</div>
+<div id="ref-Nichols:2004tb" class="csl-entry" role="listitem">
+Nichols, D.C., Wahlen, J.M., 2004. How do earnings numbers relate to stock returns? A review of classic accounting research with updated evidence. Accounting Horizons 18, 263–286. <a href="https://doi.org/10.2308/acch.2004.18.4.263">https://doi.org/10.2308/acch.2004.18.4.263</a>
+</div>
+</div>
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Or equally long and short equal-weighted portfolios of these firms, as implied by the calculated <span class="math inline">\(0.146\)</span> above. It is not entirely clear from the text of <span class="citation" data-cites="Ball:2019wu">Ball and Brown (<a href="#ref-Ball:2019wu" role="doc-biblioref">2019</a>)</span> what approach was used in Table 2 of that paper.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
