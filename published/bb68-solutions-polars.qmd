@@ -1,0 +1,1094 @@
+---
+title: "Solutions for Ball and Brown (1968)"
+subtitle: "Updated Python Polars solutions"
+author: Ian D. Gow
+date: 2026-10-26
+date-modified: 2026-10-26
+date-format: D MMMM YYYY
+categories: ["Accounting research", "Replication", "Python", "Polars"]
+engine: jupyter
+jupyter: era_pl_sols
+execute:
+  freeze: false
+  cache: false
+  error: false
+  warning: false
+  echo: true
+bibliography: linkedin-solutions-references.bib
+csl: linkedin-solutions.csl
+format:
+  html:
+    toc: true
+    number-sections: true
+    code-overflow: wrap
+  typst:
+    toc: false
+    number-sections: true
+    keep-typ: true
+    papersize: a4
+    fontsize: 10pt
+    mainfont: Libertinus Serif
+    monofont: Menlo
+    margin:
+      x: 2cm
+      y: 2cm
+    include-in-header:
+      text: |
+        #show raw.where(block: true): set text(size: 8pt)
+        #set par(justify: false)
+        #set bibliography(title: none)
+filters:
+  - ../filters/pdf-links.lua
+pdf-link-base: https://iangow.github.io/notes/published/
+source-repository: era_pl_sols
+source-file: bb68.qmd
+source-revision: f18ebfc493392183c4fa64f2ebeb1bd2c1457d04
+---
+
+These solutions accompany the [Ball and Brown (1968) chapter](https://iangow.github.io/era_pl_book/bb68.html) of *Empirical Research in Accounting: Tools and Methods*.
+This notes edition updates the solutions discussed in the original 2026-05-12 post with subsequent corrections and clarifications; it is not a facsimile of the original LinkedIn attachment.
+The calculations were freshly executed on 26 October 2026.
+
+The calculations use a local Parquet repository, with `DATA_DIR` pointing to that repository.
+See the book's [data setup instructions](https://iangow.github.io/era_pl_book/intro.html) and the accompanying [Python requirements](linkedin-solutions-requirements.txt).
+The QMD uses the existing `era_pl_sols` Jupyter kernel, whose environment supplies those packages; its code does not import either solutions repository.
+Changes in the input data or software can change estimates and timings.
+
+```{python}
+#| echo: false
+#| include: false
+import io
+import math
+import re
+import zipfile
+
+import numpy as np
+import polars as pl
+import polars.selectors as cs
+import plotnine_polars as p9
+import requests
+from plotnine_polars import aes
+from graphviz import Digraph
+
+
+def styled_dag(name: str = "dag") -> Digraph:
+    g = Digraph(name)
+
+    # Graph-level layout
+    g.attr(
+        rankdir="LR",
+        splines="true",
+        nodesep="0.6",
+        ranksep="0.7",
+    )
+
+    # Node defaults
+    g.attr(
+        "node",
+        shape="box",
+        style="rounded,filled",
+        fillcolor="gray85",
+        color="black",
+        fontname="Helvetica",
+        fontsize="11",
+        width="1.9",
+        height="0.6",
+        fixedsize="true",
+    )
+
+    # Edge defaults
+    g.attr(
+        "edge",
+        color="black",
+        penwidth="2",
+        arrowsize="0.9",
+    )
+
+    return g
+from era_pl import load_parquet, NumberedLines
+
+p9.theme_set(p9.theme_gray())
+
+pl.Config.set_tbl_rows(8)
+pl.Config.set_tbl_cols(200)
+pl.Config.set_tbl_width_chars(120)
+pl.Config.set_tbl_hide_dataframe_shape(True)
+pl.Config.set_tbl_hide_column_data_types(True)
+```
+
+# Principal results of @Ball:1968ub
+
+## Discussion questions
+
+1. What is the research question of @Ball:1968ub?
+Do you find the paper to be persuasive?
+
+There are a number of possible answers here.
+One answer is that the paper examines whether accounting numbers are *meaningful* in a way that seems necessary (but not sufficient) for a claim that they are *useful*.
+This is (by design) a fairly limited question, but one that is counterposed to a claim that accounting numbers are meaningless.
+
+Relative to the limited question that it asks, the evidence in @Ball:1968ub seems quite persuasive.
+
+
+2. What do you notice about the references in @Ball:1968ub [pp. 177-178]?
+
+The striking thing for me is how recent (at that time) most of the references are.
+Most come from 1964 or later.
+Clearly this was an exciting time to be doing empirical accounting research.
+
+3. Given that "the most fundamental result" of @Ball:1968ub relates to an association or correlation, is it correct to say that the paper provides no evidence on causal linkages?
+Does this also mean that @Ball:1968ub is a "merely" descriptive paper according to the taxonomy of research papers outlined in [Chapter 4](https://iangow.github.io/era_pl_book/causal-inf.html)?
+How might the results of @Ball:1968ub be represented in a causal diagram assuming that accounting information is meaningful and markets are efficient?
+Would an alternative causal diagram be assumed by a critic who viewed accounting information as meaningless?
+
+One possible causal diagram is given in @fig-bb68-dag.\
+Note that there is no solid directed arrow connecting $X$ and $Y$ here.
+Clearly, if markets are efficient (so do not respond to useless or meaningless information) then an arrow from $X$ to $Y$ would imply that accounting information is useful.
+
+But arguably @Ball:1968ub only seek to show that accounting information is meaningful in that it is driven by fundamental information in a way that is correlated with how fundamental information affects share prices.
+This will lead to accounting reporting being associated with stock returns (represented as a dashed line), which is precisely what @Ball:1968ub find.
+
+```{python}
+#| label: fig-bb68-dag
+#| echo: false
+#| fig-cap: "BB68 causal diagram"
+dot = styled_dag("bb68_dag")
+dot.node("Z", "Fundamental info (Z)")
+dot.node("X", "Accounting reports (X)")
+dot.node("Y", "Stock returns (Y)")
+dot.edge("Z", "X")
+dot.edge("Z", "Y")
+dot.edge("X", "Y", dir="both", style="dashed")
+dot
+```
+
+One alternative causal diagram would be @fig-bb68-dag-alt, which has accounting reports directly causing stock returns but having no connection to fundamental information.
+In an efficient market, reports without connection to fundamental information should have no effect on returns, so finding an association between returns and such reports would imply market inefficiency.
+
+```{python}
+#| label: fig-bb68-dag-alt
+#| echo: false
+#| fig-cap: "Alternative causal diagram"
+dag_alt = styled_dag("bb68_dag_alt")
+dag_alt.node("Z", "Fundamental info (Z)")
+dag_alt.node("X", "Accounting reports (X)")
+dag_alt.node("Y", "Stock returns (Y)")
+dag_alt.edge("X", "Y")
+dag_alt.edge("Z", "Y")
+dag_alt
+```
+
+Under the taxonomy in [Chapter 4](https://iangow.github.io/era_pl_book/causal-inf.html), I would not classify BB68 as merely descriptive.
+Its association is used to assess an explanation in which underlying economic information causes both accounting earnings and returns.
+That is a causal interpretation involving a common cause, even though it does not identify the causal effect of publishing an accounting report on prices.
+The empirical association by itself cannot establish that particular causal explanation; its force depends on the assumptions about reporting and market efficiency.
+
+
+4. Describe how Figure 1 of @Ball:1968ub supports each of principal results identified by @Ball:2019wu.
+
+@Ball:2019wu [p. 414] identify three main results of @Ball:1968ub: "The most fundamental result was that accounting earnings and stock returns were correlated. ... Nevertheless, annual accounting earnings lacked timeliness. ... After the earnings announcement month, the API (which cumulated abnormal returns) continued to drift in the same direction."
+
+The first result (correlation) is shown by the divergence of the two lines for each variable in Figure 1.
+The second result (limited timeliness) is evidenced by most of the separation occurring before $t = 0$.
+This does not require a literally zero announcement response: much of the information has already been reflected in prices.
+The third result is evinced by the lines appearing to continue to diverge further after $t = 0$.
+
+5. Consider the causal diagrams you created above.
+Do the results of @Ball:1968ub provide more support for one causal diagram than the other?
+
+The results provide more support for the diagram in which accounting reports reflect fundamental information.
+If accounting reports were unrelated to fundamentals, an efficient market should not price them.
+The evidence is not a clean causal test, but it is difficult to reconcile with a strong claim that accounting income is meaningless.
+
+6. Compare Figure 1 of @Ball:2019wu with Figure 1 of BB68.
+What is common between the two figures?
+What is different?
+
+Both figures show divergence between good-news and bad-news portfolios, and both show evidence consistent with post-earnings announcement drift.
+The @Ball:2019wu figure suggests somewhat more information being conveyed around the earnings announcement, while still showing that much of the return movement occurs before the announcement.
+The @Ball:2019wu lines are also constructed to be mirror images after subtracting their average; the BB68 lines are not.
+
+
+
+7. What does "less their average" mean in the title of Figure 1 of @Ball:2019wu?
+What effect does this have on the plot?
+(Does it make this plot different from Figure 1 of BB68?
+Is information lost in the process?)
+
+It means that, in each period, the average of the two plotted series is subtracted from each series.
+This centers the plot and makes the lines symmetric.
+That differs from Figure 1 of BB68 because the separate levels of the good-news and bad-news lines are no longer visible.
+Some information is lost, as while the transformation preserves the spread, the two original paths are lost.
+
+8. @Ball:2019wu [p. 418] say "in this replication we address two issues with the BB68 significance tests."
+Do you understand the points being made here?
+
+Clearly, "no" is a possible answer here.
+If you answered "yes", then hopefully you explained that the statistical significance tests in @Ball:1968ub used $\chi^2$ statistics for each month from $t-11$ to $t+6$.
+However, the hypotheses more clearly relate to the pre-announcement, announcement, and post-announcement periods, not to individual months.
+Hence, the @Ball:2019wu approach of aggregating data from these periods makes sense.
+
+The second difference is that they use randomization inference to evaluate significance.
+Randomly reassigning news groups constructs an empirical null distribution rather than relying on the original monthly tests.
+This does not automatically make a test robust to every form of time-series or cross-firm dependence.
+See the [discussion of randomization inference](https://iangow.github.io/era_pl_book/natural-revisited.html#fhk-inference).
+
+9. @Ball:2019wu [p. 418] also say "the persistence of PEAD over time is evidence it does not constitute market inefficiency."
+What do you make of this argument?
+
+This is an unconventional argument to be sure.
+Persistence could mean the anomaly reflects risk, limits to arbitrage, trading costs, or some other rational mechanism.
+But persistence alone does not establish that PEAD is not an inefficiency.
+We will return to this topic when we study PEAD in Chapter 14.
+
+10. What is the minimum amount of information that our hypothetical genie needs to provide to enable formation of the portfolios underlying *TI*, *NI*, and *II*?
+What are the rules for construction of each of these portfolios?
+
+| Measure | Information from the genie | Rule |
+|---|---|---|
+| *TI* | The sign of each stock's monthly abnormal return | Choose the favorable direction separately each month. |
+| *NI* | The sign of each stock's compounded abnormal return over months $-11$ through $0$ | Choose a long or short direction once at the start and retain it. |
+| *II* (called *AI* here) | The sign of each stock's annual income surprise | Choose the direction once at the start: long for good income news, short for bad news.  |
+
+: Information and portfolio rules {#tbl-bb68-letters}
+
+The relevant returns are abnormal returns, not raw returns.
+BB68's indexes abstract from market effects and begin with equal amounts assigned to each stock; *II* uses equal initial exposure per firm, rather than allocating one half of the capital to each news group irrespective of their sizes.
+*TI* allows the direction to change each month, while *NI* and *II* fix it for the 12-month period.
+As returns accumulate, the values of individual positions can change, so equal initial amounts do not mean equal position values throughout the year.
+The genie supplies no magnitudes or rankings needed to optimize unequal initial allocations.
+For *II*, the income information must be supplied before the investment window, making this an informational thought experiment rather than a feasible trading strategy.
+
+11. @Ball:1968ub observe a ratio of *NI* to *TI* of about 0.23.
+What do we expect this ratio to be?
+Does this ratio depend on the information content of accounting information?
+
+A simple illustrative model is a coin game in which a correct guess wins \$1 and an incorrect guess loses \$1.
+Independent, equally likely wins and losses let us compare knowing every monthly outcome with knowing only the sign of their annual total.
+This is an additive, equal-magnitude approximation, not an exact model of compounded stock returns.
+
+If we have 12 coin tosses, the information we can use for *TI* is the outcome of each toss.
+As such, *TI* should give us \$12.
+The information we can use for *NI* is whether there are more heads (in which case we would bet "heads" on each toss) or more tails.
+We can use the `get_ni` function below to work out the value of *NI* in this coin game.
+
+
+
+
+```{python}
+def get_ni(n_tosses):
+    n_heads = np.arange(n_tosses + 1)
+    prob = np.fromiter(
+        (math.comb(n_tosses, int(x)) for x in n_heads),
+        dtype=float,
+    )
+    prob = prob / prob.sum()
+    value = n_heads - (n_tosses - n_heads)
+    return float((prob * np.abs(value)).sum())
+
+get_ni(12) / 12
+```
+
+
+
+
+This is almost exactly the ratio implied by values reported in @Ball:1968ub: $0.2257 \approxeq 0.165 / 0.731$.
+This ratio does not depend on the information content of accounting information.
+It's not clear that this ratio is relevant to the research questions of @Ball:2019wu.
+Its agreement with the toy calculation can be interpreted as some evidence consistent with market efficiency under the analogy's assumptions, rather than as a general or uniquely identifying prediction.
+
+12. Consider the paragraph in @Ball:2019wu [p. 418] beginning "an innovation in BB68 was to estimate ...".
+How do the discussions of these results differ between @Ball:1968ub and @Ball:2019wu?
+
+While @Ball:1968ub does talk about portfolios, the main difference seems to be in how the two papers describe the portfolio construction.
+By 2019, constructing hedge (long-short) portfolios had become a common part of research examining how capital markets process information.
+But in 1968, the approach used in @Ball:1968ub was novel.
+In fact, the calculation of the ratio of *II* to *NI* is a rather astounding innovation relative to research at the time (consider the innovative FFJR study, published in 1969).
+
+13. Consider column (4) of Table 2 of @Ball:2019wu.
+Is an equivalent set of numbers reported in BB68?
+What is the underlying investment strategy associated with this column?
+
+Not exactly.
+We can calculate it for the entire sample period of @Ball:1968ub as $1.060 - 0.914 = 0.146$.
+This appears to be lower than the value in most years reported in Table 2 of @Ball:2019wu.
+
+The underlying investment strategy involves going long in the good news firms and short the bad news firms^[Or equally long and short equal-weighted portfolios of these firms, as implied by the calculated $0.146$ above.
+It is not entirely clear from the text of @Ball:2019wu what approach was used in Table 2 of that paper.]
+
+BB68's Table 5 reports pooled net-income-model APIs at month $-1$, rather than a year-by-year column of these portfolio spreads.
+The $0.146$ calculation illustrates that pooled spread; it is neither a year-specific reproduction of the later paper's Table 2 nor the original BB68 *AI* statistic.
+A long position in an equal-weighted good-news portfolio and an equally sized short position in a bad-news portfolio compares two group averages.
+BB68's *AI* calculation additionally weights groups by their numbers of firm-year observations.
+The strategy also uses future earnings signs before they are available, so this is an informational thought experiment with lookahead, rather than a feasible pre-announcement trading rule.
+Month $-1$ is only the closest monthly comparison to the later paper's more precisely defined daily event boundary.
+
+14. Heading 6.3 of @Ball:2019wu is "Does 'useful' disprove 'meaningless'?"
+Do you think that "not meaningless" implies "not useless"?
+Which questions (or facts) does BB68 address in these terms?
+
+I would say that "not meaningless" is a necessary, but not sufficient, condition for "not useless".
+@Ball:1968ub seem content with a "not meaningless" conclusion, leaving "not useless" to future research (arguably they had done enough for one paper already).
+
+# Replicating @Ball:1968ub
+
+```{python}
+#| echo: false
+#| cache: false
+msi = load_parquet("msi", "crsp")
+msf = load_parquet("msf", "crsp")
+ccmxpf_lnkhist = load_parquet("ccmxpf_lnkhist", "crsp")
+stocknames = load_parquet("stocknames", "crsp")
+
+funda = load_parquet("funda", "comp")
+fundq = load_parquet("fundq", "comp")
+
+annc_events = (
+    fundq
+    .filter(
+        pl.col("indfmt") == "INDL",
+        pl.col("datafmt") == "STD",
+        pl.col("consol") == "C",
+        pl.col("popsrc") == "D",
+        pl.col("fqtr") == 4,
+        pl.col("fyr") == 12,
+        pl.col("rdq").is_not_null(),
+    )
+    .select("gvkey", "datadate", "rdq")
+    .with_columns(annc_month=pl.col("rdq").dt.truncate("1mo"))
+)
+
+crsp_dates = (
+    msi
+    .select("date")
+    .sort("date")
+    .with_row_index("td", offset=1)
+    .with_columns(
+        td=pl.col("td").cast(pl.Int32),
+        month=pl.col("date").dt.truncate("1mo"),
+    )
+)
+
+annc_months = (
+    crsp_dates
+    .select(
+        pl.col("month").alias("annc_month"),
+        pl.col("td").alias("annc_td"),
+    )
+    .with_columns(
+        start_td=pl.col("annc_td") - 11,
+        end_td=pl.col("annc_td") + 6,
+    )
+)
+
+td_link = (
+    crsp_dates
+    .join(annc_months, how="cross")
+    .filter(pl.col("td").is_between(pl.col("start_td"),
+                                    pl.col("end_td")))
+    .with_columns(rel_td=pl.col("td") - pl.col("annc_td"))
+    .select("annc_month", "rel_td", "date")
+)
+
+ccm_link = (
+    ccmxpf_lnkhist
+    .filter(
+        pl.col("linktype").is_in(["LC", "LU", "LS"]),
+        pl.col("linkprim").is_in(["C", "P"]),
+    )
+    .with_columns(
+        permno=pl.col("lpermno"),
+        linkenddt=pl.col("linkenddt").fill_null(pl.col("linkenddt").max()),
+    )
+    .select("gvkey", "permno", "linkdt", "linkenddt")
+)
+
+events_linked = (
+    annc_events
+    .join(td_link, on="annc_month", how="inner")
+    .join(ccm_link, on="gvkey", how="inner")
+    .filter(pl.col("annc_month").is_between(pl.col("linkdt"),
+                                            pl.col("linkenddt")))
+)
+
+rets_all = (
+    events_linked
+    .join(msf.select("permno", "date", "ret", "prc", "shrout"),
+          on=["permno", "date"], how="inner")
+    .join(
+        stocknames
+        .filter(pl.col("exchcd").is_in([1, 2, 3]))
+        .select("permno", "namedt", "nameenddt"),
+        on="permno",
+        how="inner",
+    )
+    .filter(pl.col("date").is_between(pl.col("namedt"),
+                                      pl.col("nameenddt")))
+    .select("gvkey", "datadate", "rel_td", "permno", "date", "ret")
+    .filter(pl.col("datadate").dt.year().is_between(1987, 2002))
+)
+
+full_panel = (
+    rets_all
+    .group_by("gvkey", "datadate")
+    .agg(n_obs=pl.col("ret").count())
+    .with_columns(max_n_obs=pl.col("n_obs").max())
+    .filter(pl.col("n_obs") == pl.col("max_n_obs"))
+    .select("gvkey", "datadate")
+)
+
+rets = rets_all.join(full_panel, on=["gvkey", "datadate"], how="semi")
+
+
+def zip_url_to_text(url):
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
+    zf = zipfile.ZipFile(io.BytesIO(resp.content))
+    inner_name = zf.namelist()[0]
+    raw = zf.read(inner_name).decode("latin1")
+    return NumberedLines(raw.splitlines())
+
+
+def lines_to_df(lines, header="infer"):
+    block = "\n".join(lines)
+    has_header = header == "infer"
+
+    df_raw = pl.read_csv(io.StringIO(block), has_header=has_header)
+    value_cols = df_raw.columns[1:]
+
+    df_raw = df_raw.with_columns(
+        pl.col(value_cols)
+        .cast(pl.String)
+        .str.strip_chars()
+        .replace("-99.99", None)
+        .cast(pl.Float64)
+    )
+
+    return df_raw.rename({df_raw.columns[0]: "date"})
+
+
+def read_data(lines):
+    return (
+        lines_to_df(lines)
+        .lazy()
+        .with_columns(
+            month=(pl.col("date").cast(pl.String) + "01")
+            .str.strptime(pl.Date, format="%Y%m%d", strict=False)
+        )
+        .drop("date")
+        .unpivot(index="month", variable_name="quantile", value_name="ret")
+        .with_columns(
+            ret=pl.col("ret") / 100.0,
+            decile=(
+                pl.when(pl.col("quantile") == "Hi 10").then(10)
+                .when(pl.col("quantile") == "Lo 10").then(1)
+                .when(pl.col("quantile").str.contains("-Dec"))
+                .then(
+                    pl.col("quantile")
+                    .str.replace("-Dec", "")
+                    .cast(pl.Int32, strict=False)
+                )
+                .otherwise(None)
+            ),
+        )
+        .filter(pl.col("decile").is_not_null())
+        .select("month", "ret", "decile")
+        .sort(["month", "decile"])
+    )
+
+
+url = (
+    "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
+    "Portfolios_Formed_on_ME_CSV.zip"
+)
+text = zip_url_to_text(url)
+vw_start = text.filter(re.compile(r"Value Weight.*Monthly")).index[0] + 1
+vw_end = text.filter(re.compile(r"Equal Weight.*Monthly")).index[0]
+ew_start = vw_end + 1
+ew_end = text.filter(re.compile(r"^\s+Value Weight.*Annual")).index[0]
+vw_lines = text[vw_start:vw_end].reset_index()
+ew_lines = text[ew_start:ew_end].reset_index()
+
+ew_rets = read_data(ew_lines)
+vw_rets = read_data(vw_lines)
+
+size_rets = (
+    ew_rets
+    .select("month", "decile", pl.col("ret").alias("ew_ret"))
+    .join(
+        vw_rets.select("month", "decile", pl.col("ret").alias("vw_ret")),
+        on=["month", "decile"],
+        how="inner",
+    )
+    .sort(["month", "decile"])
+)
+
+url_bp = (
+    "https://mba.tuck.dartmouth.edu/pages/faculty/"
+    "ken.french/ftp/ME_Breakpoints_CSV.zip"
+)
+text = zip_url_to_text(url_bp)
+me_last = text.filter(re.compile(r"^Copyright")).index[0]
+df_raw = lines_to_df(text[1:me_last], header=None)
+df_raw.columns = ["month", "n"] + ["p" + str(i) for i in range(5, 101, 5)]
+
+me_breakpoints_raw = (
+    df_raw
+    .with_columns(
+        month=(pl.col("month").cast(pl.String) + "01")
+        .str.strptime(pl.Date, format="%Y%m%d", strict=False)
+    )
+    .select(["month"] + [f"p{i}" for i in range(10, 101, 10)])
+    .unpivot(index="month", variable_name="decile", value_name="cutoff")
+    .with_columns(
+        decile=(
+            pl.col("decile")
+            .str.slice(1)
+            .cast(pl.Int32, strict=False) / 10
+        ).cast(pl.Int32)
+    )
+    .select("month", "decile", "cutoff")
+    .sort("month", "decile")
+    .lazy()
+)
+
+me_breakpoints = (
+    me_breakpoints_raw
+    .sort(["month", "decile"])
+    .with_columns(
+        me_min=pl.col("cutoff").shift(1).over("month").fill_null(0),
+        me_max=pl.when(pl.col("decile") == 10)
+        .then(float("inf"))
+        .otherwise(pl.col("cutoff")),
+    )
+    .drop("cutoff")
+    .sort(["month", "decile"])
+)
+
+me_values = (
+    msf
+    .with_columns(
+        mktcap=pl.col("prc").abs() * pl.col("shrout") / 1000,
+        month=pl.col("date").dt.truncate("1mo"),
+    )
+    .select("permno", "date", "mktcap", "month")
+    .filter(pl.col("month").dt.month() == 12)
+)
+
+me_decile_assignments = (
+    me_values
+    .join(me_breakpoints, on="month", how="inner")
+    .filter(pl.col("mktcap").is_between("me_min", "me_max", closed="left"))
+    .with_columns(year=(pl.col("date").dt.year() + 1).cast(pl.Int32))
+    .select("permno", "year", "decile")
+)
+
+news = (
+    funda
+    .filter(
+        pl.col("indfmt") == "INDL",
+        pl.col("datafmt") == "STD",
+        pl.col("consol") == "C",
+        pl.col("popsrc") == "D",
+        pl.col("fyr") == 12,
+    )
+    .select(
+        "gvkey", "datadate", "fyear", "at",
+        pl.col("ibc").alias("earn"),
+        pl.col("oancf").alias("cfo"),
+    )
+    .sort("gvkey", "datadate")
+    .with_columns(
+        pl.col("at", "fyear").shift(1).over("gvkey").name.prefix("lag_")
+    )
+    .with_columns(
+        pl.col("earn", "cfo")
+        .diff()
+        .over("gvkey")
+        .era.div_if_pos("lag_at")
+        .name.suffix("_chg")
+    )
+    .filter(
+        pl.col("fyear").is_between(1987, 2002),
+        pl.col("lag_fyear") + 1 == pl.col("fyear"),
+    )
+    .select("gvkey", "datadate", "earn_chg", "cfo_chg")
+    .with_columns(
+        (pl.col("earn_chg", "cfo_chg") > 0).name.replace(r"_chg$", "_gn")
+    )
+    .filter(pl.all_horizontal(pl.col("cfo_gn", "earn_gn").is_not_null()))
+    .with_columns(
+        pl.col("earn_chg", "cfo_chg")
+        .era.ntile(10)
+        .over("datadate")
+        .name.replace(r"_chg$", "_decile")
+    )
+)
+
+merged = (
+    news
+    .with_columns(year=pl.col("datadate").dt.year())
+    .join(rets, on=["gvkey", "datadate"], how="inner")
+    .join(me_decile_assignments, on=["permno", "year"], how="inner")
+    .with_columns(month=pl.col("date").dt.truncate("1mo"))
+    .join(size_rets, on=["decile", "month"], how="inner")
+    .drop("permno", "month")
+)
+
+plot_data_raw = (
+    merged
+    .filter(pl.col("ret").is_not_null())
+    .sort("gvkey", "datadate", "rel_td")
+    .with_columns(
+        cs.ends_with("ret").add(1).cum_prod().over("gvkey", "datadate")
+    )
+)
+
+plot_data = (
+    plot_data_raw
+    .group_by("rel_td", "earn_gn")
+    .agg(cs.ends_with("ret").mean())
+    .with_columns(
+        pl.when(pl.col("earn_gn"))
+        .then(pl.lit("Good"))
+        .otherwise(pl.lit("Bad"))
+        .alias("Earnings news"),
+        aret_ew=pl.col("ret") - pl.col("ew_ret"),
+        aret_vw=pl.col("ret") - pl.col("vw_ret"),
+        **{
+
+        },
+    )
+    .collect()
+)
+```
+
+```{python}
+#| label: fig-bb-1
+#| echo: false
+#| fig-cap: "Replication of Figure 1 of Ball and Brown (1968)."
+#| fig-alt: "Cumulative abnormal returns for good versus bad earnings news around annual earnings announcements."
+(
+    plot_data
+    .ggplot(
+        aes(x="rel_td", y="aret_ew",
+            linetype="Earnings news",
+            group="Earnings news")
+    )
+    .geom_line()
+    .add_theme(legend_position="bottom")
+)
+```
+
+## Exercises
+
+```{python}
+#| echo: false
+max_cutoff = (
+    me_breakpoints_raw
+    .filter(
+        pl.col("month") == pl.date(2020, 12, 1),
+        pl.col("decile") == 10,
+    )
+    .select(pl.col("cutoff").mean())
+    .collect()
+    .item() - 1
+)
+```
+
+1. From the data below, we see that the upper bound for the tenth decile is about `{python} f"US${max_cutoff/1000:.3g}"` billion.
+How can we reconcile this with the existence of firms with market capitalizations over US\$1 trillion?
+*Bonus:* Using data from `crsp.msf`, identify the firm whose market capitalization was `{python} f"US${max_cutoff/1000:.3g}"` billion in December 2020?
+Why do we need to group by `permco`, not `permno`, to find the answer?
+(*Hint:* For the bonus question, you can use data from `crsp.msf` and `crsp.stocknames`.
+Why do we need to group by `permco`, not `permno`, to find the answer?)
+
+
+```{python}
+(
+    me_breakpoints_raw
+    .filter(pl.col("month") == pl.date(2020, 12, 1))
+    .collect()
+)
+```
+
+
+
+
+```{python}
+co_names = (
+    stocknames
+    .sort("permco", "namedt")
+    .group_by("permco")
+    .agg(comnam=pl.col("comnam").last())
+)
+
+top_stocks = (
+    msf
+    .filter(pl.col("date") == pl.date(2020, 12, 31))
+    .with_columns(mktcap=pl.col("prc").abs() * pl.col("shrout") / 1000)
+    .join(
+        stocknames
+        .select("permno", "permco")
+        .unique(),
+        on="permno", how="inner")
+    .group_by("permco", "date")
+    .agg(
+        totmktcap=pl.col("mktcap").sum(),
+        n_stocks=pl.len(),
+    )
+    .filter(pl.col("totmktcap") >= math.floor(max_cutoff))
+    .join(co_names, on="permco", how="inner")
+    .sort("totmktcap")
+    .collect()
+)
+
+top_stocks
+```
+
+
+
+
+This firm is "`{python} top_stocks["comnam"][0]`".
+Note that the cut-offs provided by [Ken French](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_me_breakpoints.html) are for "NYSE stocks that have a CRSP share code of 10 or 11 and have good shares and price data" and "exclude closed end funds and REITs".
+There are larger stocks, but these are not listed on the NYSE (e.g., Microsoft and Apple are listed on the NASDAQ).
+
+There are two classes of stock for Berkshire Hathaway, so we need to add these to get the total market capitalization.
+Each class will have its own `permno`, but will share a `permco` with the other class.
+
+2. To keep things straightforward, we focused on firms that have returns for each month in the $(t - 11, t+ 6)$ window.
+Can you tell what approach @Nichols:2004tb took with regard to this issue?
+
+It is not clear from @Nichols:2004tb exactly what they did.
+Our restriction makes the plot easier to interpret because every event contributes a complete event-window return path, but it may also discard valid partial histories.
+
+3. Table 2 of @Nichols:2004tb measures cumulative abnormal returns as the "cumulative raw return minus cumulative size decile portfolio to which the firm begins."
+Apart from the use of a size-decile portfolio rather than some other market index, how does this measure differ from the Abnormal Performance Index (API) defined on p.168 of @Ball:1968ub?
+Adjust the measure depicted in the replication of Figure 1 to more closely reflect the API definition used in @Ball:1968ub.
+Does this tweak significantly affect the results?
+Which approach seems most appropriate?
+
+@Ball:1968ub instead accumulate monthly abnormal returns.
+Each approach is feasible (conditional on having a genie supply the income information needed), but implies different strategies for reweighting the market index over time.
+It seems that @Ball:1968ub will involve more trading to rebalance the market side of the portfolio, so may be more costly to implement in practice.
+
+
+
+
+```{python}
+alt_plot_data = (
+    merged
+    .filter(pl.col("ret").is_not_null())
+    .with_columns(
+        aret_ew=pl.col("ret") - pl.col("ew_ret"),
+        aret_vw=pl.col("ret") - pl.col("vw_ret"),
+    )
+    .sort("gvkey", "datadate", "rel_td")
+    .with_columns(
+        cs.starts_with("aret").add(1)
+        .cum_prod().over("gvkey", "datadate")
+    )
+    .group_by("rel_td", "earn_gn")
+    .agg(cs.starts_with("aret").mean())
+    .with_columns(
+        pl.when(pl.col("earn_gn"))
+        .then(pl.lit("Good"))
+        .otherwise(pl.lit("Bad"))
+        .alias("Earnings news")
+    )
+    .collect()
+)
+```
+
+
+
+
+As can be seen in @fig-alt-api, making this tweak does not materially change the qualitative pattern in the figure.
+
+
+
+
+```{python}
+#| label: fig-alt-api
+#| fig-cap: Plot with alternative approach to accumulating returns
+(
+    alt_plot_data
+    .ggplot(
+        aes(x="rel_td", y="aret_ew",
+            linetype="Earnings news",
+            group="Earnings news")
+    )
+    .geom_line()
+    .add_theme(legend_position="bottom")
+)
+```
+
+
+
+
+The baseline difference of buy-and-hold returns is
+
+$$\prod_m(1+r_{jm})-\prod_m(1+r^b_{jm}),$$
+
+whereas a BB68-style API averages firm-level products of monthly abnormal gross returns:
+
+$$API_M=\frac{1}{N}\sum_j\prod_{m=-11}^{M}(1+r_{jm}-r^b_{jm}).$$
+
+Subtracting one from the API aligns its starting value with an abnormal-return series starting at zero.
+These quantities generally differ because subtracting a compounded benchmark is not the same as compounding monthly differences.
+The persistence of good/bad-news separation in the plot is a qualitative comparison, not a statistical test of equality between the methods.
+For a fixed stock-versus-benchmark buy-and-hold comparison, the first measure has the clearer interpretation.
+For reproducing BB68's API and its *AI*/*NI* calculations, the monthly-abnormal-return product is the relevant definition.
+The choice should follow the intended investment or informational comparison.
+
+4. Create an alternative version of @fig-bb-1 using the sign of "news" about cash flows in the place of income news.
+Do your results broadly line up with those in Panel A of Figure 2 of @Nichols:2004tb?
+Do these results imply that accounting income is inherently more informative than cash flows from operations?
+Why or why not?
+
+
+The four curves in @fig-cfo-news broadly follow the ordering in Panel A of Nichols and Wahlen's Figure 2.
+The larger separation between the income-news portfolios suggests a stronger return association in this sample under these definitions of news.
+It does not establish that accounting income is inherently more informative than cash flows from operations.
+Accrual accounting can reduce timing noise in cash receipts and payments, making income a better measure of current performance in some settings.
+The comparison also depends on the expectations model, firms, periods, and return window.
+Separate sorts place different firms in the good- and bad-news portfolios; they do not hold the other signal constant.
+Cash flows may add to information in income, and vice versa.
+An incremental-information analysis would examine both signals together; these plots alone do not establish a universal ranking or a causal disclosure effect.
+
+Note that I make a small `portfolio_plot_data()` function that creates a `portfolio` variable that is a string that can be used to label a plot, as seen in @fig-cfo-news.
+
+
+
+
+```{python}
+def portfolio_plot_data(signal):
+    return (
+        plot_data_raw
+        .group_by("rel_td", signal)
+        .agg(cs.ends_with("ret").mean())
+        .with_columns(
+            aret_ew=pl.col("ret") - pl.col("ew_ret"),
+            aret_vw=pl.col("ret") - pl.col("vw_ret"),
+            portfolio=pl.when(pl.col(signal))
+            .then(pl.lit(signal))
+            .otherwise(pl.lit(signal.replace("_gn", "_bn"))),
+        )
+        .select("rel_td", "portfolio", "aret_ew", "aret_vw")
+    )
+
+
+plot_data_news = pl.concat([
+    portfolio_plot_data("cfo_gn"),
+    portfolio_plot_data("earn_gn"),
+]).collect()
+```
+
+
+
+
+```{python}
+#| label: fig-cfo-news
+#| fig-cap: "Abnormal performance index by sign of cash flow and earnings news"
+(
+    plot_data_news
+    .ggplot(
+        aes(x="rel_td", y="aret_ew", color="portfolio")
+    )
+    .geom_line()
+    .add_theme(legend_position="bottom")
+)
+```
+
+5. Create an alternative version of the figure above focused on the extreme earnings deciles in place of the good-bad news dichotomy.
+Do your results broadly line up with those in Panel B of Figure 2 of @Nichols:2004tb?
+
+In the code below, I use `pl.concat()` to stack two data frames---one for extreme deciles of earnings news and one for extreme deciles of cash-flow news---to create `plot_data_extreme`.
+
+```{python}
+plot_data_extreme = (
+    pl.concat([
+        (
+            plot_data_raw
+            .filter(pl.col("earn_decile").is_in([1, 10]))
+            .group_by("rel_td", "earn_decile")
+            .agg(cs.ends_with("ret").mean())
+            .with_columns(
+                aret_ew=pl.col("ret") - pl.col("ew_ret"),
+                aret_vw=pl.col("ret") - pl.col("vw_ret"),
+                portfolio=pl.when(pl.col("earn_decile") == 10)
+                .then(pl.lit("earn_decile_10"))
+                .otherwise(pl.lit("earn_decile_1")),
+            )
+            .select("rel_td", "portfolio", "aret_ew", "aret_vw")
+        ),
+        (
+            plot_data_raw
+            .filter(pl.col("cfo_decile").is_in([1, 10]))
+            .group_by("rel_td", "cfo_decile")
+            .agg(cs.ends_with("ret").mean())
+            .with_columns(
+                aret_ew=pl.col("ret") - pl.col("ew_ret"),
+                aret_vw=pl.col("ret") - pl.col("vw_ret"),
+                portfolio=pl.when(pl.col("cfo_decile") == 10)
+                .then(pl.lit("cfo_decile_10"))
+                .otherwise(pl.lit("cfo_decile_1")),
+            )
+            .select("rel_td", "portfolio", "aret_ew", "aret_vw")
+        ),
+    ])
+    .collect()
+)
+```
+
+It is then easy to plot the data in `plot_data_extreme` to create @fig-ext-decs.
+
+```{python}
+#| label: fig-ext-decs
+#| fig-cap: Plot with extreme deciles
+(
+    plot_data_extreme
+    .ggplot(aes(x="rel_td", y="aret_ew", color="portfolio"))
+    .geom_line()
+    .add_theme(legend_position="bottom")
+)
+```
+
+The results broadly line up with Panel B of Figure 2 in @Nichols:2004tb.
+Using extreme deciles produces a cleaner spread than simply splitting at zero, which is what we would expect if the magnitude of the earnings or cash-flow surprise matters.
+
+6. Calculate *AI* by year following the formula on p. 175 of @Ball:1968ub (there denoted as $II_0$).
+
+```{python}
+api_returns = (
+    merged
+    .filter(pl.col("ret").is_not_null())
+    .with_columns(
+        api_ew=pl.col("ret") - pl.col("ew_ret"),
+        api_vw=pl.col("ret") - pl.col("vw_ret"),
+    )
+    .sort("gvkey", "datadate", "rel_td")
+    .with_columns(
+        pl.col("api_ew", "api_vw").add(1)
+        .cum_prod().over("gvkey", "datadate").sub(1)
+    )
+    .filter(pl.col("rel_td") == 0)
+    .select("gvkey", "datadate", "year", "earn_gn", "api_ew", "api_vw")
+    .collect()
+)
+
+ai_data = (
+    api_returns
+    .with_columns(news_sign=pl.when(pl.col("earn_gn")).then(1).otherwise(-1))
+    .group_by("year")
+    .agg(
+        ai_ew=(pl.col("news_sign") * pl.col("api_ew")).mean(),
+        ai_vw=(pl.col("news_sign") * pl.col("api_vw")).mean(),
+    )
+    .sort("year")
+)
+ai_data
+```
+
+AI weights every firm equally; it is not an equal-weighted average of two news-group means when their counts differ.
+The stock-level API increments use the assigned compounded-monthly-abnormal-return definition.
+
+7. Calculate *NI* by year following the formula on p. 175 of @Ball:1968ub (there denoted as $NI_0$).
+
+```{python}
+ni_data = (
+    api_returns
+    .group_by("year")
+    .agg(
+        ni_ew=pl.col("api_ew").abs().mean(),
+        ni_vw=pl.col("api_vw").abs().mean(),
+    )
+    .sort("year")
+)
+ni_data
+```
+
+8. Using the data on *NI* and *AI* from above, create a plot of $AI/NI$ like that in Figure 2 of @Ball:2019wu.
+Do you observe similar results to those shown in Figure 2 of @Ball:2019wu?
+
+Credit for this question goes to Philip Brown.
+I start by joining the *NI* and *AI* data calculated in the responses to the previous questions.
+I then calculate both value-weighted and equal-weighted versions of the ratios, then `.unpivot()` the data so that it is easier to plot both series on one plot.
+
+
+```{python}
+ai_ni_data = (
+    ni_data
+    .join(ai_data, on="year", how="inner")
+    .with_columns(
+        ai_to_ni_ew=pl.col("ai_ew") / pl.col("ni_ew"),
+        ai_to_ni_vw=pl.col("ai_vw") / pl.col("ni_vw"),
+    )
+    .unpivot(
+        on=["ai_to_ni_ew", "ai_to_ni_vw"],
+        index="year",
+        variable_name="measure",
+        value_name="value",
+    )
+)
+```
+
+
+In @fig-ai-ni, we see similar results to those in Figure 2 of @Ball:2019wu, but not exactly the same numbers in each year.
+For example, we have less volatility in the ratio in our data and 1999 (the peak of the "dot-com boom") is more clearly an outlier in our data.
+
+
+```{python}
+#| label: fig-ai-ni
+#| fig-cap: AI-to-NI plot
+(
+    ai_ni_data
+    .ggplot(aes(x="year", y="value", color="measure"))
+    .geom_point()
+    .geom_line()
+    .add_theme(legend_position="bottom")
+)
+```
+
+```{python}
+#| label: notes-validation
+#| include: false
+import json
+_complete = merged.group_by("gvkey", "datadate").agg(
+    n=pl.len(), usable=pl.col("ret").count(), months=pl.col("rel_td").n_unique()
+).collect()
+assert _complete.select(pl.all_horizontal(pl.all().exclude("gvkey", "datadate") == 18).all()).item()
+_independent = (
+    merged.filter(pl.col("rel_td") <= 0)
+    .group_by("gvkey", "datadate")
+    .agg(
+        check_ew=(1 + pl.col("ret") - pl.col("ew_ret")).product() - 1,
+        check_vw=(1 + pl.col("ret") - pl.col("vw_ret")).product() - 1,
+    ).collect()
+    .join(api_returns, on=["gvkey", "datadate"], how="inner")
+)
+assert _independent.height == api_returns.height
+assert np.allclose(_independent["check_ew"], _independent["api_ew"], atol=1e-12)
+assert np.allclose(_independent["check_vw"], _independent["api_vw"], atol=1e-12)
+assert ai_ni_data["value"].abs().max() <= 1 + 1e-12
+_at_zero = dict(plot_data_news.filter(pl.col("rel_td") == 0).select("portfolio", "aret_ew").iter_rows())
+assert _at_zero["earn_gn"] - _at_zero["earn_bn"] > _at_zero["cfo_gn"] - _at_zero["cfo_bn"]
+print("NOTES_CHECKS " + json.dumps({
+    "complete_events": _complete.height,
+    "usable_months_per_event": 18,
+    "independent_api_products_equal": True,
+    "ai_ni_within_bounds": True,
+    "month_zero_returns": _at_zero,
+    "ai_ni_min": ai_ni_data["value"].min(),
+    "ai_ni_max": ai_ni_data["value"].max(),
+}))
+```
+
+```{=typst}
+#pagebreak(weak: true)
+```
+
+# References
+
+::: {#refs}
+:::

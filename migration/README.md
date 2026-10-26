@@ -18,6 +18,40 @@ have not been changed.
 The three reviewed entries were approved for publication on 26 October 2026
 and now live under `posts/`, retaining their original LinkedIn dates.
 
+The second batch was approved for publication on 26 October 2026:
+
+- **What's the most important financial statement?** (12 May 2026)
+- **Why include code in teaching?** (20 May 2026)
+
+`linkedin-batch-02.json` retains the original post text, independently checked
+LinkedIn `datePublished` timestamps, expanded chapter links and editorial changes.
+The two posts now live under `posts/`; their notes-owned solution documents live
+under `published/` and are included in the topic collection and archive.
+
+The posts now link to notes-owned `bb68-solutions-polars.qmd` and
+`panel-data-solutions-polars.qmd`, with PDF and HTML editions. These bounded
+documents adapt the current Python Polars solutions and applicable R corrections.
+They were freshly executed on 26 October 2026 with freeze and cache disabled.
+The existing `published/bb68.qmd` replication note is unchanged.
+
+The original attachments were 13 and 15 pages. The new PDFs are updated editions,
+not facsimiles or certified archives of those files. No LinkedIn download is needed
+to review or maintain the new notes versions.
+
+`linkedin-solutions-provenance.json` records source revisions and hashes, historical
+comparison baselines, corrections versus other substantive changes, package/data
+verification limits, code comparisons, numerical checks and rendering receipts.
+Before updating these notes, manually compare changes since those recorded
+revisions in `era_pl_sols` and the corresponding R files in `far_sols`. Review and
+carry across relevant fixes without overwriting notes-specific corrections or
+presentation helpers. No scheduled task or shared-source synchronization is set up.
+
+The build was isolated to avoid repository hooks changing unrelated generated
+listings or caches. Publication outputs are under `_site/posts/` and `_site/published/`.
+The source directory also contains the checked PDFs, retained Typst sources, a
+bounded bibliography, citation style and recorded Python requirements. Only the two posts and two solution documents are approved for publication; private
+full instructor guides and sharing settings remain unchanged.
+
 Inventory statuses:
 
 - `published`: the approved migration has been published; `site_url` records its location.

@@ -1,0 +1,1082 @@
+---
+title: "Solutions for Panel data"
+subtitle: "Updated Python Polars solutions"
+author: Ian D. Gow
+date: 2026-10-26
+date-modified: 2026-10-26
+date-format: D MMMM YYYY
+categories: ["Accounting research", "Replication", "Python", "Polars"]
+engine: jupyter
+jupyter: era_pl_sols
+execute:
+  freeze: false
+  cache: false
+  error: false
+  warning: false
+  echo: true
+bibliography: linkedin-solutions-references.bib
+csl: linkedin-solutions.csl
+format:
+  html:
+    toc: true
+    number-sections: true
+    code-overflow: wrap
+  typst:
+    toc: false
+    number-sections: true
+    keep-typ: true
+    papersize: a4
+    fontsize: 10pt
+    mainfont: Libertinus Serif
+    monofont: Menlo
+    margin:
+      x: 2cm
+      y: 2cm
+    include-in-header:
+      text: |
+        #show raw.where(block: true): set text(size: 8pt)
+        #set par(justify: false)
+        #set bibliography(title: none)
+filters:
+  - ../filters/pdf-links.lua
+pdf-link-base: https://iangow.github.io/notes/published/
+source-repository: era_pl_sols
+source-file: panel-data.qmd
+source-revision: f18ebfc493392183c4fa64f2ebeb1bd2c1457d04
+---
+
+These solutions accompany the [Panel data chapter](https://iangow.github.io/era_pl_book/panel-data.html) of *Empirical Research in Accounting: Tools and Methods*.
+This notes edition updates the solutions discussed in the original 2026-05-20 post with subsequent corrections and clarifications; it is not a facsimile of the original LinkedIn attachment.
+The calculations were freshly executed on 26 October 2026.
+
+The calculations use a local Parquet repository, with `DATA_DIR` pointing to that repository.
+See the book's [data setup instructions](https://iangow.github.io/era_pl_book/intro.html) and the accompanying [Python requirements](linkedin-solutions-requirements.txt).
+The QMD uses the existing `era_pl_sols` Jupyter kernel, whose environment supplies those packages; its code does not import either solutions repository.
+Changes in the input data or software can change estimates and timings.
+
+```{python}
+#| label: setup
+#| include: false
+#| cache: false
+#| echo: true
+#| warning: false
+#| message: false
+import numpy as np
+import polars as pl
+import pyfixest as pf
+import warnings
+from scipy import stats
+from maketables import ETable
+from plotnine_polars import aes
+
+import dataclasses
+
+import great_tables as gt
+import great_tables._gt_data as _gt_data
+
+
+DEFAULT_TABLE_FONT = "Libertinus Serif"
+DEFAULT_TABLE_FONT_SIZE = "10pt"
+DEFAULT_HEADER_RULE_COLOR = "#000000"
+DEFAULT_HEADER_RULE_WIDTH = "1px"
+DEFAULT_BODY_RULE_STYLE = "none"
+DEFAULT_DATA_ROW_PADDING = "3px"
+DEFAULT_COLUMN_LABEL_PADDING = "3px"
+
+
+def configure_gt_typst(
+    font: str = DEFAULT_TABLE_FONT,
+    font_size: str = DEFAULT_TABLE_FONT_SIZE,
+    header_rule_color: str = DEFAULT_HEADER_RULE_COLOR,
+    header_rule_width: str = DEFAULT_HEADER_RULE_WIDTH,
+    body_rule_style: str = DEFAULT_BODY_RULE_STYLE,
+    data_row_padding: str = DEFAULT_DATA_ROW_PADDING,
+    column_label_padding: str = DEFAULT_COLUMN_LABEL_PADDING,
+) -> None:
+    """Set Typst-friendly defaults for new ``great_tables.GT`` objects."""
+    current_init = gt.GT.__init__
+    original_init = getattr(gt.GT, "_era_original_init", current_init)
+
+    def _gt_init_patched(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        table_font = _gt_data.OptionsInfo(
+            False, "table", "values", [font]
+        )
+        table_font_size = _gt_data.OptionsInfo(
+            True, "table", "px", font_size
+        )
+        header_rule_color_opt = _gt_data.OptionsInfo(
+            True, "column_labels", "value", header_rule_color
+        )
+        header_rule_width_opt = _gt_data.OptionsInfo(
+            True, "column_labels", "px", header_rule_width
+        )
+        body_rule_style_opt = _gt_data.OptionsInfo(
+            True, "table_body", "value", body_rule_style
+        )
+        data_row_padding_opt = _gt_data.OptionsInfo(
+            True, "data_row", "px", data_row_padding
+        )
+        column_label_padding_opt = _gt_data.OptionsInfo(
+            True, "column_labels", "px", column_label_padding
+        )
+        options = dataclasses.replace(
+            self._options,
+            table_font_names=table_font,
+            table_font_size=table_font_size,
+            table_border_top_color=header_rule_color_opt,
+            table_border_top_width=header_rule_width_opt,
+            table_border_bottom_color=header_rule_color_opt,
+            table_border_bottom_width=header_rule_width_opt,
+            column_labels_border_bottom_color=header_rule_color_opt,
+            column_labels_border_bottom_width=header_rule_width_opt,
+            table_body_border_top_color=header_rule_color_opt,
+            table_body_border_top_width=header_rule_width_opt,
+            table_body_hlines_style=body_rule_style_opt,
+            data_row_padding=data_row_padding_opt,
+            data_row_padding_horizontal=data_row_padding_opt,
+            column_labels_padding=column_label_padding_opt,
+            column_labels_padding_horizontal=column_label_padding_opt,
+        )
+        object.__setattr__(self, "_options", options)
+
+    gt.GT._era_original_init = original_init
+    gt.GT.__init__ = _gt_init_patched
+
+
+configure_gt_typst()
+
+from graphviz import Digraph
+
+
+def styled_dag(name: str = "dag") -> Digraph:
+    g = Digraph(name)
+
+    # Graph-level layout
+    g.attr(
+        rankdir="LR",
+        splines="true",
+        nodesep="0.6",
+        ranksep="0.7",
+    )
+
+    # Node defaults
+    g.attr(
+        "node",
+        shape="box",
+        style="rounded,filled",
+        fillcolor="gray85",
+        color="black",
+        fontname="Helvetica",
+        fontsize="11",
+        width="1.9",
+        height="0.6",
+        fixedsize="true",
+    )
+
+    # Edge defaults
+    g.attr(
+        "edge",
+        color="black",
+        penwidth="2",
+        arrowsize="0.9",
+    )
+
+    return g
+from era_pl import (
+    fit_test_score_panel, get_idd_periods, get_test_scores,
+    load_data, load_parquet, show_typst,
+)
+
+pl.Config.set_tbl_cols(200)
+pl.Config.set_tbl_width_chars(120)
+
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    module=r"pyfixest\..*",
+);
+```
+
+```{python}
+#| include: false
+class NotesETable(ETable):
+    """Normalize fixed-effect labels for the recorded maketables build."""
+    def _extract_fixef_string(self, model):
+        value = super()._extract_fixef_string(model)
+        return "+".join(x.strip() for x in value.split("+")) if value else value
+
+
+def show_etable(models, row_gutter=None, font_size=None, **kwargs):
+    """Display the same regression table in HTML and Typst/PDF."""
+    from IPython.display import display
+    table = NotesETable(models=models, **kwargs)
+    typst = table.make(type="typst")
+    if row_gutter is not None:
+        typst = typst.replace(
+            "stroke: none, row-gutter: 0.2em,",
+            f"stroke: none, row-gutter: {row_gutter},",
+        )
+    if font_size is not None:
+        typst = f"#block[\n#set text(size: {font_size})\n{typst}\n]"
+    display({
+        "text/html": table.make(type="html"),
+        "text/markdown": f"```{{=typst}}\n{typst}\n```",
+    }, raw=True)
+```
+
+# Exercises
+
+1. Generate a random sample of test scores using `get_test_scores()` with some value of `effect_size` and some value of `seed`.
+   Assign this to the variable `df_1`.
+   Estimate the model `"score ~ I(treat * post) | grade + id"` using `pf.feols()` with `data=df_1` and `vcov="iid"` and store the result in `fm`.
+   Compare the output of `fm.tidy()` with that from `fit_test_score_panel(df_1, vcov="iid")`.
+   What do you observe?
+
+   Estimate the model `"score ~ I(treat * post) | grade + id"` using `pf.feols()` with `data=df_1` and `vcov={"CRV1": "grade + id"}` and store the result in `fm2`.
+   Compare the output of `fm2.tidy()` with that from `fit_test_score_panel(df_1, vcov={"CRV1": "grade + id"})`.
+   What do you observe?
+
+
+
+
+```{python}
+df_1 = get_test_scores(effect_size=0.1, seed=100)
+
+fm = pf.feols(
+    "score ~ I(treat * post) | grade + id",
+    data=df_1,
+    vcov="iid",
+)
+
+fm2 = pf.feols(
+    "score ~ I(treat * post) | grade + id",
+    data=df_1,
+    vcov={"CRV1": "grade + id"},
+)
+
+fit_test_score_panel(df_1, vcov="iid")
+```
+
+
+
+
+```{python}
+fit_test_score_panel(df_1, vcov={"CRV1": "grade + id"})
+```
+
+The outputs match the corresponding rows from `fm.tidy()` and `fm2.tidy()` for the treatment-effect coefficient.
+The helper returns just the quantities needed for the simulation analysis: the estimate, standard error, $t$-statistic, and $p$-value.
+
+2. Given the above, why do you think we included `fit_test_score_panel()` rather than using `pf.feols()`?
+Develop and run a test of your hypothesis for why we did so.
+
+The likely reason is speed.
+The chapter runs the same two-way fixed-effects regression many times in simulation, and `fit_test_score_panel()` is specialized to this exact setting.
+The following code compares the two approaches over a modest number of replications.
+
+
+```{python}
+#| label: tbl-panel-speed
+#| tbl-cap: Timing comparison for simulated panel regressions
+import time
+
+num_runs = 50
+sim_dfs = [
+    get_test_scores(effect_size=0, seed=i)
+    for i in range(num_runs)
+]
+
+start = time.perf_counter()
+_ = [
+    pf.feols(
+        "score ~ I(treat * post) | grade + id",
+        data=df,
+        vcov="iid",
+    ).coef()["I(treat * post)"]
+    for df in sim_dfs
+]
+pyfixest_time = time.perf_counter() - start
+
+start = time.perf_counter()
+_ = [
+    fit_test_score_panel(df, vcov="iid").item(0, "estimate")
+    for df in sim_dfs
+]
+helper_time = time.perf_counter() - start
+
+pl.DataFrame({
+    "method": ["pyfixest", "fit_test_score_panel"],
+    "seconds": [pyfixest_time, helper_time],
+    "runs": [num_runs, num_runs],
+}).with_columns(
+    seconds_per_run=pl.col("seconds") / pl.col("runs")
+).with_columns(
+    pl.col("seconds", "seconds_per_run").round(4)
+).style
+```
+
+
+The timing table measures the relative speed of the helper and the general estimator in this run.
+The exact times depend on the computer, software versions and workload.
+That speed matters because the chapter uses 1,000 replications in several settings.
+
+```{python}
+#| include: false
+seg_customer = load_parquet("seg_customer", "compseg")
+names_seg = load_parquet("names_seg", "compseg")
+funda = load_parquet("funda", "comp")
+
+undisclosed_names = load_data("undisclosed_names")
+llz_2018 = load_data("llz_2018")
+state_hq = load_data("state_hq")
+
+sample_start = pl.date(1994, 1, 1)
+sample_end = pl.date(2010, 12, 31)
+
+disclosure_raw = (
+    seg_customer
+    .filter(
+        pl.col("ctype") == "COMPANY",
+        pl.col("datadate").is_between(sample_start, sample_end),
+    )
+    .collect()
+    .join(undisclosed_names, on="cnms", how="left")
+    .with_columns(pl.col("disclosed").fill_null(True))
+    .select("gvkey", "datadate", "cnms", "salecs", "disclosed")
+)
+
+sales = (
+    funda
+    .filter(
+        pl.col("indfmt") == "INDL",
+        pl.col("datafmt") == "STD",
+        pl.col("consol") == "C",
+        pl.col("popsrc") == "D",
+    )
+    .select("gvkey", "datadate", "sale")
+    .collect()
+)
+
+prin_custs = (
+    disclosure_raw
+    .join(sales, on=["gvkey", "datadate"], how="inner")
+    .filter(pl.col("salecs").is_not_null(), pl.col("sale") > 0)
+    .group_by("gvkey", "datadate")
+    .agg(
+        (pl.col("salecs").max() / pl.col("sale").first()).alias("prin_cust")
+    )
+    .with_columns(has_prin_cust=pl.col("prin_cust") >= 0.1)
+)
+
+disclosure = (
+    disclosure_raw
+    .join(sales, on=["gvkey", "datadate"], how="inner")
+    .join(llz_2018, on="gvkey", how="inner")
+    .group_by("gvkey", "datadate")
+    .agg(
+        pl.col("disclosed").not_().mean().alias("ratio"),
+        pl.when(pl.col("salecs").is_null().any())
+        .then(None)
+        .otherwise(
+            (pl.col("disclosed").not_().cast(pl.Float64) * pl.col("salecs")).sum()
+            / pl.col("salecs").sum()
+        )
+        .alias("ratio_sale"),
+    )
+    .with_columns(year=pl.col("datadate").dt.year())
+)
+
+idd_periods = get_idd_periods(
+    min_date=sample_start,
+    max_date=sample_end,
+)
+
+ciks = (
+    names_seg
+    .filter(pl.col("cik").is_not_null())
+    .select("gvkey", "cik")
+    .collect()
+)
+
+state_hq_linked = (
+    state_hq
+    .join(ciks, on="cik", how="inner")
+    .join(disclosure.select("gvkey", "datadate"), on="gvkey", how="inner")
+    .filter(
+        pl.col("datadate").is_between(
+            pl.col("min_date"), pl.col("max_date")
+        )
+    )
+    .select("gvkey", "datadate", "ba_state")
+    .rename({"ba_state": "state"})
+)
+
+reg_data = (
+    disclosure
+    .join(prin_custs, on=["gvkey", "datadate"], how="inner")
+    .filter(pl.col("has_prin_cust"))
+    .join(state_hq_linked, on=["gvkey", "datadate"], how="inner")
+    .join(idd_periods, on="state", how="inner")
+    .filter(
+        pl.col("datadate").is_between(
+            pl.col("start_date"), pl.col("end_date")
+        )
+    )
+    .filter(pl.col("period_type") != "Post-rejection")
+    .with_columns(
+        (pl.col("period_type") == "Post-adoption")
+        .cast(pl.Int8)
+        .alias("post"),
+        pl.col("ratio", "ratio_sale").add(1).log().name.prefix("ln_"),
+    )
+    .select(pl.exclude("start_date", "end_date"))
+)
+
+switchers = (
+    reg_data
+    .select("gvkey", "post")
+    .unique()
+    .group_by("gvkey")
+    .agg(pl.len().alias("n"))
+    .filter(pl.col("n") > 1)
+    .select("gvkey")
+)
+
+reg_data_switchers = reg_data.join(switchers, on="gvkey", how="inner")
+
+def format_event_time(value):
+    if value is None:
+        return -np.inf
+    value = int(value)
+    return float(max(-5, min(5, value)))
+
+def plot_coefs(fm, ref=-1):
+    coefs = (
+        pl.DataFrame({
+            "term": fm.coef().index,
+            "value": fm.coef(),
+            "se": fm.se(),
+        })
+        .with_columns(
+            t=pl.col("term")
+            .str.extract(r"\[T\.(-?\d+(?:\.0)?)\]")
+            .cast(pl.Float64)
+        )
+        .filter(pl.col("t").is_not_null(), pl.col("t").is_finite())
+        .select("t", "value", "se")
+    )
+
+    ci = 0.95
+    mult = stats.norm.ppf(1 - (1 - ci) / 2)
+
+    return (
+        pl.concat([
+            pl.DataFrame({
+                "t": [float(ref)],
+                "value": [0.0],
+                "se": [0.0],
+            }),
+            coefs,
+        ])
+        .with_columns(
+            mean=pl.col("value"),
+            top=pl.col("value") + mult * pl.col("se"),
+            bot=pl.col("value") - mult * pl.col("se"),
+        )
+        .sort("t")
+        .ggplot(aes(x="t", y="mean"))
+        .geom_errorbar(aes(ymin="bot", ymax="top"), width=0.1)
+        .geom_line()
+        .geom_point()
+        .scale_x_continuous(
+            breaks=list(range(
+                int(coefs["t"].min()),
+                int(coefs["t"].max()) + 1,
+            ))
+        )
+    )
+
+switch_years = (
+    reg_data
+    .sort(["gvkey", "datadate"])
+    .with_columns(prev_period=pl.col("period_type").shift(1).over("gvkey"))
+    .filter(
+        pl.col("period_type") == "Post-adoption",
+        pl.col("prev_period") == "Pre-adoption",
+    )
+    .group_by("gvkey")
+    .agg(pl.col("year").min().alias("adoption_year"))
+)
+
+reg_data_t = (
+    reg_data
+    .join(switch_years, on="gvkey", how="left")
+    .with_columns(
+        (pl.col("year") - pl.col("adoption_year"))
+        .map_elements(
+            format_event_time,
+            return_dtype=pl.Float64,
+            skip_nulls=False,
+        )
+        .alias("t"),
+    )
+)
+
+fms_orig = [
+    pf.feols("ln_ratio ~ post | gvkey + year", data=reg_data, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ post | gvkey + year", data=reg_data, vcov="iid"),
+    pf.feols("ln_ratio ~ post | gvkey + year", data=reg_data_switchers, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ post | gvkey + year", data=reg_data_switchers, vcov="iid"),
+]
+
+fms_year = [
+    pf.feols("ln_ratio ~ C(t, Treatment(reference=-1)) | gvkey + year",
+             data=reg_data_t, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t, Treatment(reference=-1)) | gvkey + year",
+             data=reg_data_t, vcov="iid"),
+    pf.feols("ln_ratio ~ C(t, Treatment(reference=-1)) | gvkey + year",
+             data=reg_data_t.filter(pl.col("t").is_finite()), vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t, Treatment(reference=-1)) | gvkey + year",
+             data=reg_data_t.filter(pl.col("t").is_finite()), vcov="iid"),
+]
+```
+
+# Discussion questions
+
+1. The proprietary cost hypothesis tested by @Li:2018tj posits that increased cost of disclosure will lead to reduced supply of disclosure.
+What rival theories exist that would make alternative predictions?
+Are there other elements of disclosure theory that might be tested?
+Why do you think  @Li:2018tj focused on this specific element of the proprietary cost hypothesis?
+
+There are no clear rival theories other than "no effect".
+Of course, "no effect" is unlikely to be found in a published paper for reasons discussed in [Chapter 19](https://iangow.github.io/era_pl_book/natural-revisited.html).
+There are other elements of the theory that might be examined, such as the firms with good news (observed in later realizations) being the ones who disclose and the market reacting favourably to disclosure.
+At times it seems the least interesting aspect of "proprietary cost hypothesis" gets studied again and again in "increasingly clever" ways.
+
+2. In the analysis above, we do not include the control variables considered by @Li:2018tj.
+For example, @Li:2018tj "include R&D expenditures to sales, advertisement [sic] expenditure to sales, and intangible assets scaled by total assets to control for a firm's proprietary costs of disclosure."
+Using the approach outlined in [Chapter 4](https://iangow.github.io/era_pl_book/causal-inf.html), in what circumstances would it be necessary to control for "a firm's proprietary costs of disclosure" in this way?
+Do these circumstances seem applicable in this setting, where the treatment is a (presumably exogenous) shock to disclosure costs and the outcome is disclosure choices?
+
+The first question is whether a proposed control is a pre-treatment common cause, a precision variable, or a variable affected by IDD.
+Controlling for proprietary costs changed by IDD could block the proposed mechanism.
+A better interpretation is simply that the wording used by @Li:2018tj is poor.
+Instead, @Li:2018tj are in effect using IDD adoption as an exogenous shock to the treatment.
+This is like using IDD adoption as an instrument, but focused on *intent-to-treat* analyses.^[Recall from Table 1 of @Hoekstra:2009wp that an intent-to-treat analysis regresses the outcome directly on the instrument.]
+
+Intent-to-treat analyses are common when researchers have an instrument, but do not observe the treatment of interest directly.^[@Bloomfield:2021va focuses on intent-to-treat analyses, even though the treatment is observed.]
+In this setting, the treatment of interest is "proprietary costs of disclosure" and a maintained assumption is that IDD adoption is random, has a direct causal effect on proprietary costs of disclosure, and does not affect the outcome (in this setting, voluntary disclosure of customer identities) except through its effect on the treatment.
+This can be represented on a causal diagram as in @fig-iv-llz.
+
+In conventional IV analyses, it is considered a standard step to evaluate the relationship between the instrument ($Z$) and the treatment ($X$) statistically.^[As always, remember that the critical assumption is *causal* not *statistical*, but statistical analysis is necessary to check for problems in the finite-sample behaviour of IV analyses.]
+But this is not possible when the treatment is not observed.
+As such, in addition to assumptions about the causal relationship between $Z$ and $X$, the magnitude of the proprietary-cost change is unobserved.
+A reduced-form effect of IDD exposure does not require dividing by a measured first stage, but it does not identify the effect per unit of proprietary costs.
+So we need to assume that IDD adoption has a causal effect on proprietary costs of disclosure and the empirical tests are joint tests of that assumption and the hypothesis that increased costs of disclosure lead to reduced supply of disclosure.^[My own view is that it is quite obvious that increased costs of disclosure lead to reduced supply of disclosure and that the paper is really a test of the effect of IDD adoption on proprietary costs of disclosure. For reasons that will become evident by the end of this document, I think the evidence from the setting in @Li:2018tj is very far from persuasive.]
+
+```{python}
+#| label: fig-iv-llz
+#| echo: false
+#| fig-cap: Causal diagram for @Li:2018tj
+dag = styled_dag("li_idd")
+dag.attr(rankdir="TB", nodesep="0.3", ranksep="0.45")
+dag.node("Z", "IDD\nadoption", group="left")
+dag.node("X", "Proprietary\ncosts", style="rounded,dashed,filled", group="left")
+dag.node("U", "Other\nvariables", style="rounded,dashed,filled", group="right")
+dag.node("Y", "Disclosure\nof customer\nidentities", group="right")
+
+with dag.subgraph() as s:
+    s.attr(rank="same")
+    s.node("Z")
+    s.node("U")
+
+with dag.subgraph() as s:
+    s.attr(rank="same")
+    s.node("X")
+    s.node("Y")
+
+dag.edge("Z", "U", style="invis")
+dag.edge("X", "Y", style="invis")
+dag.edge("U", "X")
+dag.edge("U", "Y")
+dag.edge("Z", "X")
+dag.edge("X", "Y")
+dag
+```
+
+The variables that need to be controlled for are any determinants of "a firm's proprietary costs of disclosure" that also affect the instrument.
+If IDD exposure were randomly assigned, baseline controls could improve precision.
+If it is only as-if random conditional on measured factors, those factors matter for identification; time-varying confounders and conditional parallel trends remain relevant.
+Post-treatment measures of proprietary costs should not be added mechanically.
+But @Li:2018tj no doubt understood that in accounting research it's important to "control for stuff".
+
+3. What differs between the regressions reported in columns (1) and (3), and (2) and (4) of @tbl-table-2, respectively?
+Does this tell you anything about what drives the regression results in this setting?
+What happens if you omit the year fixed effects from both sets of regressions?
+What does this tell you about the role of the "non-switchers" (i.e., firms not in the `switchers` data frame) in the regression?
+
+In the regression output below, warnings from `pyfixest` about singleton fixed effects and collinear event-time indicators are suppressed.
+These warnings reflect observations or indicators that the fixed-effects estimator drops automatically; they do not affect the interpretation of the reported coefficients.
+
+```{python}
+#| label: tbl-table-2
+#| tbl-cap: Effect of IDD adoption
+#| echo: false
+show_etable(
+    fms_orig,
+    signif_code=[0.01, 0.05, 0.1],
+    coef_fmt="b* \n (se)",
+    custom_model_stats={
+        "Sample": ["All", "All", "Switchers", "Switchers"]
+    },
+)
+```
+
+*What differs between the regressions reported in columns (1) and (3), and (2) and (4) of @tbl-table-2, respectively?*
+
+The samples are different.
+Columns (1) and (2) include all firms, while columns (3) and (4) only include the "switchers" (defined above as firms whose treatment status changed during the sample period).
+
+*What happens if you omit the year fixed effects from both sets of regressions?*
+
+It is easy to tweak the code to omit `year` fixed effects:
+
+```{python}
+fms_no_year = [
+    pf.feols("ln_ratio ~ post | gvkey", data=reg_data, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ post | gvkey", data=reg_data, vcov="iid"),
+    pf.feols("ln_ratio ~ post | gvkey", data=reg_data_switchers, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ post | gvkey", data=reg_data_switchers, vcov="iid"),
+]
+```
+
+Results are reported in @tbl-no-year-fe.
+Without year fixed effects, the treatment coefficients agree between the full and switcher samples.
+The observation counts and standard errors can differ, so the complete regression results are not identical.
+
+```{python}
+#| label: tbl-no-year-fe
+#| tbl-cap: "Effect of IDD adoption: No year fixed effects"
+#| echo: false
+show_etable(
+    fms_no_year,
+    signif_code=[0.01, 0.05, 0.1],
+    coef_fmt="b* \n (se)",
+    custom_model_stats={
+        "Sample": ["All", "All", "Switchers", "Switchers"]
+    },
+)
+```
+
+*What does this tell you about what drives the regression results in this setting?*
+
+Regression results are driven by the switchers.
+
+*What does this tell you about the role of the "non-switchers" (i.e., firms not in the `switchers` data frame) in the regression?*
+
+This tells us that the only impact of the "non-switchers" on the full regression results is via their effect on the estimated year fixed effects.
+These firms do not directly affect the estimates of the treatment effect or of other firms' fixed effects, which are driven by the switchers and the individual firms, respectively.
+
+4. Would you expect the inclusion of controls (see the question above) to have a significant impact on the regression results?
+Why or why not?
+
+I would not expect the controls to have a big impact for a number of reasons.
+First, many controls would be fairly persistent over time and, with firm fixed effects included, only within-firm variation in controls that is correlated with the treatment indicator (i.e., `POST` for treatment firms) will affect the estimated effects.
+
+With firm fixed effects, only within-firm variation in controls can change the treatment estimate.
+Persistence makes a small effect plausible when the remaining variation is weakly related to treatment, but it is not a guarantee.
+A time-varying omitted confounder can still matter.
+State effects provide a useful sensitivity check because firms sometimes change headquarters state; the paper includes state effects in its specification.
+When making that comparison, hold the estimation sample and covariance convention fixed first, so that changes in the coefficient are not confused with changes in the sample or standard errors.
+
+5. What differs between the regressions reported in columns (1) and (3), and (2) and (4) of @tbl-idd-by-year, respectively?
+What happens if you omit the year fixed effects from both sets of regressions?
+What does this tell you about what drives the regression results in this setting?
+
+```{python}
+#| label: tbl-idd-by-year
+#| tbl-cap: Effect of IDD adoption by year
+#| echo: false
+show_etable(
+    fms_year,
+    signif_code=[0.01, 0.05, 0.1],
+    coef_fmt="b* \n (se)",
+    cat_template="t = {value_int}",
+    custom_model_stats={
+        "Sample": ["All", "All", "Switchers", "Switchers"]
+    },
+)
+```
+
+*What happens if you omit the year fixed effects from both sets of regressions?*
+
+Here is the code to estimate regressions without year fixed effects.
+
+
+```{python}
+fms_year_no_year = [
+    pf.feols("ln_ratio ~ C(t, Treatment(reference=-1)) | gvkey",
+             data=reg_data_t, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t, Treatment(reference=-1)) | gvkey",
+             data=reg_data_t, vcov="iid"),
+    pf.feols("ln_ratio ~ C(t, Treatment(reference=-1)) | gvkey",
+             data=reg_data_t.filter(pl.col("t").is_finite()), vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t, Treatment(reference=-1)) | gvkey",
+             data=reg_data_t.filter(pl.col("t").is_finite()), vcov="iid"),
+]
+```
+
+
+As can be seen in the results reported in @tbl-by-year, only the firms that are treated for part of the sample drive the regression results absent year fixed effects.
+We have identical coefficients in columns (1) and (3), and in columns (2) and (4).
+
+```{python}
+#| label: tbl-by-year
+#| tbl-cap: "Effect of IDD adoption by year: No year fixed effects"
+#| echo: false
+show_etable(
+    fms_year_no_year,
+    signif_code=[0.01, 0.05, 0.1],
+    coef_fmt="b* \n (se)",
+    cat_template="t = {value_int}",
+    custom_model_stats={
+        "Sample": ["All", "All", "Switchers", "Switchers"]
+    },
+)
+```
+
+6. What patterns do you observe in the coefficients reported in @tbl-idd-by-year?
+Do these conform to what you would expect from @Li:2018tj?
+(It may be easiest to focus on these in groups, e.g., those in $t-5$ to $t-2$, those in $t + 0$ to $t+3$ and those for $t+4$ and $t+5$.)
+
+In @tbl-idd-by-year, most pre-adoption coefficients are negative, while the clearest positive signal in the full sample is in the pooled $t+5$-and-later bin.
+The weighted measure is only marginally significant at $t+4$; results for firms observed to switch differ.
+The estimates and their uncertainty should be read together, rather than treating a sign as evidence of a nonzero effect.
+
+These do *not* conform with what I'd expect from reading @Li:2018tj.
+First, the negative coefficients in years $t-5$ through $t-2$ are problematic, but their signs alone do not establish anticipation or rejection of parallel trends.
+Their uncertainty and a joint test of the leads should also be examined.
+Second, the clearest positive signals appear relatively late in this expanded specification.
+@Li:2018tj discuss effects within one or two years [pp. 269 and 288], so it is inaccurate to say that the paper does not discuss delay.
+Table 3 pools observations from $t+2$ onward and cannot identify onset within that pooled period.
+Online appendix Table OA2 uses a $[-2,+2]$ window and reports significant coefficients at exactly $t+2$, with a matched sample and a different reference year.
+Our later pattern is a discrepancy to investigate, rather than a direct contradiction of estimates from that different design.
+
+The number and composition of firms vary by event year.
+The later coefficients rely on fewer firms, and a pooled tail can contain several observations from each firm.
+Report firm counts as well as row counts before judging how much independent support a late-period estimate has.
+
+7. How do the variables in @tbl-idd-by-year differ from those used in Table 3 of @Li:2018tj?
+Modify the code above (e.g., `format_event_time()`) to produce analysis closer to that reported in Table 3 of @Li:2018tj.
+
+@Li:2018tj treat years before $t-2$ the same as years without treatment and collapse years after $t+2$ into year $t+2$.
+We can replace the regression above by using a modified `format_event_time()` as follows.
+This function pools the years before $t - 2$ with the control firms by setting their level at $-\infty$ and caps the upper event-time indicator at $t + 2$.
+
+The other thing that @Li:2018tj do is report coefficients relative to non-treatment firms and firm-years strictly before $t-2$ (*some* reference group needs to be chosen), which we implement by pooling pre-$t-2$ treated firm-years with the control group.
+
+
+```{python}
+def format_event_time_llz(value):
+    if value is None or value < -2:
+        return -np.inf
+    value = int(value)
+    return float(min(2, value))
+
+reg_data_t_llz = (
+    reg_data
+    .join(switch_years, on="gvkey", how="left")
+    .with_columns(
+        (pl.col("year") - pl.col("adoption_year"))
+        .map_elements(
+            format_event_time_llz,
+            return_dtype=pl.Float64,
+            skip_nulls=False,
+        )
+        .alias("t_llz"),
+    )
+)
+
+fms_llz = [
+    pf.feols("ln_ratio ~ C(t_llz, Treatment(reference=-np.inf)) "
+             "| gvkey + year",
+             data=reg_data_t_llz, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t_llz, Treatment(reference=-np.inf)) "
+             "| gvkey + year",
+             data=reg_data_t_llz, vcov="iid"),
+]
+```
+
+
+```{python}
+#| label: tbl-by-year2
+#| tbl-cap: "Effect of IDD adoption by year"
+#| echo: false
+show_etable(
+    fms_llz,
+    signif_code=[0.01, 0.05, 0.1],
+    coef_fmt="b* \n (se)",
+    cat_template="t = {value_int}",
+)
+```
+
+The positive pooled coefficients in @tbl-by-year2 have the same broad direction as Table 3 of @Li:2018tj.
+These regressions retain IID standard errors and change the event coding only, so their significance cannot be described as stronger evidence than the paper's differently clustered specification.
+The net effect of the reporting choices made here appears to be to collapse the effects of $t+3$, $t+4$, and $t+5$ into $t+2$ and to suppress the reporting of any of the awkward negative coefficients in years $t-5$ through $t-3$.
+
+This changes the event coding, but it does not reproduce the paper's full specification.
+We retain the book's controls, missing-value handling and first observed pre-to-post transition as the event year.
+That transition can reflect a headquarters change or an observation gap, whereas the paper's indicators refer to state adoption years.
+The authors' supplied code replaces missing weighted ratios with one; our code retains them as missing.
+State effects, state-clustered inference and sample restrictions are further distinct choices.
+
+A significant coefficient on the pooled $t+2$-and-later category does not establish that an effect begins at exactly $t+2$.
+It averages the later years too, while pooling early years into the reference removes their separate estimates from view.
+Assess the displayed comparison with these differences in mind.
+
+8. The `format_event_time()` function collapses years after $t + 5$ and before $t - 5$ into years $t + 5$ and $t - 5$, respectively.
+When would this approach make sense?
+What would be one alternative approach to handling these years?
+Does your suggested approach make a difference in this setting?
+
+Binning can make sense when very early and late event years contain few observations, so separate estimates would be unstable and hard to interpret.
+Pooling gives more precise tail estimates, but imposes a common effect on all years in each tail.
+It is most defensible when that approximation is plausible and the research question concerns the years near adoption.
+It can conceal changes or reversals in distant years, so the bin definitions and sensitivity to them should be reported.
+
+One alternative approach would be not to collapse them at all and report them separately.
+Here we use the `format_event_time_all()` function defined above, which implements this idea.
+
+
+```{python}
+def format_event_time_all(value):
+    if value is None:
+        return -np.inf
+    return float(int(value))
+
+reg_data_t_all = (
+    reg_data
+    .join(switch_years, on="gvkey", how="left")
+    .with_columns(
+        (pl.col("year") - pl.col("adoption_year"))
+        .map_elements(
+            format_event_time_all,
+            return_dtype=pl.Float64,
+            skip_nulls=False,
+        )
+        .alias("t_all"),
+    )
+)
+
+fms_all_years = [
+    pf.feols("ln_ratio ~ C(t_all, Treatment(reference=-1)) "
+             "| gvkey + year",
+             data=reg_data_t_all, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t_all, Treatment(reference=-1)) "
+             "| gvkey + year",
+             data=reg_data_t_all, vcov="iid"),
+    pf.feols("ln_ratio ~ C(t_all, Treatment(reference=-1)) "
+             "| gvkey + year",
+             data=reg_data_t_all.filter(pl.col("t_all").is_finite()), vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t_all, Treatment(reference=-1)) "
+             "| gvkey + year",
+             data=reg_data_t_all.filter(pl.col("t_all").is_finite()), vcov="iid"),
+]
+```
+
+
+```{python}
+#| label: tbl-by-year-all
+#| tbl-cap: "Effect of IDD adoption by year (all years)"
+#| echo: false
+show_etable(
+    fms_all_years,
+    row_gutter="0em",
+    font_size="8pt",
+    signif_code=[0.01, 0.05, 0.1],
+    coef_fmt="b*",
+    cat_template="t = {value_int}",
+    custom_model_stats={
+        "Sample": ["All", "All", "Switchers", "Switchers"]
+    },
+)
+```
+
+But, as can be seen in the results reported in @tbl-by-year-all, this level of transparency makes the results seem even more difficult to explain.^[Note that the results obtained from running the equivalent code in R differ for columns (3) and (4) because the R code omits the $t + 15$ indicator due to collinearity and the Python code makes a different choice. This has no impact on the substance of the results.]
+
+9. How helpful do you find @fig-coefs-by-year (plot of the coefficients by year)?
+
+
+```{python}
+#| label: fig-coefs-by-year
+#| fig-cap: Plot of coefficients by year
+#| fig-alt: "Plot shows estimated coefficients by year and that, while coefficients tend to be positive for period after year zero, only in year 5 do these become statistically distinguishable from zero. In fact, in year 2 the coefficient is below zero. Year -1 is the baseline (so is zero with no standard errors)."
+plot_coefs(fms_year[0])
+```
+
+
+It's somewhat helpful, but it's really just the "by year" regression results in graphical form.
+I'm not inclined to believe any of the results in @Li:2018tj given where these results are coming from ... and I don't need the plot to tell me that.
+I think that if the results were (in my view, counterfactually) real, a plot like this might be a useful way to communicate that.
+
+10. Describe the data set created from the following code.
+What proportion of the firms in the data set have `same_state` equal to `true`?
+For the purposes of empirical analysis, do the firms with `same_state` equal to `false` enhance, or detract from, our ability to draw causal inferences about the effect of adoption of IDD?
+
+
+
+
+```{python}
+switch_years_state = (
+    reg_data_switchers
+    .sort(["gvkey", "datadate"])
+    .with_columns(
+        pl.col("state", "period_type").shift(1).over("gvkey")
+        .name.prefix("lag_")
+    )
+    .with_columns(
+        same_state=pl.col("state") == pl.col("lag_state"),
+        adoption_year=
+            (pl.col("period_type") == "Post-adoption") &
+            (pl.col("lag_period_type") == "Pre-adoption"),
+    )
+    .filter(pl.col("adoption_year"))
+)
+
+switch_years_state.group_by("same_state").agg(n=pl.len())
+```
+
+
+
+
+A firm can contribute more than one observed pre-to-post transition, so the proportion of records is not necessarily the proportion of firms.
+The following calculation distinguishes all transition records, firms with at least one unchanged-state transition, and each firm's first transition.
+
+
+```{python}
+firm_transitions = switch_years_state.group_by("gvkey").agg(
+    any_same_state=pl.col("same_state").fill_null(False).any()
+)
+first_transitions = (
+    switch_years_state.sort(["gvkey", "datadate"])
+    .unique("gvkey", keep="first", maintain_order=True)
+)
+state_transition_summary = pl.DataFrame({
+    "Unit": ["Transition records", "Firms: at least one", "Firms: first transition"],
+    "Unchanged state": [
+        switch_years_state["same_state"].sum(),
+        firm_transitions["any_same_state"].sum(),
+        first_transitions["same_state"].sum(),
+    ],
+    "Total": [
+        switch_years_state.height,
+        firm_transitions.height,
+        first_transitions.height,
+    ],
+}).with_columns(Share=pl.col("Unchanged state") / pl.col("Total"))
+state_transition_summary.style.fmt_integer(
+    columns=["Unchanged state", "Total"]
+).fmt_percent(columns="Share", decimals=1)
+```
+
+
+`same_state` is `true` when the headquarters state is unchanged from the preceding observed record and `false` when the transition coincides with a recorded state change.
+The first-transition calculation follows the book's event-year convention; the “at least one” calculation answers a different firm-level question.
+
+The changed-state cases weaken the claim that every exposure change comes from an exogenous court ruling in a firm's existing state.
+They can reflect endogenous relocation, but location-record changes, mergers and other events may also explain them; these records alone do not establish intentional relocation.
+They may add statistical variation while making causal interpretation harder.
+Useful sensitivity checks restrict transitions to unchanged-state firms or fix headquarters location before the ruling, while acknowledging the resulting selection and measurement issues.
+
+11. What issues might be implied by the following data? How might you address these?
+
+```{python}
+(
+    reg_data_t
+    .group_by("t")
+    .agg(n=pl.len().alias("n"))
+    .sort("t")
+    .style
+    .fmt_integer()
+)
+```
+
+One issue is that the sample is changing from one event-period to the next.
+Requiring observation at $t+4$ does not ensure a balanced panel at all earlier event times, and it excludes the never-switching comparison pool.
+A balanced-window sensitivity analysis must explicitly require each desired event year and separately retain an appropriate control pool.
+One idea would be to require that a firm be in the sample in $t + 4$ (the full and switcher samples play different roles once year effects are included) and to drop all periods after $t + 4$ and run the by-year regressions for this sample.
+
+```{python}
+reg_data_t2 = (
+    reg_data_t
+    .filter(pl.col("t") == 4)
+    .select("gvkey")
+    .unique()
+    .join(reg_data_t, on="gvkey", how="inner")
+    .filter(pl.col("t") < 5)
+)
+
+fms_constant = [
+    pf.feols("ln_ratio ~ C(t, Treatment(reference=-1)) "
+             "| gvkey + year",
+             data=reg_data_t2, vcov="iid"),
+    pf.feols("ln_ratio_sale ~ C(t, Treatment(reference=-1)) "
+             "| gvkey + year",
+             data=reg_data_t2, vcov="iid"),
+]
+```
+
+Using the code above to create this sample, regression results are reported in @tbl-by-year-constant.
+Perhaps unsurprisingly there are no consistent results here.
+
+```{python}
+#| label: tbl-by-year-constant
+#| tbl-cap: "Effect of IDD adoption by year: Firms observed at $t+4$"
+#| echo: false
+show_etable(
+    fms_constant,
+    signif_code=[0.01, 0.05, 0.1],
+    coef_fmt="b* \n (se)",
+    cat_template="t = {value_int}",
+)
+```
+
+The $t+4$ restriction also selects on later survival and data availability.
+A fully balanced event window would require exactly one complete observation in every chosen event year for both outcomes, then retain an appropriate comparison pool.
+Report the number of qualifying treated firms and support by adoption cohort: balancing can sharply reduce the available sample.
+Neither balancing nor the selected $t+4$ sample resolves heterogeneous treatment effects in a staggered-adoption design.
+The changing sample, a sample selected at $t+4$, and a balanced-window sample answer different questions.
+
+```{python}
+#| label: notes-validation
+#| include: false
+import json
+for _model, _vcov in [(fm, "iid"), (fm2, {"CRV1": "grade + id"})]:
+    _helper = fit_test_score_panel(df_1, vcov=_vcov)
+    assert np.isclose(_model.coef().iloc[0], _helper["estimate"][0])
+    assert np.isclose(_model.se().iloc[0], _helper["se"][0])
+assert np.allclose(fms_no_year[0].coef(), fms_no_year[2].coef())
+assert np.allclose(fms_no_year[1].coef(), fms_no_year[3].coef())
+assert format_event_time_llz(-2) == -2
+assert format_event_time_llz(-3) == -np.inf
+assert format_event_time_llz(7) == 2
+assert reg_data.select("gvkey", "datadate").unique().height == reg_data.height
+print("NOTES_CHECKS " + json.dumps({
+    "helper_matches_general_estimator_iid_and_clustered": True,
+    "full_and_switcher_coefficients_equal_without_year_effects": True,
+    "strict_pre_minus_two_reference": True,
+    "unique_firm_dates": reg_data.height,
+    "transition_summary": state_transition_summary.to_dicts(),
+    "baseline_observations": [int(x._N) for x in fms_orig],
+}))
+```
+
+```{=typst}
+#pagebreak(weak: true)
+```
+
+# References
+
+::: {#refs}
+:::
