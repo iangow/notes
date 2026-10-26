@@ -150,5 +150,5 @@ The SEC scripts in `scripts/` are a preserved research and reproduction checkpoi
 Use [`sec_submissions`](https://github.com/iangow/sec_submissions) for new
 operational work. The [migration plan](scripts/SEC_SUBMISSIONS_MIGRATION.md)
 records ownership, the regression tests being carried across, remaining diagnostic
-gaps, and evidence-retention requirements. The processing-workflow article remains
-an unpublished draft; committing it does not add it to the website render list.
+gaps, and evidence-retention requirements. The [processing-workflow article](published/sec_submissions_workflow.qmd)
+introduces the package and distinguishes the original audit from later findings.

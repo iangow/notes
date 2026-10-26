@@ -1,17 +1,27 @@
 ---
 title: "Processing SEC submissions data"
 author: Ian D. Gow
-date: 2026-10-01
-draft: true
+date: 2026-10-26
 date-format: "D MMMM YYYY"
-categories: [SEC EDGAR, JSON, Datetimes, Python, DuckDB]
+categories: [SEC, EDGAR, JSON, Datetimes, Python, DuckDB]
 format:
   html:
     colorlinks: true
+    code-overflow: wrap
   typst:
     papersize: a4
+    mainfont: Libertinus Serif
+    monofont: Menlo
+    fontsize: 10pt
+    keep-typ: true
+    colorlinks: true
+    linkcolor: "#0000FF"
     margin:
       x: 2cm
+format-links: false
+filters:
+  - ../filters/pdf-links.lua
+pdf-link-base: https://iangow.github.io/notes/published/
 execute:
   eval: false
 ---
@@ -22,11 +32,15 @@ The package converts the bulk JSON archive into Parquet, preserves the original 
 I explain the evidence behind those corrections and report a sample-based assessment of the resulting data.
 :::
 
-::: {.callout-note}
-This draft preserves the September 30, 2026 workflow and its original audit results.
-The package has subsequently developed a provisional category for live-file inference and additional reference checks.
-Use the [current package methodology](https://iangow.github.io/sec_submissions/timestamps/) and [audit documentation](https://iangow.github.io/sec_submissions/audit/) for new updates.
-The dated results below are not an assessment of a later candidate.
+::: {.content-visible when-format="html"}
+[Download the PDF](sec_submissions_workflow.pdf).
+:::
+
+::: {.callout-note title="Methods and data versions"}
+This note describes the package workflow and reports the original September 30, 2026 audit alongside subsequent findings.
+New candidates treat live-file inference as provisional and can use filing-index references where SGML timestamps are absent.
+The [package methodology](https://iangow.github.io/sec_submissions/timestamps/) and [audit documentation](https://iangow.github.io/sec_submissions/audit/) give the maintained details.
+Each dated assessment concerns its own frozen candidate; it does not assess a later file.
 :::
 
 In [an earlier note](sec_submissions.html), I described the structure of the SEC's submissions data and showed how to process those data using R.
@@ -38,6 +52,7 @@ Since I wrote the earlier note, I have also found a problem with the acceptance 
 Some represent UTC and others New York local time, even when the text ends in `Z`.
 The package therefore produces two filings tables: `filings_raw.parquet`, with the original timestamp text, and `filings.parquet`, with time-zone-aware timestamps and information about how they were established.
 Keeping the two separate allows the interpretation to improve without losing the source data or extracting the JSON archive again.
+New candidates also retain the original text in `acceptanceDateTime_raw`, allowing later updates to compare source clocks even when an earlier interpretation was unresolved.
 [My note on dates and times](datetimes.html) discusses the additional issues that arise when analysing these timestamps.
 
 The workflow has four stages: extract a dated snapshot, resolve timestamps using earlier evidence and new comparisons, collect filing headers for selected remaining cases, and audit a frozen candidate before release.
@@ -154,7 +169,9 @@ Explicit inputs are available for controlled comparisons, as described in the [w
 
 Only supported prior instants can act as anchors.
 For each accession, the usable prior rows must agree on one instant, and interpreting a new raw clock as either UTC or `America/New_York` must reproduce that instant.
-A previously unresolved Eastern fallback is not an anchor, although its reconstructed source clock may supply one member of a new exact clock pair.
+A previously unresolved Eastern fallback or provisional live-file inference is not an anchor.
+Its observed source clock may nevertheless supply one member of a new exact clock pair.
+The processor can use the preserved `acceptanceDateTime_raw` column or explicitly supplied historical raw files, rather than treating a converted provisional guess as another observation.
 Changes in non-timestamp fields come from the newly extracted archive.
 
 ### Resolve differing clocks first
@@ -176,8 +193,9 @@ One live JSON response can provide observations for many accessions.
 Where a direct pair cannot resolve an accession, supported prior instants, resolved clock pairs, and SGML observations can anchor the interpretation of that response.
 If all available anchors agree, the package can apply the inferred convention to its other observed clocks.
 
-This is an inference based on the assumption that the response uses a common convention, not direct evidence for every accession.
-The package records its anchors and rejects contradictory file evidence.
+A live response can contain both UTC and Eastern clocks, even when the available anchors suggest a common convention.
+The resulting proposals are therefore **provisional**, not confirmations.
+The package records the anchors, rejects contradictory file evidence, and never promotes a provisional proposal to confirming evidence in a subsequent update.
 It identifies a response version by its source URL and retrieval time: a later response from the same URL need not use the same convention.
 It does not apply a live-file convention indiscriminately to all rows in the ZIP or to future accessions not observed in that response.
 
@@ -188,7 +206,7 @@ It is different from assuming that all new filings for an earlier CIK must use t
 ## Collecting additional evidence
 
 The initial candidate identifies what the existing observations cannot resolve.
-It is useful to screen all unresolved recent filings, not only those outside ordinary EDGAR hours: a UTC clock can fall within that window and still be misinterpreted as Eastern.
+It is useful to screen unresolved and provisional recent filings, not only those outside ordinary EDGAR hours: a UTC clock can fall within that window and still be misinterpreted as Eastern.
 For example, collect live JSON for files containing unresolved records from 2024 onward, then process the data again:
 
 ```python
@@ -212,14 +230,15 @@ An exact SGML observation has priority over weaker file-level inference, while d
 After preparing such a queue from the candidate and its coverage diagnostics, collect it and create another candidate:
 
 ```python
-sec.collect_sgml("sgml_queue.parquet", workers=8, rate=5)
+sec.collect_sgml("sgml_queue.parquet", workers=8, rate=5,
+                 index_fallback=True)
 sec.process()
 ```
 
 Possible selections include missing live matches, contradictory evidence, and live response versions without anchors.
 For the September 30 update, the follow-up used one accession for single-accession response versions and the first and last accessions for multi-accession versions.
 The queue contained 23,906 accessions; 23,905 supplied a timestamp tag and one returned 404.
-These checks support file-level inference only under its common-convention assumption; they are not a substitute for the independent audit below.
+That historical anchoring design relied on a common-convention assumption. The current package retains such inferences as provisional; an independent audit addresses a different question.
 
 An outside-hours screen remains useful for diagnosis, but an outside-hours time is not automatically an error.
 `EFFECT` is excluded from that screen, and the targeted anchor collection also excluded `CORRESP`, `UPLOAD`, and `DRSLTR`.
@@ -227,8 +246,10 @@ Those forms can still participate in exact clock-pair comparisons and the random
 Their form names or a global date cutoff should not determine their time zone.
 
 Successful SGML observations, missing timestamp tags, and request errors are retained separately.
-Transient request failures can be retried, but a missing tag is unavailable evidence, not confirmation of either time zone.
+Transient request failures can be retried.
+Where an SGML tag is absent, filing-index fallback reads the labelled `Accepted` value and retains its source separately; an unsuccessful lookup remains unavailable evidence.
 Likewise, literal midnight is a useful diagnostic, not a sufficient rule for declaring a timestamp missing.
+Historical date-only values must remain distinguishable from observed acceptance times: midnight Eastern is a storage convention for those dates, not evidence of an intraday acceptance time.
 The collection functions support resumption with the same inputs and settings; see the workflow guide for those options.
 
 ## The candidate and its provenance
@@ -240,7 +261,9 @@ Readers do not need to create or maintain a permanent database.
 Rows without an accepted instant retain an Eastern-time interpretation labelled `unresolved_raw_as_eastern`.
 That is a compatibility fallback, not a verified timestamp.
 The output's `timestamp_provenance`, `timestamp_reference_id`, and `timestamp_interpretation` preserve the distinction between established instants, inferred conventions, and unresolved cases.
-For example, `sgml` denotes direct header evidence and `live_file_inferred` denotes an inferred live-file convention.
+For example, `sgml` denotes direct header evidence and `provisional_live_file_inferred` denotes a proposed live-file convention.
+The older `live_file_inferred` label must likewise be treated as provisional when reading the frozen September 30 release.
+Current diagnostics count supported, provisional, and unresolved rows separately.
 
 The main Parquet therefore carries the accepted instants and their status forward.
 The separate observation files retain source clocks, failed attempts, retrieval versions, and evidence for accessions that may be absent from a later snapshot.
@@ -261,6 +284,7 @@ The population assessed here is the rows of `filings.parquet`, including repeate
 An accession-level accuracy estimate answers a different question.
 All form types belong in this audit; a sample limited to unresolved cases cannot establish the accuracy of the whole file.
 
+The current audit uses SGML first and the filing index's labelled `Accepted` value when the SGML tag is absent.
 Use the package to draw and audit a reproducible simple random sample:
 
 ```python
@@ -305,7 +329,9 @@ The worked example's first ZIP, downloaded on 5 September 2026, contained 27,209
 The September 30 ZIP was retrieved at 13:39 UTC, had an HTTP modification time of 12:34:49 UTC that day, and supplied 27,272,863 filing rows.
 The [release manifest](https://github.com/iangow/sec_submissions_data/releases/download/2026-09-30/manifest.json) records its checksum, the released candidate's checksum, and the audit metadata.
 
-The corrected September 30 candidate contains 25,584,390 supported timestamps and 1,688,473 explicitly unresolved Eastern fallbacks.
+The frozen September 30 file labels 25,584,390 timestamps as supported under the policy used for that release, alongside 1,688,473 explicitly unresolved Eastern fallbacks.
+That historical supported count includes live-file inference, which the current package treats as provisional.
+The following results describe the original SGML-only audit of that file.
 A fresh 10,000-row sample was frozen before new SGML lookup, using seed `202609304`.
 The audit found no disagreements among the 9,230 rows with verifiable headers.
 The exact one-sided 95% upper bound on the error rate among those verifiable rows is **0.0325%**.
@@ -325,7 +351,22 @@ All 770 unavailable references lacked the SGML timestamp tag; none remained unav
 They were filings dated 1994 through 2002, with no missing tags observed for 2003 onward in this sample.
 In particular, none of the sampled unresolved fallbacks was verifiable: the result does not validate those rows.
 The [sample identifiers and frozen predictions](https://github.com/iangow/sec_submissions_data/releases/download/2026-09-30/audit_sample.csv) and [row-level outcomes](https://github.com/iangow/sec_submissions_data/releases/download/2026-09-30/audit_outcomes.parquet) make the assessment transparent without listing 10,000 records in the note.
-When a newer update is completed, its independent audit can replace these results while the dated artifacts remain available.
+These results remain a dated record of that original assessment.
+
+### Subsequent findings
+
+A follow-up obtained a filing-index reference for each of the 770 missing-tag rows while retaining the original sample and predictions.
+Seven supplied acceptance times that agreed exactly; the other 763 were historical date-only values whose dates agreed with the source.
+Of those date-only values, 52 had an incorrect midnight representation in the frozen file.
+This distinction matters: agreement on the date is not agreement on an observed acceptance instant.
+
+An independent October 2 audit of a later pair-corrected candidate found two disagreements in 10,000 rows, with all rows verifiable using 9,234 SGML and 766 filing-index references.
+Both disagreements arose from a live-response-wide timezone convention, which led to the package's provisional treatment of such inferences.
+The observed disagreement rate for that candidate was 0.020%, with a one-sided 95% upper bound of 0.06294%.
+
+Later targeted collection and checks against saved samples verified repairs, but those are regression checks rather than a new independent estimate for the repaired file.
+A newly frozen random audit remains the release gate for that candidate.
+The [maintained audit report](https://iangow.github.io/sec_submissions/audit/) identifies each candidate, the original observations, the supplemental references, and the limits of the comparisons.
 
 ## Releasing an update
 

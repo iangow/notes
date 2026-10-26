@@ -71,10 +71,10 @@ migration commit.
 ## Notes and evidence
 
 The datetime and original SEC notes can use package-based download instructions.
-`sec_submissions_workflow.qmd` remains a draft, excluded from website rendering
-and PDF/Typst resource publication. Review its methods, dates, links and renders
-before publishing it. Its original audit sample is retained in this checkpoint
-for provenance even though the draft currently links to the data release.
+`sec_submissions_workflow.qmd` was published on 26 October 2026 as an introduction
+to the package, with current provisional-status guidance and separately dated
+audit findings. Its original audit sample remains in this checkpoint for
+provenance; the article links to the versioned data-release artifacts.
 
 Keep `TIMESTAMP_WORKFLOW.md`, `TIMESTAMP_STORAGE.md`, the release records and
 legacy analysis scripts for dated reproduction. Replace operational directions
