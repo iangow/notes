@@ -107,14 +107,57 @@ body :is(h1, h2, h3, h4, h5, h6) code:not(.sourceCode) {
   background-color: transparent;
 }
 .code-copy-button { color: var(--notes-muted); }
-body .table {
-  --bs-table-color: var(--notes-ink);
+/* Keep table colours local so code blocks and tags retain the site palette. */
+body :is(.table, .gt_table) {
+  --notes-table-ink: var(--notes-ink);
+  --notes-table-surface: var(--notes-surface);
+  --notes-table-stripe: var(--notes-tag);
+  --notes-table-line: var(--notes-line);
+  --notes-table-link: var(--notes-accent);
+  --bs-table-color: var(--notes-table-ink);
   --bs-table-bg: transparent;
-  --bs-table-border-color: var(--notes-line);
-  --bs-table-striped-bg: var(--notes-tag);
-  --bs-table-striped-color: var(--notes-ink);
+  --bs-table-border-color: var(--notes-table-line);
+  --bs-table-striped-bg: var(--notes-table-stripe);
+  --bs-table-striped-color: var(--notes-table-ink);
   --bs-table-hover-bg: var(--notes-hover);
-  --bs-table-hover-color: var(--notes-ink);
+  --bs-table-hover-color: var(--notes-table-ink);
+}
+/* Lift dark tables above the page using the cash-flow note's tested palette. */
+body.quarto-dark :is(.table, .gt_table) {
+  --notes-table-ink: #f5f7f2;
+  --notes-table-surface: #3c5148;
+  --notes-table-stripe: #4d6659;
+  --notes-table-line: #718b7b;
+  --notes-table-link: #c3ecd5;
+  --bs-table-bg: var(--notes-table-surface);
+}
+/* Paint stripes directly; Bootstrap's inset overlay conflicts with GT colours. */
+body .table > :not(caption) > * > * {
+  color: var(--notes-table-ink);
+  background-color: var(--bs-table-bg);
+  border-color: var(--notes-table-line);
+  box-shadow: none;
+}
+body .table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: var(--notes-table-stripe);
+}
+body .table-hover > tbody > tr:hover > * {
+  background-color: var(--bs-table-hover-bg);
+}
+/* Outrank GT's generated ID-scoped colours without changing its typography. */
+#quarto-document-content table.gt_table,
+#quarto-document-content .gt_table :is(thead, tbody, tfoot, tr, th, td, .gt_column_spanner) {
+  color: var(--notes-table-ink);
+  background-color: var(--notes-table-surface);
+  border-color: var(--notes-table-line);
+  box-shadow: none;
+}
+#quarto-document-content .gt_table tbody tr:nth-child(odd) > :is(th, td),
+#quarto-document-content .gt_table .gt_striped {
+  background-color: var(--notes-table-stripe);
+}
+body.quarto-dark :is(.table, .gt_table) a {
+  color: var(--notes-table-link);
 }
 /* Recolour informational callouts; retain warning/error colours and icons. */
 body .callout.callout-tip, body .callout.callout-note {
