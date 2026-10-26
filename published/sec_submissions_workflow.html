@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ian D. Gow">
+<meta name="dcterms.date" content="2026-10-26">
+
+<title>Processing SEC submissions data – notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f418161beb48e0141c760e455f12af2c.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bda65858d638fb4c085804bc14c4d351.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-aaa1e35cf1f5b6230ece6ed5b6fa3d4a.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bda65858d638fb4c085804bc14c4d351.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../assets/notes-theme.css?v=487d212b1008">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../blog.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#getting-started" id="toc-getting-started" class="nav-link active" data-scroll-target="#getting-started">Getting started</a></li>
+  <li><a href="#from-the-bulk-archive-to-parquet" id="toc-from-the-bulk-archive-to-parquet" class="nav-link" data-scroll-target="#from-the-bulk-archive-to-parquet">From the bulk archive to Parquet</a></li>
+  <li><a href="#establishing-the-timestamps" id="toc-establishing-the-timestamps" class="nav-link" data-scroll-target="#establishing-the-timestamps">Establishing the timestamps</a>
+  <ul class="collapse">
+  <li><a href="#the-first-update-and-later-updates" id="toc-the-first-update-and-later-updates" class="nav-link" data-scroll-target="#the-first-update-and-later-updates">The first update and later updates</a></li>
+  <li><a href="#resolve-differing-clocks-first" id="toc-resolve-differing-clocks-first" class="nav-link" data-scroll-target="#resolve-differing-clocks-first">Resolve differing clocks first</a></li>
+  <li><a href="#use-live-file-evidence-carefully" id="toc-use-live-file-evidence-carefully" class="nav-link" data-scroll-target="#use-live-file-evidence-carefully">Use live-file evidence carefully</a></li>
+  </ul></li>
+  <li><a href="#collecting-additional-evidence" id="toc-collecting-additional-evidence" class="nav-link" data-scroll-target="#collecting-additional-evidence">Collecting additional evidence</a></li>
+  <li><a href="#the-candidate-and-its-provenance" id="toc-the-candidate-and-its-provenance" class="nav-link" data-scroll-target="#the-candidate-and-its-provenance">The candidate and its provenance</a></li>
+  <li><a href="#checking-quality-with-a-sample" id="toc-checking-quality-with-a-sample" class="nav-link" data-scroll-target="#checking-quality-with-a-sample">Checking quality with a sample</a>
+  <ul class="collapse">
+  <li><a href="#freeze-predictions-before-fetching-headers" id="toc-freeze-predictions-before-fetching-headers" class="nav-link" data-scroll-target="#freeze-predictions-before-fetching-headers">Freeze predictions before fetching headers</a></li>
+  <li><a href="#what-the-sample-can-establish" id="toc-what-the-sample-can-establish" class="nav-link" data-scroll-target="#what-the-sample-can-establish">What the sample can establish</a></li>
+  <li><a href="#results-for-the-september-30-update" id="toc-results-for-the-september-30-update" class="nav-link" data-scroll-target="#results-for-the-september-30-update">Results for the September 30 update</a></li>
+  <li><a href="#subsequent-findings" id="toc-subsequent-findings" class="nav-link" data-scroll-target="#subsequent-findings">Subsequent findings</a></li>
+  </ul></li>
+  <li><a href="#releasing-an-update" id="toc-releasing-an-update" class="nav-link" data-scroll-target="#releasing-an-update">Releasing an update</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Processing SEC submissions data</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">SEC</div>
+    <div class="quarto-category">EDGAR</div>
+    <div class="quarto-category">JSON</div>
+    <div class="quarto-category">Datetimes</div>
+    <div class="quarto-category">Python</div>
+    <div class="quarto-category">DuckDB</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ian D. Gow </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">26 October 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="abstract">
+<p>This note describes how to use the <code>sec-submissions</code> package to obtain and process the SEC’s submissions data. The package converts the bulk JSON archive into Parquet, preserves the original timestamp text, and uses comparisons with earlier data and filing headers to produce time-zone-aware acceptance timestamps. I explain the evidence behind those corrections and report a sample-based assessment of the resulting data.</p>
+</div>
+<p><a href="sec_submissions_workflow.pdf">Download the PDF</a>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Methods and data versions">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Methods and data versions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This note describes the package workflow and reports the original September 30, 2026 audit alongside subsequent findings. New candidates treat live-file inference as provisional and can use filing-index references where SGML timestamps are absent. The <a href="https://iangow.github.io/sec_submissions/timestamps/">package methodology</a> and <a href="https://iangow.github.io/sec_submissions/audit/">audit documentation</a> give the maintained details. Each dated assessment concerns its own frozen candidate; it does not assess a later file.</p>
+</div>
+</div>
+<p>In <a href="sec_submissions.html">an earlier note</a>, I described the structure of the SEC’s submissions data and showed how to process those data using R. That note introduces JSON, list-columns, and the tools used to turn hierarchical data into tables. Here I focus on doing the work using my <a href="https://github.com/iangow/sec_submissions"><code>sec-submissions</code> Python package</a>, which brings together the extraction, timestamp-correction, and audit code used to prepare the data discussed below. I switched the bulk processing to Python for efficiency; the resulting Parquet files can still be analysed using R and DuckDB.</p>
+<p>Since I wrote the earlier note, I have also found a problem with the acceptance timestamps supplied in newer submissions data. Some represent UTC and others New York local time, even when the text ends in <code>Z</code>. The package therefore produces two filings tables: <code>filings_raw.parquet</code>, with the original timestamp text, and <code>filings.parquet</code>, with time-zone-aware timestamps and information about how they were established. Keeping the two separate allows the interpretation to improve without losing the source data or extracting the JSON archive again. New candidates also retain the original text in <code>acceptanceDateTime_raw</code>, allowing later updates to compare source clocks even when an earlier interpretation was unresolved. <a href="datetimes.html">My note on dates and times</a> discusses the additional issues that arise when analysing these timestamps.</p>
+<p>The workflow has four stages: extract a dated snapshot, resolve timestamps using earlier evidence and new comparisons, collect filing headers for selected remaining cases, and audit a frozen candidate before release. Readers interested only in analysing the data can instead download the <a href="https://github.com/iangow/sec_submissions_data/releases/latest/download/filings.parquet">current corrected Parquet</a>. The examples below show how to prepare an update using the package; the reported results concern the <a href="https://github.com/iangow/sec_submissions_data/releases/tag/2026-09-30">30 September 2026 release</a>. Running the download examples later obtains a different SEC snapshot, which needs its own checks and audit.</p>
+<section id="getting-started" class="level2">
+<h2 class="anchored" data-anchor-id="getting-started">Getting started</h2>
+<p>The package requires Python 3.12 or later. It is not yet on PyPI; install it from GitHub, including the optional dependencies used to calculate audit confidence bounds:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> pip install <span class="st">'sec-submissions[audit] @ git+https://github.com/iangow/sec_submissions.git'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The package uses <code>RAW_DATA_DIR</code> for original ZIP snapshots and <code>DATA_DIR</code> for Parquet files, supporting evidence, and audits. It reads these settings from a <code>.env</code> file in the working directory, preserving values already set in the process environment. An optional configuration is:</p>
+<pre class="dotenv"><code>RAW_DATA_DIR=~/data/raw_data
+DATA_DIR=~/data/pq_data
+SEC_USER_AGENT="Your Name your.email@example.org"</code></pre>
+<p>Without these directory settings, the roots are <code>~/sec-submissions-data/raw_data</code> and <code>~/sec-submissions-data/pq_data</code>. Each contains a <code>submissions/</code> subdirectory, and explicit function arguments override the defaults. SEC requests require an identifying user agent; if one has not been configured, the first interactive request prompts for it and offers to save it. The package moderates concurrent requests in accordance with the SEC’s <a href="https://www.sec.gov/about/developer-resources">developer guidance</a>. The <a href="https://iangow.github.io/sec_submissions/data/">data and directory guide</a> explains the layout, and the <a href="https://iangow.github.io/sec_submissions/api/">API reference</a> documents the functions used below.</p>
+<p>For a first update, obtain a corrected reference and its supporting evidence:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sec_submissions <span class="im">as</span> sec</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>reference <span class="op">=</span> sec.fetch_reference(version<span class="op">=</span><span class="st">"2026-09-30"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>reference.filings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This downloads the dated corrected file, reusable JSON and SGML observations, source metadata, and audit artifacts. Every file is checked against its recorded size and SHA-256 checksum; interrupted downloads can resume, and verified local files are reused. Omit <code>version</code> to obtain the current release, or add <code>companions=True</code> for the other Parquet tables. These public GitHub downloads require neither a GitHub account nor an SEC user agent.</p>
+</section>
+<section id="from-the-bulk-archive-to-parquet" class="level2">
+<h2 class="anchored" data-anchor-id="from-the-bulk-archive-to-parquet">From the bulk archive to Parquet</h2>
+<p>The SEC provides <a href="https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip">a bulk submissions archive</a>, which it <a href="https://www.sec.gov/search-filings/edgar-application-programming-interfaces">recompiles nightly</a>. Downloading that archive is more efficient than obtaining a separate JSON file for every CIK. Use the package to retain a dated snapshot and extract it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>snapshot <span class="op">=</span> sec.download_submissions()</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>sec.extract_submissions(snapshot, max_seconds<span class="op">=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>download_submissions()</code> saves the ZIP under the raw-data root and records its source URL, retrieval time, HTTP modification headers, size, and checksum in a small Parquet manifest. It does not overwrite an earlier snapshot. <code>extract_submissions()</code> writes the following tables into a separate directory for that snapshot under the Parquet root.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>filings_raw.parquet</code></td>
+<td>Filing records, including the unaltered acceptance timestamp text</td>
+</tr>
+<tr class="even">
+<td><code>companies.parquet</code></td>
+<td>Company metadata from each primary CIK file</td>
+</tr>
+<tr class="odd">
+<td><code>addresses.parquet</code></td>
+<td>Business and mailing addresses</td>
+</tr>
+<tr class="even">
+<td><code>tickers.parquet</code></td>
+<td>Tickers and exchanges</td>
+</tr>
+<tr class="odd">
+<td><code>former_names.parquet</code></td>
+<td>Former names and their date ranges</td>
+</tr>
+<tr class="even">
+<td><code>files.parquet</code></td>
+<td>References to historical filing files, including whether they are present in the archive</td>
+</tr>
+</tbody>
+</table>
+<p>The extractor reads every primary CIK file and the historical files that it references, retaining <code>cik</code> and <code>source_file</code> so that each filing row can be traced to its source. It does not start from a selected list of companies. Historical files referenced more than once by a company are read only once for that company; absent files are recorded in <code>files.parquet</code> but their filing rows cannot be recovered from the ZIP. Company metadata describes the downloaded snapshot, not necessarily the company as it existed on each filing date.</p>
+<p>Dates such as <code>filingDate</code> and <code>reportDate</code> are written as dates, while identifiers that may contain leading zeros remain text. <code>acceptanceDateTime</code> remains text, including any suffix and fractional seconds: extraction makes no decision about the time zone represented by that text. The other tables do not need separate raw versions because they do not contain acceptance timestamps.</p>
+<p>The extractor saves checkpoints. By default it returns after about 150 seconds; repeating the call resumes the same extraction. The example uses <code>max_seconds=0</code> to continue until completion. Do not replace the source ZIP while resuming an associated checkpoint. Using a separate directory for each snapshot also prevents its companion tables from replacing those of another snapshot.</p>
+</section>
+<section id="establishing-the-timestamps" class="level2">
+<h2 class="anchored" data-anchor-id="establishing-the-timestamps">Establishing the timestamps</h2>
+<p>The unit to which the package attaches a corrected timestamp is the <strong>accession number</strong>. A filing may appear under more than one CIK, but those appearances should refer to the same acceptance instant. An accepted correction is therefore joined to every occurrence of that accession when producing the candidate file. A rule for an entire archived CIK file is not sufficient: its timestamps can have mixed interpretations.</p>
+<section id="the-first-update-and-later-updates" class="level3">
+<h3 class="anchored" data-anchor-id="the-first-update-and-later-updates">The first update and later updates</h3>
+<p>Our original analysis had a useful starting point: the May 2024 archive used a consistent New York local-clock convention. The first update compared a Parquet reference derived from that archive with the ZIP downloaded on 5 September 2026, then used duplicate-accession comparisons, live JSON, and selected SGML headers to address the remaining cases. The package’s <code>make_previous()</code> function supports that historical bootstrap, but the 2024 convention is not a rule for newer snapshots.</p>
+<p>The second update started from the corrected September 5 Parquet and processed the September 30 ZIP. Readers need not repeat either historical preparation: the downloadable September 30 reference incorporates that work and can serve as the starting point for their next update. Thereafter, their own preceding corrected Parquet can provide the reference.</p>
+<p>Create an initial candidate using the newly extracted data and available evidence:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sec.process()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With the default layout, <code>process()</code> uses the latest extracted <code>filings_raw.parquet</code> and the local <code>DATA_DIR/submissions/filings.parquet</code> as its predecessor when that file exists. Otherwise it uses the downloaded reference. It reuses the reference’s observations and locally collected JSON/SGML evidence, writes a fresh numbered candidate such as <code>filings_candidate_0001.parquet</code>, and saves diagnostics beside it. It does not download new SEC evidence or replace the current release. Explicit inputs are available for controlled comparisons, as described in the <a href="https://iangow.github.io/sec_submissions/workflow/">workflow guide</a>.</p>
+<p>Only supported prior instants can act as anchors. For each accession, the usable prior rows must agree on one instant, and interpreting a new raw clock as either UTC or <code>America/New_York</code> must reproduce that instant. A previously unresolved Eastern fallback or provisional live-file inference is not an anchor. Its observed source clock may nevertheless supply one member of a new exact clock pair. The processor can use the preserved <code>acceptanceDateTime_raw</code> column or explicitly supplied historical raw files, rather than treating a converted provisional guess as another observation. Changes in non-timestamp fields come from the newly extracted archive.</p>
+</section>
+<section id="resolve-differing-clocks-first" class="level3">
+<h3 class="anchored" data-anchor-id="resolve-differing-clocks-first">Resolve differing clocks first</h3>
+<p>An accession appearing under several CIKs may have different raw clocks. Comparisons with the previous snapshot or live submissions JSON may also reveal a second clock for the same accession. The useful case has exactly two distinct valid clocks that resolve to one instant when the earlier clock is interpreted as <code>America/New_York</code> and the later as UTC. For example, 08:01:07 in New York on a December date and 13:01:07 UTC on that date describe the same instant.</p>
+<p>The package tests that equality using the named time zones, accounting for daylight saving and changes of date. A difference of four or five hours alone is insufficient. Neither the newer snapshot nor the live JSON is assumed to supply the UTC member: either source may provide the later clock reading. Equal clocks provide no new timezone evidence, and unexplained differences remain available for investigation. This comparison does not require a filing to be outside ordinary EDGAR hours.</p>
+</section>
+<section id="use-live-file-evidence-carefully" class="level3">
+<h3 class="anchored" data-anchor-id="use-live-file-evidence-carefully">Use live-file evidence carefully</h3>
+<p>One live JSON response can provide observations for many accessions. Where a direct pair cannot resolve an accession, supported prior instants, resolved clock pairs, and SGML observations can anchor the interpretation of that response. If all available anchors agree, the package can apply the inferred convention to its other observed clocks.</p>
+<p>A live response can contain both UTC and Eastern clocks, even when the available anchors suggest a common convention. The resulting proposals are therefore <strong>provisional</strong>, not confirmations. The package records the anchors, rejects contradictory file evidence, and never promotes a provisional proposal to confirming evidence in a subsequent update. It identifies a response version by its source URL and retrieval time: a later response from the same URL need not use the same convention. It does not apply a live-file convention indiscriminately to all rows in the ZIP or to future accessions not observed in that response.</p>
+<p>An already established accession instant can usually be reused without fetching its JSON or SGML again, provided the new raw clock reproduces it. That is the principal saving in a subsequent update. It is different from assuming that all new filings for an earlier CIK must use the same time zone.</p>
+</section>
+</section>
+<section id="collecting-additional-evidence" class="level2">
+<h2 class="anchored" data-anchor-id="collecting-additional-evidence">Collecting additional evidence</h2>
+<p>The initial candidate identifies what the existing observations cannot resolve. It is useful to screen unresolved and provisional recent filings, not only those outside ordinary EDGAR hours: a UTC clock can fall within that window and still be misinterpreted as Eastern. For example, collect live JSON for files containing unresolved records from 2024 onward, then process the data again:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> date</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>sec.collect_live_json(since_date<span class="op">=</span>date(<span class="dv">2024</span>, <span class="dv">1</span>, <span class="dv">1</span>), workers<span class="op">=</span><span class="dv">8</span>, rate<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>sec.process()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The collector freezes the selected set of source files, fetches matching raw accessions, and follows linked historical JSON when necessary. It includes already supported accessions in those files so that they can serve as anchors. Its Parquet observations preserve source URLs and retrieval times; a completed request queue does not imply that every accession was found or every timestamp resolved. The recent cutoff defines the collection scope, not a claim that older unsupported timestamps are correct. Workers overlap network waits, while <code>rate</code> limits total requests per second across those workers.</p>
+<p>JSON comparisons should precede a large SGML queue because one response can resolve many timestamps. For remaining questions, the archived filing header’s <code>&lt;ACCEPTANCE-DATETIME&gt;</code> field provides an accession-level reference, interpreted here as a New York local clock and converted using <code>America/New_York</code>. An exact SGML observation has priority over weaker file-level inference, while disagreements remain in the diagnostics.</p>
+<p><code>collect_sgml()</code> expects an explicit queue with <code>cik</code> and <code>accession_number</code> columns; it does not automatically select an anchor for every unresolved file. After preparing such a queue from the candidate and its coverage diagnostics, collect it and create another candidate:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sec.collect_sgml(<span class="st">"sgml_queue.parquet"</span>, workers<span class="op">=</span><span class="dv">8</span>, rate<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                 index_fallback<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>sec.process()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Possible selections include missing live matches, contradictory evidence, and live response versions without anchors. For the September 30 update, the follow-up used one accession for single-accession response versions and the first and last accessions for multi-accession versions. The queue contained 23,906 accessions; 23,905 supplied a timestamp tag and one returned 404. That historical anchoring design relied on a common-convention assumption. The current package retains such inferences as provisional; an independent audit addresses a different question.</p>
+<p>An outside-hours screen remains useful for diagnosis, but an outside-hours time is not automatically an error. <code>EFFECT</code> is excluded from that screen, and the targeted anchor collection also excluded <code>CORRESP</code>, <code>UPLOAD</code>, and <code>DRSLTR</code>. Those forms can still participate in exact clock-pair comparisons and the random audit. Their form names or a global date cutoff should not determine their time zone.</p>
+<p>Successful SGML observations, missing timestamp tags, and request errors are retained separately. Transient request failures can be retried. Where an SGML tag is absent, filing-index fallback reads the labelled <code>Accepted</code> value and retains its source separately; an unsuccessful lookup remains unavailable evidence. Likewise, literal midnight is a useful diagnostic, not a sufficient rule for declaring a timestamp missing. Historical date-only values must remain distinguishable from observed acceptance times: midnight Eastern is a storage convention for those dates, not evidence of an intraday acceptance time. The collection functions support resumption with the same inputs and settings; see the workflow guide for those options.</p>
+</section>
+<section id="the-candidate-and-its-provenance" class="level2">
+<h2 class="anchored" data-anchor-id="the-candidate-and-its-provenance">The candidate and its provenance</h2>
+<p>Every processing run combines the evidence into one accession-level interpretation and writes a separate candidate with time-zone-aware <code>acceptanceDateTime</code> values. The package uses a temporary DuckDB database for this computation, exports the candidate and Parquet diagnostics, and removes the working database. Readers do not need to create or maintain a permanent database.</p>
+<p>Rows without an accepted instant retain an Eastern-time interpretation labelled <code>unresolved_raw_as_eastern</code>. That is a compatibility fallback, not a verified timestamp. The output’s <code>timestamp_provenance</code>, <code>timestamp_reference_id</code>, and <code>timestamp_interpretation</code> preserve the distinction between established instants, inferred conventions, and unresolved cases. For example, <code>sgml</code> denotes direct header evidence and <code>provisional_live_file_inferred</code> denotes a proposed live-file convention. The older <code>live_file_inferred</code> label must likewise be treated as provisional when reading the frozen September 30 release. Current diagnostics count supported, provisional, and unresolved rows separately.</p>
+<p>The main Parquet therefore carries the accepted instants and their status forward. The separate observation files retain source clocks, failed attempts, retrieval versions, and evidence for accessions that may be absent from a later snapshot. Diagnostics record the inputs, support counts, rejected evidence, and disagreements. Check these alongside row counts and non-timestamp fields before releasing the candidate. Request completion, evidence-supported coverage, and an accuracy estimate are different things.</p>
+</section>
+<section id="checking-quality-with-a-sample" class="level2">
+<h2 class="anchored" data-anchor-id="checking-quality-with-a-sample">Checking quality with a sample</h2>
+<p>The checks used to find and correct problems do not estimate the frequency of errors in the released data. A collection concentrated on recent or outside-hours filings is not representative of all filing rows. For that purpose, draw a probability sample from a frozen candidate. Readers using the published data can inspect the results and downloadable audit artifacts without repeating this collection themselves.</p>
+<section id="freeze-predictions-before-fetching-headers" class="level3">
+<h3 class="anchored" data-anchor-id="freeze-predictions-before-fetching-headers">Freeze predictions before fetching headers</h3>
+<p>The population assessed here is the rows of <code>filings.parquet</code>, including repeated appearances of an accession under different CIKs. An accession-level accuracy estimate answers a different question. All form types belong in this audit; a sample limited to unresolved cases cannot establish the accuracy of the whole file.</p>
+<p>The current audit uses SGML first and the filing index’s labelled <code>Accepted</code> value when the SGML tag is absent. Use the package to draw and audit a reproducible simple random sample:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sec.audit(sample_size<span class="op">=</span><span class="dv">10_000</span>, seed<span class="op">=</span><span class="dv">202609304</span>, workers<span class="op">=</span><span class="dv">8</span>, rate<span class="op">=</span><span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>By default this selects the latest candidate, saves the sampled row keys and predicted instants before fetching SGML, and does not reuse an observation cache. It uses seeded reservoir sampling, retains repeated appearances of an accession in the sample, and deduplicates only the fetch queue. It never changes the candidate or its frozen predictions. The seed alone does not reproduce the published sample for another file; the candidate’s identity and the saved identifiers matter too.</p>
+<p>The output includes sample identifiers, frozen predictions, observation batches, row-level outcomes, and a summary. Record agreement, disagreement, missing timestamp tags, and request failures separately, retrying transient failures without changing sample membership. Do not replace sampled rows because their headers are unavailable. An audit used to repair a candidate must be followed by a new independent assessment of the revised candidate. The processor does not automatically use a candidate’s own audit observations as repair evidence; those observations can be retained for a subsequent update.</p>
+<p>A fresh header lookup does not make every comparison independent of the original evidence. Where an SGML timestamp already supported the prediction, agreement checks application of that evidence rather than independently establishing the header’s timezone semantics. Report outcomes by evidence group where sample sizes permit, as below.</p>
+</section>
+<section id="what-the-sample-can-establish" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-sample-can-establish">What the sample can establish</h3>
+<p>If there are zero disagreements in <span class="math inline">\(n\)</span> verifiable observations, the one-sided 95% binomial upper bound on the error rate is</p>
+<p><span class="math display">\[
+p_U = 1 - 0.05^{1/n}.
+\]</span></p>
+<p>For a small sampling fraction, this is a conservative approximation for sampling rows without replacement. It is close to <span class="math inline">\(3/n\)</span>: zero errors in 600 verifiable observations gives a bound of about 0.5%, and zero in 3,000 gives about 0.1%. With observed errors, use an appropriate binomial interval rather than only the sample error percentage; <a href="https://itl.nist.gov/div898/software/dataplot/refman2/auxillar/exacbino.htm">NIST describes exact binomial confidence limits</a>. The package calculates a one-sided exact bound using the optional audit dependencies installed above.</p>
+<p>Unavailable timestamps limit the conclusion. A bound among verifiable rows does not establish whether rows without reference timestamps are correct, so it is not valid to call the entire file 99.9% accurate merely because 3,000 obtainable headers agree. Diagnostic samples of recent filings, correspondence forms, or suspicious clocks can be useful additions, but must remain separate from the overall estimate unless they form part of a probability design with appropriate weights.</p>
+</section>
+<section id="results-for-the-september-30-update" class="level3">
+<h3 class="anchored" data-anchor-id="results-for-the-september-30-update">Results for the September 30 update</h3>
+<p>The worked example’s first ZIP, downloaded on 5 September 2026, contained 27,209,834 filing rows, with filings dated through 4 September. The September 30 ZIP was retrieved at 13:39 UTC, had an HTTP modification time of 12:34:49 UTC that day, and supplied 27,272,863 filing rows. The <a href="https://github.com/iangow/sec_submissions_data/releases/download/2026-09-30/manifest.json">release manifest</a> records its checksum, the released candidate’s checksum, and the audit metadata.</p>
+<p>The frozen September 30 file labels 25,584,390 timestamps as supported under the policy used for that release, alongside 1,688,473 explicitly unresolved Eastern fallbacks. That historical supported count includes live-file inference, which the current package treats as provisional. The following results describe the original SGML-only audit of that file. A fresh 10,000-row sample was frozen before new SGML lookup, using seed <code>202609304</code>. The audit found no disagreements among the 9,230 rows with verifiable headers. The exact one-sided 95% upper bound on the error rate among those verifiable rows is <strong>0.0325%</strong>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Candidate evidence group</th>
+<th style="text-align: right;">Sample rows</th>
+<th style="text-align: right;">Verifiable</th>
+<th style="text-align: right;">Disagreements</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Trusted 2024 snapshot</td>
+<td style="text-align: right;">6,702</td>
+<td style="text-align: right;">6,695</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td>ZIP/live-JSON clock pairs</td>
+<td style="text-align: right;">1,446</td>
+<td style="text-align: right;">1,445</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td>Live-file inference</td>
+<td style="text-align: right;">953</td>
+<td style="text-align: right;">862</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td>Cross-CIK accession pairs</td>
+<td style="text-align: right;">173</td>
+<td style="text-align: right;">99</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td>Direct SGML evidence</td>
+<td style="text-align: right;">129</td>
+<td style="text-align: right;">129</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td>Snapshot-pair inference</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">n/a</td>
+</tr>
+<tr class="odd">
+<td>Unresolved Eastern fallback</td>
+<td style="text-align: right;">596</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">n/a</td>
+</tr>
+<tr class="even">
+<td><strong>Total</strong></td>
+<td style="text-align: right;"><strong>10,000</strong></td>
+<td style="text-align: right;"><strong>9,230</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+<p>All 770 unavailable references lacked the SGML timestamp tag; none remained unavailable because of a failed request. They were filings dated 1994 through 2002, with no missing tags observed for 2003 onward in this sample. In particular, none of the sampled unresolved fallbacks was verifiable: the result does not validate those rows. The <a href="https://github.com/iangow/sec_submissions_data/releases/download/2026-09-30/audit_sample.csv">sample identifiers and frozen predictions</a> and <a href="https://github.com/iangow/sec_submissions_data/releases/download/2026-09-30/audit_outcomes.parquet">row-level outcomes</a> make the assessment transparent without listing 10,000 records in the note. These results remain a dated record of that original assessment.</p>
+</section>
+<section id="subsequent-findings" class="level3">
+<h3 class="anchored" data-anchor-id="subsequent-findings">Subsequent findings</h3>
+<p>A follow-up obtained a filing-index reference for each of the 770 missing-tag rows while retaining the original sample and predictions. Seven supplied acceptance times that agreed exactly; the other 763 were historical date-only values whose dates agreed with the source. Of those date-only values, 52 had an incorrect midnight representation in the frozen file. This distinction matters: agreement on the date is not agreement on an observed acceptance instant.</p>
+<p>An independent October 2 audit of a later pair-corrected candidate found two disagreements in 10,000 rows, with all rows verifiable using 9,234 SGML and 766 filing-index references. Both disagreements arose from a live-response-wide timezone convention, which led to the package’s provisional treatment of such inferences. The observed disagreement rate for that candidate was 0.020%, with a one-sided 95% upper bound of 0.06294%.</p>
+<p>Later targeted collection and checks against saved samples verified repairs, but those are regression checks rather than a new independent estimate for the repaired file. A newly frozen random audit remains the release gate for that candidate. The <a href="https://iangow.github.io/sec_submissions/audit/">maintained audit report</a> identifies each candidate, the original observations, the supplemental references, and the limits of the comparisons.</p>
+</section>
+</section>
+<section id="releasing-an-update" class="level2">
+<h2 class="anchored" data-anchor-id="releasing-an-update">Releasing an update</h2>
+<p>After reviewing the candidate, diagnostics, and audit, install the candidate as the local current file:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sec.publish()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This writes <code>DATA_DIR/submissions/filings.parquet</code>. If a release already exists, the publisher first saves it as <code>filings_previous.parquet</code> and moves an older previous version into a dated <code>archive/</code> entry. It validates the copied bytes and preserves the existing current file’s local identity. The in-place update is not atomic for other readers, so they should wait until it finishes. The package does not upload the data or perform storage-service-specific link checks.</p>
+<p>For the public reference, I attach the validated files and a checksum manifest to a dated release in a separate <a href="https://github.com/iangow/sec_submissions_data">data repository</a>. All files are uploaded to a draft release and checked before it becomes public. The <a href="https://github.com/iangow/sec_submissions_data/releases/latest/download/filings.parquet">current-file link</a> follows the latest release; a <a href="https://github.com/iangow/sec_submissions_data/releases/download/2026-09-30/filings.parquet">dated link</a> identifies a fixed snapshot. The package’s <code>fetch_reference()</code> resolves the current release once and downloads its files from that dated version, avoiding a mixture of releases.</p>
+<p>For the next update, retain the preceding corrected Parquet and its supporting observations, then repeat extraction, comparison, bounded evidence collection, and an independent audit. The earlier ZIP is useful for reproducibility but need not be reprocessed to carry its established accession instants forward. The command-line equivalents of the functions shown here are documented in the <a href="https://iangow.github.io/sec_submissions/workflow/">package workflow guide</a>.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
