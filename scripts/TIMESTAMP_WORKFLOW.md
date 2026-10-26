@@ -1,5 +1,15 @@
 # Accession-first timestamp repair
 
+> Historical workflow checkpoint (26 October 2026). New operational work belongs
+> in [`sec_submissions`](https://github.com/iangow/sec_submissions).
+> See [the migration plan](SEC_SUBMISSIONS_MIGRATION.md) before using these scripts
+> for another release; their preserved inference policy predates newer package fixes.
+
+For subsequent snapshots, [TIMESTAMP_BOOTSTRAP.md](TIMESTAMP_BOOTSTRAP.md)
+describes the direct previous-Parquet bootstrap and safe release rollover.
+It does not require reprocessing the May 2024 ZIP. The historical commands
+and experiments below remain available for reproduction.
+
 The production Parquet was updated on September 10, 2026 using the frozen
 accession evidence. See [the release record](TIMESTAMP_RELEASE_20260910.md)
 for validation, the archived previous version and report publication details.
@@ -958,7 +968,7 @@ uv run python scripts/extract_timestamp_clocks.py \
 uv run python scripts/analyze_timestamp_pair_baseline.py \
   --old-raw output/timestamp_baseline/2024/filings_raw_clocks.parquet \
   --raw "$DATA_DIR/edgar/filings_raw.parquet" \
-  --reference "$DATA_DIR/edgar/filings.parquet" \
+  --reference "$DATA_DIR/submissions/filings.parquet" \
   --database output/timestamp_baseline/pair_baseline.duckdb
 ```
 

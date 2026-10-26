@@ -638,7 +638,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zip", type=Path, default=DEFAULT_NEW_ZIP)
     parser.add_argument("--database", type=Path, default=DEFAULT_DB)
-    parser.add_argument("--filings", type=Path, default=DATA_DIR / "edgar" / "filings.parquet")
+    parser.add_argument("--filings", type=Path, default=DATA_DIR / "submissions" / "filings.parquet")
     parser.add_argument("--dry-run", action="store_true", help="List targets without fetching or writing.")
     parser.add_argument("--max-blocks", type=int, default=100)
     parser.add_argument(

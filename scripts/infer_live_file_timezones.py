@@ -10,14 +10,20 @@ from acceptance_timestamp_db import DEFAULT_DB, initialize_database
 from compare_filing_timestamp_sources import sql_string
 
 
-def infer(con, sgml_file_anchors=False):
-    extra_evidence = """
+def infer(con, sgml_file_anchors=False, versioned=False):
+    version_column = 'retrieved_at observation_version,' if versioned else ''
+    version_group = ',retrieved_at' if versioned else ''
+    version_join = "AND l.retrieved_at IS NOT DISTINCT FROM r.observation_version" if versioned else ''
+    sgml_version_join = "AND l.retrieved_at IS NOT DISTINCT FROM s.retrieved_at" if versioned else ''
+    extra_evidence = f"""
         UNION ALL
         SELECT l.source_url,l.accession_number,l.retrieved_at,
                CASE WHEN (try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'UTC')=s.instant THEN 'utc'
                     WHEN (try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'America/New_York')=s.instant THEN 'eastern'
                     ELSE 'contradiction' END
-        FROM live l JOIN sgml_file_anchors s USING(source_url,accession_number)
+        FROM live l JOIN sgml_file_anchors s
+          ON l.source_url=s.source_url AND l.accession_number=s.accession_number
+          {sgml_version_join}
     """ if sgml_file_anchors else ""
     con.execute(f"""
         CREATE TABLE anchors AS
@@ -31,10 +37,10 @@ def infer(con, sgml_file_anchors=False):
         FROM live l JOIN anchors a ON a.accession=l.accession_number
         {extra_evidence};
         CREATE TABLE file_rules AS
-        SELECT source_url,min(interpretation) interpretation,
+        SELECT source_url,{version_column}min(interpretation) interpretation,
                count(DISTINCT accession_number) evidence_count,
                min(retrieved_at) first_observed,max(retrieved_at) last_observed
-        FROM file_evidence GROUP BY source_url
+        FROM file_evidence GROUP BY source_url{version_group}
         HAVING count(DISTINCT interpretation)=1 AND min(interpretation)<>'contradiction';
         CREATE TABLE file_candidates AS
         SELECT l.source_url,l.accession_number,
@@ -42,7 +48,7 @@ def infer(con, sgml_file_anchors=False):
                  THEN try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'UTC'
                  ELSE try_cast(l.acceptance_datetime_text AS TIMESTAMP) AT TIME ZONE 'America/New_York'
                END instant
-        FROM live l JOIN file_rules r USING(source_url);
+        FROM live l JOIN file_rules r ON l.source_url=r.source_url {version_join};
         CREATE TABLE rejected_accessions AS
         SELECT accession_number FROM file_candidates GROUP BY 1
         HAVING count(DISTINCT instant)<>1 OR count(*) FILTER(WHERE instant IS NULL)>0
@@ -86,6 +92,10 @@ def main():
             UNION ALL SELECT accession_number,corrected_acceptance_datetime AT TIME ZONE 'America/New_York'
             FROM production.submission_overrides;
         """)
+        if con.execute("SELECT count(*) FROM information_schema.tables WHERE table_catalog='baseline' AND table_name='prior_release_evidence'").fetchone()[0]:
+            con.execute("""INSERT INTO validation
+                SELECT DISTINCT accessionNumber,corrected_instant FROM baseline.prior_release_evidence
+                WHERE supported AND corrected_instant IS NOT NULL""")
         infer(con)
         if args.sgml_anchor_unclassified:
             con.execute("""
@@ -118,7 +128,7 @@ def main():
               count(*) FILTER(WHERE inferred_instant=reference_instant) FROM incremental
         """).fetchone(),flush=True)
         print('Disagreements:',con.execute("""SELECT reference_provenance,count(*) FROM incremental
-            WHERE inferred_instant IS DISTINCT FROM reference_instant GROUP BY 1""").fetchall(),flush=True)
+            WHERE reference_instant IS NOT NULL AND inferred_instant IS DISTINCT FROM reference_instant GROUP BY 1""").fetchall(),flush=True)
     if args.promote_overrides:
         with duckdb.connect(str(args.database)) as con:
             initialize_database(con)

@@ -199,7 +199,7 @@ def main():
                         help='Allow correspondence forms in outside-hours targeting; comparison includes all forms.')
     parser.add_argument('--only-form',help='Compare only this form in explicitly selected blocks (for backfills).')
     parser.add_argument('--list-only', action='store_true', help='Count targets without fetching or writing.')
-    parser.add_argument('--filings', type=Path, default=DATA_DIR/'edgar'/'filings.parquet')
+    parser.add_argument('--filings', type=Path, default=DATA_DIR/'submissions'/'filings.parquet')
     parser.add_argument('--since-date', default='2003-01-01')
     parser.add_argument('--database', type=Path, default=DEFAULT_DB)
     parser.add_argument('--zip', type=Path, default=DEFAULT_NEW_ZIP)

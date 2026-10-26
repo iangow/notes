@@ -1,5 +1,26 @@
 # Parquet evidence storage
 
+> Historical workflow checkpoint (26 October 2026). New operational work belongs
+> in [`sec_submissions`](https://github.com/iangow/sec_submissions).
+> See [the migration plan](SEC_SUBMISSIONS_MIGRATION.md) before using these scripts
+> for another release; their preserved inference policy predates newer package fixes.
+
+## Parquet interface (September 30, 2026)
+
+`process_filings.py` now reads raw filings, a previous corrected Parquet and an
+optional Parquet observation cache. Its DuckDB is a temporary implementation
+detail and is removed after producing the candidate and diagnostics. Accepted
+instants and provenance normally live in the main `filings.parquet`; a separate
+accepted-instants table is a derived convenience, not a required permanent store.
+`audit_filings.py` freezes a simple random row sample, writes observations and
+results as Parquet, and does not modify the candidate. Observations, missing-tag
+results, request attempts and audit predictions remain separate from the main
+table, including evidence for accessions absent from the latest snapshot.
+
+See [TIMESTAMP_BOOTSTRAP.md](TIMESTAMP_BOOTSTRAP.md) for the reader-facing commands.
+Legacy live collectors still use their existing databases; the export/restore
+bridge below remains available for those tools and historical reproduction.
+
 ## Migration status (September 10, 2026)
 
 `timestamp_parquet_archive.py` provides a non-destructive bridge: export an
@@ -119,7 +140,17 @@ listed in published manifests, not indiscriminately glob old full snapshots
 (which would double-count evidence). Compaction must preserve retrieval history,
 keys and conflicts. DuckDB becomes a rebuildable query engine and working cache.
 
-The previous corrected Parquet can replace the 2024 bootstrap reference after
-validation, but only alongside provenance identifying evidence-supported values
-versus defaults. Keep the 2024 bootstrap and current databases until that
-transition has been demonstrated. No deletion is part of this migration.
+`bootstrap_timestamp_workflow.py` now accepts a previous corrected Parquet as
+the accession reference instead of requiring the 2024 raw snapshot. Supported
+instants retain their provenance, defaults and legacy rules are excluded, and
+current clocks must agree with inherited instants. See
+[TIMESTAMP_BOOTSTRAP.md](TIMESTAMP_BOOTSTRAP.md) for the checks, follow-up stages
+and release rollover. This changes the update interface, not the historical
+release or its evidence. Keep the 2024 bootstrap and current databases for
+reproduction; no deletion is part of this migration.
+
+`publish_filings.py` is a deliberate exception to immutable evidence storage:
+it backs up prior releases and overwrites the shared current Parquet in place
+to retain its local identity. Observation batches and evidence snapshots should
+still be immutable. Dropbox identity and the shared download must be verified
+after sync; concurrent readers must be closed during publication.

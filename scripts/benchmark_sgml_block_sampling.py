@@ -189,23 +189,25 @@ def fetch_sgml(cik, accession, user_agent):
         headers={"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate"},
     )
     started = time.monotonic()
+    text = None
+    status = None
+    digest = None
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             content = decode_response(response)
             status = response.status
         text = content.decode("latin-1")
-        match = re.search(r"<ACCEPTANCE-DATETIME>(\d{14})", text)
+        digest = hashlib.sha256(content).hexdigest()
+        match = re.search(r"<ACCEPTANCE-DATETIME>\s*(\d{14})", text)
         if not match:
             raise ValueError("ACCEPTANCE-DATETIME tag not found")
         acceptance = datetime.strptime(match.group(1), "%Y%m%d%H%M%S")
         error = None
-        digest = hashlib.sha256(content).hexdigest()
     except Exception as exc:
-        text = None
         acceptance = None
-        status = exc.code if isinstance(exc, urllib.error.HTTPError) else None
+        if isinstance(exc, urllib.error.HTTPError):
+            status = exc.code
         error = f"{type(exc).__name__}: {exc}"
-        digest = None
     elapsed_ms = (time.monotonic() - started) * 1000
     return {
         "acceptance": acceptance,

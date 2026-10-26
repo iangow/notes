@@ -143,3 +143,12 @@ Keep topic tags consistent between each note's `categories` and its topic list i
 It is marked `draft: true` and excluded from the website render list. Its Typst
 source and generated PDF are also excluded from website resources. Keep these
 exclusions until publication is explicitly approved.
+
+## SEC submissions workflow
+
+The SEC scripts in `scripts/` are a preserved research and reproduction checkpoint.
+Use [`sec_submissions`](https://github.com/iangow/sec_submissions) for new
+operational work. The [migration plan](scripts/SEC_SUBMISSIONS_MIGRATION.md)
+records ownership, the regression tests being carried across, remaining diagnostic
+gaps, and evidence-retention requirements. The processing-workflow article remains
+an unpublished draft; committing it does not add it to the website render list.

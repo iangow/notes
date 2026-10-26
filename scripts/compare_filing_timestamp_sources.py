@@ -38,7 +38,7 @@ DEFAULT_NEW = Path(
         "NEW_FILINGS_PATH",
         DEFAULT_BAD_TIMELINE
         if DEFAULT_BAD_TIMELINE.exists()
-        else DATA_DIR / "edgar" / "filings.parquet",
+        else DATA_DIR / "submissions" / "filings.parquet",
     )
 )
 DEFAULT_OLD_ZIP = Path(

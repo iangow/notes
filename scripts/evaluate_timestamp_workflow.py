@@ -24,13 +24,21 @@ def main():
         c.execute("SET TimeZone='UTC'; SET threads=4; SET enable_progress_bar=false; SET memory_limit='4GB'")
         for alias,path in [('b',args.baseline),('l',args.live_inference),('q',args.sgml_queue),('e',args.database)]:
             c.execute(f'ATTACH {sql_string(path)} AS {alias} (READ_ONLY)')
+        columns = {r[0] for r in c.execute('DESCRIBE b.accession_timestamp_overrides').fetchall()}
+        provenance = 'provenance' if 'provenance' in columns else "CASE WHEN evidence='duplicates_only' THEN 'cross_cik_pair' ELSE 'snapshot_pair' END"
+        c.execute(f"""CREATE TEMP TABLE baseline_evidence AS
+            SELECT accessionNumber,corrected_instant,{provenance} AS provenance
+            FROM b.accession_timestamp_overrides""")
+        if c.execute("SELECT count(*) FROM information_schema.tables WHERE table_catalog='b' AND table_name='prior_accession_evidence'").fetchone()[0]:
+            c.execute('CREATE TABLE prior_release_evidence AS SELECT * FROM b.prior_release_evidence')
+            c.execute('CREATE TABLE prior_accession_evidence AS SELECT * FROM b.prior_accession_evidence')
+            c.execute('CREATE TABLE bootstrap_rejections AS SELECT * FROM b.bootstrap_rejections')
         c.execute("""
             CREATE TABLE inputs AS SELECT * FROM b.inputs;
             CREATE TABLE workflow_metadata AS SELECT now() AS created_at;
             CREATE TABLE accession_evidence AS
             SELECT accessionNumber accession_number,corrected_instant,
-                   CASE WHEN evidence='duplicates_only' THEN 'cross_cik_pair' ELSE 'snapshot_pair' END provenance,
-                   30 priority FROM b.accession_timestamp_overrides
+                   provenance,30 priority FROM baseline_evidence
             UNION ALL SELECT accession,instant,'live_pair',20 FROM l.anchors
             WHERE accession NOT IN (SELECT accessionNumber FROM b.accession_timestamp_overrides)
             UNION ALL SELECT accession_number,instant,'live_file_inferred',10 FROM l.inferred_overrides
@@ -54,8 +62,8 @@ def main():
             CREATE TABLE summary AS
             SELECT count(*) rows_n,count(corrected_instant) supported_rows,
               count(*) FILTER(WHERE prospective_instant=reference_instant) matching_rows,
-              count(*) FILTER(WHERE corrected_instant IS NULL AND prospective_instant IS DISTINCT FROM reference_instant) missing_corrections,
-              count(*) FILTER(WHERE corrected_instant IS NOT NULL AND prospective_instant IS DISTINCT FROM reference_instant) evidence_differences
+              count(*) FILTER(WHERE reference_instant IS NOT NULL AND corrected_instant IS NULL AND prospective_instant IS DISTINCT FROM reference_instant) missing_corrections,
+              count(*) FILTER(WHERE reference_instant IS NOT NULL AND corrected_instant IS NOT NULL AND prospective_instant IS DISTINCT FROM reference_instant) evidence_differences
             FROM comparison;
         """)
         print('Summary:',c.execute('SELECT * FROM summary').fetchone())

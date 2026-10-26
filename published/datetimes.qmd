@@ -2,6 +2,7 @@
 title: "Working with date and times"
 author: Ian D. Gow
 date: 2026-09-10
+date-modified: 2026-10-26
 date-format: "D MMMM YYYY"
 categories: [Datetimes, DuckDB]
 format:
@@ -196,23 +197,36 @@ sample |> mutate(hour = hour(a_datetime)) |> collect()
 
 ## Working with SEC filings data
 
-We start by loading the `filings` data stored in a parquet file `filings.parquet` in the `edgar` schema of our data repository.^[The code below assumes that `DATA_DIR` is set in the project `.env` file and points to the root of that repository.
-The process for creating this file is described [here](sec_submissions.html).
-You can obtain a copy of `filings.parquet` [here](https://www.dropbox.com/scl/fi/9osie7ln50z67uzi9zys5/filings.parquet?rlkey=5igrlb23tns4n8trunk3nstlt&dl=0).
-If you do not use a Parquet data repository, place `filings.parquet` in the `data` subdirectory of this project and use `filings <- load_parquet(db, table = "filings", data_dir = "data")` instead.]
-Because the SEC bulk submissions file is updated over time, the results below may differ from those in earlier rendered versions of this note.
+This note uses the September 30, 2026 release of the corrected SEC submissions data.
+After installing my [`sec-submissions` package](https://iangow.github.io/sec_submissions/), download that release and its companion tables by running the following command in a terminal:
+
+```sh
+sec-submissions fetch-reference --version 2026-09-30 --companions
+```
+
+The package checks the downloads against the release's checksums and reuses verified local files.
+No SEC user agent is needed for this download, and readers do not need to run the timestamp corrections or repeat the audit.
+The [package documentation](https://iangow.github.io/sec_submissions/data/) describes the files and directory settings, while the [audit results](https://iangow.github.io/sec_submissions/audit/) explain what was verified and what remains uncertain.
+Using a dated release for both filings and tickers keeps the analysis tied to a fixed snapshot rather than a moving current file.
+
+We load `filings.parquet` from the downloaded reference directory.^[The package uses `DATA_DIR` when set, including in a local `.env`, and otherwise uses `~/sec-submissions-data/pq_data`.
+The initial code in this note loads `.env` into R when that file is present, so both use the same directory setting.]
 
 ```{r}
-filings <- load_parquet(db, table = "filings", schema = "edgar")
+data_dir <- path.expand(Sys.getenv(
+  "DATA_DIR", unset = "~/sec-submissions-data/pq_data"
+))
+reference_dir <- file.path(data_dir, "submissions", "references", "2026-09-30")
+filings <- load_parquet(db, table = "filings", data_dir = reference_dir)
 ```
 
 An important thing to note about the creation of this file is that the original data were coded such that the time zone of the data was UTC.
 For example, the original text representation of `acceptanceDateTime` was of the form `2024-04-25T17:04:01.000Z`.
 The `Z` is meant to indicate that the timestamp is expressed in UTC.^[See the [Wikipedia page for ISO 8601](https://en.m.wikipedia.org/wiki/ISO_8601).]
 However, the bulk JSON contains a mixture of UTC and `America/New_York` clock values despite this suffix.
-The current Parquet file reconciles timestamps using comparisons across snapshots, duplicate accessions, live SEC JSON, and selected SGML headers; it also uses file-level timezone inference where the available evidence agrees.
+The September 30 Parquet release reconciles timestamps using comparisons across snapshots, duplicate accessions, live SEC JSON, and selected SGML headers; it also uses file-level timezone inference where the available evidence agrees.
 Rows without supporting evidence retain an explicitly labelled Eastern-time fallback, rather than being treated as verified.
-The file includes `timestamp_provenance` and `timestamp_interpretation` columns so that these cases can be distinguished.^[The correction workflow is documented [here](https://github.com/iangow/notes/blob/main/scripts/TIMESTAMP_WORKFLOW.md). The timestamps are stored as timezone-aware instants in Parquet and displayed here in New York time.]
+The file includes `timestamp_provenance` and `timestamp_interpretation` columns so that these cases can be distinguished.^[The timestamp corrections and their assumptions are documented [here](https://iangow.github.io/sec_submissions/timestamps/). The timestamps are stored as timezone-aware instants in Parquet and displayed here in New York time.]
 
 To understand the date-times on `filings`, I extract some components of the timestamp to create a variable `acceptance_time` that converts the date component of each `acceptanceDateTime` to the same date (`2000-01-01`) as this facilitates plotting the times ignoring the dates.^[As mentioned above, R has no native type for times, but a set of date-times with the date fixed on a common date will provide us with what we need.]
 
@@ -467,14 +481,12 @@ filings |>
 ```
 
 To merge `sample_calls` with `filings`, we need a mapping from tickers to CIKs.
-We can get the `tickers` file from Dropbox using the code below.^[See [the note](sec_submissions.html) discussed earlier for details on how this file was created from data on SEC EDGAR.]
+The package command above has already downloaded `tickers.parquet` from the same September 30 release.^[See [the note](sec_submissions.html) discussed earlier for details on how this file was created from data on SEC EDGAR.
+The mapping describes tickers at the snapshot date rather than historical ticker changes.]
 
 ```{r}
-url <- str_c("https://www.dropbox.com/scl/fi/lertyk4twnphum0g8wrjv/",
-             "tickers.parquet?rlkey=mwm0m2m9c0ylg5h6yg1ivr38p&dl=1")
-sql <- str_c("read_parquet('", url, "')")
 tickers <- 
-  tbl(db, dbplyr::sql(str_c("SELECT * FROM ", sql))) |>
+  load_parquet(db, table = "tickers", data_dir = reference_dir) |>
   compute(name = "tickers", overwrite = TRUE)
 ```
 

@@ -20,7 +20,7 @@ default_new_filings_path <- file.path(
 )
 
 if (!file.exists(default_new_filings_path)) {
-  default_new_filings_path <- file.path(data_dir, "edgar", "filings.parquet")
+  default_new_filings_path <- file.path(data_dir, "submissions", "filings.parquet")
 }
 
 old_filings_path <- Sys.getenv("OLD_FILINGS_PATH", default_old_filings_path)

@@ -14,7 +14,7 @@ import duckdb
 from compare_filing_timestamp_sources import DATA_DIR, DEFAULT_OLD
 
 DEFAULT_BACKUP = DEFAULT_OLD
-DEFAULT_CURRENT = DATA_DIR / "edgar" / "filings.parquet"
+DEFAULT_CURRENT = DATA_DIR / "submissions" / "filings.parquet"
 DEFAULT_OUTPUT = Path("/private/tmp/filings_timeline_fixed.parquet")
 
 

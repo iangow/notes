@@ -26,7 +26,7 @@ def residuals(con, filings):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--database', type=Path, default=DEFAULT_DB)
-    parser.add_argument('--filings', type=Path, default=DATA_DIR/'edgar'/'filings.parquet')
+    parser.add_argument('--filings', type=Path, default=DATA_DIR/'submissions'/'filings.parquet')
     parser.add_argument('--raw', type=Path, default=DATA_DIR/'edgar'/'filings_raw.parquet')
     parser.add_argument('--fetch-identical', type=int, default=0,
                         help='Check this many recent identical ZIP/live cases, one per block.')
