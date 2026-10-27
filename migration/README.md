@@ -110,3 +110,22 @@ private solution guides are included.
 
 Publication versions were built in an isolated snapshot. Existing deployed
 notes and assets were retained, and valuation remains excluded.
+
+## Fourth batch: published
+
+Two short introductions were approved and published on 27 October 2026 under
+`posts/`, with HTML and individual PDFs:
+
+- Direct-method cash flow statements (11 June 2026).
+- Moving notes to Typst (3 April 2026 UTC; 2 April in New York).
+
+Full originals and verified LinkedIn timestamps are retained in
+`linkedin-batch-04.json`. Original dates and the Typst post's New York/UTC
+calendar-date distinction are preserved. The cash-flow introduction dates its
+0.2% finding and links the existing HTML analysis and dated PDF; no analysis is
+duplicated or rerun. Current Typst collection/archive links are identified in a
+dated update; original short-link redirect chains remain unverified. Inline-code
+formatting is retained. No third-party comments or private material is included.
+
+Publication versions were built in an isolated snapshot. Existing deployed notes,
+assets and the CTE correction were retained; valuation remains unpublished.
