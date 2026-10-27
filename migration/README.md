@@ -88,3 +88,25 @@ period. Chart labels use two decimal places in billions, with rounding half up;
 the bar geometry uses the unrounded amounts. Both dates are preliminary
 purchase-price allocations as reported at those dates, rather than subsequent
 balance-sheet carrying values of the acquired business.
+
+## Third batch: published
+
+Four short introductions were approved and published on 27 October 2026 under
+`posts/`, with HTML and individual PDFs:
+
+- Consolidation mini-textbook (22 April 2026).
+- Learning Python Polars (15 April 2026).
+- The R version of db2pq on CRAN (2 June 2026).
+- farr: reusable code and teaching data (4 September 2025).
+
+Full original bodies and verified LinkedIn timestamps are preserved in
+`linkedin-batch-03.json`; displayed dates retain their original UTC calendar
+dates. Links point to maintained public resources; original short-link redirect
+chains remain unverified. Polars and farr have explicitly dated updates. The
+obsolete farr release-timing parenthetical is omitted from the published post
+and preserved in its archived original. Package, function and dataset names
+use inline-code formatting where appropriate. No third-party comments or
+private solution guides are included.
+
+Publication versions were built in an isolated snapshot. Existing deployed
+notes and assets were retained, and valuation remains excluded.
