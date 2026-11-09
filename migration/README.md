@@ -129,3 +129,12 @@ formatting is retained. No third-party comments or private material is included.
 
 Publication versions were built in an isolated snapshot. Existing deployed notes,
 assets and the CTE correction were retained; valuation remains unpublished.
+
+## Fifth batch: published
+
+Three posts approved by Ian on 9 November 2026: A whole research paper in Quarto
+(22 February 2026), ChatGPT as a copy editor, with Git (15 January 2026), and
+Severance and academic incentives (28 January 2025). Original wording and UTC
+publication dates retained. Quarto links use linked text at Ian’s request.
+The copy-editing post retains its screenshot and separately labelled own follow-up,
+with a dated errata-link/context update. Source evidence is in linkedin-batch-05.json.
