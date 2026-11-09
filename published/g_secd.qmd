@@ -52,7 +52,7 @@ While creating the Parquet file takes 45 minutes, this may be a reasonable trade
 In writing this note, I used the R packages listed below.^[Execute `install.packages(c("tidyverse", "DBI", "duckdb", "dbplyr", "farr", "RPostgres")` within R to install all the packages you need to run the code in this note.]
 I also used Python for portions of the code.
 This note was written using [Quarto](https://quarto.org) and compiled with [RStudio](https://posit.co/products/open-source/rstudio/), an integrated development environment (IDE) for working with R and Python.
-The source code for this note is available [here](https://raw.githubusercontent.com/iangow/notes/main/g_secd.qmd) and the latest version of this PDF is [here](https://raw.githubusercontent.com/iangow/notes/main/g_secd.pdf).
+The source code for this note is available [here](https://github.com/iangow/notes/blob/main/published/g_secd.qmd) and the latest version of this PDF is [here](https://iangow.github.io/notes/published/g_secd.pdf).
 
 ```{r}
 #| warning: false
@@ -82,7 +82,7 @@ In 2011, I created a predecessor of my `wrds2pg` Python package to create a Post
 Early on, I considered SQLite and MySQL as well as PostgreSQL, but I decided on PostgreSQL because of its rich type system, powerful SQL, and support for server programming (though I ended up not using the last one much).
 Though I had zero expertise, it seems that I somehow made the right choice.
 I was also an early adopter of RStudio in 2010 or 2011.]
-The `wrds2pg` package has developed over time, but almost nothing has changed since 2023.^[The only recent change was I recently exposed the (previously internal) `sas_to_pandas()` function that I used in [my recent note](https://raw.githubusercontent.com/iangow/notes/main/sas_to_pd.pdf) on SAS and pandas.]
+The `wrds2pg` package has developed over time, but almost nothing has changed since 2023.^[The only recent change was I recently exposed the (previously internal) `sas_to_pandas()` function that I used in [my recent note](https://iangow.github.io/notes/published/sas_to_pd.pdf) on SAS and pandas.]
 
 By early 2017, WRDS offered its own PostgreSQL database.
 Early on the data in the WRDS PostgreSQL database was not complete and it seemed to have been created from the SAS data files, but generally was of lower quality than what I had in my database (e.g., `wrds2pg` did a better job with inference of data types and handled non-Latin characters better).
@@ -90,7 +90,7 @@ But today it is unclear whether the SAS data or the PostgreSQL data are the "can
 
 Working in R with data in databases such as PostgreSQL has been greatly facilitated by [the `dbplyr` Tidyverse package](https://dbplyr.tidyverse.org).
 I don't recall exactly when I started using `dbplyr`, but I have email exchanges with Hadley Wickham about backend functionality for PostgreSQL as far back as 2015 and I can barely remember the days when I didn't have it.
-I would say that `dbplyr` is what made the code approach used in @gow2024empirical feasible, even if [some critical pieces](https://raw.githubusercontent.com/iangow/notes/main/dbplyr-news.pdf) fell into place after work on the book began.
+I would say that `dbplyr` is what made the code approach used in @gow2024empirical feasible, even if [some critical pieces](https://iangow.github.io/notes/published/dbplyr-news.pdf) fell into place after work on the book began.
 Today, packages such as Ibis mean that a similar approach could be taken with Python.^[Trying to do @gow2024empirical using pandas and SQL would be painful and slow.]
 
 In late 2023, I added functionality to `wrds2pg` that allows SAS files to be turned into Parquet files.
