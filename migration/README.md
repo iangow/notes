@@ -138,3 +138,18 @@ Severance and academic incentives (28 January 2025). Original wording and UTC
 publication dates retained. Quarto links use linked text at Ian’s request.
 The copy-editing post retains its screenshot and separately labelled own follow-up,
 with a dated errata-link/context update. Source evidence is in linkedin-batch-05.json.
+
+## Sixth batch: published posts
+
+Approved for publication on 10 November 2026:
+
+- Accounting, finance and the bundling of education (17 March 2025).
+- Universities and willing learners (14 April 2025).
+- R packages on Linux without compiling from source (11 February 2026).
+
+`linkedin-batch-06.json` records full original text, verified public LinkedIn
+publication timestamps, authorship boundaries, and editorial changes. The drafts
+retain original wording and dates, with descriptive hyperlinks. The willing-learners
+post has a separately labelled context line; the R tip has a dated update based
+on current Posit documentation. No third-party repost text or comments are
+reproduced. All three are published from `posts/` with their original publication dates.

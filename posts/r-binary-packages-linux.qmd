@@ -1,0 +1,47 @@
+---
+title: "R packages on Linux without compiling from source"
+author: Ian D. Gow
+date: 2026-02-11
+date-format: D MMMM YYYY
+source-url: https://www.linkedin.com/posts/iangow_posit-package-manager-activity-7427451728028991488-K67U
+source-published-at: "2026-02-11T20:41:27.326Z"
+source-date-timezone: UTC
+categories: ["R", "Linux", "WRDS"]
+format:
+  html:
+    toc: false
+  typst:
+    colorlinks: true
+    linkcolor: "#0000FF"
+    papersize: a4
+    margin:
+      x: 2cm
+      y: 2cm
+    mainfont: Libertinus Serif
+    mathfont: New Computer Modern Math
+    keep-typ: true
+    filters:
+      - ../filters/pdf-links.lua
+pdf-link-base: https://iangow.github.io/notes/posts/
+format-links: false
+---
+
+*Originally shared on [LinkedIn](https://www.linkedin.com/posts/iangow_posit-package-manager-activity-7427451728028991488-K67U) on 2026-02-11 (UTC).*
+
+::: {.content-visible when-format="html"}
+[Download the PDF](r-binary-packages-linux.pdf).
+:::
+
+If you use RStudio on Linux (e.g., using the WRDS RStudio Server platform) and your packages are still compiling from source, do yourself a favour and follow the instructions [here](https://p3m.dev/client/#/repos/cran/setup)
+
+Type `cat /etc/os-release` at the command line and use that information to answer the "what Linux distribution are you using?" question, then proceed with the Repository URL provided.
+
+(I know there are other solutions for this, but this one comes with easy instructions.)
+
+::: {.callout-note icon=false}
+## Setup update - 10 November 2026
+
+Posit’s interface has changed since this post. Its current instructions are to choose the CRAN repository, use **Select Distribution** in the repository menu to select a compatible Linux distribution, and then open **Setup** to obtain the repository URL. In RStudio, paste that URL into **Tools → Global Options → Packages → Primary CRAN repository**. See [Posit’s distribution instructions](https://docs.posit.co/rspm/user/r-binary-packages.html) and [R configuration guide](https://docs.posit.co/rspm/user/configure-r.html).
+
+For Linux binaries, use the URL generated for the appropriate distribution rather than a generic source-repository URL. Posit also documents [R user-agent configuration and runtime dependencies](https://docs.posit.co/rspm/admin/serving-binaries.html#r-configuration-steps-linux), which may matter if packages still compile from source.
+:::
