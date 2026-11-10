@@ -153,3 +153,14 @@ retain original wording and dates, with descriptive hyperlinks. The willing-lear
 post has a separately labelled context line; the R tip has a dated update based
 on current Posit documentation. No third-party repost text or comments are
 reproduced. All three are published from `posts/` with their original publication dates.
+
+## Seventh batch: two accounting essays
+
+Prepared on 10 November 2026, with original dates of 2 February 2022 and
+22 December 2021. Sources, original paragraphs, current public-source modification
+timestamps, and link replacements are recorded in `linkedin-batch-07.json`.
+Ian approved both essays and requested removal of the added editorial note.
+All separately added editorial context and footnotes were removed before publication.
+Both essays are published from `posts/`, with their original publication dates.
+The registered-reports JAR post is deferred.
+The public article text was retrieved in 2026; this is not a recovered original-date snapshot.
