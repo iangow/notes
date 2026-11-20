@@ -26,6 +26,47 @@ Check the Python environment seen by `uv`:
 uv run python -c "import sys; print(sys.executable)"
 ```
 
+## Publishing: render HTML locally with the freezer, then publish without rerendering
+
+Ian’s established workflow is to render the website locally using frozen
+computations, review the output, and publish that output without rendering again.
+From the repository root:
+
+```sh
+python3 scripts/build-blog.py
+quarto render --to=html --use-freezer
+# Review the generated website in _site/ before publishing.
+quarto publish gh-pages --no-render
+```
+
+The explicit `gh-pages` provider avoids the provider-selection prompt that
+`quarto publish --no-render` can show. The first command refreshes the checked-in
+archive include before Quarto resolves it; the project also has a pre-render hook
+for this script.
+
+`--to=html` renders the website, not every configured PDF output. `--use-freezer`
+uses frozen computational results where available; it is not the same as
+`--no-execute` and does not guarantee that a document without usable frozen
+results will avoid execution. Regenerate computational results deliberately when
+needed, with the appropriate environment, rather than silently treating stale
+results as current. Build any approved PDF updates separately.
+
+After reviewing the complete `_site/` and obtaining publication approval, the
+publish command sends those already-rendered files to `gh-pages`. Keep source
+changes on `main`; pushing source changes alone does not publish `_site/`.
+Preserve unchanged pages, assets, and search entries. Do not substitute a partial
+preview for the complete website or introduce a GitHub-side Quarto render unless
+Ian requests a workflow change.
+
+Verify GitHub Pages deployment and the live URLs before reporting that an update
+is live. GitHub’s job named “pages build and deployment” packages and deploys the
+already-rendered branch; its name does not mean it rerenders Quarto sources.
+A queued or failed deployment is not, by itself, a reason to rerender locally.
+
+When changing CSS/JS directly without a render, run
+`python3 scripts/version-site-assets.py` against the complete `_site/` before
+publishing so its asset references are updated. This does not rerender notes.
+
 ## The pandas `.assign()` note
 
 `published/assign_magic.qmd` uses pandas 3.1 and includes an executed R comparison.

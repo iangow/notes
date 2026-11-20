@@ -1,0 +1,20 @@
+% Minimal Quarto template: let tufte-handout own fonts, geometry and sidenotes.
+\documentclass{tufte-handout}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\setlist{topsep=4pt,itemsep=4pt,parsep=0pt,partopsep=0pt}
+\setlist[enumerate,2]{labelsep=3pt}
+\providecommand{\tightlist}{}
+\setcounter{secnumdepth}{-\maxdimen}
+\title{$title$}
+\author{$for(author)$$author$$sep$ and $endfor$}
+\date{$date$}
+% Match the tighter title spacing in the recovered 2017 handout.
+\makeatletter
+\patchcmd{\maketitle}{\setlength{\parskip}{4pt}}{\setlength{\parskip}{2pt}}{}{}
+\makeatother
+\begin{document}
+\maketitle
+\vspace{-5.5pt}
+$body$
+\end{document}

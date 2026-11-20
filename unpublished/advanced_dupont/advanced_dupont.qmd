@@ -1,0 +1,159 @@
+---
+title: "Advanced DuPont Decomposition"
+author: "Ian D. Gow and Charles C.Y. Wang"
+date: "8 February 2017"
+date-format: "D MMMM YYYY"
+format:
+  pdf:
+    template: advanced_dupont-tufte.tex
+    pdf-engine: pdflatex
+    keep-tex: false
+    toc: false
+    number-sections: false
+    latex-auto-install: false
+    latex-tinytex: false
+---
+
+```{=latex}
+\begin{abstract}
+This document describes the motivation and derivation of the advanced DuPont decomposition of return on equity.
+\end{abstract}
+```
+
+As shareholders we care about return on equity (*ROE*).
+BAV will teach you a valuation framework on the basis of *ROE*.
+Thus, understanding what drives *ROE* helps us better understand what drives stock value.
+The simple DuPont decomposition is an attempt to do this,[^simple] but does not clearly separate the effects of operating vs. financing decisions.
+For example, net income includes (thus is confounded by) the effects of capital structure (i.e., interest expense), complicating the comparison between firms with different level of debt.
+Similarly, total assets includes both operating and financial assets.
+The advanced DuPont decomposition introduces return on net operating assets (*RNOA*) as a central measure of operating performance to separate the effects of operating decisions from the effects of financial leverage on *ROE*.
+
+# Concepts and Definitions
+
+To understand the advanced DuPont decomposition, it is useful to introduce the following concepts.
+These concepts arise from dividing the balance sheet into operating assets and liabilities and financial assets and liabilities.
+The following section will illustrates how these concepts become useful.
+
+1. Net Operating Assets (*NOA*): Operating Working Capital + Net Operating Long-Term Assets
+   - Operating Working Capital = Current Operating Assets - Current Operating Liabilities[^working]
+   - Net Operating Long-Term Assets = Total Long-Term Assets - Non-Interest-Bearing Long-Term Liabilities
+
+2. Net Operating Profit After Taxes (*NOPAT*): Net Income + Net Interest Expenses After Tax[^nopat]
+   - Net Interest Expense After Tax = (Interest Expense - Interest Income)$\times(1-\tau) = \textit{Int} \times(1-\tau)$
+   - $\textit{NOPAT} = NI + Int\times(1-\tau) = (\textit{EBIT}-Int)\times(1-\tau)+\textit{Int}\times(1-\tau) = \textit{EBIT}\times(1-\tau)$
+
+3. Return on *NOA* (*RNOA*): = *NOPAT/NOA*.[^rnoa]
+
+4. Spread: *RNOA--Net Cost of Debt*
+   - Net Cost of Debt = Net Interest Expense After Tax / Net Debt
+   - Net Debt = Financial Liabilities - Financial Assets[^debt]
+
+5. Net Financial Leverage: Net Debt/Equity
+
+# Derivation
+
+```{=latex}
+\begin{enumerate}
+    \item $A = L + E$ $^{[}$\footnote{We begin with the balance sheet equation}$^{]}$
+    \bigskip
+    \bigskip
+    \item $OA + FA = OL + FL + E$ $^{[}$\footnote{We will divide assets and liabilities into operating and financial components}$^{]}$
+    \bigskip
+    \bigskip
+    \item $\textit{NOA} = \textit{Net Debt} +E$ $^{[}$\footnote{We can re-express in terms of net operating assets and net debt}$^{]}$
+    \bigskip
+    \bigskip
+    \item \begin{eqnarray*}
+    \textit{ROE}&=&\frac{NI}{E}\\
+       &=&\frac{\textit{EBIT}\times(1-\tau) - \textit{Int}\times(1-\tau)}{E}\\
+       &=&\left[\frac{\textit{EBIT}\times(1-\tau)}{\textit{NOA}}\right] \times \frac{\textit{NOA}}{E} - \left[\frac{\textit{Int}\times(1-\tau)}{\textit{Net Debt}}\right] \times \frac{\textit{Net Debt}}{E} \\
+       &=& \textit{RNOA} \times \frac{E+\textit{Net Debt}}{E} - \textit{Net Borrowing Cost} \times \frac{\textit{Net Debt}}{E} \\
+       &=&\textit{RNOA}+ \left(\textit{RNOA}-\textit{Net Borrowing Cost}\right) \times \frac{\textit{Net Debt}}{E} \\ 
+       &=&\textit{RNOA} + \textit{Spread}\times \textit{Net Fin Leverage}
+    \end{eqnarray*}
+        
+\end{enumerate}
+\bigskip
+```
+
+# Conceptual Notes
+
+1. You can think of RNOA as the **ROA or ROE for an all-equity financed firm**. It takes out the effect of financing from both the numerator and the denominator of ROA, so we can focus solely on how well managers are operating the firm or deploying the company's net operating assets independent of financing decisions.
+
+1. *Spread*$\times$ *Net Fin Leverage* is the **gain from financial leverage**. Another way to think of this is to re-express this gain as
+
+   ```{=latex}
+   \begin{equation*}
+   \frac{Spread\times NetDebt}{Equity}.
+   \end{equation*}
+   ```
+
+   The numerator is the dollar return you generate to shareholders from taking on additional (net) debt: since you earn *RNOA*$\times$*NetDebt* dollars, but pay back an effective interest of *NetInterestRate*$\times$*NetDebt*, with the remainder representing the dollar amount that is attributable to equity holders. Dividing by total equity re-expresses this dollar amount as the percent return to equity that comes from taking out additional net debt.
+
+1. The effective interest rate on net debt
+
+   ```{=latex}
+   \begin{equation*}
+   \frac{(InterestExpense - InterestIncome)\times(1-\tau)}{NetDebt}
+   \end{equation*}
+   ```
+
+   evaluates the effectiveness of the company's management of financial assets and liabilities. It punishes for holding high levels of financial assets (lower *NetDebt*) that have low returns (lower *Interest Income*), or for taking out small amount of loans at a high interest (higher *InterestExpense* with lower *NetDebt*). On the other hand, it rewards generating high level of financial returns with a low level of financial assets (high *InterestIncome* and lower *NetDebt*) and rewards low interest expenses especially at high levels of debt (lower *InterestExpense* and higher *NetDebt*).
+
+1. Although *Spread* may be positive at any point in time, the gain from leverage may not increase monotonically as we increase financial leverage. Above some efficient level of leverage, additional net debt may increase the cost of debt. Combined with diminishing returns to scale which could lower RNOA, one expects the spread to eventually decline as leverage increases.
+
+1. What if the firm has net financial assets (i.e., $\textit{Net Debt} < 0)$? In this case, we can re-express the deomposition as follows:
+
+   ```{=latex}
+   \begin{eqnarray*}
+   ROE &=& RNOA+(RNOA - Interest)\times\frac{NetDebt}{E} \\
+   &=& RNOA+(RNFA - RNOA)\times\frac{NFA}{E}
+   \end{eqnarray*}
+   ```
+
+   \[[^nfa]\]
+
+   `\hspace*{1em}`{=latex}In this case, equity is invested in operating and financial assets ($\textit{NOA} + \textit{NFA} = E$). Thus, if returns from financing assets exceed that of operating assets, then equity holders benefit when a greater proportion of the capital is invested in net financial assets. If RNOA exceeds RNFA, on the other hand, then investing a greater proportion of equity in financial assets is worse for equity holders.
+
+\newpage
+
+# Implementation
+
+1. Divide assets and liabilities on the balance sheet into operating and financial assets and liabilities.[^balance]
+
+   (a) Net Operating Working Capital (CA - CL and exclude financial assets and liabilities)
+   (b) Net Operating Long-Term Capital (LT Assets - LT Liabilities and exclude LT financial assets and LT financial liabilities)
+
+   Doing so allows us to re-express the standard balance sheet equation as follows:
+
+   ```{=latex}
+   \vspace{-14pt}
+   \begin{eqnarray*}
+       A &=& L+E \\
+       OA + FA &=& OL + FA + E \\
+       NOA &=& ND + E
+   \end{eqnarray*}
+   \bigskip
+   ```
+
+2. Divide the income statement into an operating and financial income and expenses.[^income] Note that how we divide the income statement should be consistent with the approach taken to divide the balance sheet.
+
+3. Compute NOPAT, RNOA, Spread, and Net Financial Leverage
+
+4. Check that ROE is \underline{exactly} equal to RNOA + Spread x Net Financial Leverage
+
+[^simple]: Simple DuPont Decomposition: `\\`{=latex} $\textit{ROE}=\frac{NI}{E}=\frac{\textit{Sales}}{A}\times\frac{NI}{\textit{Sales}}\times\frac{A}{E}$
+
+[^working]: Current operating assets is current assets minus the amount of cash and marketable securities above what is considered "normal" or necessary to operate the business. Current operating liabilities is current liabilities minus short-term debt and the current portion of long-term debt.
+
+[^nopat]: The idea is to calculate the firm's profitability if it held no debt and has no interest expense.
+
+[^rnoa]: This measure is not affected by the amount of debt (relative to equity) because *NOA* and *NOPAT* are not affected by capital structure.
+
+[^debt]: Financial liabilities is the sum of short-term debt, current portion of long-term debt, and interest-bearing long-term debt. Financial assets are the cash and marketable securities above what is considered "normal" or necessary to operate the business.
+
+[^balance]: Technically, we can carefully divide cash into an operating or "normal" portion and an "excess" or financial portion. Similarly, when we look at balance sheet accounts, we can carefully separate components of accounts (e.g., "LT Investments") into portions that are operating and those that are financial. In practice, we often treat all cash as negative net debt, and all accounts other than debt, borrowings, or capital lease liabilities as operating.
+
+[^income]: Typically we just take interest expense and interest income as reported. However, there could be financial assets (e.g., short term or long term securities) that generate earnings reported elsewhere in the income statement which we can parse out. Alternatively, there could be interest revenues (e.g., from holding "normal" level of cash necessary for operations of the business) that could be considered operating earnings rather than financial.
+
+[^nfa]: NFA = Net Financial Assets=-Net Debt. RNFA = Return on Net Financial Assets = (Interest Revenue - Interest Expense)(1-$\tau$) / Net Financial Assets = (Interest Expense-Interest Revenue)(1-$\tau$) / Net Debt  = Effective Interest Rate
