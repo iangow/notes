@@ -1,0 +1,34 @@
+---
+title: "AI and research"
+author: Ian D. Gow
+date: 2026-11-19
+date-format: D MMMM YYYY
+format:
+  html:
+    toc: false
+---
+
+Earlier this year, working with Martien Lubberink, I wrote a [Python Polars version](https://iangow.github.io/era_pl_book/) of [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/), which used R.
+Apart from the code,  most of the book was little changed from the R edition.
+The main changes were in Part I of the book, which introduces the foundational skills, including basic data analysis skills, needed in the rest of the book.
+
+However, we did make substantial changes to the ["Beyond OLS"](https://iangow.github.io/era_pl_book/glms.html) chapter in Part IV.
+The original chapter explained how to download and parse SEC index files and organize them as part of a Parquet data repository.
+However, by 2026, covering such details seemed very out of date.
+Today, if starting with a blank sheet of paper, one would just use AI to write the code to do this work.
+As a result, I created a small API in the `era_py` Python package I created to accompany the book and the Python Polars version uses that instead.
+
+Recently I figured it would make sense to create a similar API in the `farr` R package that accompanies the R version of the book.
+Naturally, I used AI to help me with that work (basically, take the Python package's API and implement the same basic API in R).
+
+This raises a broader question about the relevance of the coding skills covered in [*Empirical Research in Accounting: Tools and Methods*](https://iangow.github.io/far_book/).
+If AI can do all the coding, is a book with code relevant in 2026?
+
+I think the answer is a resounding "yes" because, while the inclusion of code was important for teaching coding skills in 2024, that was only part of the reason for having code that would allow the reader to reproduce every table and figure in the book.
+
+For me, the main reason to include the code was my belief that the traditional "campfire discussion" approach to covering research papers in the typical PhD class is woefully inadequate for developing the critical reasoning skills needed to evaluate and conduct research.
+A typical paper today is essentially marketing material for the analyses they contain.
+So if a student is just reading the paper, it is much more difficult to challenge the paper than if one can run the code and see the (often critical) details of the choices made by the researchers.
+
+Another reason for including code was that it's not necessarily the precise code used, but the logic that it embodies that is important.
+One guiding principle in writing the code was that it should function as a kind of pseudo-code
